@@ -1,0 +1,6 @@
+// Standalone compiled entry for chat-details styles.
+// Imported by chat-details-result.ts to produce a shared Lit CSSResult.
+@use 'chat-details' as dt;
+
+@include dt.styles;
+@include dt.keyframes;

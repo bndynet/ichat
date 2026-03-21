@@ -1,0 +1,109 @@
+@use 'variables' as *;
+
+// ── CSS custom property defaults (overridable on :host / ancestor) ────────────
+// --chat-details-border        border color        (default: --chat-border)
+// --chat-details-radius        border radius       (default: --chat-radius)
+// --chat-details-summary-bg    summary background  (default: --chat-surface-alt)
+// --chat-details-body-bg       body background     (default: --chat-surface)
+// --chat-details-chevron-color chevron icon color  (default: --chat-primary)
+
+@mixin styles {
+  .chat-details {
+    border: 1px solid var(--chat-details-border, var(--chat-border, #{$color-border}));
+    border-radius: var(--chat-details-radius, var(--chat-radius, #{$radius-md}));
+    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
+    overflow: hidden;
+  }
+
+  // ── Summary (header / trigger) ──────────────────────────────────────────────
+  .chat-details__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--chat-spacing-sm, #{$spacing-sm});
+    list-style: none;
+
+    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+    background: var(--chat-details-summary-bg, var(--chat-surface-alt, #{$color-surface-alt}));
+    font-size: var(--chat-font-size, #{$font-size-base});
+    font-weight: 500;
+    color: var(--chat-text, #{$color-text});
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--chat-transition-fast, #{$transition-fast});
+
+    // Hide the browser's native disclosure triangle in all engines
+    &::-webkit-details-marker { display: none; }
+    &::marker { content: ''; display: none; }
+
+    // ── Chevron — Unicode character, pure CSS, no DOM element needed ──────────
+    // Using ::before with content: '▶' avoids:
+    //   • SVG-in-summary DOMPurify stripping issues
+    //   • mask-image data-URI quirks inside Lit Shadow DOM
+    //   • Extra DOM elements that DOMPurify might mishandle
+    &::before {
+      content: '▶';
+      font-size: 0.55em;
+      line-height: 1;
+      color: var(--chat-details-chevron-color, var(--chat-primary, #{$color-primary}));
+      display: inline-block;
+      flex-shrink: 0;
+      transform: rotate(0deg);
+      transition: transform var(--chat-transition-fast, #{$transition-fast});
+    }
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--chat-details-summary-bg, var(--chat-surface-alt, #{$color-surface-alt})) 85%,
+        var(--chat-border, #{$color-border}) 15%
+      );
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--chat-primary, #{$color-primary});
+      outline-offset: -2px;
+    }
+  }
+
+  // Rotate chevron when the panel is open.
+  // This selector is kept flat (no .content ancestor) so it applies to both
+  // container-syntax and fence-syntax <details> blocks equally.
+  details.chat-details[open] > .chat-details__summary::before {
+    transform: rotate(90deg);
+  }
+
+  // ── Body (collapsible content area) ──────────────────────────────────────────
+  .chat-details__body {
+    padding: var(--chat-spacing-md, #{$spacing-md});
+    background: var(--chat-details-body-bg, var(--chat-surface, #{$color-surface}));
+    border-top: 1px solid var(--chat-details-border, var(--chat-border, #{$color-border}));
+
+    animation: chat-details-open var(--chat-transition-fast, #{$transition-fast}) ease both;
+
+    > :first-child { margin-top: 0; }
+    > :last-child  { margin-bottom: 0; }
+  }
+
+  // ── Nested details ────────────────────────────────────────────────────────────
+  .chat-details .chat-details {
+    border-color: var(--chat-details-border, var(--chat-border, #{$color-border}));
+
+    .chat-details__summary {
+      font-size: var(--chat-font-size-sm, #{$font-size-sm});
+      padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-md, #{$spacing-md});
+    }
+  }
+}
+
+@mixin keyframes {
+  @keyframes chat-details-open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

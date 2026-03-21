@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Demo</title>
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" /> -->
+    <link rel="stylesheet" href="demo.css" />
+  </head>
+  <body>
+    <div class="demo-toolbar">
+      <h1>Demo</h1>
+      <div class="demo-toolbar-actions">
+        <button type="button" id="btn-cancel" disabled>Cancel</button>
+        <button type="button" id="btn-clear">Clear</button>
+        <button type="button" class="theme-toggle" id="btn-theme" aria-label="Toggle dark mode">
+          <span class="icon icon-sun">☀️ Light</span>
+          <span class="icon icon-moon">🌙 Dark</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-layout">
+      <div class="demo-sidebar" id="demo-sidebar">
+        <button type="button" id="btn-run">Run demo</button>
+        <button type="button" id="btn-real-sse">Real SSE</button>
+        <button type="button" id="btn-error-msg">Error message</button>
+        <button type="button" id="btn-error-banner">Error banner</button>
+        <button type="button" id="btn-timeline">Timeline</button>
+        <!-- DemoData buttons injected here by demo.js -->
+      </div>
+
+      <div class="demo-container">
+        <chat-messages id="chat">
+        <div
+          slot="user-avatar"
+          style="
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+          "
+        >
+          U
+        </div>
+        <div
+          slot="assistant-avatar"
+          style="
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
+            <path d="M18 14h.01" />
+            <path d="M6 14h.01" />
+            <rect x="3" y="12" width="18" height="8" rx="3" />
+            <path d="M9 22v-2" />
+            <path d="M15 22v-2" />
+          </svg>
+        </div>
+        <div slot="message-actions">
+          <button data-action="copy">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path
+                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+              />
+            </svg>
+            Copy
+          </button>
+          <button data-action="like">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M7 10v12" />
+              <path
+                d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88z"
+              />
+            </svg>
+          </button>
+          <button data-action="dislike">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M17 14V2" />
+              <path
+                d="M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88z"
+              />
+            </svg>
+          </button>
+        </div>
+        <div slot="reasoning-header" style="display: inline-flex; align-items: center; gap: 6px;">
+          <style>
+            .reasoning-header-custom .dots { display: none; }
+            .reasoning-header-custom.is-thinking .dots { display: inline; vertical-align: middle; }
+            @keyframes spin { to { transform: rotate(360deg); } }
+          </style>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+            <line x1="9" y1="21" x2="15" y2="21"/>
+          </svg>
+          <span style="font-weight: 600;">Deep Thinking
+            <svg class="dots" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 0.8s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          </span>
+        </div>
+        <div slot="empty" style="text-align: center">
+          <div style="font-size: 2.5rem; margin-bottom: 12px">💬</div>
+          <div
+            style="
+              font-size: 1.1rem;
+              font-weight: 600;
+              margin-bottom: 8px;
+            "
+          >
+            Chat with me
+          </div>
+          <div style="font-size: 0.875rem; opacity: 0.6;">
+            Click <strong>Run demo</strong> to simulate <code>data:</code> events and <code>[DONE]</code>.
+          </div>
+        </div>
+      </chat-messages>
+      </div><!-- .demo-container -->
+    </div><!-- .demo-layout -->
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var stored = localStorage.getItem('chat-demo-theme');
+        if (stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          root.setAttribute('data-theme', 'dark');
+        }
+        document.getElementById('btn-theme').addEventListener('click', function () {
+          var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          if (next === 'dark') {
+            root.setAttribute('data-theme', 'dark');
+          } else {
+            root.removeAttribute('data-theme');
+          }
+          localStorage.setItem('chat-demo-theme', next);
+        });
+      })();
+    </script>
+    <script>window.process = { env: { NODE_ENV: 'production' } };</script>
+    <script src="/packages/chat-messages/dist/index.global.js"></script>
+    <script src="/packages/chat-renderers/dist/index.global.js"></script>
+    <script src="https://unpkg.com/@bndynet/sse-parser/dist/index.global.js"></script>
+    <script src="demo-responses.js"></script>
+    <script src="demo-data.js"></script>
+    <script src="demo-sse.js"></script>
+    <script src="demo.js"></script>
+  </body>
+</html>

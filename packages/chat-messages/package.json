@@ -1,0 +1,36 @@
+{
+  "name": "@bndynet/chat-messages",
+  "version": "0.1.0",
+  "description": "Lit 3 chat message UI as Web Components: Markdown + syntax highlighting, pluggable fenced-block renderers, collapsible reasoning, and streaming previews (bring your own composer).",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.4",
+    "highlight.js": "^11.11.1",
+    "lit": "^3.3.0",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "sass-embedded": "^1.86.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  },
+  "license": "MIT"
+}

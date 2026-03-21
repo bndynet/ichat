@@ -1,0 +1,85 @@
+// Chat component SCSS defaults — used as fallback values for CSS custom properties.
+// External consumers override via --chat-* custom properties on <chat-messages> or an ancestor.
+
+// ── Typography ──────────────────────────────────────────────────────
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+  Ubuntu, Cantarell, sans-serif;
+$font-mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo,
+  monospace;
+
+$font-size-sm: 0.8125rem;
+$font-size-base: 0.9375rem;
+$font-size-lg: 1rem;
+
+$line-height-base: 1.6;
+
+// ── Border Radius ───────────────────────────────────────────────────
+$radius-sm: 6px;
+$radius-md: 12px;
+$radius-lg: 18px;
+
+// ── Spacing ─────────────────────────────────────────────────────────
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// ── Transitions ─────────────────────────────────────────────────────
+$transition-fast: 150ms ease;
+$transition-normal: 250ms ease;
+
+// ── Semantic Colors (light theme defaults) ──────────────────────────
+$color-bg: #f7f7f8;
+$color-surface: #ffffff;
+$color-surface-alt: #f0f2f5;
+$color-border: #e5e7eb;
+$color-text: #1a1a2e;
+$color-text-secondary: #6b7280;
+$color-text-muted: #9ca3af;
+
+$color-primary: #2563eb;
+$color-primary-light: #dbeafe;
+
+// ── User Bubble ─────────────────────────────────────────────────────
+$color-user-bg: #2563eb;
+$color-user-text: #ffffff;
+
+// ── Assistant Bubble ────────────────────────────────────────────────
+$color-assistant-bg: #ffffff;
+$color-assistant-text: #1a1a2e;
+
+// ── Reasoning ───────────────────────────────────────────────────────
+$color-reasoning-bg: #f0f4ff;
+$color-reasoning-border: #c7d2fe;
+$color-reasoning-text: #4338ca;
+$color-reasoning-header-hover-bg: rgba(0, 0, 0, 0.03);
+
+// ── Code ────────────────────────────────────────────────────────────
+$color-code-bg: #1e1e2e;
+$color-code-text: #cdd6f4;
+$color-code-inline-bg: rgba(0, 0, 0, 0.06);
+$color-user-code-inline-bg: rgba(255, 255, 255, 0.15);
+
+// ── Blockquote ──────────────────────────────────────────────────────
+$color-blockquote-bg: rgba(0, 0, 0, 0.02);
+
+// ── Chart ───────────────────────────────────────────────────────────
+$color-chart-bar-track-bg: rgba(0, 0, 0, 0.04);
+$color-error: #ef4444;
+$color-error-bg: #fef2f2;
+
+// ── Timeline ────────────────────────────────────────────────────────
+$color-timeline-done: #10b981;
+$color-timeline-active-pulse: rgba(37, 99, 235, 0.25);
+$timeline-indicator-size: #{$font-size-base};
+
+// ── Shadows ─────────────────────────────────────────────────────────
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+// ── Layout ──────────────────────────────────────────────────────────
+$avatar-size: 32px;
+$message-max-width: 85%;
+$messages-max-width: 800px;
+$scrollbar-width: 6px;

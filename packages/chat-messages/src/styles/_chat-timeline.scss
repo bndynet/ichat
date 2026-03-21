@@ -1,0 +1,125 @@
+@use 'variables' as *;
+
+@mixin styles {
+  .chat-timeline {
+    display: flex;
+    flex-direction: column;
+    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
+  }
+
+  .chat-timeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--chat-spacing-sm, #{$spacing-sm});
+    position: relative;
+    padding-bottom: var(--chat-spacing-md, #{$spacing-md});
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+
+    // Vertical connector line: from current indicator bottom to next indicator top
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: calc(var(--chat-timeline-indicator-size, #{$timeline-indicator-size}) / 2 - 0.5px);
+      top: calc(
+        (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em
+        + var(--chat-timeline-indicator-size, #{$timeline-indicator-size})
+      );
+      bottom: calc((var(--chat-line-height, #{$line-height-base}) - 1) / -2 * 1em);
+      width: 1px;
+      background: var(--chat-timeline-line, #{$color-border});
+      border-radius: 1px;
+    }
+  }
+
+  .chat-timeline-indicator {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: var(--chat-timeline-indicator-size, #{$timeline-indicator-size});
+    height: var(--chat-timeline-indicator-size, #{$timeline-indicator-size});
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--chat-timeline-pending-border, #{$color-border});
+    background: var(--chat-surface, #{$color-surface});
+    color: var(--chat-text-muted, #{$color-text-muted});
+    position: relative;
+    z-index: 1;
+    transition: all var(--chat-transition-normal, #{$transition-normal});
+    margin-top: calc((var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em);
+  }
+
+  .chat-timeline-content {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--chat-font-size, #{$font-size-base});
+    line-height: var(--chat-line-height, #{$line-height-base});
+
+    p {
+      margin: 0;
+
+      & + p {
+        margin-top: var(--chat-spacing-xs, #{$spacing-xs});
+      }
+    }
+  }
+
+  // ── Status modifiers ──────────────────────────────────────────────
+
+  .chat-timeline-step--done {
+    .chat-timeline-indicator {
+      background: var(--chat-timeline-done, #{$color-timeline-done});
+      border-color: var(--chat-timeline-done, #{$color-timeline-done});
+      color: #fff;
+    }
+
+    &:not(:last-child)::after {
+      background: var(--chat-timeline-done, #{$color-timeline-done});
+    }
+  }
+
+  .chat-timeline-step--active {
+    .chat-timeline-indicator {
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--chat-timeline-active, #{$color-primary});
+      background: transparent;
+      animation: timeline-spin 0.7s linear infinite;
+    }
+
+    .chat-timeline-content {
+      font-weight: 600;
+    }
+  }
+
+  .chat-timeline-step--error {
+    .chat-timeline-indicator {
+      background: var(--chat-timeline-error, #{$color-error});
+      border-color: var(--chat-timeline-error, #{$color-error});
+      color: #fff;
+    }
+  }
+
+  .chat-timeline-step--skipped {
+    .chat-timeline-indicator {
+      background: var(--chat-surface-alt, #{$color-surface-alt});
+      border-color: var(--chat-border, #{$color-border});
+      color: var(--chat-text-muted, #{$color-text-muted});
+    }
+
+    .chat-timeline-content {
+      color: var(--chat-text-muted, #{$color-text-muted});
+      text-decoration: line-through;
+    }
+  }
+}
+
+@mixin keyframes {
+  @keyframes timeline-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

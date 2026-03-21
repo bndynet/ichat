@@ -1,0 +1,182 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #e5e7eb;
+  padding: 16px;
+  gap: 12px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── Top toolbar ── */
+.demo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.demo-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  transition: color 0.3s;
+}
+
+/* ── Main area: sidebar + chat ── */
+.demo-layout {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* ── Left sidebar ── */
+.demo-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 148px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+/* ── Shared button base ── */
+.demo-sidebar button,
+.demo-toolbar-actions button {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 150ms;
+}
+
+.demo-sidebar button {
+  width: 100%;
+  text-align: left;
+}
+
+.demo-sidebar button:hover,
+.demo-toolbar-actions button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.demo-sidebar button:disabled,
+.demo-toolbar-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Chat container ── */
+.demo-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Hide the element (keeping its layout space) until the JS bundle defines and
+   upgrades it.  Without this, the light-DOM slot children (avatar divs, SVGs,
+   etc.) are painted as plain block elements at full width — the classic FOUC
+   that makes avatars look huge and causes a visible flash on load/refresh. */
+chat-messages:not(:defined) {
+  visibility: hidden;
+}
+
+chat-messages {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Theme toggle button ── */
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+/* ── Dark mode — page ── */
+[data-theme="dark"] body {
+  background: #1a1a2e;
+}
+[data-theme="dark"] h1 {
+  color: #e0e0e0;
+}
+[data-theme="dark"] .demo-sidebar button,
+[data-theme="dark"] .demo-toolbar-actions button {
+  background: #2d2d44;
+  border-color: #404060;
+  color: #e0e0e0;
+}
+[data-theme="dark"] .demo-sidebar button:hover,
+[data-theme="dark"] .demo-toolbar-actions button:hover {
+  background: #3d3d55;
+  border-color: #6366f1;
+}
+[data-theme="dark"] .demo-container {
+  border-color: #404060;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .theme-toggle .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: inline;
+}
+
+/* ── Dark mode — chat component ── */
+[data-theme="dark"] chat-messages {
+  --chat-bg: #16213e;
+  --chat-surface: #1e1e3a;
+  --chat-surface-alt: #2d2d44;
+  --chat-border: #404060;
+  --chat-text: #e0e0e0;
+  --chat-text-secondary: #a0a0b0;
+  --chat-text-muted: #707080;
+  --chat-primary: #818cf8;
+  --chat-primary-light: #312e81;
+  --chat-user-bg: #6366f1;
+  --chat-user-text: #ffffff;
+  --chat-assistant-bg: #1e1e3a;
+  --chat-assistant-text: #e0e0e0;
+  --chat-assistant-avatar-bg: #2d2d44;
+  --chat-reasoning-bg: #1e1e3a;
+  --chat-reasoning-border: #4338ca;
+  --chat-reasoning-text: #a5b4fc;
+  --chat-reasoning-header-hover-bg: rgba(255, 255, 255, 0.05);
+  --chat-code-bg: #0d1117;
+  --chat-code-text: #c9d1d9;
+  --chat-code-inline-bg: rgba(255, 255, 255, 0.08);
+  --chat-user-code-inline-bg: rgba(255, 255, 255, 0.18);
+  --chat-blockquote-bg: rgba(255, 255, 255, 0.04);
+  --chat-error-color: #f87171;
+  --chat-error-bg: rgba(239, 68, 68, 0.15);
+  --chat-chart-bar-track-bg: rgba(255, 255, 255, 0.06);
+  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --chat-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

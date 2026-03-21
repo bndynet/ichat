@@ -1,0 +1,15 @@
+{
+  "name": "bndynet-chat-monorepo",
+  "private": true,
+  "description": "Monorepo for @bndynet/chat-* packages",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @bndynet/chat-renderers && npm run build -w @bndynet/chat-messages",
+    "dev": "npm run dev -w @bndynet/chat-renderers & npm run dev -w @bndynet/chat-messages",
+    "demo": "npx serve .",
+    "start": "npm run build && npm run dev & npm run demo"
+  },
+  "license": "MIT"
+}

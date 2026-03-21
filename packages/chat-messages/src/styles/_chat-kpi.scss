@@ -1,0 +1,92 @@
+@use 'variables' as *;
+
+@mixin styles {
+  // ── Single KPI card ────────────────────────────────────────────────────────
+  .chat-kpi {
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--chat-spacing-xs, #{$spacing-xs});
+    padding: var(--chat-spacing-md, #{$spacing-md});
+    background: var(--chat-surface, #{$color-surface});
+    border: 1px solid var(--chat-border, #{$color-border});
+    border-radius: var(--chat-radius-md, #{$radius-md});
+    box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
+    min-width: 160px;
+    margin-right: var(--chat-spacing-sm, #{$spacing-sm});
+    margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--chat-spacing-sm, #{$spacing-sm});
+    }
+
+    &__label {
+      font-size: var(--chat-font-size-sm, #{$font-size-sm});
+      color: var(--chat-text-secondary, #{$color-text-secondary});
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    &__trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: var(--chat-font-size-sm, #{$font-size-sm});
+      font-weight: 600;
+      white-space: nowrap;
+
+      &--up {
+        color: var(--chat-kpi-trend-up, #{$color-timeline-done});
+      }
+
+      &--down {
+        color: var(--chat-kpi-trend-down, #{$color-error});
+      }
+    }
+
+    &__value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--chat-text, #{$color-text});
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    &--error {
+      color: var(--chat-error, #{$color-error});
+      background: var(--chat-error-bg, #{$color-error-bg});
+      border: 1px solid var(--chat-error, #{$color-error});
+      border-radius: var(--chat-radius-sm, #{$radius-sm});
+      padding: var(--chat-spacing-sm, #{$spacing-sm});
+      font-size: var(--chat-font-size-sm, #{$font-size-sm});
+    }
+  }
+
+  // ── KPI group — overrides .chat-kpi to remove card chrome, lay out in a row
+  .chat-kpis {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: wrap;
+
+    // Strip card styling from each item; keep only content styles
+    .chat-kpi {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+      margin: 0;
+      min-width: 120px;
+      padding: var(--chat-spacing-sm, #{$spacing-sm}) 0;
+    }
+
+    &__divider {
+      width: 1px;
+      background: var(--chat-border, #{$color-border});
+      align-self: stretch;
+      margin: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-lg, #{$spacing-lg});
+    }
+  }
+}

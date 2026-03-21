@@ -1,0 +1,44 @@
+{
+  "name": "@bndynet/chat-renderers",
+  "version": "0.1.0",
+  "description": "Optional peer add-on for @bndynet/chat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "@bndynet/chat-messages": "^0.1.0",
+    "echarts": ">=5",
+    "markdown-it": ">=14"
+  },
+  "peerDependenciesMeta": {
+    "markdown-it": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@bndynet/chat-messages": "file:../chat-messages",
+    "@types/markdown-it": "^14.1.2",
+    "markdown-it": "^14.1.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@bndynet/icharts": "^5.0.1"
+  }
+}
