@@ -7,7 +7,7 @@ export default defineConfig({
   dts: true,
   splitting: false,
   sourcemap: true,
-  clean: true,
+  clean: !process.argv.includes('--watch'),
   treeshake: true,
   external: ['markdown-it', '@bndynet/chat-messages', 'echarts'],
 });

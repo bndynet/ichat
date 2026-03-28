@@ -97,6 +97,9 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .error-banner {
@@ -155,7 +158,8 @@
 }
 
 .chat-messages {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--chat-spacing-lg);
   scroll-behavior: smooth;

@@ -11,12 +11,113 @@ body {
   font-family: system-ui, sans-serif;
 }
 
+/* ── Chat component color tokens — light (mirrors :host defaults) ─────────
+   Defined at root so demo UI elements (palette swatches etc.) can reference
+   the same --chat-* vars without going through the shadow DOM.
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Base */
+  --chat-bg:                          #f7f7f8;
+  --chat-surface:                     #ffffff;
+  --chat-surface-alt:                 #f0f2f5;
+  --chat-border:                      #e5e7eb;
+  --chat-text:                        #1a1a2e;
+  --chat-text-secondary:              #6b7280;
+  --chat-text-muted:                  #9ca3af;
+  --chat-primary:                     #2563eb;
+  --chat-primary-light:               #dbeafe;
+  /* User bubble */
+  --chat-user-bg:                     #2563eb;
+  --chat-user-text:                   #ffffff;
+  /* Assistant bubble */
+  --chat-assistant-bg:                #ffffff;
+  --chat-assistant-text:              #1a1a2e;
+  --chat-assistant-avatar-bg:         #f0f2f5;
+  /* Reasoning */
+  --chat-reasoning-bg:                #f0f4ff;
+  --chat-reasoning-border:            #c7d2fe;
+  --chat-reasoning-text:              #4338ca;
+  /* Code */
+  --chat-code-bg:                     #1e1e2e;
+  --chat-code-text:                   #cdd6f4;
+  /* Error & misc */
+  --chat-error-color:                 #ef4444;
+  --chat-error-bg:                    #fef2f2;
+  --chat-timeline-done:               #10b981;
+}
+
+/* ── Chat component color tokens — dark ───────────────────────────────────
+   Override the same --chat-* vars so swatches update on theme toggle.
+────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Base */
+  --chat-bg:                          #16213e;
+  --chat-surface:                     #1e1e3a;
+  --chat-surface-alt:                 #2d2d44;
+  --chat-border:                      #404060;
+  --chat-text:                        #e0e0e0;
+  --chat-text-secondary:              #a0a0b0;
+  --chat-text-muted:                  #707080;
+  --chat-primary:                     #818cf8;
+  --chat-primary-light:               #312e81;
+  /* User bubble */
+  --chat-user-bg:                     #6366f1;
+  --chat-user-text:                   #ffffff;
+  /* Assistant bubble */
+  --chat-assistant-bg:                #1e1e3a;
+  --chat-assistant-text:              #e0e0e0;
+  --chat-assistant-avatar-bg:         #2d2d44;
+  /* Reasoning */
+  --chat-reasoning-bg:                #1e1e3a;
+  --chat-reasoning-border:            #4338ca;
+  --chat-reasoning-text:              #a5b4fc;
+  /* Code */
+  --chat-code-bg:                     #0d1117;
+  --chat-code-text:                   #c9d1d9;
+  /* Error & misc */
+  --chat-error-color:                 #f87171;
+  --chat-error-bg:                    rgba(239, 68, 68, 0.15);
+  --chat-timeline-done:               #10b981;
+}
+
+/* ── Demo site design tokens (light) ──────────────────────────────────────
+   Derived from the chat component's light palette so both sides stay in sync.
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  --demo-page-bg:       #f0f2f5;
+  --demo-sidebar-bg:    #ffffff;
+  --demo-surface:       #ffffff;
+  --demo-border:        #e5e7eb;
+  --demo-text:          #1a1a2e;
+  --demo-text-muted:    #6b7280;
+  --demo-accent:        #2563eb;   /* matches --chat-primary */
+  --demo-accent-soft:   #dbeafe;   /* matches --chat-primary-light */
+  --demo-nav-hover:     #f0f2f5;
+  --demo-nav-active:    #eff6ff;
+  --demo-shadow:        0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+}
+
+/* ── Demo site design tokens (dark) ───────────────────────────────────────
+   Mirror the chat component's dark palette exactly.
+────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --demo-page-bg:       #131325;
+  --demo-sidebar-bg:    #16213e;   /* = --chat-bg */
+  --demo-surface:       #1e1e3a;   /* = --chat-surface */
+  --demo-border:        #404060;   /* = --chat-border */
+  --demo-text:          #e0e0e0;   /* = --chat-text */
+  --demo-text-muted:    #a0a0b0;   /* = --chat-text-secondary */
+  --demo-accent:        #818cf8;   /* = --chat-primary */
+  --demo-accent-soft:   #312e81;   /* = --chat-primary-light */
+  --demo-nav-hover:     #2d2d44;   /* = --chat-surface-alt */
+  --demo-nav-active:    #2d2d44;
+  --demo-shadow:        0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.4);
+}
+
 body {
   display: flex;
   flex-direction: column;
   background: #e5e7eb;
-  padding: 16px;
-  gap: 12px;
   transition: background 0.3s, color 0.3s;
 }
 

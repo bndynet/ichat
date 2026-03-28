@@ -22,7 +22,7 @@
   },
   "peerDependencies": {
     "@bndynet/chat-messages": "^0.1.0",
-    "echarts": ">=5",
+    "echarts": ">=6",
     "markdown-it": ">=14"
   },
   "peerDependenciesMeta": {
@@ -39,6 +39,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@bndynet/icharts": "^5.0.1"
+    "@bndynet/icharts": "^6.0.0"
   }
 }

@@ -1,6 +1,8 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { ref, createRef } from 'lit/directives/ref.js';
+import morphdom from 'morphdom';
 import type { ChatMessage } from '../types.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
@@ -81,6 +83,11 @@ export class ChatMessageElement extends LitElement {
   private _duration: number | null = null;
   private _timelineOverrides = new Map<string, { step: number; status: TimelineStatus; bid?: string }>();
   private _pendingTimelineRetry = false;
+
+  /** Ref to the `.content` div so we can morph it directly without tearing down custom elements. */
+  private _contentRef = createRef<HTMLDivElement>();
+  /** Last HTML string written into the content div via morphdom – used to skip no-op patches. */
+  private _cachedContentHtml = '';
 
   private _isImageUrl(str: string): boolean {
     return /^(https?:\/\/|data:image\/)/.test(str) || /\.(png|jpe?g|gif|svg|webp)$/i.test(str);
@@ -172,6 +179,46 @@ export class ChatMessageElement extends LitElement {
 
   override updated(_changed: Map<string, unknown>): void {
     this._pendingTimelineRetry = false;
+
+    // ── morphdom content patch ──────────────────────────────────────────────
+    // Instead of using unsafeHTML (which replaces the entire DOM subtree on
+    // every Lit update), we patch only the changed nodes via morphdom.
+    // This preserves custom elements such as <i-chart> when their attributes
+    // haven't changed, preventing ECharts from re-initializing at 60 fps and
+    // causing the chart-flicker that occurs during the streaming animation.
+    const contentEl = this._contentRef.value;
+    if (contentEl) {
+      const newHtml = renderMarkdown(this._contentCtrl.displayedContent);
+      if (newHtml !== this._cachedContentHtml) {
+        const temp = document.createElement('div');
+        temp.innerHTML = newHtml;
+        morphdom(contentEl, temp, {
+          childrenOnly: true,
+          onBeforeElUpdated(fromEl, toEl) {
+            // Skip custom elements whose attributes are all unchanged.
+            // Tag names with a hyphen are custom elements (web components).
+            if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {
+              const fa = fromEl.attributes;
+              const ta = toEl.attributes;
+              if (fa.length === ta.length) {
+                let same = true;
+                for (let i = 0; i < ta.length; i++) {
+                  if (fromEl.getAttribute(ta[i].name) !== ta[i].value) {
+                    same = false;
+                    break;
+                  }
+                }
+                if (same) return false;
+              }
+            }
+            return true;
+          },
+        });
+        this._cachedContentHtml = newHtml;
+      }
+    }
+
+    // ── timeline re-apply ───────────────────────────────────────────────────
     if (this._timelineOverrides.size === 0) return;
     // Re-apply after child components (e.g. chat-reasoning) have also updated,
     // since their re-render would otherwise overwrite direct DOM mutations.
@@ -204,7 +251,6 @@ export class ChatMessageElement extends LitElement {
     if (!this.message) return nothing;
 
     const { role, timestamp, streaming, avatar, error } = this.message;
-    const displayed = this._contentCtrl.displayedContent;
     const isAnimating = this._contentCtrl.isAnimating;
     const resolvedAvatar =
       avatar || (role === 'user' ? this.userAvatar : this.assistantAvatar);
@@ -231,14 +277,12 @@ export class ChatMessageElement extends LitElement {
                   <span class="error-text">${error}</span>
                 </div>
                 ${hasMainBody
-                  ? html`<div class="content">${unsafeHTML(renderMarkdown(displayed))}</div>`
+                  ? html`<div class="content" ${ref(this._contentRef)}></div>`
                   : nothing}
               </div>`
             : hasMainBody
               ? html`<div class="bubble">
-                  <div class="content ${isAnimating ? 'typing-cursor' : ''}">
-                    ${unsafeHTML(renderMarkdown(displayed))}
-                  </div>
+                  <div class="content ${isAnimating ? 'typing-cursor' : ''}" ${ref(this._contentRef)}></div>
                 </div>`
               : nothing}
           <div class="message-footer">

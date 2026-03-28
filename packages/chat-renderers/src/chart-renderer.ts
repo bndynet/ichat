@@ -1,7 +1,9 @@
 import type MarkdownIt from 'markdown-it';
 import type { BlockRenderer } from '@bndynet/chat-messages';
 import type { ChartData, ChartOptions } from '@bndynet/icharts';
+import { switchTheme } from '@bndynet/icharts';
 import '@bndynet/icharts'; // registers <i-chart>
+import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,35 +53,16 @@ function isDarkTheme(): boolean {
 }
 
 /**
- * Recursively collect elements matching `selector` across all shadow roots.
- * document.querySelectorAll() cannot pierce shadow DOM boundaries, so we
- * must traverse every shadow root manually.
- */
-function queryShadowAll(selector: string, root: Document | ShadowRoot = document): HTMLElement[] {
-  const found: HTMLElement[] = Array.from(root.querySelectorAll<HTMLElement>(selector));
-  root.querySelectorAll('*').forEach((el) => {
-    if (el.shadowRoot) found.push(...queryShadowAll(selector, el.shadowRoot));
-  });
-  return found;
-}
-
-/**
- * Watch <html data-theme> and update every auto-themed <i-chart> on change.
- * Charts where the user explicitly set options.theme are left untouched.
+ * Watch <html data-theme> and call switchTheme() on every theme change.
+ * switchTheme() updates both the global colorHub state (so newly created
+ * charts pick up the correct theme via resolveThemeName()) and calls
+ * setTheme() on every IChart instance already in the registry.
  */
 function setupThemeObserver(): void {
   if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return;
 
   new MutationObserver(() => {
-    const theme = isDarkTheme() ? 'dark' : 'light';
-    queryShadowAll('i-chart[data-auto-theme]').forEach((el) => {
-      try {
-        const opts = JSON.parse(el.getAttribute('options') ?? '{}') as ChartOptions;
-        if (opts.theme === theme) return;
-        opts.theme = theme as ChartOptions['theme'];
-        el.setAttribute('options', JSON.stringify(opts));
-      } catch { /* malformed attribute — skip */ }
-    });
+    switchTheme(isDarkTheme() ? 'dark' : 'light');
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
@@ -87,63 +70,78 @@ setupThemeObserver();
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
 
-function renderChart(code: string): string {
+function renderChart(code: string, opts: RendererOptions = {}): string {
   let input: ChartInput;
   try {
     input = JSON.parse(code) as ChartInput;
   } catch {
-    return `<pre class="chart-error">Invalid chart data: expected JSON\n${code}</pre>`;
+    return renderCodeFallback('chart', code);
   }
 
   const options: ChartOptions = { ...(input.options ?? {}) };
 
-  // Auto-inject dark theme when the document is dark and the user has not
-  // explicitly chosen a theme in options.
-  const autoTheme = !options.theme;
-  if (autoTheme && isDarkTheme()) {
-    options.theme = 'dark' as ChartOptions['theme'];
-  }
-
-  // @bndynet/icharts >=5.0.1 declares data/options with @property({ type: Object }),
-  // so Lit's defaultConverter calls JSON.parse() on these attribute strings automatically.
+  // @bndynet/icharts >=6.0.0: resolveThemeName(undefined) falls back to
+  // colorHub.getCurrentTheme().name, so newly created charts automatically
+  // pick up whichever theme is currently active via switchTheme().
+  // Only inject options.theme when the caller explicitly requested one.
   const escapedData = JSON.stringify(input.data).replace(/'/g, '&#39;');
   const escapedOptions = JSON.stringify(options).replace(/'/g, '&#39;');
 
-  // data-auto-theme marks charts whose theme was injected automatically so the
-  // MutationObserver above can update them when the page theme toggles.
-  const autoAttr = autoTheme ? ' data-auto-theme' : '';
+  const html = `<i-chart type="${input.type}" data='${escapedData}' options='${escapedOptions}' style="display:block;width:100%;height:320px"></i-chart>`;
 
-  return `<i-chart type="${input.type}" data='${escapedData}' options='${escapedOptions}'${autoAttr} style="display:block;width:100%;height:320px"></i-chart>`;
+  return opts.codeToggle !== false
+    ? wrapWithCodeToggle('chart', code, html)
+    : html;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * BlockRenderer for the registry approach.
+ * Creates a `BlockRenderer` for `chart` fence blocks.
+ *
+ * @param options.codeToggle  Show the "view source" toggle icon on rendered
+ *   charts.  Default: `true`.  Pass `{ codeToggle: false }` to disable.
+ *
+ * @example
+ * // Default — toggle icon visible
+ * registry.register(createChartRenderer())
+ *
+ * // Disable toggle
+ * registry.register(createChartRenderer({ codeToggle: false }))
+ */
+export function createChartRenderer(options: RendererOptions = {}): BlockRenderer {
+  return {
+    name: 'chart',
+    test: (lang: string) => lang === 'chart',
+    render: (code: string, _lang: string) => renderChart(code, options),
+  };
+}
+
+/**
+ * Pre-built `BlockRenderer` with default options (code toggle enabled).
  * Add to a renderer registry: `registry.register(chartRenderer)`
  */
-export const chartRenderer: BlockRenderer = {
-  name: 'chart',
-  test: (lang: string) => lang === 'chart',
-  render: (code: string, _lang: string) => renderChart(code),
-};
+export const chartRenderer: BlockRenderer = createChartRenderer();
 
 /**
  * markdown-it plugin approach.
  * Install into a markdown-it instance: `md.use(chartPlugin)`
+ *
+ * To customise options pass them as the second argument to `md.use()`:
+ * `md.use(chartPlugin, { codeToggle: false })`
  */
-export function chartPlugin(mdInstance: MarkdownIt): void {
+export function chartPlugin(mdInstance: MarkdownIt, options: RendererOptions = {}): void {
   const originalFence =
     mdInstance.renderer.rules.fence ||
-    function (tokens, idx, options, _env, self) {
-      return self.renderToken(tokens, idx, options);
+    function (tokens, idx, opts, _env, self) {
+      return self.renderToken(tokens, idx, opts);
     };
 
-  mdInstance.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  mdInstance.renderer.rules.fence = (tokens, idx, opts, env, self) => {
     const token = tokens[idx];
     if (token.info.trim() === 'chart') {
-      return renderChart(token.content);
+      return renderChart(token.content, options);
     }
-    return originalFence(tokens, idx, options, env, self);
+    return originalFence(tokens, idx, opts, env, self);
   };
 }

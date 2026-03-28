@@ -317,29 +317,112 @@ For single-timeline messages, `bid` can be omitted in both phases.
 
 All visual styles are exposed as CSS custom properties on `<chat-messages>`. Override them on the element (or any ancestor) to customize the look and feel — no need to touch the source.
 
+### Color palette
+
+The component ships with a **light theme** built in. Apply a **dark theme** by overriding the `--chat-*` properties on `<chat-messages>` or any ancestor element. The table below shows the built-in light defaults and the recommended dark values (used by the demo app).
+
+#### Base
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-bg` | ![#f7f7f8](https://placehold.co/14x14/f7f7f8/f7f7f8.png) `#f7f7f8` | ![#16213e](https://placehold.co/14x14/16213e/16213e.png) `#16213e` |
+| `--chat-surface` | ![#ffffff](https://placehold.co/14x14/ffffff/e5e7eb.png) `#ffffff` | ![#1e1e3a](https://placehold.co/14x14/1e1e3a/1e1e3a.png) `#1e1e3a` |
+| `--chat-surface-alt` | ![#f0f2f5](https://placehold.co/14x14/f0f2f5/f0f2f5.png) `#f0f2f5` | ![#2d2d44](https://placehold.co/14x14/2d2d44/2d2d44.png) `#2d2d44` |
+| `--chat-border` | ![#e5e7eb](https://placehold.co/14x14/e5e7eb/e5e7eb.png) `#e5e7eb` | ![#404060](https://placehold.co/14x14/404060/404060.png) `#404060` |
+| `--chat-text` | ![#1a1a2e](https://placehold.co/14x14/1a1a2e/1a1a2e.png) `#1a1a2e` | ![#e0e0e0](https://placehold.co/14x14/e0e0e0/e0e0e0.png) `#e0e0e0` |
+| `--chat-text-secondary` | ![#6b7280](https://placehold.co/14x14/6b7280/6b7280.png) `#6b7280` | ![#a0a0b0](https://placehold.co/14x14/a0a0b0/a0a0b0.png) `#a0a0b0` |
+| `--chat-text-muted` | ![#9ca3af](https://placehold.co/14x14/9ca3af/9ca3af.png) `#9ca3af` | ![#707080](https://placehold.co/14x14/707080/707080.png) `#707080` |
+| `--chat-primary` | ![#2563eb](https://placehold.co/14x14/2563eb/2563eb.png) `#2563eb` | ![#818cf8](https://placehold.co/14x14/818cf8/818cf8.png) `#818cf8` |
+| `--chat-primary-light` | ![#dbeafe](https://placehold.co/14x14/dbeafe/dbeafe.png) `#dbeafe` | ![#312e81](https://placehold.co/14x14/312e81/312e81.png) `#312e81` |
+
+#### User bubble
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-user-bg` | ![#2563eb](https://placehold.co/14x14/2563eb/2563eb.png) `#2563eb` | ![#6366f1](https://placehold.co/14x14/6366f1/6366f1.png) `#6366f1` |
+| `--chat-user-text` | ![#ffffff](https://placehold.co/14x14/ffffff/e5e7eb.png) `#ffffff` | ![#ffffff](https://placehold.co/14x14/ffffff/e5e7eb.png) `#ffffff` |
+
+#### Assistant bubble
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-assistant-bg` | ![#ffffff](https://placehold.co/14x14/ffffff/e5e7eb.png) `#ffffff` | ![#1e1e3a](https://placehold.co/14x14/1e1e3a/1e1e3a.png) `#1e1e3a` |
+| `--chat-assistant-text` | ![#1a1a2e](https://placehold.co/14x14/1a1a2e/1a1a2e.png) `#1a1a2e` | ![#e0e0e0](https://placehold.co/14x14/e0e0e0/e0e0e0.png) `#e0e0e0` |
+| `--chat-assistant-avatar-bg` | `= --chat-surface-alt` | ![#2d2d44](https://placehold.co/14x14/2d2d44/2d2d44.png) `#2d2d44` |
+
+#### Reasoning block
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-reasoning-bg` | ![#f0f4ff](https://placehold.co/14x14/f0f4ff/f0f4ff.png) `#f0f4ff` | ![#1e1e3a](https://placehold.co/14x14/1e1e3a/1e1e3a.png) `#1e1e3a` |
+| `--chat-reasoning-border` | ![#c7d2fe](https://placehold.co/14x14/c7d2fe/c7d2fe.png) `#c7d2fe` | ![#4338ca](https://placehold.co/14x14/4338ca/4338ca.png) `#4338ca` |
+| `--chat-reasoning-text` | ![#4338ca](https://placehold.co/14x14/4338ca/4338ca.png) `#4338ca` | ![#a5b4fc](https://placehold.co/14x14/a5b4fc/a5b4fc.png) `#a5b4fc` |
+
+#### Code
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-code-bg` | ![#1e1e2e](https://placehold.co/14x14/1e1e2e/1e1e2e.png) `#1e1e2e` | ![#0d1117](https://placehold.co/14x14/0d1117/0d1117.png) `#0d1117` |
+| `--chat-code-text` | ![#cdd6f4](https://placehold.co/14x14/cdd6f4/cdd6f4.png) `#cdd6f4` | ![#c9d1d9](https://placehold.co/14x14/c9d1d9/c9d1d9.png) `#c9d1d9` |
+| `--chat-code-inline-bg` | `rgba(0,0,0,0.06)` | `rgba(255,255,255,0.08)` |
+| `--chat-user-code-inline-bg` | `rgba(255,255,255,0.15)` | `rgba(255,255,255,0.18)` |
+
+#### Error & misc
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-error-color` | ![#ef4444](https://placehold.co/14x14/ef4444/ef4444.png) `#ef4444` | ![#f87171](https://placehold.co/14x14/f87171/f87171.png) `#f87171` |
+| `--chat-error-bg` | ![#fef2f2](https://placehold.co/14x14/fef2f2/fef2f2.png) `#fef2f2` | `rgba(239,68,68,0.15)` |
+| `--chat-blockquote-bg` | `rgba(0,0,0,0.02)` | `rgba(255,255,255,0.04)` |
+| `--chat-chart-bar-track-bg` | `rgba(0,0,0,0.04)` | `rgba(255,255,255,0.06)` |
+
+#### Timeline
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-timeline-done` | ![#10b981](https://placehold.co/14x14/10b981/10b981.png) `#10b981` | ![#10b981](https://placehold.co/14x14/10b981/10b981.png) `#10b981` |
+| `--chat-timeline-active` | `= --chat-primary` | `= --chat-primary` |
+| `--chat-timeline-error` | `= --chat-error-color` | `= --chat-error-color` |
+
+#### Shadows
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--chat-shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | `0 1px 2px rgba(0,0,0,0.3)` |
+| `--chat-shadow-md` | `0 4px 12px rgba(0,0,0,0.08)` | `0 4px 12px rgba(0,0,0,0.4)` |
+
 ### Quick example — dark theme
 
 ```css
-chat-messages {
-  --chat-bg: #1a1a2e;
-  --chat-surface: #16213e;
-  --chat-surface-alt: #2a2a4a;
-  --chat-border: #2a2a4a;
+[data-theme="dark"] chat-messages {
+  --chat-bg: #16213e;
+  --chat-surface: #1e1e3a;
+  --chat-surface-alt: #2d2d44;
+  --chat-border: #404060;
   --chat-text: #e0e0e0;
   --chat-text-secondary: #a0a0b0;
   --chat-text-muted: #707080;
-  --chat-primary: #6366f1;
+  --chat-primary: #818cf8;
+  --chat-primary-light: #312e81;
   --chat-user-bg: #6366f1;
   --chat-user-text: #ffffff;
   --chat-assistant-bg: #1e1e3a;
   --chat-assistant-text: #e0e0e0;
+  --chat-assistant-avatar-bg: #2d2d44;
   --chat-reasoning-bg: #1e1e3a;
   --chat-reasoning-border: #4338ca;
   --chat-reasoning-text: #a5b4fc;
+  --chat-reasoning-header-hover-bg: rgba(255, 255, 255, 0.05);
   --chat-code-bg: #0d1117;
   --chat-code-text: #c9d1d9;
   --chat-code-inline-bg: rgba(255, 255, 255, 0.08);
+  --chat-user-code-inline-bg: rgba(255, 255, 255, 0.18);
   --chat-blockquote-bg: rgba(255, 255, 255, 0.04);
+  --chat-error-color: #f87171;
+  --chat-error-bg: rgba(239, 68, 68, 0.15);
+  --chat-chart-bar-track-bg: rgba(255, 255, 255, 0.06);
+  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --chat-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 ```
 

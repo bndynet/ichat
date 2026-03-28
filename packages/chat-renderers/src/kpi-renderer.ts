@@ -1,18 +1,11 @@
 import type { BlockRenderer } from '@bndynet/chat-messages';
+import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 interface KpiData {
   label: string;
   value: string;
   trend?: number;
   unit?: string;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /** Builds the inner HTML for one KPI item using `.chat-kpi` classes. */
@@ -34,28 +27,42 @@ function buildKpiItemHtml(data: KpiData): string {
 
 // ── Single KPI card ──────────────────────────────────────────────────────────
 
-function renderKpi(code: string): string {
+function renderKpi(code: string, opts: RendererOptions = {}): string {
   try {
     const data = JSON.parse(code) as KpiData;
-    return `<div class="chat-kpi">${buildKpiItemHtml(data)}</div>`;
+    const html = `<div class="chat-kpi">${buildKpiItemHtml(data)}</div>`;
+    return opts.codeToggle !== false ? wrapWithCodeToggle('kpi', code, html) : html;
   } catch {
-    return `<pre class="chat-kpi--error">Invalid KPI data: expected JSON with "label" and "value" fields</pre>`;
+    return renderCodeFallback('kpi', code);
   }
 }
 
-export const kpiRenderer: BlockRenderer = {
-  name: 'kpi',
-  test: (lang: string) => lang === 'kpi',
-  render: (code: string, _lang: string) => renderKpi(code),
-};
+/**
+ * Creates a `BlockRenderer` for `kpi` fence blocks.
+ *
+ * @param options.codeToggle  Show the "view source" toggle icon.  Default: `true`.
+ *
+ * @example
+ * registry.register(createKpiRenderer({ codeToggle: false }))
+ */
+export function createKpiRenderer(options: RendererOptions = {}): BlockRenderer {
+  return {
+    name: 'kpi',
+    test: (lang: string) => lang === 'kpi',
+    render: (code: string, _lang: string) => renderKpi(code, options),
+  };
+}
 
-// ── KPI group — horizontal strip, reuses .chat-kpi classes ──────────────────
+/** Pre-built `BlockRenderer` with default options (code toggle enabled). */
+export const kpiRenderer: BlockRenderer = createKpiRenderer();
 
-function renderKpis(code: string): string {
+// ── KPI group — horizontal strip ─────────────────────────────────────────────
+
+function renderKpis(code: string, opts: RendererOptions = {}): string {
   try {
     const items = JSON.parse(code) as KpiData[];
     if (!Array.isArray(items) || items.length === 0) {
-      return `<pre class="chat-kpi--error">Invalid KPIs data: expected a non-empty JSON array</pre>`;
+      return renderCodeFallback('kpis', code);
     }
 
     const inner = items
@@ -65,14 +72,25 @@ function renderKpis(code: string): string {
       })
       .join('');
 
-    return `<div class="chat-kpis">${inner}</div>`;
+    const html = `<div class="chat-kpis">${inner}</div>`;
+    return opts.codeToggle !== false ? wrapWithCodeToggle('kpis', code, html) : html;
   } catch {
-    return `<pre class="chat-kpi--error">Invalid KPIs data: expected a JSON array of KPI objects</pre>`;
+    return renderCodeFallback('kpis', code);
   }
 }
 
-export const kpisRenderer: BlockRenderer = {
-  name: 'kpis',
-  test: (lang: string) => lang === 'kpis',
-  render: (code: string, _lang: string) => renderKpis(code),
-};
+/**
+ * Creates a `BlockRenderer` for `kpis` fence blocks (horizontal KPI strip).
+ *
+ * @param options.codeToggle  Show the "view source" toggle icon.  Default: `true`.
+ */
+export function createKpisRenderer(options: RendererOptions = {}): BlockRenderer {
+  return {
+    name: 'kpis',
+    test: (lang: string) => lang === 'kpis',
+    render: (code: string, _lang: string) => renderKpis(code, options),
+  };
+}
+
+/** Pre-built `BlockRenderer` with default options (code toggle enabled). */
+export const kpisRenderer: BlockRenderer = createKpisRenderer();

@@ -1,4 +1,5 @@
 import type { BlockRenderer } from '@bndynet/chat-messages';
+import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -469,7 +470,8 @@ class ChatFormElement extends HTMLElement {
   private _render() {
     const parsed = this._parse();
     if (!parsed) {
-      this._shadow.innerHTML = `<style>${FORM_STYLES}</style><pre class="chat-form-error">Invalid form data</pre>`;
+      const raw = this.getAttribute('data') ?? '';
+      this._shadow.innerHTML = `<style>${FORM_STYLES}</style>${renderCodeFallback('form', raw)}`;
       return;
     }
 
@@ -598,22 +600,37 @@ if (!customElements.get('chat-form')) {
 
 // ── BlockRenderer export ──────────────────────────────────────────────────────
 
-function renderForm(code: string): string {
+function renderForm(code: string, opts: RendererOptions = {}): string {
   let schema: FormSchema;
   try {
     schema = JSON.parse(code) as FormSchema;
   } catch {
-    return `<pre class="chat-form-error">Invalid form data: expected JSON\n${escapeHtml(code)}</pre>`;
+    return renderCodeFallback('form', code);
   }
 
   const formId = schema.id ?? nextFormId();
   const safeData = escapeHtml(JSON.stringify(schema));
+  const html = `<chat-form data="${safeData}" data-form-id="${escapeHtml(formId)}"></chat-form>`;
 
-  return `<chat-form data="${safeData}" data-form-id="${escapeHtml(formId)}"></chat-form>`;
+  return opts.codeToggle !== false ? wrapWithCodeToggle('form', code, html) : html;
 }
 
-export const formRenderer: BlockRenderer = {
-  name: 'form',
-  test: (lang: string) => lang === 'form',
-  render: (code: string, _lang: string) => renderForm(code),
-};
+/**
+ * Creates a `BlockRenderer` for `form` fence blocks.
+ *
+ * @param options.codeToggle  Show the "view source" toggle icon on rendered
+ *   forms.  Default: `true`.  Pass `{ codeToggle: false }` to disable.
+ *
+ * @example
+ * registry.register(createFormRenderer({ codeToggle: false }))
+ */
+export function createFormRenderer(options: RendererOptions = {}): BlockRenderer {
+  return {
+    name: 'form',
+    test: (lang: string) => lang === 'form',
+    render: (code: string, _lang: string) => renderForm(code, options),
+  };
+}
+
+/** Pre-built `BlockRenderer` with default options (code toggle enabled). */
+export const formRenderer: BlockRenderer = createFormRenderer();
