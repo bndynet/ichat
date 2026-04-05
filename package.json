@@ -9,9 +9,11 @@
   "scripts": {
     "build": "npm run build -w @bndynet/chat-messages && npm run build -w @bndynet/chat-renderers",
     "dev": "concurrently -n messages,renderers,demo -c cyan,yellow,green \"npm run dev -w @bndynet/chat-messages\" \"npm run dev -w @bndynet/chat-renderers\" \"npm run dev -w chat-demo\"",
-    "start": "npm run build && npm run dev"
+    "start": "npm run build && npm run dev",
+    "sync": "cli-sync -t ../chat-g"
   },
   "devDependencies": {
+    "@bndynet/cli": "^1.5.1",
     "concurrently": "^9.0.0"
   },
   "license": "MIT"
