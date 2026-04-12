@@ -1,0 +1,171 @@
+@use 'variables' as *;
+@use 'chat-input-host-tokens';
+
+:host {
+  display: block;
+  font-family: var(--chat-input-font-family, #{$font-family});
+}
+
+.chat-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--chat-input-padding-block) var(--chat-input-spacing);
+  background: var(--chat-input-bg);
+  border: 1px solid color-mix(in srgb, var(--chat-input-border) 72%, transparent);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow:
+    var(--chat-input-shadow),
+    inset 0 1px 0 color-mix(in srgb, var(--chat-input-text) 10%, transparent);
+  transition:
+    border-color var(--chat-input-transition),
+    box-shadow var(--chat-input-transition);
+
+  &:focus-within {
+    border-color: color-mix(in srgb, var(--chat-input-primary) 55%, var(--chat-input-border));
+    box-shadow:
+      var(--chat-input-shadow),
+      0 0 0 3px color-mix(in srgb, var(--chat-input-primary) 18%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--chat-input-text) 8%, transparent);
+  }
+}
+
+.chat-input-field {
+  min-height: 0;
+}
+
+.chat-input-textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: var(--chat-input-field-min-height);
+  max-height: calc(var(--chat-input-max-rows) * 1.5em + 0.75rem);
+  padding-block: 0.75rem;
+  padding-inline: var(--chat-input-textarea-padding-inline-impl);
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--chat-input-text);
+  font-family: inherit;
+  font-size: var(--chat-input-font-size);
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+
+  &::placeholder {
+    color: var(--chat-input-placeholder);
+  }
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--chat-input-border) 65%, var(--chat-input-bg));
+    border-radius: 2px;
+  }
+}
+
+.chat-input-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: #{$spacing-md};
+  margin-top: var(--chat-input-gap);
+  padding: 0 0.75rem 0.75rem;
+}
+
+.chat-input-toolbar-start,
+.chat-input-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: #{$spacing-xs};
+  min-height: var(--chat-input-send-size-impl);
+}
+
+.chat-input-toolbar-start {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  slot {
+    display: contents;
+  }
+}
+
+.chat-input-toolbar-end {
+  flex-shrink: 0;
+}
+
+.chat-input-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    background var(--chat-input-transition),
+    color var(--chat-input-transition),
+    box-shadow var(--chat-input-transition),
+    transform var(--chat-input-transition);
+
+  svg {
+    width: 62.5%;
+    height: 62.5%;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+}
+
+.chat-input-send {
+  background: color-mix(in srgb, var(--chat-input-primary) 22%, var(--chat-input-bg));
+  color: var(--chat-input-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-primary) 35%, transparent);
+
+  &:disabled {
+    cursor: not-allowed;
+    background: color-mix(in srgb, var(--chat-input-primary) 16%, var(--chat-input-bg));
+    color: color-mix(in srgb, var(--chat-input-primary) 70%, var(--chat-input-placeholder));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 45%, transparent);
+  }
+
+  &:not(:disabled) {
+    background: var(--chat-input-primary);
+    color: var(--chat-input-primary-text);
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--chat-input-primary) 28%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--chat-input-primary-text) 22%, transparent);
+
+    &:hover {
+      background: var(--chat-input-primary-hover);
+      box-shadow:
+        0 2px 8px color-mix(in srgb, var(--chat-input-primary) 35%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--chat-input-primary-text) 18%, transparent);
+    }
+  }
+}
+
+.chat-input-cancel {
+  background: color-mix(in srgb, var(--chat-input-bg) 88%, var(--chat-input-border));
+  color: var(--chat-input-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 65%, transparent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--chat-input-border) 22%, var(--chat-input-bg));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 85%, var(--chat-input-text));
+  }
+}

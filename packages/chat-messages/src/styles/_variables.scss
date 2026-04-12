@@ -1,5 +1,4 @@
-// Chat component SCSS defaults — used as fallback values for CSS custom properties.
-// External consumers override via --chat-* custom properties on <chat-messages> or an ancestor.
+// SCSS fallbacks for `--chat-*` (see `chat-host-tokens.scss`, `@use`d by message components).
 
 // ── Typography ──────────────────────────────────────────────────────
 $font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
@@ -81,5 +80,6 @@ $shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 // ── Layout ──────────────────────────────────────────────────────────
 $avatar-size: 32px;
 $message-max-width: 85%;
-$messages-max-width: 800px;
+// Fill host by default; set e.g. 800px or min(100%, 48rem) for a reading column
+$messages-max-width: 100%;
 $scrollbar-width: 6px;

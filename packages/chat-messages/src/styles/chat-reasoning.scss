@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'chat-host-tokens';
 @use 'chat-timeline' as tl;
 
 :host {

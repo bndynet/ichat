@@ -1,0 +1,358 @@
+import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import type { ChatMessage, ChatConfig, BlockRenderer } from '@bndynet/chat-messages';
+import { ChatMessages, rendererRegistry, StreamingController } from '@bndynet/chat-messages';
+import { ChatInput } from '@bndynet/chat-input';
+import {
+  chartRenderer,
+  kpiRenderer,
+  kpisRenderer,
+  formRenderer,
+} from '@bndynet/chat-renderers';
+
+import styles from '../styles/chat.scss';
+
+void ChatMessages;
+void ChatInput;
+
+rendererRegistry.register(chartRenderer);
+rendererRegistry.register(kpiRenderer);
+rendererRegistry.register(kpisRenderer);
+rendererRegistry.register(formRenderer);
+
+export type { ChatMessage, ChatConfig, BlockRenderer };
+
+/** Slot names that `<i-chat-messages>` recognises as template content. */
+const MESSAGE_SLOT_NAMES = [
+  'user-avatar',
+  'assistant-avatar',
+  'message-actions',
+  'reasoning-header',
+] as const;
+
+/** Slotted into the default `<i-chat-input>` (not used when `slot="input"` replaces it). */
+const INPUT_FORWARDED_SLOT = 'actions';
+
+/**
+ * `<i-chat>` — A complete, drop-in chat Web Component.
+ *
+ * Bundles `<i-chat-messages>`, `<i-chat-input>`, and all built-in renderers
+ * (chart, kpi, form) so consumers only need a single import.
+ *
+ * ## Slots
+ *
+ * | Slot                 | Description                                        |
+ * |----------------------|----------------------------------------------------|
+ * | `user-avatar`        | Custom avatar for user messages                    |
+ * | `assistant-avatar`   | Custom avatar for assistant messages                |
+ * | `message-actions`    | Action buttons shown on each message                |
+ * | `reasoning-header`   | Custom header for reasoning/thinking blocks         |
+ * | `empty`              | Content shown when there are no messages            |
+ * | `actions`            | Toolbar row **inside** the default `<i-chat-input>` (left side) |
+ * | `input`              | Replace the default `<i-chat-input>` entirely           |
+ *
+ * @fires send - `{ detail: { content: string } }` when user submits a message
+ * @fires cancel - Fired when user clicks cancel during streaming
+ * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
+ * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
+ *
+ * @example
+ * ```html
+ * <i-chat></i-chat>
+ * ```
+ *
+ * @example Custom input slot
+ * ```html
+ * <i-chat>
+ *   <div slot="input">
+ *     <my-custom-input></my-custom-input>
+ *   </div>
+ * </i-chat>
+ * ```
+ *
+ * @example Default composer toolbar (`i-chat-input` actions)
+ * ```html
+ * <i-chat>
+ *   <div slot="actions" style="display:flex;gap:8px;align-items:center">
+ *     <button type="button">+</button>
+ *     <span>Tools</span>
+ *   </div>
+ * </i-chat>
+ * ```
+ */
+@customElement('i-chat')
+export class NiceChat extends LitElement {
+  static styles = unsafeCSS(styles);
+
+  @property({ type: Array }) messages: ChatMessage[] = [];
+  @property({ type: Object }) config: ChatConfig = {};
+  @property() emptyText = '';
+  @property() placeholder = 'Type a message…';
+  /** Disable the input area. */
+  @property({ type: Boolean, reflect: true }) disabled = false;
+
+  @query('i-chat-messages') private _messages!: ChatMessages;
+  @query('i-chat-input') private _input!: ChatInput;
+
+  @state() private _streaming = false;
+  @state() private _hasCustomInput = false;
+
+  /** Observes light-DOM children so slots added after first render (e.g. Vue `onMounted`) are forwarded. */
+  private _lightChildObserver?: MutationObserver;
+
+  // ── Proxy methods to <i-chat-messages> ──────────────────────────────
+
+  addMessage(message: ChatMessage): void {
+    this._messages.addMessage(message);
+  }
+
+  updateMessage(id: string, partial: Partial<ChatMessage>): void {
+    this._messages.updateMessage(id, partial);
+  }
+
+  removeMessage(id: string): void {
+    this._messages.removeMessage(id);
+  }
+
+  cancel(hint?: string): void {
+    this._messages.cancel(hint);
+  }
+
+  cancelMessage(id: string, hint?: string): void {
+    this._messages.cancelMessage(id, hint);
+  }
+
+  clear(): void {
+    this._messages.clear();
+  }
+
+  showError(text: string, options?: { duration?: number }): void {
+    this._messages.showError(text, options);
+  }
+
+  dismissError(): void {
+    this._messages.dismissError();
+  }
+
+  updateTimeline(messageId: string, step: number, status: string, bid?: string): boolean {
+    return this._messages.updateTimeline(messageId, step, status as Parameters<ChatMessages['updateTimeline']>[2], bid);
+  }
+
+  addErrorMessage(error: string, content = ''): void {
+    this._messages.addErrorMessage(error, content);
+  }
+
+  /** Register an additional block renderer at runtime. */
+  registerRenderer(renderer: BlockRenderer): void {
+    rendererRegistry.register(renderer);
+  }
+
+  /** Create a `StreamingController` bound to this component's message list. */
+  createStreamingController(): StreamingController {
+    return new StreamingController(this._messages);
+  }
+
+  /** Focus the input textarea. */
+  focusInput(): void {
+    this._input?.focus();
+  }
+
+  // ── Slot forwarding ────────────────────────────────────────────────
+  //
+  // `<i-chat-messages>` reads slotted content via querySelectorAll('[slot="xxx"]')
+  // during connectedCallback (before shadow DOM exists).  Nested
+  // `<slot name="x" slot="x">` does NOT work reliably because the projection
+  // happens too late.  Instead we manually clone the user's light-DOM nodes
+  // into the `<i-chat-messages>` light DOM so its existing mechanism picks them up.
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._syncInputSlotPresence();
+    this._lightChildObserver = new MutationObserver(() => {
+      this._syncInputSlotPresence();
+      this._forwardMessageSlots();
+      this._forwardInputActionsSlot();
+      this.requestUpdate();
+    });
+    this._lightChildObserver.observe(this, { childList: true, subtree: false });
+  }
+
+  /** Clone `[slot="actions"]` from light DOM onto `<i-chat-input>` so it projects into the inner toolbar. */
+  private _forwardInputActionsSlot(): void {
+    if (this._hasCustomInput) return;
+    const input = this._input;
+    if (!input) return;
+
+    input.querySelectorAll<HTMLElement>('[data-i-chat-forwarded-input]').forEach((el) => el.remove());
+
+    const sources = this.querySelectorAll<HTMLElement>(`[slot="${INPUT_FORWARDED_SLOT}"]`);
+    sources.forEach((el) => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.setAttribute('slot', INPUT_FORWARDED_SLOT);
+      clone.setAttribute('data-i-chat-forwarded-input', '');
+      input.appendChild(clone);
+    });
+  }
+
+  override disconnectedCallback(): void {
+    this._lightChildObserver?.disconnect();
+    this._lightChildObserver = undefined;
+    super.disconnectedCallback();
+  }
+
+  private _syncInputSlotPresence(): void {
+    this._hasCustomInput = !!this.querySelector('[slot="input"]');
+  }
+
+  override firstUpdated(changed: PropertyValues): void {
+    super.firstUpdated(changed);
+    this._forwardMessageSlots();
+    this._forwardInputActionsSlot();
+    // Push initial property values that may have been set before first render.
+    if (this._messages) {
+      if (this.messages.length) this._messages.messages = this.messages;
+      if (this.config && Object.keys(this.config).length) this._messages.config = this.config;
+      if (this.emptyText) this._messages.emptyText = this.emptyText;
+    }
+  }
+
+  /**
+   * Clone slotted elements from `<i-chat>` light DOM into
+   * `<i-chat-messages>` light DOM so its `_readLightDomSlots` /
+   * `slotchange` mechanism works natively.
+   */
+  private _forwardMessageSlots(): void {
+    const target = this._messages;
+    if (!target) return;
+
+    target.querySelectorAll<HTMLElement>('[data-i-chat-forwarded]').forEach((el) => el.remove());
+
+    for (const name of MESSAGE_SLOT_NAMES) {
+      const sources = this.querySelectorAll<HTMLElement>(`[slot="${name}"]`);
+      sources.forEach((el) => {
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.setAttribute('slot', name);
+        clone.setAttribute('data-i-chat-forwarded', '');
+        target.appendChild(clone);
+      });
+    }
+
+    const emptySources = this.querySelectorAll<HTMLElement>('[slot="empty"]');
+    emptySources.forEach((el) => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.setAttribute('slot', 'empty');
+      clone.setAttribute('data-i-chat-forwarded', '');
+      target.appendChild(clone);
+    });
+  }
+
+  // ── Lifecycle ──────────────────────────────────────────────────────
+
+  override updated(changed: PropertyValues): void {
+    if (changed.has('messages') && this._messages) {
+      this._messages.messages = this.messages;
+    }
+    if (changed.has('config') && this._messages) {
+      this._messages.config = this.config;
+    }
+    if (changed.has('emptyText') && this._messages) {
+      this._messages.emptyText = this.emptyText;
+    }
+    if (changed.has('_hasCustomInput') && !this._hasCustomInput) {
+      void this.updateComplete.then(() => this._forwardInputActionsSlot());
+    }
+  }
+
+  // ── Events ────────────────────────────────────────────────────────
+
+  private _handleSend(e: CustomEvent<{ content: string }>): void {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('send', {
+        detail: e.detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _handleCancel(e: Event): void {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('cancel', {
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _handleStreamingChange(e: CustomEvent<{ streaming: boolean }>): void {
+    e.stopPropagation();
+    this._streaming = e.detail.streaming;
+    if (this._input) {
+      this._input.streaming = this._streaming;
+    }
+    this.dispatchEvent(
+      new CustomEvent('streaming-change', {
+        detail: e.detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _handleMessageAction(e: CustomEvent): void {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('message-action', {
+        detail: e.detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _handleInputSlotChange(e: Event): void {
+    const slot = e.target as HTMLSlotElement;
+    this._hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  //
+  // Property bindings (.messages, .config, .emptyText) are intentionally
+  // NOT in the template.  They are pushed in `updated()` only when the
+  // corresponding property on <i-chat> actually changes.  This avoids
+  // overwriting <i-chat-messages> internal state when proxy methods
+  // (addMessage, updateMessage, …) are used instead of the property.
+
+  render() {
+    return html`
+      <div class="chat-body">
+        <i-chat-messages
+          @streaming-change=${this._handleStreamingChange}
+          @message-action=${this._handleMessageAction}
+        ></i-chat-messages>
+      </div>
+      <div class="chat-footer">
+        <slot name="input" @slotchange=${this._handleInputSlotChange}></slot>
+        ${this._hasCustomInput
+          ? nothing
+          : html`
+              <i-chat-input
+                .placeholder=${this.placeholder}
+                .streaming=${this._streaming}
+                ?disabled=${this.disabled}
+                @send=${this._handleSend}
+                @cancel=${this._handleCancel}
+              ></i-chat-input>
+            `}
+      </div>
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'i-chat': NiceChat;
+  }
+}

@@ -6,7 +6,7 @@ Monorepo of npm packages for a **Lit 3** chat message UI: markdown, fenced-block
 
 | Package | Description |
 |--------|-------------|
-| [`@bndynet/chat-messages`](packages/chat-messages) | Web Components (`<chat-messages>`, …), markdown pipeline, **`BlockRenderer` type**, renderer registry, streaming. **Install this** for the core UI. |
+| [`@bndynet/chat-messages`](packages/chat-messages) | Web Components (`<i-chat-messages>`, …), markdown pipeline, **`BlockRenderer` type**, renderer registry, streaming. **Install this** for the core UI. |
 | [`@bndynet/chat-renderers`](packages/chat-renderers) | **Optional.** Built-in chart renderer, `chartPlugin` for `markdown-it`, and future fenced-block extras. Not a dependency of `chat-messages`; add it when you need these features. |
 
 **`@bndynet/chat-renderers` peer dependencies:** `@bndynet/chat-messages` and **`markdown-it` ≥ 14** (match the version used by your app; `chat-messages` already depends on `markdown-it`).
@@ -34,7 +34,7 @@ npm install @bndynet/chat-messages @bndynet/chat-renderers
   import '@bndynet/chat-messages';
 </script>
 
-<chat-messages id="chat"></chat-messages>
+<i-chat-messages id="chat"></i-chat-messages>
 
 <div class="my-input">
   <textarea id="input"></textarea>
@@ -96,7 +96,7 @@ When developing this monorepo with `npm run demo`, the sample app under `apps/de
 
 ## Components
 
-### `<chat-messages>`
+### `<i-chat-messages>`
 
 Main container: list, scroll, streaming flag.
 
@@ -123,20 +123,20 @@ chatEl.addEventListener('streaming-change', (e) => {
 ```
 
 ```css
-chat-messages[streaming] ~ .my-input {
+i-chat-messages[streaming] ~ .my-input {
   opacity: 0.5;
   pointer-events: none;
 }
 ```
 
-### `<chat-message>` / `<chat-reasoning>`
+### `<i-chat-message>` / `<i-chat-reasoning>`
 
 Per-message rendering and collapsible reasoning blocks.
 
 ## Slots example
 
 ```html
-<chat-messages id="chat">
+<i-chat-messages id="chat">
   <div slot="user-avatar">
     <img src="user.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover" alt="" />
   </div>
@@ -152,7 +152,7 @@ Per-message rendering and collapsible reasoning blocks.
     <h2>Welcome!</h2>
     <p>Start a conversation below.</p>
   </div>
-</chat-messages>
+</i-chat-messages>
 ```
 
 ## Custom renderers
@@ -257,7 +257,7 @@ The comment is stripped during rendering — it only serves as metadata.
 
 ### Programmatic status updates
 
-Use `updateTimeline()` on `<chat-messages>` to change a step's status after the message has been rendered:
+Use `updateTimeline()` on `<i-chat-messages>` to change a step's status after the message has been rendered:
 
 ```javascript
 // Single timeline (targets the first timeline in the message)
@@ -315,11 +315,11 @@ For single-timeline messages, `bid` can be omitted in both phases.
 
 ## Theming
 
-All visual styles are exposed as CSS custom properties on `<chat-messages>`. Override them on the element (or any ancestor) to customize the look and feel — no need to touch the source.
+All visual styles are exposed as CSS custom properties on `<i-chat-messages>`. Override them on the element (or any ancestor) to customize the look and feel — no need to touch the source.
 
 ### Color palette
 
-The component ships with a **light theme** built in. Apply a **dark theme** by overriding the `--chat-*` properties on `<chat-messages>` or any ancestor element. The table below shows the built-in light defaults and the recommended dark values (used by the demo app).
+The component ships with a **light theme** built in. Apply a **dark theme** by overriding the `--chat-*` properties on `<i-chat-messages>` or any ancestor element. The table below shows the built-in light defaults and the recommended dark values (used by the demo app).
 
 #### Base
 
@@ -394,7 +394,7 @@ The component ships with a **light theme** built in. Apply a **dark theme** by o
 ### Quick example — dark theme
 
 ```css
-[data-theme="dark"] chat-messages {
+[data-theme="dark"] i-chat-messages {
   --chat-bg: #16213e;
   --chat-surface: #1e1e3a;
   --chat-surface-alt: #2d2d44;
@@ -536,7 +536,7 @@ The component ships with a **light theme** built in. Apply a **dark theme** by o
 |----------|---------|-------------|
 | `--chat-avatar-size` | `32px` | Avatar width & height |
 | `--chat-message-max-width` | `85%` | Max width of a single message row |
-| `--chat-messages-max-width` | `800px` | Max width of the message list inner area |
+| `--chat-messages-max-width` | `100%` | Max width of the message list inner area (fills host; override e.g. `800px` or `min(100%, 48rem)` for a centered reading column) |
 | `--chat-scrollbar-width` | `6px` | Scrollbar width (WebKit) |
 
 ### Minimal override set
@@ -544,7 +544,7 @@ The component ships with a **light theme** built in. Apply a **dark theme** by o
 For most themes you only need to set these **core 12 properties** — everything else derives from them or has reasonable defaults:
 
 ```css
-chat-messages {
+i-chat-messages {
   --chat-bg: …;
   --chat-surface: …;
   --chat-surface-alt: …;

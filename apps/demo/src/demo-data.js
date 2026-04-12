@@ -76,7 +76,7 @@ export const demoData = [
 export const thinkingDemoEvents = [
   { reasoning: '**Parse intent:** User sent `thinking`. Demo **all-in-one** — same SSE shape as production (`reasoning` + `content`), but the reply body pulls in every preset from `demoData`: Charts → KPI cards → KPI group → Form → Details (fence + container) → Markdown notes → dev timeline.\n\n' },
   { reasoning: '<!-- bid:plan -->\n1. [done] **Scope** — Reasoning stays in the collapsible block; body streams preset content by reference.\n2. [done] **Charts** — `charts.*` fences via preset `demoData[0]`.\n3. [done] **KPI** — `kpi` / `kpis` blocks from presets `[1]` and `[2]`.\n4. [done] **Form** — JSON form fence from preset `[3]`.\n5. [done] **Details** — Fence + container variants from presets `[4]` and `[5]`.\n6. [done] **Pace** — Chunked `content` events so streaming stays visible.\n7. [done] **UX** — Expand thinking (推理过程); answer emphasizes widgets + timeline.\n8. [done] **Contract** — Optional `reasoning` + `content` per event.\n\n' },
-  { reasoning: '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n' },
+  { reasoning: '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n', delay: 8000 },
   { content: '## All-in-one streaming demo\n\n' },
   { content: 'Plan steps above streamed as **reasoning**; below, the same markdown as the sidebar presets (single pass).\n\n' },
   { content: demoData[0][1] + '\n\n' },

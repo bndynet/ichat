@@ -1,0 +1,51 @@
+// Shell only: set `--chat-*` on this host or an ancestor. Inner components load
+// token SCSS via `@use 'chat-host-tokens'` / `@use 'chat-input-host-tokens'`.
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--chat-radius, 12px);
+  background: var(--chat-bg, #f7f7f8);
+  font-family: var(--chat-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
+  box-sizing: border-box;
+}
+
+.chat-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+i-chat-messages {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// Override from outside: --chat-footer-padding (full shorthand) e.g. `0` or `0 12px 8px`.
+// Falls back to horizontal/bottom spacing tokens.
+.chat-footer {
+  flex: 0 0 auto;
+  padding: var(
+    --chat-footer-padding,
+    0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px)
+  );
+}
+
+i-chat-input {
+  --chat-input-bg: var(--chat-surface, #ffffff);
+  --chat-input-border: var(--chat-border, #e5e7eb);
+  --chat-input-text: var(--chat-text, #1a1a2e);
+  --chat-input-placeholder: var(--chat-text-muted, #9ca3af);
+  --chat-input-primary: var(--chat-primary, #2563eb);
+  --chat-input-primary-hover: var(--chat-primary-hover, #1d4ed8);
+  --chat-input-primary-text: var(--chat-user-text, #ffffff);
+  --chat-input-shadow: var(--chat-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}

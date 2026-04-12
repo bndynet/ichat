@@ -9,6 +9,8 @@
     "preview": "vs preview"
   },
   "dependencies": {
+    "@bndynet/chat": "*",
+    "@bndynet/chat-input": "*",
     "@bndynet/chat-messages": "*",
     "@bndynet/chat-renderers": "*",
     "@bndynet/vue-site": "^0.1.9",

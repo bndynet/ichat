@@ -31,13 +31,9 @@ export interface RendererOptions {
 const CODE_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
 const EYE_ICON  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
-// ── <chat-code-toggle> custom element ─────────────────────────────────────────
+// ── <i-chat-code-toggle> custom element ─────────────────────────────────────────
 
-// CSS custom properties inherit through Shadow DOM boundaries.
-// <chat-messages> defines all --chat-* defaults on its :host (chat-messages.scss).
-// External consumers customise by overriding on <chat-messages> or any ancestor —
-// those values cascade into this shadow DOM automatically.
-// Therefore, no local :host token defaults are needed here.
+// Theme `--chat-*`: `chat-host-tokens.scss` is `@use`d into chat-messages / chat-message / chat-reasoning styles.
 
 const TOGGLE_STYLES = `
   :host {
@@ -163,19 +159,19 @@ class ChatCodeToggle extends HTMLElement {
   }
 }
 
-if (!customElements.get('chat-code-toggle')) {
-  customElements.define('chat-code-toggle', ChatCodeToggle);
+if (!customElements.get('i-chat-code-toggle')) {
+  customElements.define('i-chat-code-toggle', ChatCodeToggle);
 }
 
 // ── Public helpers ────────────────────────────────────────────────────────────
 
 /**
- * Wraps a successfully rendered HTML string in a `<chat-code-toggle>` element.
+ * Wraps a successfully rendered HTML string in a `<i-chat-code-toggle>` element.
  * The element overlays a small icon that lets the user switch between the rich
  * rendered view and the raw source code.
  */
 export function wrapWithCodeToggle(lang: string, code: string, renderedHtml: string): string {
-  return `<chat-code-toggle data-lang="${escapeHtml(lang)}" data-code="${escapeHtml(code)}">${renderedHtml}</chat-code-toggle>`;
+  return `<i-chat-code-toggle data-lang="${escapeHtml(lang)}" data-code="${escapeHtml(code)}">${renderedHtml}</i-chat-code-toggle>`;
 }
 
 /**
@@ -184,9 +180,8 @@ export function wrapWithCodeToggle(lang: string, code: string, renderedHtml: str
  * Used as a graceful fallback when a fence block cannot be parsed — displaying
  * the raw source is more useful to developers than a bare error string.
  *
- * All styles use `var(--chat-*)` custom properties.  These cascade in from the
- * enclosing `<chat-messages>` host (defined in chat-messages.scss) and can be
- * overridden on `<chat-messages>` or any ancestor — no local defaults needed.
+ * All styles use `var(--chat-*)`. Tokens are defined in `chat-host-tokens.scss`
+ * (@bndynet/chat-messages); override on `<i-chat-messages>`, `<i-chat>`, or any ancestor.
  */
 export function renderCodeFallback(_lang: string, code: string): string {
   const escaped = escapeHtml(code);

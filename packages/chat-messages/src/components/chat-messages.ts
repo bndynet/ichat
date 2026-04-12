@@ -8,7 +8,7 @@ import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
 
-@customElement('chat-messages')
+@customElement('i-chat-messages')
 export class ChatMessages extends LitElement {
   static styles = unsafeCSS(styles);
 
@@ -240,7 +240,7 @@ export class ChatMessages extends LitElement {
       }
     }
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
-      `chat-message[data-message-id="${CSS.escape(id)}"]`
+      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
     );
     // cancel() fires message-cancel which the template listener above catches
     // and calls updateMessage() automatically. If the element is not in the
@@ -291,7 +291,7 @@ export class ChatMessages extends LitElement {
    */
   updateTimeline(messageId: string, step: number, status: TimelineStatus, bid?: string): boolean {
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
-      `chat-message[data-message-id="${CSS.escape(messageId)}"]`
+      `i-chat-message[data-message-id="${CSS.escape(messageId)}"]`
     );
     if (!msgEl) return false;
     return msgEl.updateTimeline(step, status, bid);
@@ -355,7 +355,7 @@ export class ChatMessages extends LitElement {
                     this.messages,
                     (m) => m.id,
                     (m) => html`
-                      <chat-message
+                      <i-chat-message
                         data-message-id=${m.id}
                         .message=${m}
                         .speed=${cfg.streamingSpeed}
@@ -367,7 +367,7 @@ export class ChatMessages extends LitElement {
                         .reasoningHeaderHtml=${this._reasoningHeaderHtml}
                         @message-cancel=${(e: CustomEvent<{ id: string }>) =>
                           this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
-                      ></chat-message>
+                      ></i-chat-message>
                     `
                   )}
                 </div>
@@ -393,6 +393,6 @@ export class ChatMessages extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'chat-messages': ChatMessages;
+    'i-chat-messages': ChatMessages;
   }
 }

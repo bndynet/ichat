@@ -105,10 +105,8 @@ const FORM_STYLES = `
     --_form-submitted:    var(--chat-form-submitted-color,#38a169);
   }
 
-  /* ── Dark mode via inherited CSS custom properties ── */
-  /* css custom properties propagate through shadow boundaries, so when
-     [data-theme="dark"] chat-messages sets --chat-* vars they are available
-     here. We also support the :host-context selector for direct overrides. */
+  /* ── Dark mode: --chat-* inherit from ancestor (e.g. html / <i-chat>) ── */
+  /* :host-context keeps a fallback when data-theme is not on a selector we can pair with i-chat-messages. */
   :host-context([data-theme="dark"]) {
     --_form-bg:           var(--chat-form-bg,            #1e1e3a);
     --_form-border:       var(--chat-form-border,         #404060);
@@ -594,8 +592,8 @@ class ChatFormElement extends HTMLElement {
 }
 
 // Guard against double registration (HMR / multiple script loads)
-if (!customElements.get('chat-form')) {
-  customElements.define('chat-form', ChatFormElement);
+if (!customElements.get('i-chat-form')) {
+  customElements.define('i-chat-form', ChatFormElement);
 }
 
 // ── BlockRenderer export ──────────────────────────────────────────────────────
@@ -610,7 +608,7 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
 
   const formId = schema.id ?? nextFormId();
   const safeData = escapeHtml(JSON.stringify(schema));
-  const html = `<chat-form data="${safeData}" data-form-id="${escapeHtml(formId)}"></chat-form>`;
+  const html = `<i-chat-form data="${safeData}" data-form-id="${escapeHtml(formId)}"></i-chat-form>`;
 
   return opts.codeToggle !== false ? wrapWithCodeToggle('form', code, html) : html;
 }

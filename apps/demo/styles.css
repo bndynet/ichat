@@ -1,7 +1,13 @@
-/* ── Chat color tokens — light (host only; demo does not use --chat-* elsewhere) ─
-   Set on chat-messages so they override shadow :host { --chat-* } defaults.
+/* ── Chat theme: define `--chat-*` on :root so they inherit everywhere ───────
+   Custom properties inherit into Shadow DOM onto each custom element host. Setting
+   them only on `i-chat` / `i-chat-messages` fails for components inside another
+   component’s shadow (selectors can’t reach them). One :root block per theme is enough.
+
+   Integrators: copy these two blocks, or set the same variables on any ancestor
+   that wraps your chat (inheritance flows down).
 ────────────────────────────────────────────────────────────────────────── */
-:root:not([data-theme="dark"]) chat-messages {
+
+:root:not([data-theme="dark"]) {
   /* Base */
   --chat-bg:                          #f7f7f8;
   --chat-surface:                     #ffffff;
@@ -32,10 +38,10 @@
   --chat-error-color:                 #ef4444;
   --chat-error-bg:                    #fef2f2;
   --chat-timeline-done:               #10b981;
+  --chat-shadow-sm:                   0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* ── Chat color tokens — dark (host only; same :host override as light) ──── */
-[data-theme="dark"] chat-messages {
+:root[data-theme="dark"] {
   /* Base */
   --chat-bg:                          #16213e;
   --chat-surface:                     #1e1e3a;
@@ -74,24 +80,45 @@
   --chat-timeline-done:               #10b981;
 }
 
-.topbar {
-  padding-top: 12px !important;
+/* ── Global: site-content-inner fills parent ─────────────────────────── */
+.site-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--site-top-nav-height, 0px));
+  min-height: 0;
+  box-sizing: border-box;
 }
 
-.site-content > .site-content-inner {
+.site-content-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
   max-width: 1200px;
-  padding: 1rem 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem 2rem !important;
+  box-sizing: border-box;
+}
+
+.site-content-inner .page-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Hide the element (keeping its layout space) until the JS bundle defines and
    upgrades it.  Without this, the light-DOM slot children (avatar divs, SVGs,
    etc.) are painted as plain block elements at full width — the classic FOUC
    that makes avatars look huge and causes a visible flash on load/refresh. */
-chat-messages:not(:defined) {
+i-chat-messages:not(:defined),
+i-chat:not(:defined) {
   visibility: hidden;
 }
 
-chat-messages {
+i-chat-messages {
   flex: 1;
   min-height: 0;
 }

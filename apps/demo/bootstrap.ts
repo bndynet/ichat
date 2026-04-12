@@ -1,5 +1,5 @@
 import './styles.css'
-// Importing registers the <chat-messages> custom element via @customElement decorator
+// Importing registers the <i-chat-messages> custom element via @customElement decorator
 import '@bndynet/chat-messages'
 
 // Register optional fenced-block renderers

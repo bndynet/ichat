@@ -7,9 +7,9 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w @bndynet/chat-messages && npm run build -w @bndynet/chat-renderers",
-    "dev": "concurrently -n messages,renderers,demo -c cyan,yellow,green \"npm run dev -w @bndynet/chat-messages\" \"npm run dev -w @bndynet/chat-renderers\" \"npm run dev -w chat-demo\"",
-    "start": "npm run build && npm run dev",
+    "build": "npm run build -w @bndynet/chat-messages && npm run build -w @bndynet/chat-input && npm run build -w @bndynet/chat-renderers && npm run build -w @bndynet/chat",
+    "dev": "concurrently -n messages,input,renderers,chat,demo -c cyan,magenta,yellow,blue,green \"npm run dev -w @bndynet/chat-messages\" \"npm run dev -w @bndynet/chat-input\" \"npm run dev -w @bndynet/chat-renderers\" \"npm run dev -w @bndynet/chat\" \"npm run dev -w chat-demo\"",
+    "start": "cd apps/demo && npm run dev",
     "sync": "cli-sync -t ../chat-g"
   },
   "devDependencies": {

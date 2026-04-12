@@ -6,7 +6,7 @@ import { StreamingController } from '../controllers/streaming-controller.js';
 import styles from '../styles/chat-reasoning.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 
-@customElement('chat-reasoning')
+@customElement('i-chat-reasoning')
 export class ChatReasoning extends LitElement {
   static styles = [unsafeCSS(styles), chatDetailsStyles];
 
@@ -107,6 +107,6 @@ export class ChatReasoning extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'chat-reasoning': ChatReasoning;
+    'i-chat-reasoning': ChatReasoning;
   }
 }

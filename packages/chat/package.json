@@ -1,0 +1,41 @@
+{
+  "name": "@bndynet/chat",
+  "version": "0.1.0",
+  "description": "Complete Lit 3 chat Web Component: messages + input + built-in renderers. Drop in one tag and start chatting.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@bndynet/chat-messages": "^0.1.0",
+    "@bndynet/chat-input": "^0.1.0",
+    "@bndynet/chat-renderers": "^0.1.0",
+    "lit": "^3.3.0"
+  },
+  "peerDependencies": {
+    "echarts": ">=6"
+  },
+  "devDependencies": {
+    "@bndynet/chat-messages": "file:../chat-messages",
+    "@bndynet/chat-input": "file:../chat-input",
+    "@bndynet/chat-renderers": "file:../chat-renderers",
+    "sass-embedded": "^1.86.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+@use 'variables' as *;
+
+// Only **non-theme** scale on :host — spacing, radius, transitions, layout.
+// Theme (`--chat-bg`, `--chat-text`, fonts, shadows, …) must come from an ancestor
+// (e.g. `:root` in the app). Do not assign them here, or they override inheritance
+// and DevTools shows “variable not defined” on self-referential :host rules.
+//
+// `@use 'chat-host-tokens';` at top of chat-messages / chat-message / chat-reasoning SCSS.
+
+:host {
+  --chat-spacing-xs: #{$spacing-xs};
+  --chat-spacing-sm: #{$spacing-sm};
+  --chat-spacing-md: #{$spacing-md};
+  --chat-spacing-lg: #{$spacing-lg};
+  --chat-spacing-xl: #{$spacing-xl};
+
+  --chat-radius-sm: #{$radius-sm};
+  --chat-radius: #{$radius-md};
+  --chat-radius-lg: #{$radius-lg};
+
+  --chat-transition-fast: #{$transition-fast};
+  --chat-transition-normal: #{$transition-normal};
+
+  --chat-avatar-size: #{$avatar-size};
+  --chat-message-max-width: #{$message-max-width};
+  --chat-messages-max-width: #{$messages-max-width};
+  --chat-scrollbar-width: #{$scrollbar-width};
+  --chat-timeline-indicator-size: #{$timeline-indicator-size};
+}

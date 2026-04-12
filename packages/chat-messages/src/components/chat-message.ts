@@ -11,7 +11,7 @@ import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-reasoning.js';
 
-@customElement('chat-message')
+@customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
   static styles = [unsafeCSS(styles), chatDetailsStyles];
 
@@ -170,7 +170,7 @@ export class ChatMessageElement extends LitElement {
   private _applyTimelineOverride(step: number, status: TimelineStatus, bid?: string): boolean {
     if (!this.shadowRoot) return false;
     if (updateTimelineStatus(this.shadowRoot, step, status, bid)) return true;
-    const reasoning = this.shadowRoot.querySelector('chat-reasoning');
+    const reasoning = this.shadowRoot.querySelector('i-chat-reasoning');
     if (reasoning?.shadowRoot) {
       return updateTimelineStatus(reasoning.shadowRoot, step, status, bid);
     }
@@ -261,12 +261,12 @@ export class ChatMessageElement extends LitElement {
         ${this._renderAvatar(resolvedAvatar, role)}
         <div class="bubble-wrapper">
           ${this._showReasoning
-            ? html`<chat-reasoning
+            ? html`<i-chat-reasoning
                 .content=${this._parsedReasoning}
                 .streaming=${!!streaming}
                 .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
                 .headerHtml=${this.reasoningHeaderHtml}
-              ></chat-reasoning>`
+              ></i-chat-reasoning>`
             : nothing}
           ${error
             ? html`<div class="bubble bubble--error">
@@ -306,6 +306,6 @@ export class ChatMessageElement extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'chat-message': ChatMessageElement;
+    'i-chat-message': ChatMessageElement;
   }
 }
