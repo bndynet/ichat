@@ -633,4 +633,4 @@ export function createFormRenderer(options: RendererOptions = {}): BlockRenderer
 }
 
 /** Pre-built `BlockRenderer` with default options (code toggle enabled). */
-export const formRenderer: BlockRenderer = createFormRenderer();
+export const formRenderer: BlockRenderer = createFormRenderer({ codeToggle: false });

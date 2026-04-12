@@ -54,7 +54,7 @@ export function createKpiRenderer(options: RendererOptions = {}): BlockRenderer 
 }
 
 /** Pre-built `BlockRenderer` with default options (code toggle enabled). */
-export const kpiRenderer: BlockRenderer = createKpiRenderer();
+export const kpiRenderer: BlockRenderer = createKpiRenderer({ codeToggle: false });
 
 // ── KPI group — horizontal strip ─────────────────────────────────────────────
 
@@ -93,4 +93,4 @@ export function createKpisRenderer(options: RendererOptions = {}): BlockRenderer
 }
 
 /** Pre-built `BlockRenderer` with default options (code toggle enabled). */
-export const kpisRenderer: BlockRenderer = createKpisRenderer();
+export const kpisRenderer: BlockRenderer = createKpisRenderer({ codeToggle: false });

@@ -4,19 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vs dev",
+    "build": "vs build",
+    "preview": "vs preview"
   },
   "dependencies": {
     "@bndynet/chat-messages": "*",
     "@bndynet/chat-renderers": "*",
-    "echarts": "^6.0.0",
-    "element-plus": "^2.9.0",
-    "vue": "^3.5.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.0",
-    "vite": "^6.3.0"
+    "@bndynet/vue-site": "^0.1.9",
+    "echarts": "^6.0.0"
   }
 }

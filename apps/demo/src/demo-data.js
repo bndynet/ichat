@@ -72,13 +72,19 @@ export const demoData = [
 
 ]
 
-/** Streaming thinking demo events */
+/** Streaming thinking demo — reuses `demoData` markdown so one stream shows charts, KPI, form, details, and timeline. */
 export const thinkingDemoEvents = [
-  { reasoning: '**Parse intent:** User sent `thinking`. Treating as a request to demo extended thinking — streamed reasoning separate from the visible reply.\n\n' },
-  { reasoning: '<!-- bid:plan -->\n1. [done] **Scope** — Keep reasoning in the collapsible block only.\n2. [done] **Pace** — Longer delay between `reasoning` chunks so the thinking phase feels deliberate.\n3. [done] **Structure** — Outline → constraints → verification, then switch to `content`.\n4. [done] **UX** — User can expand the thinking block; default view emphasizes the answer.\n5. [done] **Contract** — Same SSE shape as production: optional `reasoning` + `content` per event.\n\n' },
-  { reasoning: '**Sanity check:** Reasoning text must not duplicate into the Markdown body.\n\n' },
-  { content: '## Thinking demo\n\n' },
-  { content: 'Above, multiple **plan** steps streamed first. The UI shows them in the expandable **thinking** block (推理过程).\n\n' },
+  { reasoning: '**Parse intent:** User sent `thinking`. Demo **all-in-one** — same SSE shape as production (`reasoning` + `content`), but the reply body pulls in every preset from `demoData`: Charts → KPI cards → KPI group → Form → Details (fence + container) → Markdown notes → dev timeline.\n\n' },
+  { reasoning: '<!-- bid:plan -->\n1. [done] **Scope** — Reasoning stays in the collapsible block; body streams preset content by reference.\n2. [done] **Charts** — `charts.*` fences via preset `demoData[0]`.\n3. [done] **KPI** — `kpi` / `kpis` blocks from presets `[1]` and `[2]`.\n4. [done] **Form** — JSON form fence from preset `[3]`.\n5. [done] **Details** — Fence + container variants from presets `[4]` and `[5]`.\n6. [done] **Pace** — Chunked `content` events so streaming stays visible.\n7. [done] **UX** — Expand thinking (推理过程); answer emphasizes widgets + timeline.\n8. [done] **Contract** — Optional `reasoning` + `content` per event.\n\n' },
+  { reasoning: '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n' },
+  { content: '## All-in-one streaming demo\n\n' },
+  { content: 'Plan steps above streamed as **reasoning**; below, the same markdown as the sidebar presets (single pass).\n\n' },
+  { content: demoData[0][1] + '\n\n' },
+  { content: demoData[1][1] + '\n\n' },
+  { content: demoData[2][1] + '\n\n' },
+  { content: demoData[3][1] + '\n\n' },
+  { content: demoData[4][1] + '\n\n' },
+  { content: demoData[5][1] + '\n\n' },
   { content: '## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Reasoning** — optional collapsible block above the fold.\n- **Markdown** — headings, lists, tables, and fences.\n\n' },
   { content: 'GFM-style table:\n\n| Feature | Notes |\n| --- | --- |\n| Lists | `-` / `1.` with optional nesting |\n| Tables | Pipe rows + header separator row |\n| Code | Indented block or fenced blocks |\n\n' },
   { content: '## Timeline\n\nVertical timeline with status indicators:\n\n<!-- bid:dev -->\n1. [done] Collect requirements from stakeholders\n2. [done] Design system architecture\n3. [active] Implement core API endpoints\n4. [pending] Write integration tests\n5. [error] Deploy to staging (rollback triggered)\n6. [skipped] Performance benchmarking\n\n' },
