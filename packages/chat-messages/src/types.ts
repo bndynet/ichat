@@ -12,14 +12,30 @@ export interface BlockRenderer {
   render: (code: string, lang: string, info?: string) => string;
 }
 
+/** Who sent the message (layout + default styling). Viewer-relative: `self` = current user. */
+export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
+
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: ChatMessageRole;
   content: string;
   reasoning?: string;
   timestamp?: number;
   streaming?: boolean;
-  /** Per-message avatar: text (e.g. emoji/initials), image URL, or HTML string */
+  /**
+   * Optional avatar for this message only. When set (non-empty after trim), it replaces
+   * the default avatar from `config` and overrides `self-avatar` / `peer-avatar` /
+   * `assistant-avatar` slot templates for this row.
+   *
+   * Supported forms:
+   * - Image URL (`https://…`) or path ending in a known image extension
+   * - Data URL (`data:image/…;base64,…`)
+   * - Raw base64 (no prefix): interpreted as PNG (`data:image/png;base64,…`); use a full data URL for JPEG/WebP
+   * - Inline SVG (`<svg…>`…)
+   * - Plain text or emoji (shown in the avatar circle)
+   *
+   * Inline SVG is rendered like slot avatars; treat values as trusted app content.
+   */
   avatar?: string;
   /** When set, the message is rendered as an error with this text as the description. */
   error?: string;
@@ -29,17 +45,40 @@ export interface ChatMessage {
   duration?: number;
 }
 
+/** Strings for message list date separators (between day buckets). */
+export interface DateSeparatorLabels {
+  today: string;
+  yesterday: string;
+  /** `days` is always 2–7 (calendar days before “today”). */
+  daysAgo: (days: number) => string;
+  older: string;
+}
+
 export interface ChatConfig {
   /** Characters revealed per animation frame (default: 3) */
   streamingSpeed?: number;
-  /** Default avatar for user messages (text, emoji, or image URL) */
-  userAvatar?: string;
-  /** Default avatar for assistant messages (text, emoji, or image URL) */
+  /** Default avatar for `role: 'self'` (text, emoji, or image URL) */
+  selfAvatar?: string;
+  /** Default avatar for `role: 'peer'` (text, emoji, or image URL) */
+  peerAvatar?: string;
+  /** Default avatar for assistant/system messages (text, emoji, or image URL) */
   assistantAvatar?: string;
+  /**
+   * BCP 47 locale for built-in UI: date-separator labels, per-message timestamps, and assistant
+   * **duration** (`Intl.NumberFormat` / `Intl.DurationFormat` where available).
+   * Built-ins: `en` (default), `zh` / `zh-CN` (Chinese). Unknown separator strings fall back to English;
+   * timestamp and duration still use this tag with the runtime `Intl` implementation.
+   */
+  locale?: string;
+  /** Partial overrides merged on top of the strings chosen via `locale`. */
+  dateSeparatorLabels?: Partial<DateSeparatorLabels>;
 }
 
 export const DEFAULT_CONFIG: Required<ChatConfig> = {
   streamingSpeed: 3,
-  userAvatar: '',
+  selfAvatar: '',
+  peerAvatar: '',
   assistantAvatar: '',
+  locale: 'en',
+  dateSeparatorLabels: {},
 };

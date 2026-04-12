@@ -8,9 +8,9 @@
 }
 
 .reasoning {
-  border: 1px solid var(--chat-reasoning-border, #{$color-reasoning-border});
+  border: 1px solid var(--chat-reasoning-border, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 30%, var(--chat-border, #{$color-border})));
   border-radius: var(--chat-radius, #{$radius-md});
-  background: var(--chat-reasoning-bg, #{$color-reasoning-bg});
+  background: var(--chat-reasoning-bg, var(--chat-primary-light, #{$color-primary-light}));
   overflow: hidden;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});
 }
@@ -24,11 +24,11 @@
   user-select: none;
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   font-weight: 500;
-  color: var(--chat-reasoning-text, #{$color-reasoning-text});
+  color: var(--chat-reasoning-text, var(--chat-primary, #{$color-primary}));
   transition: background var(--chat-transition-fast, #{$transition-fast});
 
   &:hover {
-    background: var(--chat-reasoning-header-hover-bg, #{$color-reasoning-header-hover-bg});
+    background: var(--chat-reasoning-header-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 3%, transparent));
   }
 
   &:focus-visible {
@@ -143,7 +143,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--chat-reasoning-text, #{$color-reasoning-text});
+    background: var(--chat-reasoning-text, var(--chat-primary, #{$color-primary}));
     opacity: 0.4;
     animation: thinkPulse 1.4s ease-in-out infinite;
 

@@ -3,7 +3,7 @@
 
 :host {
   display: block;
-  font-family: var(--chat-input-font-family, #{$font-family});
+  font-family: var(--_input-font-family);
 }
 
 .chat-input-wrapper {
@@ -11,24 +11,24 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  padding: var(--chat-input-padding-block) var(--chat-input-spacing);
-  background: var(--chat-input-bg);
-  border: 1px solid color-mix(in srgb, var(--chat-input-border) 72%, transparent);
+  padding: var(--_input-padding-block) var(--_input-spacing);
+  background: var(--_input-bg);
+  border: 1px solid color-mix(in srgb, var(--_input-border) 72%, transparent);
   border-radius: 0.5rem;
   overflow: hidden;
   box-shadow:
-    var(--chat-input-shadow),
-    inset 0 1px 0 color-mix(in srgb, var(--chat-input-text) 10%, transparent);
+    var(--_input-shadow),
+    inset 0 1px 0 color-mix(in srgb, var(--_input-text) 10%, transparent);
   transition:
-    border-color var(--chat-input-transition),
-    box-shadow var(--chat-input-transition);
+    border-color var(--_input-transition),
+    box-shadow var(--_input-transition);
 
   &:focus-within {
-    border-color: color-mix(in srgb, var(--chat-input-primary) 55%, var(--chat-input-border));
+    border-color: color-mix(in srgb, var(--_input-primary) 55%, var(--_input-border));
     box-shadow:
-      var(--chat-input-shadow),
-      0 0 0 3px color-mix(in srgb, var(--chat-input-primary) 18%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--chat-input-text) 8%, transparent);
+      var(--_input-shadow),
+      0 0 0 3px color-mix(in srgb, var(--_input-primary) 18%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--_input-text) 8%, transparent);
   }
 }
 
@@ -40,22 +40,20 @@
   box-sizing: border-box;
   display: block;
   width: 100%;
-  min-height: var(--chat-input-field-min-height);
-  max-height: calc(var(--chat-input-max-rows) * 1.5em + 0.75rem);
-  padding-block: 0.75rem;
-  padding-inline: var(--chat-input-textarea-padding-inline-impl);
+  min-height: var(--_input-field-min-height);
+  max-height: calc(var(--_input-max-rows) * 1.5em + 0.75rem);
   border: none;
   outline: none;
   background: transparent;
-  color: var(--chat-input-text);
+  color: var(--_input-text);
   font-family: inherit;
-  font-size: var(--chat-input-font-size);
+  font-size: var(--_input-font-size);
   line-height: 1.5;
   resize: none;
   overflow-y: auto;
 
   &::placeholder {
-    color: var(--chat-input-placeholder);
+    color: var(--_input-placeholder);
   }
 
   &::-webkit-scrollbar {
@@ -67,7 +65,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--chat-input-border) 65%, var(--chat-input-bg));
+    background: color-mix(in srgb, var(--_input-border) 65%, var(--_input-bg));
     border-radius: 2px;
   }
 }
@@ -79,8 +77,7 @@
   align-items: center;
   justify-content: space-between;
   gap: #{$spacing-md};
-  margin-top: var(--chat-input-gap);
-  padding: 0 0.75rem 0.75rem;
+  margin-top: 0.25rem;
 }
 
 .chat-input-toolbar-start,
@@ -88,7 +85,7 @@
   display: flex;
   align-items: center;
   gap: #{$spacing-xs};
-  min-height: var(--chat-input-send-size-impl);
+  min-height: var(--_input-send-size);
 }
 
 .chat-input-toolbar-start {
@@ -117,10 +114,10 @@
   border-radius: 50%;
   cursor: pointer;
   transition:
-    background var(--chat-input-transition),
-    color var(--chat-input-transition),
-    box-shadow var(--chat-input-transition),
-    transform var(--chat-input-transition);
+    background var(--_input-transition),
+    color var(--_input-transition),
+    box-shadow var(--_input-transition),
+    transform var(--_input-transition);
 
   svg {
     width: 62.5%;
@@ -133,40 +130,40 @@
 }
 
 .chat-input-send {
-  background: color-mix(in srgb, var(--chat-input-primary) 22%, var(--chat-input-bg));
-  color: var(--chat-input-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--_input-primary) 22%, var(--_input-bg));
+  color: var(--_input-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-primary) 35%, transparent);
 
   &:disabled {
     cursor: not-allowed;
-    background: color-mix(in srgb, var(--chat-input-primary) 16%, var(--chat-input-bg));
-    color: color-mix(in srgb, var(--chat-input-primary) 70%, var(--chat-input-placeholder));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 45%, transparent);
+    background: color-mix(in srgb, var(--_input-primary) 16%, var(--_input-bg));
+    color: color-mix(in srgb, var(--_input-primary) 70%, var(--_input-placeholder));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 45%, transparent);
   }
 
   &:not(:disabled) {
-    background: var(--chat-input-primary);
-    color: var(--chat-input-primary-text);
+    background: var(--_input-primary);
+    color: var(--_input-primary-text);
     box-shadow:
-      0 1px 2px color-mix(in srgb, var(--chat-input-primary) 28%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--chat-input-primary-text) 22%, transparent);
+      0 1px 2px color-mix(in srgb, var(--_input-primary) 28%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--_input-primary-text) 22%, transparent);
 
     &:hover {
-      background: var(--chat-input-primary-hover);
+      background: var(--_input-primary-hover);
       box-shadow:
-        0 2px 8px color-mix(in srgb, var(--chat-input-primary) 35%, transparent),
-        inset 0 1px 0 color-mix(in srgb, var(--chat-input-primary-text) 18%, transparent);
+        0 2px 8px color-mix(in srgb, var(--_input-primary) 35%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--_input-primary-text) 18%, transparent);
     }
   }
 }
 
 .chat-input-cancel {
-  background: color-mix(in srgb, var(--chat-input-bg) 88%, var(--chat-input-border));
-  color: var(--chat-input-text);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 65%, transparent);
+  background: color-mix(in srgb, var(--_input-bg) 88%, var(--_input-border));
+  color: var(--_input-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 65%, transparent);
 
   &:hover {
-    background: color-mix(in srgb, var(--chat-input-border) 22%, var(--chat-input-bg));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-input-border) 85%, var(--chat-input-text));
+    background: color-mix(in srgb, var(--_input-border) 22%, var(--_input-bg));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 85%, var(--_input-text));
   }
 }

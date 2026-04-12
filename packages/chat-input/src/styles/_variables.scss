@@ -1,4 +1,7 @@
 // Fallbacks for `--chat-input-*` — see `chat-input-host-tokens.scss` (`@use` in `chat-input.scss`).
+//
+// Base colors match the 12-token palette from @bndynet/chat-messages so that
+// standalone <i-chat-input> looks consistent without any extra setup.
 
 $font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
   Ubuntu, Cantarell, sans-serif;
@@ -12,17 +15,18 @@ $spacing-md: 16px;
 $spacing-input-y: 14px;
 $spacing-input-inline: 16px;
 $spacing-input-wrapper: 18px;
-$field-min-height: 4.75rem;
+$field-min-height: 1.75rem;
 $send-size: 1.5rem;
 
 $transition-fast: 150ms ease;
 
-$color-bg: #ffffff;
-$color-border: #e5e7eb;
-$color-text: #1a1a2e;
-$color-text-muted: #9ca3af;
+// ── Base color palette (same 12 tokens) ─────────────────────────────
+$color-bg: #ffffff;            // maps to --chat-surface (input sits on surface)
+$color-border: #e5e7eb;        // maps to --chat-border
+$color-text: #1a1a2e;          // maps to --chat-text
+$color-text-muted: #9ca3af;    // maps to --chat-text-muted
 
-$color-primary: #2563eb;
+$color-primary: #2563eb;       // maps to --chat-primary
 $color-primary-hover: #1d4ed8;
 $color-primary-text: #ffffff;
 

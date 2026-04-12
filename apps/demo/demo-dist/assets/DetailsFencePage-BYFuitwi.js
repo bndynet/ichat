@@ -1,0 +1,1 @@
+import{d as o}from"./demo-data-Cnf05NNT.js";import{C as r}from"./ChatMessagesLayout-BVluER33.js";import{a as s,b as i}from"./index-D4wLlsbU.js";import"./ChatToolbar-EUMtoQlZ.js";const f={__name:"DetailsFencePage",setup(n){function e({addStaticMessage:t,clear:a}){a(),t(o[4][1])}return(t,a)=>(s(),i(r,{init:e}))}};export{f as default};

@@ -71,20 +71,20 @@
 
   .chat-timeline-step--done {
     .chat-timeline-indicator {
-      background: var(--chat-timeline-done, #{$color-timeline-done});
-      border-color: var(--chat-timeline-done, #{$color-timeline-done});
-      color: #fff;
+      background: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
+      border-color: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
+      color: var(--chat-surface, #{$color-surface});
     }
 
     &:not(:last-child)::after {
-      background: var(--chat-timeline-done, #{$color-timeline-done});
+      background: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
     }
   }
 
   .chat-timeline-step--active {
     .chat-timeline-indicator {
-      border: 2px solid rgba(59, 130, 246, 0.2);
-      border-top-color: var(--chat-timeline-active, #{$color-primary});
+      border: 2px solid color-mix(in srgb, var(--chat-primary, #{$color-primary}) 20%, transparent);
+      border-top-color: var(--chat-timeline-active, var(--chat-primary, #{$color-primary}));
       background: transparent;
       animation: timeline-spin 0.7s linear infinite;
     }
@@ -96,9 +96,9 @@
 
   .chat-timeline-step--error {
     .chat-timeline-indicator {
-      background: var(--chat-timeline-error, #{$color-error});
-      border-color: var(--chat-timeline-error, #{$color-error});
-      color: #fff;
+      background: var(--chat-timeline-error, var(--chat-error, #{$color-error}));
+      border-color: var(--chat-timeline-error, var(--chat-error, #{$color-error}));
+      color: var(--chat-surface, #{$color-surface});
     }
   }
 

@@ -1,0 +1,1 @@
+import{C as o}from"./ChatMessagesLayout-BVluER33.js";import{a as r,b as i}from"./index-D4wLlsbU.js";import"./demo-data-Cnf05NNT.js";import"./ChatToolbar-EUMtoQlZ.js";const _={__name:"TimelinePage",setup(n){function a({runTimeline:t,clear:e}){e(),t()}return(t,e)=>(r(),i(o,{init:a}))}};export{_ as default};

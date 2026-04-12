@@ -38,11 +38,11 @@
       white-space: nowrap;
 
       &--up {
-        color: var(--chat-kpi-trend-up, #{$color-timeline-done});
+        color: var(--chat-kpi-trend-up, var(--chat-success, #{$color-success}));
       }
 
       &--down {
-        color: var(--chat-kpi-trend-down, #{$color-error});
+        color: var(--chat-kpi-trend-down, var(--chat-error, #{$color-error}));
       }
     }
 
@@ -56,7 +56,7 @@
 
     &--error {
       color: var(--chat-error, #{$color-error});
-      background: var(--chat-error-bg, #{$color-error-bg});
+      background: var(--chat-error-bg, color-mix(in srgb, var(--chat-error, #{$color-error}) 6%, var(--chat-surface, #{$color-surface})));
       border: 1px solid var(--chat-error, #{$color-error});
       border-radius: var(--chat-radius-sm, #{$radius-sm});
       padding: var(--chat-spacing-sm, #{$spacing-sm});

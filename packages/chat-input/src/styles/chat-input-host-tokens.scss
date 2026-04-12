@@ -1,26 +1,37 @@
 @use 'variables' as *;
 
-// `--chat-input-*` fallbacks for standalone use; integrators override on host/ancestor.
-// `--chat-input-radius-impl` reads inherited `--chat-input-radius` (don’t self-ref `var(--chat-input-radius, var(...))` on :host).
+// Private `--_input-*` tokens for internal use inside <i-chat-input>'s shadow DOM.
+//
+// Each token reads the public `--chat-input-*` custom property (set by an integrator)
+// then falls back to the corresponding `--chat-*` base token (set on :root / ancestor),
+// then finally to a compiled SCSS default for standalone use.
+//
+// IMPORTANT: We must NOT write `--chat-input-bg: var(--chat-input-bg, ...)` because
+// assigning a custom property that references itself is a CSS cycle — the browser
+// computes it as guaranteed-invalid and every downstream `var()` silently fails.
+// Using a *different* internal name (`--_input-*`) avoids the cycle entirely.
 
 :host {
-  --chat-input-font-family: var(--chat-input-font-family, #{$font-family});
-  --chat-input-font-size: var(--chat-input-font-size, #{$font-size-base});
-  --chat-input-bg: var(--chat-input-bg, #{$color-bg});
-  --chat-input-border: var(--chat-input-border, #{$color-border});
-  --chat-input-text: var(--chat-input-text, #{$color-text});
-  --chat-input-placeholder: var(--chat-input-placeholder, #{$color-text-muted});
-  --chat-input-primary: var(--chat-input-primary, #{$color-primary});
-  --chat-input-primary-hover: var(--chat-input-primary-hover, #{$color-primary-hover});
-  --chat-input-primary-text: var(--chat-input-primary-text, #{$color-primary-text});
-  --chat-input-radius-impl: var(--chat-input-radius, #{$radius-lg});
-  --chat-input-spacing: var(--chat-input-spacing, #{$spacing-input-wrapper});
-  --chat-input-padding-block: var(--chat-input-padding-block, #{$spacing-input-y});
-  --chat-input-textarea-padding-inline-impl: var(--chat-input-textarea-padding-inline, #{$spacing-input-inline});
-  --chat-input-gap: var(--chat-input-gap, #{$spacing-input-wrapper});
-  --chat-input-field-min-height: var(--chat-input-field-min-height, #{$field-min-height});
-  --chat-input-send-size-impl: var(--chat-input-send-size, #{$send-size});
-  --chat-input-shadow: var(--chat-input-shadow, #{$shadow-sm});
-  --chat-input-transition: var(--chat-input-transition, #{$transition-fast});
-  --chat-input-max-rows: var(--chat-input-max-rows, 6);
+  --_input-font-family: var(--chat-input-font-family, #{$font-family});
+  --_input-font-size: var(--chat-input-font-size, #{$font-size-base});
+
+  --_input-bg: var(--chat-input-bg, var(--chat-surface, #{$color-bg}));
+  --_input-border: var(--chat-input-border, var(--chat-border, #{$color-border}));
+  --_input-text: var(--chat-input-text, var(--chat-text, #{$color-text}));
+  --_input-placeholder: var(--chat-input-placeholder, var(--chat-text-muted, #{$color-text-muted}));
+
+  --_input-primary: var(--chat-input-primary, var(--chat-primary, #{$color-primary}));
+  --_input-primary-hover: var(--chat-input-primary-hover, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black));
+  --_input-primary-text: var(--chat-input-primary-text, #{$color-primary-text});
+
+  --_input-radius: var(--chat-input-radius, #{$radius-lg});
+  --_input-spacing: var(--chat-input-spacing, #{$spacing-input-wrapper});
+  --_input-padding-block: var(--chat-input-padding-block, #{$spacing-input-y});
+  --_input-textarea-padding-inline: var(--chat-input-textarea-padding-inline, #{$spacing-input-inline});
+  --_input-gap: var(--chat-input-gap, #{$spacing-input-wrapper});
+  --_input-field-min-height: var(--chat-input-field-min-height, #{$field-min-height});
+  --_input-send-size: var(--chat-input-send-size, #{$send-size});
+  --_input-shadow: var(--chat-input-shadow, var(--chat-shadow-sm, #{$shadow-sm}));
+  --_input-transition: var(--chat-input-transition, #{$transition-fast});
+  --_input-max-rows: var(--chat-input-max-rows, 6);
 }

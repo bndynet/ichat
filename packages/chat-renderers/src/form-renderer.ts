@@ -87,42 +87,23 @@ const FORM_STYLES = `
   :host {
     display: block;
     font-family: inherit;
-    /* Light-mode token defaults — all overridden in dark mode below */
-    --_form-bg:           var(--chat-form-bg,           #f8f9fa);
-    --_form-border:       var(--chat-form-border,        #e2e8f0);
-    --_form-title:        var(--chat-form-title-color,   #1a202c);
-    --_form-label:        var(--chat-form-label-color,   #4a5568);
-    --_form-required:     var(--chat-form-required-color,#e53e3e);
-    --_form-input-color:  var(--chat-form-input-color,   #1a202c);
-    --_form-input-bg:     var(--chat-form-input-bg,      #ffffff);
-    --_form-input-border: var(--chat-form-input-border,  #cbd5e0);
-    --_form-focus-border: var(--chat-form-focus-border,  #667eea);
-    --_form-focus-shadow: var(--chat-form-focus-shadow,  rgba(102,126,234,0.18));
-    --_form-accent:       var(--chat-form-accent,        #667eea);
-    --_form-btn-bg:       var(--chat-form-btn-bg,        #667eea);
-    --_form-btn-hover-bg: var(--chat-form-btn-hover-bg,  #5a67d8);
+    /* Derive from --chat-* base tokens; dark/light mode is handled by the ancestor
+       setting those tokens — no media query or :host-context needed. */
+    --_form-bg:           var(--chat-form-bg,            var(--chat-surface-alt, #f8f9fa));
+    --_form-border:       var(--chat-form-border,        var(--chat-border,      #e2e8f0));
+    --_form-title:        var(--chat-form-title-color,   var(--chat-text,        #1a202c));
+    --_form-label:        var(--chat-form-label-color,   var(--chat-text-secondary, #4a5568));
+    --_form-required:     var(--chat-form-required-color,var(--chat-error,       #e53e3e));
+    --_form-input-color:  var(--chat-form-input-color,   var(--chat-text,        #1a202c));
+    --_form-input-bg:     var(--chat-form-input-bg,      var(--chat-surface,     #ffffff));
+    --_form-input-border: var(--chat-form-input-border,  var(--chat-border,      #cbd5e0));
+    --_form-focus-border: var(--chat-form-focus-border,  var(--chat-primary,     #667eea));
+    --_form-focus-shadow: var(--chat-form-focus-shadow,  color-mix(in srgb, var(--chat-primary, #667eea) 18%, transparent));
+    --_form-accent:       var(--chat-form-accent,        var(--chat-primary,     #667eea));
+    --_form-btn-bg:       var(--chat-form-btn-bg,        var(--chat-primary,     #667eea));
+    --_form-btn-hover-bg: var(--chat-form-btn-hover-bg,  color-mix(in srgb, var(--chat-primary, #667eea) 85%, black));
     --_form-btn-text:     var(--chat-form-btn-text,      #ffffff);
-    --_form-submitted:    var(--chat-form-submitted-color,#38a169);
-  }
-
-  /* ── Dark mode: --chat-* inherit from ancestor (e.g. html / <i-chat>) ── */
-  /* :host-context keeps a fallback when data-theme is not on a selector we can pair with i-chat-messages. */
-  :host-context([data-theme="dark"]) {
-    --_form-bg:           var(--chat-form-bg,            #1e1e3a);
-    --_form-border:       var(--chat-form-border,         #404060);
-    --_form-title:        var(--chat-form-title-color,    #e0e0e0);
-    --_form-label:        var(--chat-form-label-color,    #a0a0b0);
-    --_form-required:     var(--chat-form-required-color, #f87171);
-    --_form-input-color:  var(--chat-form-input-color,    #e0e0e0);
-    --_form-input-bg:     var(--chat-form-input-bg,       #16213e);
-    --_form-input-border: var(--chat-form-input-border,   #404060);
-    --_form-focus-border: var(--chat-form-focus-border,   #818cf8);
-    --_form-focus-shadow: var(--chat-form-focus-shadow,   rgba(129,140,248,0.22));
-    --_form-accent:       var(--chat-form-accent,         #818cf8);
-    --_form-btn-bg:       var(--chat-form-btn-bg,         #6366f1);
-    --_form-btn-hover-bg: var(--chat-form-btn-hover-bg,   #4f46e5);
-    --_form-btn-text:     var(--chat-form-btn-text,       #ffffff);
-    --_form-submitted:    var(--chat-form-submitted-color,#4ade80);
+    --_form-submitted:    var(--chat-form-submitted-color,var(--chat-success, #38a169));
   }
 
   .chat-form {
@@ -251,7 +232,7 @@ const FORM_STYLES = `
     align-items: center;
     justify-content: center;
     background: var(--_form-submitted);
-    color: #fff;
+    color: var(--chat-surface, #fff);
     box-shadow: 0 1px 4px rgba(0,0,0,0.18);
     transition: background 0.3s;
   }
@@ -285,9 +266,6 @@ const FORM_STYLES = `
   }
   .chat-form__input[type="date"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
-  }
-  :host-context([data-theme="dark"]) .chat-form__input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
   }
   /* Date range */
   .chat-form__date-range {

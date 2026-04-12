@@ -5,44 +5,54 @@ export default defineConfig({
   nav: [
     { label: 'Home', icon: 'home', page: () => import('../../README.md?raw') },
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
-    { label: 'chat-messages', icon: 'layout-list',  children: [
-      { label: 'Thinking stream', icon: 'sparkles', page: () => import('./src/pages/ThinkingPage.vue') },
-      { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/TimelinePage.vue') },
-      { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/ChartsPage.vue') },
-      { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/KpiCardsPage.vue') },
-      { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/KpiGroupPage.vue') },
-      { label: 'Form', icon: 'file-text', page: () => import('./src/pages/FormPage.vue') },
-      { label: 'Details (fence)', icon: 'panel-bottom', page: () => import('./src/pages/DetailsFencePage.vue') },
-      { label: 'Details (container)', icon: 'panel-bottom-dashed', page: () => import('./src/pages/DetailsContainerPage.vue') },
+    { label: 'Renderers', icon: 'layout-list',  children: [
+      { label: 'Thinking stream', icon: 'sparkles', page: () => import('./src/pages/renderers/ThinkingPage.vue') },
+      { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
+      { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
+      { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
+      { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/renderers/KpiGroupPage.vue') },
+      { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },
+      { label: 'Details (fence)', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsFencePage.vue') },
+      { label: 'Details (container)', icon: 'panel-bottom-dashed', page: () => import('./src/pages/renderers/DetailsContainerPage.vue') },
     ]},
     {
-      label: 'Custom slots',
+      label: 'Slots',
       icon: 'puzzle',
       children: [
         {
-          label: 'chat-messages',
-          icon: 'layout-list',
-          page: () => import('./src/pages/SlotsChatMessages.vue'),
+          label: 'Placeholder',
+          icon: 'circle-user',
+          page: () => import('./src/pages/slots/Placeholder.vue'),
+        },
+        {
+          label: 'Avatar',
+          icon: 'circle-user',
+          page: () => import('./src/pages/slots/Avatar.vue'),
+        },
+        {
+          label: 'Message Actions',
+          icon: 'rectangle-ellipsis',
+          page: () => import('./src/pages/slots/Actions.vue'),
         },
         {
           label: 'Custom input',
           icon: 'panel-top',
-          page: () => import('./src/pages/SlotsInput.vue'),
+          page: () => import('./src/pages/slots/SlotsInput.vue'),
         },
         {
           label: 'Custom input actions',
           icon: 'message-circle',
-          page: () => import('./src/pages/SlotsInputActions.vue'),
+          page: () => import('./src/pages/slots/SlotsInputActions.vue'),
         },
       ],
     },
   ],
   bootstrap: 'bootstrap.ts',
   env: {
-    customElements: ['i-chat-messages', 'i-chat-input', 'i-chat', 'chat-renderers'],
+    customElements: ['i-renderers', 'i-chat-input', 'i-chat', 'chat-renderers'],
     watchPackages: [{
-      name: '@bndynet/chat-messages',
-      entryPath: '../../packages/chat-messages/src/index.ts',
+      name: '@bndynet/renderers',
+      entryPath: '../../packages/renderers/src/index.ts',
     }, {
       name: '@bndynet/chat-input',
       entryPath: '../../packages/chat-input/src/index.ts',

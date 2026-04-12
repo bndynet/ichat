@@ -3,10 +3,12 @@ import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ref, createRef } from 'lit/directives/ref.js';
 import morphdom from 'morphdom';
-import type { ChatMessage } from '../types.js';
+import type { ChatMessage, ChatMessageRole } from '../types.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
+import { calendarDaysAgo } from '../date-separator.js';
+import { formatAssistantDurationMs } from '../duration-format.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-reasoning.js';
@@ -17,12 +19,19 @@ export class ChatMessageElement extends LitElement {
 
   @property({ type: Object }) message!: ChatMessage;
   @property({ type: Number }) speed = 3;
-  @property() userAvatar = '';
+  @property() selfAvatar = '';
+  @property() peerAvatar = '';
   @property() assistantAvatar = '';
-  @property() userAvatarHtml = '';
+  @property() selfAvatarHtml = '';
+  @property() peerAvatarHtml = '';
   @property() assistantAvatarHtml = '';
   @property() actionsHtml = '';
   @property() reasoningHeaderHtml = '';
+  /**
+   * BCP 47 tag for `Intl` date/time (from parent `ChatConfig.locale`).
+   * Empty → browser default locale for `toLocaleString` / `toLocaleTimeString`.
+   */
+  @property() locale = '';
 
   private _contentCtrl = new StreamingController(this, {
     speed: this.speed,
@@ -93,15 +102,76 @@ export class ChatMessageElement extends LitElement {
     return /^(https?:\/\/|data:image\/)/.test(str) || /\.(png|jpe?g|gif|svg|webp)$/i.test(str);
   }
 
-  private _renderAvatar(avatar: string, role: string) {
-    const tplHtml = role === 'user' ? this.userAvatarHtml : this.assistantAvatarHtml;
+  /** True when `message.avatar` is set and non-empty after trim; used to override slot avatars. */
+  private _hasPerMessageAvatar(): boolean {
+    const a = this.message?.avatar;
+    return a != null && String(a).trim() !== '';
+  }
+
+  /** Inline SVG markup (trusted, same model as slot avatars). */
+  private _isInlineSvg(str: string): boolean {
+    return /^<svg[\s>/]/i.test(str.trim());
+  }
+
+  /**
+   * If `s` looks like raw base64 (no `data:` prefix), return a PNG data URL.
+   * Prefer passing a full `data:image/...;base64,...` URL for non-PNG images.
+   */
+  private _tryDataUrlFromRawBase64(s: string): string | null {
+    const t = s.replace(/\s/g, '');
+    if (t.length < 16) return null;
+    if (!/^[A-Za-z0-9+/]+=*$/.test(t)) return null;
+    return `data:image/png;base64,${t}`;
+  }
+
+  private _slotAvatarHtml(role: ChatMessageRole): string {
+    switch (role) {
+      case 'self':
+        return this.selfAvatarHtml;
+      case 'peer':
+        return this.peerAvatarHtml;
+      case 'assistant':
+      case 'system':
+        return this.assistantAvatarHtml;
+    }
+  }
+
+  private _defaultAvatarLabel(role: ChatMessageRole): string {
+    switch (role) {
+      case 'self':
+        return 'U';
+      case 'peer':
+        return 'P';
+      case 'assistant':
+        return 'AI';
+      case 'system':
+        return 'S';
+    }
+  }
+
+  private _renderAvatar(resolvedAvatar: string, role: ChatMessageRole) {
+    const tplHtml = this._slotAvatarHtml(role);
+
+    if (this._hasPerMessageAvatar()) {
+      const explicit = String(this.message.avatar).trim();
+      if (this._isInlineSvg(explicit)) {
+        return html`<div class="avatar avatar--custom">${unsafeHTML(explicit)}</div>`;
+      }
+      const fromB64 = this._tryDataUrlFromRawBase64(explicit);
+      const imgSrc = fromB64 ?? (this._isImageUrl(explicit) ? explicit : null);
+      if (imgSrc) {
+        return html`<div class="avatar avatar--img"><img src=${imgSrc} alt=${role} /></div>`;
+      }
+      return html`<div class="avatar">${explicit}</div>`;
+    }
+
     if (tplHtml) {
       return html`<div class="avatar avatar--custom">${unsafeHTML(tplHtml)}</div>`;
     }
-    if (avatar && this._isImageUrl(avatar)) {
-      return html`<div class="avatar avatar--img"><img src=${avatar} alt=${role} /></div>`;
+    if (resolvedAvatar && this._isImageUrl(resolvedAvatar)) {
+      return html`<div class="avatar avatar--img"><img src=${resolvedAvatar} alt=${role} /></div>`;
     }
-    const label = avatar || (role === 'user' ? 'U' : 'AI');
+    const label = resolvedAvatar || this._defaultAvatarLabel(role);
     return html`<div class="avatar">${label}</div>`;
   }
 
@@ -229,22 +299,33 @@ export class ChatMessageElement extends LitElement {
     });
   }
 
-  private _formatTime(ts?: number): string {
-    if (!ts) return '';
+  /** Locale tag for Intl; `undefined` uses the runtime default (browser / environment). */
+  private _timestampLocale(): string | undefined {
+    const t = this.locale?.trim();
+    return t || undefined;
+  }
+
+  /** Today: time only; other days: date + time (matches date-separator “today” bucket). */
+  private _formatTimestamp(ts: number): string {
     const d = new Date(ts);
-    return d.toLocaleTimeString(undefined, {
+    const loc = this._timestampLocale();
+    if (calendarDaysAgo(ts) === 0) {
+      return d.toLocaleTimeString(loc, {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    return d.toLocaleString(loc, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
   }
 
   private _formatDuration(ms: number): string {
-    if (ms < 1000) return '< 1s';
-    const totalSeconds = ms / 1000;
-    if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = Math.round(totalSeconds % 60);
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+    return formatAssistantDurationMs(ms, this._timestampLocale());
   }
 
   render() {
@@ -253,7 +334,12 @@ export class ChatMessageElement extends LitElement {
     const { role, timestamp, streaming, avatar, error } = this.message;
     const isAnimating = this._contentCtrl.isAnimating;
     const resolvedAvatar =
-      avatar || (role === 'user' ? this.userAvatar : this.assistantAvatar);
+      avatar ||
+      (role === 'self'
+        ? this.selfAvatar
+        : role === 'peer'
+          ? this.peerAvatar
+          : this.assistantAvatar);
     const hasMainBody = (this._parsedContent ?? '').trim().length > 0;
 
     return html`
@@ -287,7 +373,7 @@ export class ChatMessageElement extends LitElement {
               : nothing}
           <div class="message-footer">
             ${timestamp && !streaming
-              ? html`<div class="timestamp">${this._formatTime(timestamp)}</div>`
+              ? html`<div class="timestamp">${this._formatTimestamp(timestamp)}</div>`
               : nothing}
             ${role === 'assistant' && !streaming && this._duration !== null
               ? html`<div class="duration">${this._formatDuration(this._duration)}</div>`

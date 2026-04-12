@@ -3,6 +3,7 @@ import { customElement, property, state, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type { ChatMessage, ChatConfig } from '../types.js';
 import { DEFAULT_CONFIG } from '../types.js';
+import { getDateSeparatorInfo, resolveDateSeparatorLabels } from '../date-separator.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
@@ -22,7 +23,8 @@ export class ChatMessages extends LitElement {
   @state() private _autoScroll = true;
   @state() private _hasNewContent = false;
   @state() private _errorBanner = '';
-  @state() private _userAvatarHtml = '';
+  @state() private _selfAvatarHtml = '';
+  @state() private _peerAvatarHtml = '';
   @state() private _assistantAvatarHtml = '';
   @state() private _messageActionsHtml = '';
   @state() private _reasoningHeaderHtml = '';
@@ -38,37 +40,56 @@ export class ChatMessages extends LitElement {
     return { ...DEFAULT_CONFIG, ...this.config };
   }
 
-  override connectedCallback(): void {
-    super.connectedCallback();
-    // Read slot content from light DOM BEFORE the first render so the initial
-    // paint already shows the custom avatar instead of the fallback letter.
-    // Lit schedules the first update as a microtask; synchronous state writes
-    // here are batched into that first render, eliminating the one-frame flash.
-    this._readLightDomSlots();
+  /** Flat list of separators + messages for rendering (date divider when bucket changes). */
+  private _messageRenderItems(): Array<
+    | { kind: 'sep'; key: string; label: string }
+    | { kind: 'msg'; key: string; message: ChatMessage }
+  > {
+    const items: Array<
+      | { kind: 'sep'; key: string; label: string }
+      | { kind: 'msg'; key: string; message: ChatMessage }
+    > = [];
+    const sepLabels = resolveDateSeparatorLabels({
+      locale: this._config.locale,
+      labels: this._config.dateSeparatorLabels,
+    });
+    const onlyToday =
+      this.messages.length > 0 &&
+      this.messages.every((m) => {
+        const ts = m.timestamp ?? Date.now();
+        return getDateSeparatorInfo(ts, sepLabels).key === 'today';
+      });
+    let prevKey: string | undefined;
+    for (const m of this.messages) {
+      const ts = m.timestamp ?? Date.now();
+      const { key, label } = getDateSeparatorInfo(ts, sepLabels);
+      if (prevKey === undefined || key !== prevKey) {
+        if (!(onlyToday && key === 'today')) {
+          items.push({ kind: 'sep', key: `sep-${m.id}`, label });
+        }
+        prevKey = key;
+      }
+      items.push({ kind: 'msg', key: m.id, message: m });
+    }
+    return items;
   }
 
-  /**
-   * Read slotted elements from the host's light DOM using [slot="name"]
-   * selectors.  This can be called before the shadow tree exists and is the
-   * primary path that prevents the fallback-avatar flash on first render.
-   */
-  private _readLightDomSlots(): void {
-    const slotNames = ['user-avatar', 'assistant-avatar', 'message-actions', 'reasoning-header'];
-    for (const name of slotNames) {
-      const nodes = Array.from(this.querySelectorAll<HTMLElement>(`[slot="${name}"]`));
-      const content = nodes.map((n) => n.outerHTML).join('');
-      if (content) this._applySlotTemplateHtml(name, content);
-    }
+  override connectedCallback(): void {
+    super.connectedCallback();
   }
 
   override firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
-    // Fallback sync via shadow-DOM slot.assignedElements() in case any slotted
-    // content was added after connectedCallback (e.g. dynamic insertion).
+    // Single source of truth: shadow `<slot>` assignment (works standalone and when
+    // `<i-chat>` forwards with `<slot name="x" slot="x">` — slottables stay on `<i-chat>`).
     this._syncSlotTemplatesFromAssignedNodes();
   }
 
-  /** Secondary sync using shadow-DOM slot APIs (requires rendered shadow tree). */
+  /**
+   * Reads template HTML from `.template-slots` shadow slots via `assignedElements`.
+   * Do not use `host.querySelectorAll('[slot=…]')` — forwarded slottables are not
+   * light-DOM children of `<i-chat-messages>` when nested under `<i-chat>`.
+   */
   private _syncSlotTemplatesFromAssignedNodes(): void {
     const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>(
       '.template-slots slot[name]'
@@ -79,14 +100,17 @@ export class ChatMessages extends LitElement {
       if (!name) return;
       const nodes = slot.assignedElements({ flatten: true });
       const content = nodes.map((n) => (n as HTMLElement).outerHTML).join('');
-      if (content) this._applySlotTemplateHtml(name, content);
+      this._applySlotTemplateHtml(name, content);
     });
   }
 
   private _applySlotTemplateHtml(name: string, content: string): void {
     switch (name) {
-      case 'user-avatar':
-        this._userAvatarHtml = content;
+      case 'self-avatar':
+        this._selfAvatarHtml = content;
+        break;
+      case 'peer-avatar':
+        this._peerAvatarHtml = content;
         break;
       case 'assistant-avatar':
         this._assistantAvatarHtml = content;
@@ -319,7 +343,8 @@ export class ChatMessages extends LitElement {
 
     return html`
       <div class="template-slots" hidden>
-        <slot name="user-avatar" @slotchange=${(e: Event) => this._handleSlotChange('user-avatar', e)}></slot>
+        <slot name="self-avatar" @slotchange=${(e: Event) => this._handleSlotChange('self-avatar', e)}></slot>
+        <slot name="peer-avatar" @slotchange=${(e: Event) => this._handleSlotChange('peer-avatar', e)}></slot>
         <slot name="assistant-avatar" @slotchange=${(e: Event) => this._handleSlotChange('assistant-avatar', e)}></slot>
         <slot name="message-actions" @slotchange=${(e: Event) => this._handleSlotChange('message-actions', e)}></slot>
         <slot name="reasoning-header" @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}></slot>
@@ -352,23 +377,35 @@ export class ChatMessages extends LitElement {
             : html`
                 <div class="chat-messages-inner">
                   ${repeat(
-                    this.messages,
-                    (m) => m.id,
-                    (m) => html`
-                      <i-chat-message
-                        data-message-id=${m.id}
-                        .message=${m}
-                        .speed=${cfg.streamingSpeed}
-                        .userAvatar=${cfg.userAvatar}
-                        .assistantAvatar=${cfg.assistantAvatar}
-                        .userAvatarHtml=${this._userAvatarHtml}
-                        .assistantAvatarHtml=${this._assistantAvatarHtml}
-                        .actionsHtml=${this._messageActionsHtml}
-                        .reasoningHeaderHtml=${this._reasoningHeaderHtml}
-                        @message-cancel=${(e: CustomEvent<{ id: string }>) =>
-                          this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
-                      ></i-chat-message>
-                    `
+                    this._messageRenderItems(),
+                    (item) => item.key,
+                    (item) =>
+                      item.kind === 'sep'
+                        ? html`
+                            <div class="chat-date-separator" role="separator" aria-label=${item.label}>
+                              <span class="chat-date-separator-line"></span>
+                              <span class="chat-date-separator-label">${item.label}</span>
+                              <span class="chat-date-separator-line"></span>
+                            </div>
+                          `
+                        : html`
+                            <i-chat-message
+                              data-message-id=${item.message.id}
+                              .message=${item.message}
+                              .locale=${cfg.locale}
+                              .speed=${cfg.streamingSpeed}
+                              .selfAvatar=${cfg.selfAvatar}
+                              .peerAvatar=${cfg.peerAvatar}
+                              .assistantAvatar=${cfg.assistantAvatar}
+                              .selfAvatarHtml=${this._selfAvatarHtml}
+                              .peerAvatarHtml=${this._peerAvatarHtml}
+                              .assistantAvatarHtml=${this._assistantAvatarHtml}
+                              .actionsHtml=${this._messageActionsHtml}
+                              .reasoningHeaderHtml=${this._reasoningHeaderHtml}
+                              @message-cancel=${(e: CustomEvent<{ id: string }>) =>
+                                this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
+                            ></i-chat-message>
+                          `
                   )}
                 </div>
               `}

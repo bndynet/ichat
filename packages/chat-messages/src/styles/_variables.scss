@@ -1,4 +1,10 @@
 // SCSS fallbacks for `--chat-*` (see `chat-host-tokens.scss`, `@use`d by message components).
+//
+// ── 12 Base Colors ───────────────────────────────────────────────────
+// Every derived color below traces back to one of these.
+// At runtime the CSS custom-property equivalents
+//   --chat-bg … --chat-primary-light  +  --chat-error / --chat-success / --chat-warning
+// are the ONLY tokens an app *must* set to re-theme the entire UI.
 
 // ── Typography ──────────────────────────────────────────────────────
 $font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
@@ -28,7 +34,7 @@ $spacing-xl: 32px;
 $transition-fast: 150ms ease;
 $transition-normal: 250ms ease;
 
-// ── Semantic Colors (light theme defaults) ──────────────────────────
+// ── Base Colors (light-theme defaults) ──────────────────────────────
 $color-bg: #f7f7f8;
 $color-surface: #ffffff;
 $color-surface-alt: #f0f2f5;
@@ -36,50 +42,73 @@ $color-border: #e5e7eb;
 $color-text: #1a1a2e;
 $color-text-secondary: #6b7280;
 $color-text-muted: #9ca3af;
-
 $color-primary: #2563eb;
 $color-primary-light: #dbeafe;
 
-// ── User Bubble ─────────────────────────────────────────────────────
-$color-user-bg: #2563eb;
+$color-error: #ef4444;
+$color-success: #10b981;
+$color-warning: #f59e0b;
+
+// ── Derived: User Bubble ────────────────────────────────────────────
+$color-user-bg: $color-primary;
 $color-user-text: #ffffff;
 
-// ── Assistant Bubble ────────────────────────────────────────────────
-$color-assistant-bg: #ffffff;
-$color-assistant-text: #1a1a2e;
+// ── Derived: Assistant Bubble ───────────────────────────────────────
+$color-assistant-bg: $color-surface;
+$color-assistant-text: $color-text;
 
-// ── Reasoning ───────────────────────────────────────────────────────
-$color-reasoning-bg: #f0f4ff;
+// ── Derived: Peer (other human) Bubble ──────────────────────────────
+$color-peer-bg: $color-surface;
+$color-peer-text: $color-text;
+
+// ── Derived: Reasoning ──────────────────────────────────────────────
+$color-reasoning-bg: $color-primary-light;
 $color-reasoning-border: #c7d2fe;
-$color-reasoning-text: #4338ca;
+$color-reasoning-text: $color-primary;
 $color-reasoning-header-hover-bg: rgba(0, 0, 0, 0.03);
 
-// ── Code ────────────────────────────────────────────────────────────
+// ── Code (design constant — intentionally NOT derived from the 12 base tokens) ─
 $color-code-bg: #1e1e2e;
 $color-code-text: #cdd6f4;
 $color-code-inline-bg: rgba(0, 0, 0, 0.06);
 $color-user-code-inline-bg: rgba(255, 255, 255, 0.15);
 
-// ── Blockquote ──────────────────────────────────────────────────────
+// ── Derived: Blockquote ─────────────────────────────────────────────
 $color-blockquote-bg: rgba(0, 0, 0, 0.02);
 
-// ── Chart ───────────────────────────────────────────────────────────
+// ── Derived: Chart ──────────────────────────────────────────────────
 $color-chart-bar-track-bg: rgba(0, 0, 0, 0.04);
-$color-error: #ef4444;
+
+// ── Derived: Error ───────────────────────────────────────────────────
 $color-error-bg: #fef2f2;
 
-// ── Timeline ────────────────────────────────────────────────────────
-$color-timeline-done: #10b981;
+// ── Derived: Timeline ───────────────────────────────────────────────
+$color-timeline-done: $color-success;
 $color-timeline-active-pulse: rgba(37, 99, 235, 0.25);
 $timeline-indicator-size: #{$font-size-base};
 
-// ── Shadows ─────────────────────────────────────────────────────────
+// ── Derived: Shadows ────────────────────────────────────────────────
 $shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
 $shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+// ── Derived: Avatar ─────────────────────────────────────────────────
+$color-avatar-bg: $color-surface-alt;
+$color-avatar-text: $color-text-secondary;
+
+$color-avatar-user-bg: $color-avatar-bg;
+$color-avatar-user-text: $color-avatar-text;
+
+$color-avatar-peer-bg: $color-avatar-bg;
+$color-avatar-peer-text: $color-avatar-text;
+
+$color-avatar-assistant-bg: $color-avatar-bg;
+$color-avatar-assistant-text: $color-avatar-text;
+
+$color-avatar-system-bg: $color-avatar-bg;
+$color-avatar-system-text: $color-avatar-text;
 
 // ── Layout ──────────────────────────────────────────────────────────
 $avatar-size: 32px;
 $message-max-width: 85%;
-// Fill host by default; set e.g. 800px or min(100%, 48rem) for a reading column
 $messages-max-width: 100%;
 $scrollbar-width: 6px;

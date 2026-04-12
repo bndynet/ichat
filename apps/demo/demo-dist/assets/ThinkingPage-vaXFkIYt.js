@@ -1,0 +1,1 @@
+import{C as e}from"./ChatMessagesLayout-BVluER33.js";import{a as r,b as i}from"./index-D4wLlsbU.js";import"./demo-data-Cnf05NNT.js";import"./ChatToolbar-EUMtoQlZ.js";const _={__name:"ThinkingPage",setup(n){function o({runThinkingDemo:t,clear:a}){a(),t()}return(t,a)=>(r(),i(e,{init:o}))}};export{_ as default};

@@ -22,17 +22,6 @@ rendererRegistry.register(formRenderer);
 
 export type { ChatMessage, ChatConfig, BlockRenderer };
 
-/** Slot names that `<i-chat-messages>` recognises as template content. */
-const MESSAGE_SLOT_NAMES = [
-  'user-avatar',
-  'assistant-avatar',
-  'message-actions',
-  'reasoning-header',
-] as const;
-
-/** Slotted into the default `<i-chat-input>` (not used when `slot="input"` replaces it). */
-const INPUT_FORWARDED_SLOT = 'actions';
-
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
  *
@@ -43,8 +32,9 @@ const INPUT_FORWARDED_SLOT = 'actions';
  *
  * | Slot                 | Description                                        |
  * |----------------------|----------------------------------------------------|
- * | `user-avatar`        | Custom avatar for user messages                    |
- * | `assistant-avatar`   | Custom avatar for assistant messages                |
+ * | `self-avatar`        | Custom avatar for `role: self` messages            |
+ * | `peer-avatar`        | Custom avatar for `role: peer` messages            |
+ * | `assistant-avatar`   | Custom avatar for assistant/system messages        |
  * | `message-actions`    | Action buttons shown on each message                |
  * | `reasoning-header`   | Custom header for reasoning/thinking blocks         |
  * | `empty`              | Content shown when there are no messages            |
@@ -159,39 +149,18 @@ export class NiceChat extends LitElement {
 
   // ── Slot forwarding ────────────────────────────────────────────────
   //
-  // `<i-chat-messages>` reads slotted content via querySelectorAll('[slot="xxx"]')
-  // during connectedCallback (before shadow DOM exists).  Nested
-  // `<slot name="x" slot="x">` does NOT work reliably because the projection
-  // happens too late.  Instead we manually clone the user's light-DOM nodes
-  // into the `<i-chat-messages>` light DOM so its existing mechanism picks them up.
+  // Declarative `<slot name="x" slot="x">` under `<i-chat-messages>` / `<i-chat-input>`
+  // so consumer nodes stay light-DOM children of `<i-chat>` (page / Vue CSS applies).
+  // `<i-chat-messages>` reads template HTML from shadow `assignedElements()`, not clones.
 
   override connectedCallback(): void {
     super.connectedCallback();
     this._syncInputSlotPresence();
     this._lightChildObserver = new MutationObserver(() => {
       this._syncInputSlotPresence();
-      this._forwardMessageSlots();
-      this._forwardInputActionsSlot();
       this.requestUpdate();
     });
     this._lightChildObserver.observe(this, { childList: true, subtree: false });
-  }
-
-  /** Clone `[slot="actions"]` from light DOM onto `<i-chat-input>` so it projects into the inner toolbar. */
-  private _forwardInputActionsSlot(): void {
-    if (this._hasCustomInput) return;
-    const input = this._input;
-    if (!input) return;
-
-    input.querySelectorAll<HTMLElement>('[data-i-chat-forwarded-input]').forEach((el) => el.remove());
-
-    const sources = this.querySelectorAll<HTMLElement>(`[slot="${INPUT_FORWARDED_SLOT}"]`);
-    sources.forEach((el) => {
-      const clone = el.cloneNode(true) as HTMLElement;
-      clone.setAttribute('slot', INPUT_FORWARDED_SLOT);
-      clone.setAttribute('data-i-chat-forwarded-input', '');
-      input.appendChild(clone);
-    });
   }
 
   override disconnectedCallback(): void {
@@ -206,44 +175,12 @@ export class NiceChat extends LitElement {
 
   override firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
-    this._forwardMessageSlots();
-    this._forwardInputActionsSlot();
     // Push initial property values that may have been set before first render.
     if (this._messages) {
       if (this.messages.length) this._messages.messages = this.messages;
       if (this.config && Object.keys(this.config).length) this._messages.config = this.config;
       if (this.emptyText) this._messages.emptyText = this.emptyText;
     }
-  }
-
-  /**
-   * Clone slotted elements from `<i-chat>` light DOM into
-   * `<i-chat-messages>` light DOM so its `_readLightDomSlots` /
-   * `slotchange` mechanism works natively.
-   */
-  private _forwardMessageSlots(): void {
-    const target = this._messages;
-    if (!target) return;
-
-    target.querySelectorAll<HTMLElement>('[data-i-chat-forwarded]').forEach((el) => el.remove());
-
-    for (const name of MESSAGE_SLOT_NAMES) {
-      const sources = this.querySelectorAll<HTMLElement>(`[slot="${name}"]`);
-      sources.forEach((el) => {
-        const clone = el.cloneNode(true) as HTMLElement;
-        clone.setAttribute('slot', name);
-        clone.setAttribute('data-i-chat-forwarded', '');
-        target.appendChild(clone);
-      });
-    }
-
-    const emptySources = this.querySelectorAll<HTMLElement>('[slot="empty"]');
-    emptySources.forEach((el) => {
-      const clone = el.cloneNode(true) as HTMLElement;
-      clone.setAttribute('slot', 'empty');
-      clone.setAttribute('data-i-chat-forwarded', '');
-      target.appendChild(clone);
-    });
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────
@@ -257,9 +194,6 @@ export class NiceChat extends LitElement {
     }
     if (changed.has('emptyText') && this._messages) {
       this._messages.emptyText = this.emptyText;
-    }
-    if (changed.has('_hasCustomInput') && !this._hasCustomInput) {
-      void this.updateComplete.then(() => this._forwardInputActionsSlot());
     }
   }
 
@@ -331,7 +265,14 @@ export class NiceChat extends LitElement {
         <i-chat-messages
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
-        ></i-chat-messages>
+        >
+          <slot name="empty" slot="empty"></slot>
+          <slot name="self-avatar" slot="self-avatar"></slot>
+          <slot name="peer-avatar" slot="peer-avatar"></slot>
+          <slot name="assistant-avatar" slot="assistant-avatar"></slot>
+          <slot name="message-actions" slot="message-actions"></slot>
+          <slot name="reasoning-header" slot="reasoning-header"></slot>
+        </i-chat-messages>
       </div>
       <div class="chat-footer">
         <slot name="input" @slotchange=${this._handleInputSlotChange}></slot>
@@ -344,7 +285,9 @@ export class NiceChat extends LitElement {
                 ?disabled=${this.disabled}
                 @send=${this._handleSend}
                 @cancel=${this._handleCancel}
-              ></i-chat-input>
+              >
+                <slot name="actions" slot="actions"></slot>
+              </i-chat-input>
             `}
       </div>
     `;

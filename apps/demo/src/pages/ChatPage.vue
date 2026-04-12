@@ -1,74 +1,126 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
-import '@bndynet/chat'
+import { ref, nextTick, onMounted } from 'vue';
+import { responseThinking, nextId } from '../composables/demo-data.js';
+import '@bndynet/chat';
 
-const chatRef = ref(null)
-let msgId = 0
-const nextId = () => 'msg-' + ++msgId
+const chatRef = ref(null);
+/** Default English; switch to `{ locale: 'zh-CN' }` to demo Chinese separators */
+const chatConfig = { locale: 'zh-CN' };
+
+/** 64×64 PNG (person silhouette) — valid `data:image/png;base64,…` for avatar demo */
+const DEMO_PNG_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA9klEQVR42u3ZQQ6DIBCF4blXb9fj9D69Sre4bZqiKAzO8P6XsBR8nxI1mhFCyI0p71eRKts6ZIsvB9FTPj3CiPJpEUaWT4fgUT4Ngmf5FAjSADPKh0YAAAAAdAFmlgeBLQBADIDH81O+x0yA37UBiAAwC+HfulLbIEz5O+6CUFe/BuCFUFsr3NPAAyFs+T2AUQh784cH6EU4mjvMW+DRiZ6FaJkv1GtwywnXUK4euwRAzwj3MSRdHgAA5iGE/jMEgDqAN4JliDyAF4JlCgDqAKMRLGMAUAcYhWCZA4A6QC+CrRAA1AGuIthKAUAd4CyCEUIIIe7ZAFXVGuWAntoXAAAAAElFTkSuQmCC';
+
+const DEMO_INLINE_SVG_AVATAR =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="14" fill="#f59e0b"/><text x="16" y="20" text-anchor="middle" font-size="12" fill="#fff" font-family="system-ui,sans-serif">S</text></svg>';
+
+/** Local noon N calendar days before today — stable demo timestamps for date separators */
+function timestampDaysAgo(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(12, 0, 0, 0);
+  return d.getTime();
+}
 
 onMounted(async () => {
-  await nextTick()
-  chatRef.value.addMessage({
-    id: nextId(),
-    role: 'assistant',
-    content: 'Hi there! This is the **complete `<i-chat>`** component. It bundles messages, input, and all renderers in one tag. Try typing a message below!',
-    timestamp: Date.now(),
-  })
-})
+  await nextTick();
+  const chat = chatRef.value;
+  setTimeout(() => {
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content:
+        '**Date separators** — this message is **8+ calendar days** old, so the divider shows **Older**. English is the default; set **config.locale** to **zh-CN** for Chinese labels.',
+      timestamp: timestampDaysAgo(12),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content:
+        '**7 days ago** — dividers update when the day bucket changes (see **7 days ago** label).',
+      timestamp: timestampDaysAgo(7),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content:
+        '**3 days ago** — between **2** and **7** days the label is **N days ago**.',
+      timestamp: timestampDaysAgo(3),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content: '**Yesterday** — previous calendar day.',
+      timestamp: timestampDaysAgo(1),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'assistant',
+      content:
+        'Hi there! This is the **complete `<i-chat>`** component. It bundles messages, input, and all renderers in one tag. Try typing a message below!\n\n' +
+        'The next **three self rows** demo per-message `avatar`: HTTP URL, `data:image/png;base64,…`, and inline `<svg>`.',
+      timestamp: Date.now(),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'self',
+      content: '**HTTP URL** — `avatar` is an image URL.',
+      timestamp: Date.now(),
+      avatar: 'https://static.bndy.net/images/logo.png',
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content:
+        '**Data URL** — `data:image/png;base64,…` (embedded 64×64 person icon).',
+      timestamp: Date.now(),
+      avatar: DEMO_PNG_DATA_URL,
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content: '**Inline SVG** — `avatar` is a full `<svg>…</svg>` string.',
+      timestamp: Date.now(),
+      avatar: DEMO_INLINE_SVG_AVATAR,
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'peer',
+      content:
+        '**Peer** — `role: "peer"` is for another human (left-aligned). Theme with `--chat-peer-*` (defaults match assistant until overridden).',
+      timestamp: Date.now(),
+    });
+  }, 3000);
+});
 
 function handleSend(e) {
-  const content = e.detail.content
-  const chat = chatRef.value
+  const content = e.detail.content;
+  const chat = chatRef.value;
 
-  chat.addMessage({ id: nextId(), role: 'user', content, timestamp: Date.now() })
-
-  const aiId = nextId()
-  chat.addMessage({ id: aiId, role: 'assistant', content: '', streaming: true, timestamp: Date.now() })
-
-  const reply = `You said: *"${content}"*\n\nThis is a simulated streaming reply from the assistant.`
-  let i = 0
-
-  const timer = setInterval(() => {
-    i += 3
-    if (i >= reply.length) {
-      chat.updateMessage(aiId, { content: reply, streaming: false })
-      clearInterval(timer)
-    } else {
-      chat.updateMessage(aiId, { content: reply.slice(0, i), streaming: true })
-    }
-  }, 30)
+  chat.addMessage({
+    id: nextId(),
+    role: 'self',
+    content,
+    timestamp: Date.now(),
+  });
+  responseThinking(chatRef);
 }
 
 function handleCancel() {
-  chatRef.value.cancel('*— Response stopped —*')
+  chatRef.value.cancel('*— Response stopped —*');
 }
 </script>
 
 <template>
-  <div class="complete-chat-page">
-    <i-chat
-      ref="chatRef"
-      placeholder="Type something…"
-      @send="handleSend"
-      @cancel="handleCancel"
-    />
-  </div>
+  <i-chat
+    ref="chatRef"
+    :config="chatConfig"
+    placeholder="Type something…"
+    @send="handleSend"
+    @cancel="handleCancel"
+  >
+    <div slot="empty" style="text-align: center">
+      <h2>Fetching history messages...</h2>
+    </div>
+  </i-chat>
 </template>
-
-<style scoped>
-.complete-chat-page {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0;
-  margin: 0 0 1rem 0;
-}
-
-i-chat {
-  flex: 1;
-  min-height: 0;
-  border-radius: 10px;
-}
-</style>

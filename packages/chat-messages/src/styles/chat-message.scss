@@ -6,6 +6,20 @@
 
 :host {
   display: block;
+
+  // Avatar: two-level cascade only — per-role token, then shared `--chat-avatar-bg|text`, then SCSS.
+  // Override `--chat-avatar-bg` to tint every role; override `--chat-avatar-user-bg` etc. for one role.
+  --_chat-avatar-self-bg: var(--chat-avatar-user-bg, var(--chat-avatar-bg, #{$color-avatar-user-bg}));
+  --_chat-avatar-self-color: var(--chat-avatar-user-text, var(--chat-avatar-text, #{$color-avatar-user-text}));
+
+  --_chat-avatar-peer-bg: var(--chat-avatar-peer-bg, var(--chat-avatar-bg, #{$color-avatar-peer-bg}));
+  --_chat-avatar-peer-color: var(--chat-avatar-peer-text, var(--chat-avatar-text, #{$color-avatar-peer-text}));
+
+  --_chat-avatar-assistant-bg: var(--chat-avatar-assistant-bg, var(--chat-avatar-bg, #{$color-avatar-assistant-bg}));
+  --_chat-avatar-assistant-color: var(--chat-avatar-assistant-text, var(--chat-avatar-text, #{$color-avatar-assistant-text}));
+
+  --_chat-avatar-system-bg: var(--chat-avatar-system-bg, var(--chat-avatar-bg, #{$color-avatar-system-bg}));
+  --_chat-avatar-system-color: var(--chat-avatar-system-text, var(--chat-avatar-text, #{$color-avatar-system-text}));
 }
 
 .message {
@@ -14,7 +28,7 @@
   max-width: var(--chat-message-max-width, #{$message-max-width});
   animation: messageIn var(--chat-transition-normal, #{$transition-normal}) forwards;
 
-  &--user {
+  &--self {
     margin-left: auto;
     flex-direction: row-reverse;
 
@@ -24,6 +38,7 @@
     }
   }
 
+  &--peer,
   &--assistant,
   &--system {
     margin-right: auto;
@@ -42,19 +57,43 @@
   font-weight: 600;
   overflow: hidden;
 
-  .message--user & {
-    background: var(--chat-user-avatar-bg, var(--chat-user-bg, #{$color-user-bg}));
-    color: var(--chat-user-text, #{$color-user-text});
+  .message--self & {
+    background: var(--_chat-avatar-self-bg);
+    color: var(--_chat-avatar-self-color);
   }
 
-  .message--assistant &,
+  .message--peer & {
+    background: var(--_chat-avatar-peer-bg);
+    color: var(--_chat-avatar-peer-color);
+  }
+
+  .message--assistant & {
+    background: var(--_chat-avatar-assistant-bg);
+    color: var(--_chat-avatar-assistant-color);
+  }
+
   .message--system & {
-    background: var(--chat-assistant-avatar-bg, var(--chat-surface-alt, #{$color-surface-alt}));
-    color: var(--chat-text-secondary, #{$color-text-secondary});
+    background: var(--_chat-avatar-system-bg);
+    color: var(--_chat-avatar-system-color);
   }
 
   &--img {
-    background: transparent !important;
+    // Same surface as letter avatars so image sits on a themed ring (not flat transparent).
+    .message--self & {
+      background: var(--_chat-avatar-self-bg);
+    }
+
+    .message--peer & {
+      background: var(--_chat-avatar-peer-bg);
+    }
+
+    .message--assistant & {
+      background: var(--_chat-avatar-assistant-bg);
+    }
+
+    .message--system & {
+      background: var(--_chat-avatar-system-bg);
+    }
 
     img {
       width: 100%;
@@ -91,9 +130,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--chat-spacing-sm, #{$spacing-sm});
+  gap: var(--chat-spacing-xs, #{$spacing-xs});
   margin-bottom: var(--chat-spacing-md, #{$spacing-md});
 
+  .message--peer &,
   .message--assistant &,
   .message--system & {
     flex: 1;
@@ -107,16 +147,23 @@
   word-break: break-word;
   overflow-wrap: break-word;
 
-  .message--user & {
-    background: var(--chat-user-bg, #{$color-user-bg});
-    color: var(--chat-user-text, #{$color-user-text});
+  .message--self & {
+    background: var(--chat-self-bg, var(--chat-user-bg, var(--chat-primary, #{$color-primary})));
+    color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
     border-bottom-right-radius: var(--chat-radius-sm, #{$radius-sm});
+  }
+
+  .message--peer & {
+    background: var(--chat-peer-bg, var(--chat-assistant-bg, var(--chat-surface, #{$color-surface})));
+    color: var(--chat-peer-text, var(--chat-assistant-text, var(--chat-text, #{$color-text})));
+    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
+    box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
 
   .message--assistant &,
   .message--system & {
-    background: var(--chat-assistant-bg, #{$color-assistant-bg});
-    color: var(--chat-assistant-text, #{$color-assistant-text});
+    background: var(--chat-assistant-bg, var(--chat-surface, #{$color-surface}));
+    color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
     border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
@@ -159,8 +206,8 @@
       text-decoration: underline;
     }
 
-    .message--user & {
-      color: var(--chat-user-text, #{$color-user-text});
+    .message--self & {
+      color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
       text-decoration: underline;
     }
   }
@@ -181,8 +228,12 @@
     border-radius: var(--chat-radius-sm, #{$radius-sm});
     background: var(--chat-code-inline-bg, #{$color-code-inline-bg});
 
-    .message--user & {
-      background: var(--chat-user-code-inline-bg, #{$color-user-code-inline-bg});
+    .message--self & {
+      background: var(--chat-self-code-inline-bg, var(--chat-user-code-inline-bg, #{$color-user-code-inline-bg}));
+    }
+
+    .message--peer & {
+      background: var(--chat-peer-code-inline-bg, var(--chat-code-inline-bg, #{$color-code-inline-bg}));
     }
   }
 
@@ -323,8 +374,8 @@
   }
 
   .chart-error {
-    color: var(--chat-error-color, #{$color-error});
-    background: var(--chat-error-bg, #{$color-error-bg});
+    color: var(--chat-error-color, var(--chat-error, #{$color-error}));
+    background: var(--chat-error-bg, color-mix(in srgb, var(--chat-error, #{$color-error}) 6%, var(--chat-surface, #{$color-surface})));
     padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
     border-radius: var(--chat-radius-sm, #{$radius-sm});
     font-size: var(--chat-font-size-sm, #{$font-size-sm});
@@ -350,10 +401,10 @@
 .message--error {
   .bubble--error {
     background: var(--chat-error-bg, #{$color-error-bg});
-    border: 1px solid var(--chat-error-border, rgba($color-error, 0.25));
+    border: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 25%, transparent));
     border-radius: var(--chat-radius-lg, #{$radius-lg});
     padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    color: var(--chat-error-color, #{$color-error});
+    color: var(--chat-error-color, var(--chat-error, #{$color-error}));
     word-break: break-word;
     overflow-wrap: break-word;
     border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
@@ -378,8 +429,8 @@
   .content {
     margin-top: var(--chat-spacing-sm, #{$spacing-sm});
     padding-top: var(--chat-spacing-sm, #{$spacing-sm});
-    border-top: 1px solid var(--chat-error-border, rgba($color-error, 0.15));
-    color: var(--chat-assistant-text, #{$color-assistant-text});
+    border-top: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 15%, transparent));
+    color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
     font-size: var(--chat-font-size-sm, #{$font-size-sm});
     opacity: 0.85;
   }
@@ -394,8 +445,8 @@
   font-weight: 400;
   margin-left: 1px;
 
-  .message--user & {
-    color: var(--chat-user-text, #{$color-user-text});
+  .message--self & {
+    color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
   }
 }
 
@@ -405,7 +456,7 @@
   gap: var(--chat-spacing-sm, #{$spacing-sm});
   // margin-top: var(--chat-spacing-xs, #{$spacing-xs});
 
-  .message--user & {
+  .message--self & {
     flex-direction: row-reverse;
   }
 }

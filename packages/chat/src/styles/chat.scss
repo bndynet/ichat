@@ -39,13 +39,5 @@ i-chat-messages {
   );
 }
 
-i-chat-input {
-  --chat-input-bg: var(--chat-surface, #ffffff);
-  --chat-input-border: var(--chat-border, #e5e7eb);
-  --chat-input-text: var(--chat-text, #1a1a2e);
-  --chat-input-placeholder: var(--chat-text-muted, #9ca3af);
-  --chat-input-primary: var(--chat-primary, #2563eb);
-  --chat-input-primary-hover: var(--chat-primary-hover, #1d4ed8);
-  --chat-input-primary-text: var(--chat-user-text, #ffffff);
-  --chat-input-shadow: var(--chat-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
-}
+// `--chat-input-*` tokens now chain to `--chat-*` inside chat-input-host-tokens.scss,
+// so no bridge block is needed here. The input automatically inherits the theme.

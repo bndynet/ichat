@@ -27,9 +27,9 @@
   align-items: center;
   gap: var(--chat-spacing-sm, #{$spacing-sm});
   padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-  background: var(--chat-error-bg, #{$color-error-bg});
-  border-bottom: 1px solid var(--chat-error-border, rgba($color-error, 0.2));
-  color: var(--chat-error-color, #{$color-error});
+  background: var(--chat-error-bg, color-mix(in srgb, var(--chat-error, #{$color-error}) 6%, var(--chat-surface, #{$color-surface})));
+  border-bottom: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 20%, transparent));
+  color: var(--chat-error-color, var(--chat-error, #{$color-error}));
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   animation: slideDown 0.2s ease;
   z-index: 2;
@@ -55,7 +55,7 @@
   border: none;
   border-radius: var(--chat-radius-sm, #{$radius-sm});
   background: transparent;
-  color: var(--chat-error-color, #{$color-error});
+  color: var(--chat-error-color, var(--chat-error, #{$color-error}));
   cursor: pointer;
   opacity: 0.6;
   transition: opacity var(--chat-transition-fast, #{$transition-fast}),
@@ -63,7 +63,7 @@
 
   &:hover {
     opacity: 1;
-    background: rgba($color-error, 0.1);
+    background: color-mix(in srgb, var(--chat-error, #{$color-error}) 10%, transparent);
   }
 }
 
@@ -165,12 +165,36 @@
   padding-bottom: var(--chat-spacing-lg, #{$spacing-lg});
 }
 
+.chat-date-separator {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
+  flex-shrink: 0;
+  margin: var(--chat-spacing-xs, #{$spacing-xs}) 0;
+}
+
+.chat-date-separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--chat-border, #{$color-border});
+  opacity: 0.85;
+}
+
+.chat-date-separator-label {
+  flex-shrink: 0;
+  /* Slightly below --chat-font-size-sm so dividers stay secondary */
+  font-size: var(--chat-date-separator-font-size, 0.75rem);
+  color: var(--chat-text-muted, #{$color-text-muted});
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* No `opacity` here — it would flatten slotted custom empty states (SVG, rich text). */
 .chat-empty {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--chat-text-secondary, #{$color-text-secondary});
+  color: var(--chat-text-muted, #{$color-text-muted});
   font-size: var(--chat-font-size-lg, #{$font-size-lg});
-  opacity: 0.6;
 }
