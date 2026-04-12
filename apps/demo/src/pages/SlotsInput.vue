@@ -6,21 +6,23 @@ import { useChatDemo } from '../composables/useChatDemo.js'
 import DemoChatToolbar from '../components/DemoChatToolbar.vue'
 
 /**
- * 「输入区左侧 actions」若要用 **Vue 组件**，不要用 `slot="actions"`：`i-chat` 会
- * **cloneNode** 到 `<i-chat-input>`，组件实例会断掉。
+ * For **Vue components** in the left “actions” area of the input region, do not use
+ * `slot="actions"`: `i-chat` **cloneNode**s into `<i-chat-input>`, which breaks component instances.
  *
- * 可行做法：用 **`slot="input"`** 整块替换默认 `<i-chat-input>`，自己用 Vue 排版出
- * 「上：输入框 / 下：左侧工具条 + 右侧发送」——与内置 composer 同一语义位置，左侧
- * 可放任意 `<el-button>`、业务组件等。
+ * Instead: use **`slot="input"`** to replace the default `<i-chat-input>` entirely and lay out in Vue
+ * “top: textarea / bottom: left toolbar + right send”—same semantic position as the built-in composer;
+ * the left side can host any `<el-button>` or app components.
  *
- * 提交：对 `<i-chat>` 元素 `dispatchEvent(new CustomEvent('send', { detail: { content } }))`，
- * 父级 `@send` 即可收到（与默认 `<i-chat-input>` 一致）。
+ * Submit: on the `<i-chat>` element call
+ * `dispatchEvent(new CustomEvent('send', { detail: { content } }))`; the parent `@send` receives it
+ * (same as the default `<i-chat-input>`).
  */
 
 let msgId = 0
 const nextId = () => 'msg-' + ++msgId
 
 const draft = ref('')
+const model = ref('')
 const textareaRef = ref(null)
 const streamingUi = ref(false)
 
@@ -64,7 +66,7 @@ function emitCancelToHost() {
   )
 }
 
-/** 左侧「actions」区：纯 Vue，与默认 i-chat-input 左栏同角色 */
+/** Left “actions” area: plain Vue, same role as the default i-chat-input left column */
 function onAttachDemo() {
   draft.value += (draft.value ? '\n' : '') + '[attachment placeholder]'
   textareaRef.value?.focus()
@@ -77,7 +79,7 @@ function handleSend(e) {
   chat.addMessage({ id: nextId(), role: 'user', content, timestamp: Date.now() })
   const aiId = nextId()
   chat.addMessage({ id: aiId, role: 'assistant', content: '', streaming: true, timestamp: Date.now() })
-  const reply = `Echo: *${content}*\n\n（左侧按钮来自 **Vue + slot="input"**，不是 \`slot="actions"\`）`
+  const reply = `Echo: *${content}*\n\n(Left buttons come from **Vue + slot="input"**, not \`slot="actions"\`.)`
   let i = 0
   const timer = setInterval(() => {
     i += 4
@@ -90,22 +92,26 @@ function handleSend(e) {
   }, 25)
 }
 
+function onModelChange(e) {
+  console.log(e)
+}
+
 onMounted(async () => {
   await nextTick()
   clear()
   addMessage({
     role: 'assistant',
     content:
-      '### `slot="input"` 里的 Vue「actions」\n\n' +
-      '下面输入区是 **整块自定义**：左侧 **Element 按钮** 与默认 `<i-chat-input>` 里 `slot="actions"` **同一位置**，但走 Vue 渲染，不经过 clone。\n\n' +
-      '代价：要自己处理发送 / 取消按钮与 `@send` / `cancel` 的派发（见脚本注释）。',
+      '### Vue “actions” inside `slot="input"`\n\n' +
+      'The input area below is **fully custom**: the **Element buttons** on the left sit in the **same place** as `slot="actions"` on the default `<i-chat-input>`, but they render through Vue without clone.\n\n' +
+      'Trade-off: you wire Send / Stop yourself and dispatch `@send` / `cancel` (see script comments).',
     timestamp: Date.now(),
   })
 })
 </script>
 
 <template>
-  <div class="vue-outside-page">
+  <div class="slots-input-page">
     <DemoChatToolbar
       :streaming="streaming"
       @error-message="runErrorMessage"
@@ -114,92 +120,84 @@ onMounted(async () => {
       @clear="clear"
     />
 
-    <div class="chat-wrap">
-      <i-chat
-        ref="chatRef"
-        class="chat"
-        @streaming-change="onNiceChatStreamingChange"
-        @send="handleSend"
-      >
-        <!-- 替换默认 i-chat-input：左下角 actions = 任意 Vue 组件 -->
-        <div slot="input" class="vue-custom-input">
-          <div class="vue-custom-input-field">
-            <textarea
-              ref="textareaRef"
-              v-model="draft"
-              class="vue-custom-textarea"
-              placeholder="Composer 由 Vue 实现；左侧为 Element 按钮…"
-              rows="1"
-              @keydown.enter.exact.prevent="emitSendToHost"
-            />
-          </div>
-          <div class="vue-custom-input-toolbar">
-            <div class="vue-custom-input-actions">
+    <i-chat
+      ref="chatRef"
+      class="chat"
+      @streaming-change="onNiceChatStreamingChange"
+      @send="handleSend"
+    >
+      <!-- Replace default i-chat-input: bottom-left actions = any Vue components -->
+      <div slot="input" class="slots-input">
+        <textarea
+          ref="textareaRef"
+          v-model="draft"
+          class="slots-input-textarea"
+          placeholder="Say hi…"
+          rows="1"
+          @keydown.enter.exact.prevent="emitSendToHost"
+        />
+        <div class="slots-input-toolbar">
+          <div class="slots-input-actions">
+            <div>
               <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo">Attach</el-button>
-              <el-button size="small" :icon="Link" text bg>Model</el-button>
             </div>
-            <div class="vue-custom-input-end">
-              <el-button
-                v-if="streamingUi"
-                size="small"
-                type="warning"
-                @click="emitCancelToHost"
-              >
-                Stop
-              </el-button>
-              <el-button
-                size="small"
-                type="primary"
-                :icon="Promotion"
-                :disabled="!draft.trim()"
-                @click="emitSendToHost"
-              >
-                Send
-              </el-button>
+            <div>
+              <el-select v-model="model" size="small" placeholder="Select Model" @change="onModelChange">
+                <el-option value="model1" selected>Model 1</el-option>
+                <el-option value="model2">Model 2</el-option>
+                <el-option value="model3">Model 3</el-option>
+              </el-select>
             </div>
+          </div>
+          <div class="slots-input-end">
+            <el-button
+              v-if="streamingUi"
+              size="small"
+              type="warning"
+              @click="emitCancelToHost"
+            >
+              Stop
+            </el-button>
+            <el-button
+              size="small"
+              type="primary"
+              :icon="Promotion"
+              :disabled="!draft.trim()"
+              @click="emitSendToHost"
+            >
+              Send
+            </el-button>
           </div>
         </div>
-      </i-chat>
-    </div>
+      </div>
+    </i-chat>
   </div>
 </template>
 
 <style scoped>
-.vue-outside-page {
+.slots-input-page {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-.chat-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .chat {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   border-radius: 10px;
   --chat-footer-padding: 0;
 }
 
-.vue-custom-input {
-  padding: 0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px);
-  box-sizing: border-box;
+.slots-input {
+  padding: var(--chat-spacing-sm, 12px) var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px);
   background: var(--chat-surface, #fff);
   border-top: 1px solid var(--chat-border, #e5e7eb);
 }
 
-.vue-custom-input-field {
-  padding-top: var(--chat-spacing-sm, 12px);
-}
-
-.vue-custom-textarea {
+.slots-input-textarea {
   width: 100%;
   min-height: 44px;
   max-height: 160px;
@@ -215,13 +213,13 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 
-.vue-custom-textarea:focus {
+.slots-input-textarea:focus {
   outline: none;
   border-color: var(--chat-primary, #2563eb);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-primary, #2563eb) 20%, transparent);
 }
 
-.vue-custom-input-toolbar {
+.slots-input-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,15 +227,12 @@ onMounted(async () => {
   margin-top: 10px;
 }
 
-.vue-custom-input-actions {
+.slots-input-actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
-.vue-custom-input-end {
+.slots-input-end {
   display: flex;
   align-items: center;
   gap: 8px;

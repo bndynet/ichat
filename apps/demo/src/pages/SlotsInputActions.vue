@@ -1,4 +1,6 @@
 <script setup>
+import { ElButton } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import { nextTick, onMounted } from 'vue'
 import '@bndynet/chat'
 import { useChatDemo } from '../composables/useChatDemo.js'
@@ -107,13 +109,14 @@ onMounted(async () => {
         @send="handleSend"
         @cancel="handleCancel"
       >
-        <div slot="actions" class="nc-slot-actions">
+        <!-- <div slot="actions" class="nc-slot-actions">
           <el-button type="primary" size="small" icon="Plus" @click="handleAdd">Add</el-button>
           <button type="button" class="nc-slot-actions-btn" title="Search scope" aria-label="Search scope">
             <span aria-hidden="true">🌐</span>
           </button>
           <span class="nc-slot-actions-hint">5.4 Thinking</span>
-        </div>
+        </div> -->
+        <el-button slot="actions" :icon="Search" circle />
       </i-chat>
     </div>
   </div>

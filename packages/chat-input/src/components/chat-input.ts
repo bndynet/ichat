@@ -23,8 +23,8 @@ export class ChatInput extends LitElement {
 
   private static readonly _sendIcon = html`
     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M22 2 11 13" />
-      <path d="M22 2 15 22 11 13 2 9z" />
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
     </svg>
   `;
 
