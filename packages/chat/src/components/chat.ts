@@ -1,6 +1,11 @@
 import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import type { ChatMessage, ChatConfig, BlockRenderer } from '@bndynet/chat-messages';
+import type {
+  ChatFormSubmitDetail,
+  ChatMessage,
+  ChatConfig,
+  BlockRenderer,
+} from '@bndynet/chat-messages';
 import { ChatMessages, rendererRegistry, StreamingController } from '@bndynet/chat-messages';
 import { ChatInput } from '@bndynet/chat-input';
 import {
@@ -20,7 +25,7 @@ rendererRegistry.register(kpiRenderer);
 rendererRegistry.register(kpisRenderer);
 rendererRegistry.register(formRenderer);
 
-export type { ChatMessage, ChatConfig, BlockRenderer };
+export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
 
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
@@ -45,6 +50,7 @@ export type { ChatMessage, ChatConfig, BlockRenderer };
  * @fires cancel - Fired when user clicks cancel during streaming
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
+ * @fires form-submit - `{ detail: ChatFormSubmitDetail }` when an embedded chat form is submitted (`formId`, `title`, `values`, `messageId`, `message`)
  *
  * @example
  * ```html
@@ -246,6 +252,17 @@ export class NiceChat extends LitElement {
     );
   }
 
+  private _handleFormSubmit(e: CustomEvent<ChatFormSubmitDetail>): void {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent<ChatFormSubmitDetail>('form-submit', {
+        detail: e.detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   private _handleInputSlotChange(e: Event): void {
     const slot = e.target as HTMLSlotElement;
     this._hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
@@ -265,6 +282,7 @@ export class NiceChat extends LitElement {
         <i-chat-messages
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
+          @form-submit=${this._handleFormSubmit}
         >
           <slot name="empty" slot="empty"></slot>
           <slot name="self-avatar" slot="self-avatar"></slot>

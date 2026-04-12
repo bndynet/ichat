@@ -9,6 +9,11 @@ import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
 
+/**
+ * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
+ * and **`form-submit`** from embedded `i-chat-form` blocks (detail includes `messageId` / `message`
+ * after `i-chat-message` handles the event).
+ */
 @customElement('i-chat-messages')
 export class ChatMessages extends LitElement {
   static styles = unsafeCSS(styles);

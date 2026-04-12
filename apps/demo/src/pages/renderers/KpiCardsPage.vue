@@ -1,13 +1,23 @@
 <script setup>
-import { demoData } from '../../composables/demo-data.js'
-import ChatMessagesLayout from '../../components/ChatMessagesLayout.vue'
+import '@bndynet/chat';
+import { onMounted, nextTick, ref } from 'vue'
+import { demoData, nextId } from '../../composables/demo-data.js'
+import ChatToolbar from '../../components/ChatToolbar.vue'
 
-function init({ addStaticMessage, clear }) {
-  clear()
-  addStaticMessage(demoData[1][1])
-}
+const chatRef = ref(null)
+
+onMounted(async () => {
+  await nextTick()
+  chatRef.value.addMessage({
+    id: nextId(),
+    role: 'assistant',
+    content: demoData.kpis,
+    timestamp: Date.now(),
+  })
+})
 </script>
 
 <template>
-  <ChatMessagesLayout :init="init" />
+  <ChatToolbar :chat-ref="chatRef" />
+  <i-chat-messages ref="chatRef"></i-chat-messages>
 </template>

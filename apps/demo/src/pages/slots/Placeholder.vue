@@ -1,7 +1,8 @@
 <script setup>
 import '@bndynet/chat';
 import { ref, nextTick, onMounted } from 'vue';
-import { responseThinking, nextId } from '../../composables/demo-data';
+import { reply } from '../../composables/demo-data';
+import ChatToolbar from '../../components/ChatToolbar.vue';
 
 const chatRef = ref(null);
 
@@ -11,17 +12,12 @@ onMounted(async () => {
 
 function handleSend(e) {
   const content = e.detail.content;
-  chatRef.value.addMessage({
-    id: nextId(),
-    role: 'self',
-    content,
-    timestamp: Date.now(),
-  });
-  responseThinking(chatRef);
+  reply(chatRef, content);
 }
 </script>
 
 <template>
+  <ChatToolbar :chat-ref="chatRef" />
   <i-chat
     ref="chatRef"
     @send="handleSend"

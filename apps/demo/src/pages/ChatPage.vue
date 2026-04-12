@@ -1,7 +1,8 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue';
-import { responseThinking, nextId } from '../composables/demo-data.js';
+import { reply, nextId } from '../composables/demo-data.js';
 import '@bndynet/chat';
+import ChatToolbar from '../components/ChatToolbar.vue';
 
 const chatRef = ref(null);
 /** Default English; switch to `{ locale: 'zh-CN' }` to demo Chinese separators */
@@ -90,34 +91,54 @@ onMounted(async () => {
         '**Peer** — `role: "peer"` is for another human (left-aligned). Theme with `--chat-peer-*` (defaults match assistant until overridden).',
       timestamp: Date.now(),
     });
+    chat.addMessage({
+      id: nextId(),
+      role: 'assistant',
+      content:
+        '**Embedded form** — submit the fields below. The page listens for **`form-submit`** on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
+      timestamp: Date.now(),
+    });
   }, 3000);
 });
 
 function handleSend(e) {
   const content = e.detail.content;
-  const chat = chatRef.value;
-
-  chat.addMessage({
-    id: nextId(),
-    role: 'self',
-    content,
-    timestamp: Date.now(),
-  });
-  responseThinking(chatRef);
+  reply(chatRef, content);
 }
 
 function handleCancel() {
   chatRef.value.cancel('*— Response stopped —*');
 }
+
+/** `form-submit` — `detail` has `formId`, `title`, `values`, `messageId`, `message` (full row). */
+function handleFormSubmit(e) {
+  console.log('form submit:', e.detail);
+  const { formId, title, values, messageId, message } = e.detail;
+  const chat = chatRef.value;
+  const preview = JSON.stringify(values, null, 2);
+  const msgMeta =
+    message != null
+      ? `\n\n**message** — \`id\`: \`${message.id}\`, \`role\`: \`${message.role}\``
+      : '';
+  chat.addMessage({
+    id: nextId(),
+    role: 'assistant',
+    content:
+      `**form-submit** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
+    timestamp: Date.now(),
+  });
+}
 </script>
 
 <template>
+  <ChatToolbar :chat-ref="chatRef" />
   <i-chat
     ref="chatRef"
     :config="chatConfig"
     placeholder="Type something…"
     @send="handleSend"
     @cancel="handleCancel"
+    @form-submit="handleFormSubmit"
   >
     <div slot="empty" style="text-align: center">
       <h2>Fetching history messages...</h2>

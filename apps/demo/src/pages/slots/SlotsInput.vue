@@ -1,64 +1,38 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
-import { Link, Paperclip, Promotion } from '@element-plus/icons-vue'
-import '@bndynet/chat'
+import { ref, nextTick, onMounted } from 'vue';
+import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
+import '@bndynet/chat';
 import {
-  showErrorMessage,
-  cancelStreaming,
-  clearChat,
-  showErrorBanner,
-  addMessage as addChatMessage,
+  reply,
   setStreamingFromDetail,
-} from '../../composables/demo-data.js'
-import ChatToolbar from '../../components/ChatToolbar.vue'
+} from '../../composables/demo-data.js';
+import ChatToolbar from '../../components/ChatToolbar.vue';
 
-/**
- * For **Vue components** in the left “actions” area of the input region, do not use
- * `slot="actions"`: `i-chat` **cloneNode**s into `<i-chat-input>`, which breaks component instances.
- *
- * Instead: use **`slot="input"`** to replace the default `<i-chat-input>` entirely and lay out in Vue
- * “top: textarea / bottom: left toolbar + right send”—same semantic position as the built-in composer;
- * the left side can host any `<el-button>` or app components.
- *
- * Submit: on the `<i-chat>` element call
- * `dispatchEvent(new CustomEvent('send', { detail: { content } }))`; the parent `@send` receives it
- * (same as the default `<i-chat-input>`).
- */
+const draft = ref('');
+const model = ref('');
+const textareaRef = ref(null);
+const streamingUi = ref(false);
+const chatRef = ref(null);
+const streaming = ref(false);
 
-let msgId = 0
-const nextId = () => 'msg-' + ++msgId
-
-const draft = ref('')
-const model = ref('')
-const textareaRef = ref(null)
-const streamingUi = ref(false)
-const chatRef = ref(null)
-const streaming = ref(false)
-
-const runErrorMessage = () => showErrorMessage(chatRef)
-const cancelStreamingFn = () => cancelStreaming(chatRef)
-const clear = () => clearChat(chatRef)
-const showErrorBannerFn = () => showErrorBanner(chatRef)
-const addMessage = (partial) => addChatMessage(chatRef, partial)
-
-function onNiceChatStreamingChange(e) {
-  streamingUi.value = e.detail.streaming
-  setStreamingFromDetail(streaming, e)
+function onStreamingChange(e) {
+  streamingUi.value = e.detail.streaming;
+  setStreamingFromDetail(streaming, e);
 }
 
 function emitSendToHost() {
-  const content = draft.value.trim()
-  if (!content) return
-  const host = chatRef.value
-  if (!host) return
+  const content = draft.value.trim();
+  if (!content) return;
+  const host = chatRef.value;
+  if (!host) return;
   host.dispatchEvent(
     new CustomEvent('send', {
       bubbles: true,
       composed: true,
       detail: { content },
-    })
-  )
-  draft.value = ''
+    }),
+  );
+  draft.value = '';
 }
 
 function emitCancelToHost() {
@@ -66,137 +40,107 @@ function emitCancelToHost() {
     new CustomEvent('cancel', {
       bubbles: true,
       composed: true,
-    })
-  )
+    }),
+  );
 }
 
 /** Left “actions” area: plain Vue, same role as the default i-chat-input left column */
 function onAttachDemo() {
-  draft.value += (draft.value ? '\n' : '') + '[attachment placeholder]'
-  textareaRef.value?.focus()
+  draft.value += (draft.value ? '\n' : '') + '[attachment placeholder]';
+  textareaRef.value?.focus();
 }
 
 function handleSend(e) {
-  const content = e.detail.content
-  const chat = chatRef.value
-  if (!chat) return
-  chat.addMessage({ id: nextId(), role: 'self', content, timestamp: Date.now() })
-  const aiId = nextId()
-  chat.addMessage({ id: aiId, role: 'assistant', content: '', streaming: true, timestamp: Date.now() })
-  const reply = `Echo: *${content}*\n\n(Left buttons come from **Vue + slot="input"**, not \`slot="actions"\`.)`
-  let i = 0
-  const timer = setInterval(() => {
-    i += 4
-    if (i >= reply.length) {
-      chat.updateMessage(aiId, { content: reply, streaming: false })
-      clearInterval(timer)
-    } else {
-      chat.updateMessage(aiId, { content: reply.slice(0, i), streaming: true })
-    }
-  }, 25)
+  const content = e.detail.content;
+  reply(chatRef, content);
 }
 
 function onModelChange(e) {
-  console.log(e)
+  console.log(e);
 }
 
 onMounted(async () => {
-  await nextTick()
-  clear()
-  addMessage({
-    role: 'assistant',
-    content:
-      '### Vue “actions” inside `slot="input"`\n\n' +
-      'The input area below is **fully custom**: the **Element buttons** on the left sit in the **same place** as `slot="actions"` on the default `<i-chat-input>`, but they render through Vue without clone.\n\n' +
-      'Trade-off: you wire Send / Stop yourself and dispatch `@send` / `cancel` (see script comments).',
-    timestamp: Date.now(),
-  })
-})
+  await nextTick();
+});
 </script>
 
 <template>
-  <div class="slots-input-page">
-    <ChatToolbar
-      :streaming="streaming"
-      @error-message="runErrorMessage"
-      @error-banner="showErrorBannerFn"
-      @cancel-stream="cancelStreamingFn"
-      @clear="clear"
-    />
+  <ChatToolbar :streaming="streaming" :chat-ref="chatRef" />
 
-    <i-chat
-      ref="chatRef"
-      class="chat"
-      @streaming-change="onNiceChatStreamingChange"
-      @send="handleSend"
-    >
-      <!-- Replace default i-chat-input: bottom-left actions = any Vue components -->
-      <div slot="input" class="slots-input">
-        <textarea
-          ref="textareaRef"
-          v-model="draft"
-          class="slots-input-textarea"
-          placeholder="Say hi…"
-          rows="1"
-          @keydown.enter.exact.prevent="emitSendToHost"
-        />
-        <div class="slots-input-toolbar">
-          <div class="slots-input-actions">
-            <div>
-              <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo">Attach</el-button>
-            </div>
-            <div>
-              <el-select v-model="model" size="small" placeholder="Select Model" @change="onModelChange">
-                <el-option value="model1" selected>Model 1</el-option>
-                <el-option value="model2">Model 2</el-option>
-                <el-option value="model3">Model 3</el-option>
-              </el-select>
-            </div>
+  <i-chat
+    ref="chatRef"
+    @streaming-change="onStreamingChange"
+    @send="handleSend"
+  >
+    <!-- Replace default i-chat-input: bottom-left actions = any Vue components -->
+    <div slot="input" class="slots-input">
+      <textarea
+        ref="textareaRef"
+        v-model="draft"
+        class="slots-input-textarea"
+        placeholder="Say hi…"
+        rows="1"
+        @keydown.enter.exact.prevent="emitSendToHost"
+      />
+      <div class="slots-input-toolbar">
+        <div class="slots-input-actions">
+          <div>
+            <el-button
+              size="small"
+              :icon="Paperclip"
+              text
+              bg
+              @click="onAttachDemo"
+              >Attach</el-button
+            >
           </div>
-          <div class="slots-input-end">
-            <el-button
-              v-if="streamingUi"
+          <div style="width: 180px">
+            <el-select
+              v-model="model"
               size="small"
-              type="warning"
-              @click="emitCancelToHost"
+              placeholder="Select Model"
+              @change="onModelChange"
             >
-              Stop
-            </el-button>
-            <el-button
-              size="small"
-              type="primary"
-              :icon="Promotion"
-              :disabled="!draft.trim()"
-              @click="emitSendToHost"
-            >
-              Send
-            </el-button>
+              <el-option value="gpt-4o" label="GPT-4o" />
+              <el-option value="gpt-4o-mini" label="GPT-4o-mini" />
+              <el-option value="gpt-4" label="GPT-4" />
+              <el-option value="gpt-3.5-turbo" label="GPT-3.5-turbo" />
+              <el-option
+                value="gpt-3.5-turbo-mini"
+                label="GPT-3.5-turbo-mini"
+              />
+            </el-select>
           </div>
         </div>
+        <div class="slots-input-end">
+          <el-button
+            v-if="streamingUi"
+            size="small"
+            type="warning"
+            @click="emitCancelToHost"
+          >
+            Stop
+          </el-button>
+          <el-button
+            size="small"
+            type="primary"
+            :icon="Promotion"
+            :disabled="!draft.trim()"
+            @click="emitSendToHost"
+          >
+            Send
+          </el-button>
+        </div>
       </div>
-    </i-chat>
-  </div>
+    </div>
+  </i-chat>
 </template>
 
 <style scoped>
-.slots-input-page {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.chat {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: 10px;
-  --chat-footer-padding: 0;
-}
-
 .slots-input {
-  padding: var(--chat-spacing-sm, 12px) var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px);
+  margin: 0 -1rem -1rem -1rem;
+  padding: var(--chat-spacing-sm, 12px) var(--chat-spacing-md, 16px)
+    var(--chat-spacing-md, 16px);
   background: var(--chat-surface, #fff);
   border-top: 1px solid var(--chat-border, #e5e7eb);
 }
@@ -220,7 +164,8 @@ onMounted(async () => {
 .slots-input-textarea:focus {
   outline: none;
   border-color: var(--chat-primary, #2563eb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-primary, #2563eb) 20%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--chat-primary, #2563eb) 20%, transparent);
 }
 
 .slots-input-toolbar {

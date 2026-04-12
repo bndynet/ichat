@@ -1,1 +1,0 @@
-import{d as r}from"./demo-data-Cnf05NNT.js";import{C as e}from"./ChatMessagesLayout-BVluER33.js";import{a as s,b as i}from"./index-D4wLlsbU.js";import"./ChatToolbar-EUMtoQlZ.js";const u={__name:"KpiGroupPage",setup(p){function o({addStaticMessage:t,clear:a}){a(),t(r[2][1])}return(t,a)=>(s(),i(e,{init:o}))}};export{u as default};

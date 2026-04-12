@@ -21,6 +21,9 @@ export type {
   BlockRenderer,
   ChatConfig,
   DateSeparatorLabels,
+  ChatFormFieldValues,
+  ChatFormDateRangeValue,
+  ChatFormSubmitDetail,
 } from './types.js';
 export { DEFAULT_CONFIG } from './types.js';
 

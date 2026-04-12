@@ -8,6 +8,9 @@ export type {
   ChatConfig,
   BlockRenderer,
   DateSeparatorLabels,
+  ChatFormSubmitDetail,
+  ChatFormFieldValues,
+  ChatFormDateRangeValue,
 } from '@bndynet/chat-messages';
 export {
   DEFAULT_CONFIG,

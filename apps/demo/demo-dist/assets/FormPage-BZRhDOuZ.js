@@ -1,1 +1,0 @@
-import{d as r}from"./demo-data-Cnf05NNT.js";import{C as e}from"./ChatMessagesLayout-BVluER33.js";import{a as s,b as m}from"./index-D4wLlsbU.js";import"./ChatToolbar-EUMtoQlZ.js";const f={__name:"FormPage",setup(i){function o({addStaticMessage:t,clear:a}){a(),t(r[3][1])}return(t,a)=>(s(),m(e,{init:o}))}};export{f as default};

@@ -1,1 +1,0 @@
-import{d as r}from"./demo-data-Cnf05NNT.js";import{C as e}from"./ChatMessagesLayout-BVluER33.js";import{a as s,b as i}from"./index-D4wLlsbU.js";import"./ChatToolbar-EUMtoQlZ.js";const f={__name:"KpiCardsPage",setup(m){function o({addStaticMessage:a,clear:t}){t(),a(r[1][1])}return(a,t)=>(s(),i(e,{init:o}))}};export{f as default};

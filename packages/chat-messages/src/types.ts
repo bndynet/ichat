@@ -45,6 +45,30 @@ export interface ChatMessage {
   duration?: number;
 }
 
+/** Start/end pair for `date-range` fields in embedded fenced `form` blocks. */
+export interface ChatFormDateRangeValue {
+  start: string;
+  end: string;
+}
+
+/** Field values from `i-chat-form` (aligned with `@bndynet/chat-renderers` `FormSubmitDetail.values`). */
+export type ChatFormFieldValues = Record<
+  string,
+  string | boolean | string[] | ChatFormDateRangeValue
+>;
+
+/**
+ * `form-submit` event detail after `i-chat-message` adds the owning message.
+ * Bubbles through `i-chat-messages` and `i-chat`.
+ */
+export interface ChatFormSubmitDetail {
+  formId: string;
+  title: string;
+  values: ChatFormFieldValues;
+  messageId: string;
+  message: ChatMessage;
+}
+
 /** Strings for message list date separators (between day buckets). */
 export interface DateSeparatorLabels {
   today: string;

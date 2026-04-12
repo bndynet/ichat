@@ -1,21 +1,67 @@
 <script setup>
+import { computed, unref } from 'vue'
 import {
   Warning,
   Bell,
   Delete,
   CircleClose,
 } from '@element-plus/icons-vue'
+import { cancelPendingStreamPlayback } from '../composables/demo-data.js'
 
-defineProps({
+const CANCEL_HINT = '*— Response stopped —*'
+
+const props = defineProps({
   streaming: { type: Boolean, default: false },
+  /**
+   * Parent’s `<i-chat>` / `<i-chat-messages>` instance.
+   * Pass `ref(chat)` from template as `:chat-ref="chatRef"` — Vue unwraps refs there, so this is
+   * usually the element itself; `unref()` also accepts an actual Ref if passed from script.
+   */
+  chatRef: { type: Object, required: true },
 })
 
-defineEmits([
-  'error-message',
-  'error-banner',
-  'cancel-stream',
-  'clear',
-])
+/** Resolved host element (template `:chat-ref="r"` unwraps `r`, so it is not `r.value`). */
+const chatEl = computed(() => unref(props.chatRef))
+
+let msgSeq = 0
+function nextMsgId() {
+  return `msg-${++msgSeq}`
+}
+
+function onErrorMessage() {
+  const chat = chatEl.value
+  if (!chat) return
+  chat.addMessage({
+    id: nextMsgId(),
+    role: 'self',
+    content: 'Tell me about quantum computing',
+    timestamp: Date.now(),
+  })
+  setTimeout(() => {
+    chat.addMessage({
+      id: nextMsgId(),
+      role: 'assistant',
+      content: '',
+      error: 'Service temporarily unavailable. Please try again later.',
+      timestamp: Date.now(),
+    })
+  }, 500)
+}
+
+function onErrorBanner() {
+  chatEl.value?.showError('Network lost. Reconnecting…', {
+    duration: 5000,
+  })
+}
+
+function onCancelStream() {
+  cancelPendingStreamPlayback()
+  chatEl.value?.cancel(CANCEL_HINT)
+}
+
+function onClear() {
+  chatEl.value?.clear()
+}
 </script>
 
 <template>
@@ -24,7 +70,7 @@ defineEmits([
       size="small"
       :disabled="streaming"
       :icon="Warning"
-      @click="$emit('error-message')"
+      @click="onErrorMessage"
     >
       Error Message
     </el-button>
@@ -32,7 +78,7 @@ defineEmits([
     <el-button
       size="small"
       :icon="Bell"
-      @click="$emit('error-banner')"
+      @click="onErrorBanner"
     >
       Error Banner
     </el-button>
@@ -42,7 +88,7 @@ defineEmits([
       type="danger"
       :icon="CircleClose"
       :disabled="!streaming"
-      @click="$emit('cancel-stream')"
+      @click="onCancelStream"
     >
       Cancel
     </el-button>
@@ -52,7 +98,7 @@ defineEmits([
       type="danger"
       plain
       :icon="Delete"
-      @click="$emit('clear')"
+      @click="onClear"
     >
       Clear
     </el-button>

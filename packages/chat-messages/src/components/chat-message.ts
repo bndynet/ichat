@@ -3,7 +3,12 @@ import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ref, createRef } from 'lit/directives/ref.js';
 import morphdom from 'morphdom';
-import type { ChatMessage, ChatMessageRole } from '../types.js';
+import type {
+  ChatFormFieldValues,
+  ChatFormSubmitDetail,
+  ChatMessage,
+  ChatMessageRole,
+} from '../types.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
@@ -45,6 +50,59 @@ export class ChatMessageElement extends LitElement {
       );
     },
   });
+
+  /**
+   * Enrich `form-submit` from `i-chat-form` with `messageId` / `message`.
+   *
+   * Note: With Shadow DOM, `event.target` for a bubbling `composed` event may be
+   * **retargeted** to this host, so we detect the source via `composedPath()` instead
+   * of `target === i-chat-form`. Re-dispatched events include `messageId` and are skipped.
+   */
+  private _onFormSubmit = (e: Event): void => {
+    if (!this.message) return;
+    const ev = e as CustomEvent<
+      Partial<ChatFormSubmitDetail> & {
+        formId: string;
+        title: string;
+        values: ChatFormFieldValues;
+      }
+    >;
+    // Our own re-dispatch — let it bubble (already has message / messageId).
+    if (ev.detail?.messageId != null) return;
+
+    const path = e.composedPath();
+    if (!path.includes(this)) return;
+    const fromEmbeddedForm = path.some(
+      (n) => n instanceof HTMLElement && n.tagName === 'I-CHAT-FORM'
+    );
+    if (!fromEmbeddedForm) return;
+
+    e.stopPropagation();
+    const detail: ChatFormSubmitDetail = {
+      formId: ev.detail.formId,
+      title: ev.detail.title ?? '',
+      values: ev.detail.values,
+      messageId: this.message.id,
+      message: this.message,
+    };
+    this.dispatchEvent(
+      new CustomEvent<ChatFormSubmitDetail>('form-submit', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  };
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('form-submit', this._onFormSubmit);
+  }
+
+  override disconnectedCallback(): void {
+    this.removeEventListener('form-submit', this._onFormSubmit);
+    super.disconnectedCallback();
+  }
 
   willUpdate(changed: Map<string, unknown>): void {
     // Update speed first so _charsPerTick is correct when setContent is called below.

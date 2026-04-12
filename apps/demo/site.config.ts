@@ -6,7 +6,6 @@ export default defineConfig({
     { label: 'Home', icon: 'home', page: () => import('../../README.md?raw') },
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
     { label: 'Renderers', icon: 'layout-list',  children: [
-      { label: 'Thinking stream', icon: 'sparkles', page: () => import('./src/pages/renderers/ThinkingPage.vue') },
       { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
       { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
       { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
@@ -21,7 +20,7 @@ export default defineConfig({
       children: [
         {
           label: 'Placeholder',
-          icon: 'circle-user',
+          icon: 'clapperboard',
           page: () => import('./src/pages/slots/Placeholder.vue'),
         },
         {
@@ -35,13 +34,13 @@ export default defineConfig({
           page: () => import('./src/pages/slots/Actions.vue'),
         },
         {
-          label: 'Custom input',
+          label: 'Input',
           icon: 'panel-top',
           page: () => import('./src/pages/slots/SlotsInput.vue'),
         },
         {
-          label: 'Custom input actions',
-          icon: 'message-circle',
+          label: 'Input actions',
+          icon: 'banknote',
           page: () => import('./src/pages/slots/SlotsInputActions.vue'),
         },
       ],
