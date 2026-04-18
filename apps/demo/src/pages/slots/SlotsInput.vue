@@ -35,13 +35,8 @@ function emitSendToHost() {
   draft.value = '';
 }
 
-function emitCancelToHost() {
-  chatRef.value?.dispatchEvent(
-    new CustomEvent('cancel', {
-      bubbles: true,
-      composed: true,
-    }),
-  );
+function handleCancel() {
+  chatRef.value.cancel('*— Response stopped —*');
 }
 
 /** Left “actions” area: plain Vue, same role as the default i-chat-input left column */
@@ -117,7 +112,7 @@ onMounted(async () => {
             v-if="streamingUi"
             size="small"
             type="warning"
-            @click="emitCancelToHost"
+            @click="handleCancel"
           >
             Stop
           </el-button>

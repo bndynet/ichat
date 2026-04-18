@@ -4,6 +4,7 @@ import { reply, nextId } from '../composables/demo-data.js';
 import '@bndynet/chat';
 import ChatToolbar from '../components/ChatToolbar.vue';
 
+const loading = ref(true);
 const chatRef = ref(null);
 /** Default English; switch to `{ locale: 'zh-CN' }` to demo Chinese separators */
 const chatConfig = { locale: 'zh-CN' };
@@ -98,6 +99,8 @@ onMounted(async () => {
         '**Embedded form** — submit the fields below. The page listens for **`form-submit`** on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
       timestamp: Date.now(),
     });
+
+    loading.value = false;
   }, 3000);
 });
 
@@ -123,8 +126,7 @@ function handleFormSubmit(e) {
   chat.addMessage({
     id: nextId(),
     role: 'assistant',
-    content:
-      `**form-submit** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
+    content: `**form-submit** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
     timestamp: Date.now(),
   });
 }
@@ -141,7 +143,8 @@ function handleFormSubmit(e) {
     @form-submit="handleFormSubmit"
   >
     <div slot="empty" style="text-align: center">
-      <h2>Fetching history messages...</h2>
+      <h2 v-if="loading">Fetching history messages...</h2>
+      <h2 v-else>Start chatting...</h2>
     </div>
   </i-chat>
 </template>

@@ -27,12 +27,14 @@
     "lit": "^3.3.0"
   },
   "peerDependencies": {
-    "echarts": ">=6"
+    "echarts": ">=6",
+    "mermaid": ">=11"
   },
   "devDependencies": {
     "@bndynet/chat-messages": "file:../chat-messages",
     "@bndynet/chat-input": "file:../chat-input",
     "@bndynet/chat-renderers": "file:../chat-renderers",
+    "mermaid": "^11.4.0",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"

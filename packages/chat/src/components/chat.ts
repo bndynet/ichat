@@ -13,6 +13,7 @@ import {
   kpiRenderer,
   kpisRenderer,
   formRenderer,
+  mermaidRenderer,
 } from '@bndynet/chat-renderers';
 
 import styles from '../styles/chat.scss';
@@ -24,6 +25,7 @@ rendererRegistry.register(chartRenderer);
 rendererRegistry.register(kpiRenderer);
 rendererRegistry.register(kpisRenderer);
 rendererRegistry.register(formRenderer);
+rendererRegistry.register(mermaidRenderer);
 
 export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
 
@@ -31,7 +33,7 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * `<i-chat>` — A complete, drop-in chat Web Component.
  *
  * Bundles `<i-chat-messages>`, `<i-chat-input>`, and all built-in renderers
- * (chart, kpi, form) so consumers only need a single import.
+ * (chart, kpi, form, mermaid) so consumers only need a single import.
  *
  * ## Slots
  *

@@ -8,6 +8,7 @@ export default defineConfig({
     { label: 'Renderers', icon: 'layout-list',  children: [
       { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
       { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
+      { label: 'Mermaid', icon: 'git-fork', page: () => import('./src/pages/renderers/MermaidPage.vue') },
       { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
       { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/renderers/KpiGroupPage.vue') },
       { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },

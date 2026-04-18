@@ -66,6 +66,34 @@ const charts = {
 
 /** @type {Record<string, string>} Keys match sidebar / preset labels; values are markdown bodies. */
 export const demoData = {
+  mermaid:
+    'Diagrams use the **`mermaid`** fence. Theme follows `data-theme` on `<html>` (light / dark).\n\n' +
+      '## Flowchart\n\n' +
+      '```mermaid\n' +
+      'flowchart LR\n' +
+      '  A[i-chat] --> B[Markdown]\n' +
+      '  B --> C[Mermaid SVG]\n' +
+      '```\n\n' +
+      '## Sequence\n\n' +
+      '```mermaid\n' +
+      'sequenceDiagram\n' +
+      '  participant U as User\n' +
+      '  participant C as Chat\n' +
+      '  U->>C: message\n' +
+      '  C-->>U: streamed reply\n' +
+      '```\n\n' +
+      '## Graph\n\n' +
+      '```mermaid\n' +
+      'graph TD\n' +
+      '  A[Enter Chart Definition] --> B(Preview)\n' +
+      '  B --> C{decide}\n' +
+      '  C --> D[Keep]\n' +
+      '  C --> E[Edit Definition]\n' +
+      '  E --> B\n' +
+      '  D --> F[Save Image and Code]\n' +
+      '  F --> B\n' +
+      '```\n',
+
   chart:
     'Here are the chart types supported by **@bndynet/icharts**.\n\n' +
       '## XY Charts\n\n### Bar\n\n' +
@@ -161,12 +189,13 @@ const thinkingDemoEvents = [
     content:
       'Plan steps above streamed as **reasoning**; below, the same markdown as the sidebar presets (single pass).\n\n',
   },
-  { content: demoData.Charts + '\n\n' },
-  { content: demoData['KPI Cards'] + '\n\n' },
-  { content: demoData['KPI Group'] + '\n\n' },
-  { content: demoData.Timeline + '\n\n' },
-  { content: demoData.Form + '\n\n' },
-  { content: demoData['Details (fence)'] + '\n\n' },
+  { content: demoData.chart + '\n\n' },
+  { content: demoData.kpiGroup + '\n\n' },
+  { content: demoData.kpis + '\n\n' },
+  { content: demoData.timeline + '\n\n' },
+  { content: demoData.form + '\n\n' },
+  { content: demoData.detailsFence + '\n\n' },
+  { content: demoData.detailsContainer + '\n\n' },
   {
     content:
       '## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Reasoning** — optional collapsible block above the fold.\n- **Markdown** — headings, lists, tables, and fences.\n\n',

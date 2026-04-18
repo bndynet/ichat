@@ -79,7 +79,7 @@ Charts and other bundled renderers are registered automatically. When developing
 - **Reasoning blocks** — collapsible “thinking” UI + streaming
 - **Streaming typewriter** — progressive reveal and cursor state
 - **Slots** — avatars, actions, empty state
-- **Theming** — 12 base CSS custom properties; all components derive from them automatically
+- **Theming** — 12 base CSS custom properties; all components derive from them automatically ([host theme contract](#host-theme-contract-light--dark) for charts & Mermaid)
 - **TypeScript** — declaration files for public API
 
 ## Message roles (`ChatMessageRole`)
@@ -343,6 +343,32 @@ For single-timeline messages, `bid` can be omitted in both phases.
 
 All visual styles are driven by CSS custom properties. Override them on `:root`, **`<i-chat>`**, or any ancestor to customize the look and feel — no need to touch the source.
 
+### Host theme contract (light / dark)
+
+Built-in pieces that must **track page light/dark** — fenced **`chart`** blocks (ECharts / `@bndynet/icharts`) and fenced **`mermaid`** blocks — all follow the **same** rules on the **document root** (`document.documentElement`, i.e. **`<html>`**):
+
+| Signal | Dark mode |
+|--------|-----------|
+| **`class`** | `<html class="…">` **includes** the token `dark` (e.g. Tailwind / Element Plus style `class="dark"`). |
+| **`data-theme`** | The attribute value **contains the substring** `dark` (e.g. `dark`, `github-dark`, `preferred-color-scheme-dark`). |
+
+If **neither** applies, the page is treated as **light** for these integrations.
+
+**Set the contract on `<html>`** so chart and Mermaid stay aligned with your app chrome. Example (JS):
+
+```js
+document.documentElement.setAttribute('data-theme', 'dark');
+document.documentElement.classList.add('dark');
+```
+
+Toggling **only** `<body>` or a nested wrapper without updating `<html>` may leave charts/Mermaid on the previous palette.
+
+**What the library watches:** a `MutationObserver` on **`<html>`** for **`data-theme`** and **`class`**. Charts call `@bndynet/icharts` `switchTheme('dark' | 'light')`. Mermaid re-runs `render()` with the matching built-in theme. Message bodies use **Shadow DOM**; the implementation **walks open shadow roots** to find `<i-chart>` / `<i-chat-mermaid>` so diagrams inside bubbles still update.
+
+**CSS-only dark:** the [Quick example — dark theme](#quick-example--dark-theme) below uses `:root[data-theme="dark"] { … }`. You can instead put the `dark` **class** on `<html>` and drive `--chat-*` from `html.dark { … }` — both satisfy the contract above.
+
+**Limitations:** Closed shadow trees or theme flags set **only** on inner nodes (never reflected on `<html>`) are invisible to this contract; use `<html>` for global theme, or supply your own `BlockRenderer` / styling.
+
 ### Token architecture
 
 The library uses a **12 base token** system. Every component-specific token (user bubbles, reasoning, timeline, form, input, etc.) automatically derives from these base tokens via `var()` chaining. Most apps only need to set these 12 properties to completely re-theme the UI:
@@ -389,7 +415,7 @@ Component-specific tokens chain to base tokens. You can override any component t
 
 ### Quick example — dark theme
 
-With the 12-token architecture, a dark theme only needs the base tokens plus any design-constant overrides (like code block colors):
+With the 12-token architecture, a dark theme only needs the base tokens plus any design-constant overrides (like code block colors). Pair this selector with **`data-theme` on `<html>`** (or use **`html.dark`** tokens) so it matches the [host theme contract](#host-theme-contract-light--dark) for charts and Mermaid.
 
 ```css
 :root[data-theme="dark"] {

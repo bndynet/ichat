@@ -323,6 +323,16 @@ export class ChatMessageElement extends LitElement {
         morphdom(contentEl, temp, {
           childrenOnly: true,
           onBeforeElUpdated(fromEl, toEl) {
+            // Mermaid source lives in a <pre> child, not in attributes. The generic
+            // "skip if attrs unchanged" rule would always skip (zero attrs on both
+            // sides), leaving a stale fragment from the first streaming frame (e.g. "s").
+            if (fromEl.tagName === 'I-CHAT-MERMAID' && toEl.tagName === 'I-CHAT-MERMAID') {
+              return true;
+            }
+            // Source lives in a hidden <pre> child, not only in attributes — same as mermaid.
+            if (fromEl.tagName === 'I-CHAT-CODE-TOGGLE' && toEl.tagName === 'I-CHAT-CODE-TOGGLE') {
+              return true;
+            }
             // Skip custom elements whose attributes are all unchanged.
             // Tag names with a hyphen are custom elements (web components).
             if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {

@@ -33,6 +33,9 @@ const EYE_ICON  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" s
 
 // ── <i-chat-code-toggle> custom element ─────────────────────────────────────────
 
+/** Light-DOM holder for fence source (attributes cannot hold long / multiline code reliably). */
+export const CHAT_TOGGLE_SOURCE_CLASS = 'i-chat-toggle__src';
+
 // Theme `--chat-*`: `chat-host-tokens.scss` is `@use`d into chat-messages / chat-message / chat-reasoning styles.
 
 const TOGGLE_STYLES = `
@@ -80,7 +83,7 @@ const TOGGLE_STYLES = `
     box-sizing: border-box;
     overflow-y: auto;
     margin: 0;
-    padding: var(--chat-spacing-md);
+    padding: var(--chat-spacing-xs) var(--chat-spacing-sm);
     border-radius: var(--chat-radius-sm);
     background: var(--chat-code-bg);
     border: 1px solid var(--chat-border);
@@ -106,11 +109,25 @@ const TOGGLE_STYLES = `
 `;
 
 class ChatCodeToggle extends HTMLElement {
-  connectedCallback(): void {
-    if (this.shadowRoot) return; // already initialized (HMR / reconnect guard)
+  private _shadowCodeEl: HTMLElement | null = null;
+  private _srcObserver: MutationObserver | null = null;
+  private _mutationFlush = false;
 
+  connectedCallback(): void {
+    if (!this.shadowRoot) {
+      this._initShadow();
+    }
+    this._syncCodeFromLightDom();
+    this._ensureSrcObserver();
+  }
+
+  disconnectedCallback(): void {
+    this._srcObserver?.disconnect();
+    this._srcObserver = null;
+  }
+
+  private _initShadow(): void {
     const shadow = this.attachShadow({ mode: 'open' });
-    const code = this.getAttribute('data-code') ?? '';
 
     // ── Style ──
     const styleEl = document.createElement('style');
@@ -123,8 +140,8 @@ class ChatCodeToggle extends HTMLElement {
     const codeView = document.createElement('pre');
     codeView.className = 'code-view chat-code-fallback';
     const codeEl = document.createElement('code');
-    codeEl.textContent = code; // textContent avoids any XSS risk
     codeView.appendChild(codeEl);
+    this._shadowCodeEl = codeEl;
 
     const btn = document.createElement('button');
     btn.className = 'toggle-btn';
@@ -157,6 +174,31 @@ class ChatCodeToggle extends HTMLElement {
     shadow.appendChild(codeView);
     shadow.appendChild(btn);
   }
+
+  /** Prefer hidden `<pre class="…">`; fall back to legacy `data-code` attribute. */
+  private _syncCodeFromLightDom(): void {
+    const code =
+      this.querySelector(`pre.${CHAT_TOGGLE_SOURCE_CLASS}`)?.textContent ??
+      this.getAttribute('data-code') ??
+      '';
+    if (this._shadowCodeEl) {
+      this._shadowCodeEl.textContent = code;
+    }
+  }
+
+  /** Keep shadow code view in sync when morphdom patches the light-DOM `<pre>` (streaming). */
+  private _ensureSrcObserver(): void {
+    if (this._srcObserver || typeof MutationObserver === 'undefined') return;
+    this._srcObserver = new MutationObserver(() => {
+      if (this._mutationFlush) return;
+      this._mutationFlush = true;
+      queueMicrotask(() => {
+        this._mutationFlush = false;
+        this._syncCodeFromLightDom();
+      });
+    });
+    this._srcObserver.observe(this, { childList: true, subtree: true, characterData: true });
+  }
 }
 
 if (!customElements.get('i-chat-code-toggle')) {
@@ -171,7 +213,13 @@ if (!customElements.get('i-chat-code-toggle')) {
  * rendered view and the raw source code.
  */
 export function wrapWithCodeToggle(lang: string, code: string, renderedHtml: string): string {
-  return `<i-chat-code-toggle data-lang="${escapeHtml(lang)}" data-code="${escapeHtml(code)}">${renderedHtml}</i-chat-code-toggle>`;
+  // Do not put `code` in a `data-code` attribute — long / multiline values truncate in practice.
+  return (
+    `<i-chat-code-toggle data-lang="${escapeHtml(lang)}">` +
+    `<pre class="${CHAT_TOGGLE_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre>` +
+    `${renderedHtml}` +
+    `</i-chat-code-toggle>`
+  );
 }
 
 /**
@@ -191,7 +239,7 @@ export function renderCodeFallback(_lang: string, code: string): string {
     'max-height:200px',
     'overflow-y:auto',
     'margin:0',
-    'padding:var(--chat-spacing-md)',
+    'padding:var(--chat-spacing-xs) var(--chat-spacing-sm)',
     'border-radius:var(--chat-radius-sm)',
     'background:var(--chat-code-bg)',
     'border:1px solid var(--chat-border)',

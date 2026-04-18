@@ -44,16 +44,18 @@ export interface ChartInput {
   options?: ChartOptions;
 }
 
-// ── Theme detection ───────────────────────────────────────────────────────────
+// ── Theme detection (same contract as mermaid-renderer — README § Host theme contract) ──
 
 /** Returns true when the document is currently in dark mode. */
 function isDarkTheme(): boolean {
   if (typeof document === 'undefined') return false;
-  return (document.documentElement.getAttribute('data-theme') ?? '').includes('dark');
+  const html = document.documentElement;
+  if (html.classList.contains('dark')) return true;
+  return (html.getAttribute('data-theme') ?? '').includes('dark');
 }
 
 /**
- * Watch <html data-theme> and call switchTheme() on every theme change.
+ * Watch the root element (`document.documentElement`) for `data-theme` and `class` and call switchTheme() on every change.
  * switchTheme() updates both the global colorHub state (so newly created
  * charts pick up the correct theme via resolveThemeName()) and calls
  * setTheme() on every IChart instance already in the registry.
@@ -63,7 +65,10 @@ function setupThemeObserver(): void {
 
   new MutationObserver(() => {
     switchTheme(isDarkTheme() ? 'dark' : 'light');
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'class'],
+  });
 }
 
 setupThemeObserver();

@@ -9,5 +9,5 @@ export default defineConfig({
   sourcemap: true,
   clean: !process.argv.includes('--watch'),
   treeshake: true,
-  external: ['markdown-it', '@bndynet/chat-messages', 'echarts'],
+  external: ['markdown-it', '@bndynet/chat-messages', 'echarts', 'mermaid'],
 });
