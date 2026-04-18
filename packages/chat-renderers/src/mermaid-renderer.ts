@@ -2,6 +2,7 @@ import type MarkdownIt from 'markdown-it';
 import type { BlockRenderer } from '@bndynet/chat-messages';
 import { renderCodeFallback, wrapWithCodeToggle, escapeHtml, type RendererOptions } from './utils.js';
 import { DEFAULT_MERMAID_CONFIG } from './mermaid-config.js';
+import { buildMermaidThemeVariables } from './mermaid-theme-tokens.js';
 
 // ── Theme (same contract as chart-renderer — documented in repo README § Host theme contract) ──
 
@@ -32,10 +33,6 @@ function collectAllMermaidHosts(): ChatMermaid[] {
 
   walk(document);
   return out;
-}
-
-function getMermaidTheme(): 'dark' | 'default' {
-  return isDarkTheme() ? 'dark' : 'default';
 }
 
 let themeObserverAttached = false;
@@ -165,8 +162,21 @@ export class ChatMermaid extends HTMLElement {
       const mermaid = (await import('mermaid')).default;
       mermaid.initialize({
         ...DEFAULT_MERMAID_CONFIG,
-        theme: getMermaidTheme(),
+        theme: 'base',
+        darkMode: isDarkTheme(),
+        themeVariables: {
+          ...DEFAULT_MERMAID_CONFIG.themeVariables,
+          ...buildMermaidThemeVariables(this),
+        },
       });
+
+      // `render()` returns an error SVG (e.g. "Syntax error in text") without throwing — validate first.
+      const parsed = await mermaid.parse(def, { suppressErrors: true });
+      if (parsed === false) {
+        if (gen !== this._renderGen) return;
+        root.innerHTML = renderCodeFallback('mermaid', this._definitionText());
+        return;
+      }
 
       const id = `mm-${++idCounter}-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.render(id, def);

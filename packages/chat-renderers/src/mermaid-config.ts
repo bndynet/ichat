@@ -1,5 +1,9 @@
 import type { MermaidConfig } from "mermaid";
 
+/**
+ * Layout and typography defaults. Colors come from `buildMermaidThemeVariables()`
+ * in `mermaid-theme-tokens.ts` at render time (`theme: 'base'`).
+ */
 export const DEFAULT_MERMAID_CONFIG: MermaidConfig =
 {
   startOnLoad: false,
@@ -8,7 +12,7 @@ export const DEFAULT_MERMAID_CONFIG: MermaidConfig =
   fontSize: 13,
 
   themeVariables: {
-    fontSize: '13px'
+    fontSize: '13px',
   },
 
   // Flowchart / Graph

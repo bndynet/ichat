@@ -339,6 +339,31 @@ For single-timeline messages, `bid` can be omitted in both phases.
 | `--chat-timeline-pending-border` | `--chat-border` | Pending step border color |
 | `--chat-timeline-indicator-size` | `--chat-font-size` | Indicator circle diameter |
 
+### Mermaid CSS custom properties
+
+Fenced **`mermaid`** blocks render inside **`<i-chat-mermaid>`**. The renderer uses Mermaid **`theme: 'base'`** and fills **`themeVariables`** from `getComputedStyle(host)` on that element: for each `--chat-mermaid-*` below, if the value is empty after `trim()`, the listed **`--chat-*`** fallbacks are read in order (still on the same host, so inherited `:root` tokens apply). You do **not** need to define `--chat-mermaid-*` unless you want diagram-only overrides.
+
+| Property | Derives from (read order) | Description |
+|----------|---------------------------|-------------|
+| `--chat-mermaid-background` | `--chat-bg` | Diagram canvas / outer background |
+| `--chat-mermaid-text` | `--chat-text` | Primary labels and node text |
+| `--chat-mermaid-text-secondary` | `--chat-text-secondary` | Secondary labels (loops, tertiary text) |
+| `--chat-mermaid-line` | `--chat-border` | Lines, borders, arrows, links |
+| `--chat-mermaid-node-fill` | `--chat-surface-alt` | Primary block fill (first in the shared `node-fill` → `main-fill` → `--chat-surface-alt` chain) |
+| `--chat-mermaid-cluster-fill` | `--chat-surface-alt` | Cluster / subgraph fill |
+| `--chat-mermaid-main-fill` | `--chat-surface` | Second choice in the **same** block-fill chain if `node-fill` is unset (not a separate layer for flowchart nodes) |
+| `--chat-mermaid-tertiary-fill` | `--chat-surface` | Tertiary fills |
+| `--chat-mermaid-primary` | `--chat-primary` | Accent (primary-colored elements) |
+| `--chat-mermaid-primary-contrast` | `--chat-self-text`, `--chat-user-text`, then `--chat-text` | Text on primary-colored shapes |
+| `--chat-mermaid-secondary-fill` | `--chat-primary-light` | Secondary fills (e.g. activation bars) |
+| `--chat-mermaid-note-fill` | `--chat-code-bg` | Note / callout background |
+| `--chat-mermaid-note-text` | `--chat-code-text` | Note / callout text |
+| `--chat-mermaid-edge-label-bg` | `--chat-surface` | Edge label background |
+
+**Why `mainBkg` / `nodeBkg` / actors look the same:** Mermaid’s flowchart stylesheet uses `themeVariables.mainBkg` for `.node rect` fills, while sequence diagrams use `actorBkg`. The integration resolves one **block** color from `node-fill` → `main-fill` → `--chat-surface-alt`, assigns it to **both** `mainBkg` and `nodeBkg`, and sets `actorBkg` to that value so flowchart and sequence participant boxes stay aligned.
+
+The TypeScript package also exports **`CHAT_MERMAID_TOKEN_NAMES`** from `@bndynet/chat-renderers` for tooling or docs.
+
 ## Theming
 
 All visual styles are driven by CSS custom properties. Override them on `:root`, **`<i-chat>`**, or any ancestor to customize the look and feel — no need to touch the source.
@@ -363,7 +388,7 @@ document.documentElement.classList.add('dark');
 
 Toggling **only** `<body>` or a nested wrapper without updating `<html>` may leave charts/Mermaid on the previous palette.
 
-**What the library watches:** a `MutationObserver` on **`<html>`** for **`data-theme`** and **`class`**. Charts call `@bndynet/icharts` `switchTheme('dark' | 'light')`. Mermaid re-runs `render()` with the matching built-in theme. Message bodies use **Shadow DOM**; the implementation **walks open shadow roots** to find `<i-chart>` / `<i-chat-mermaid>` so diagrams inside bubbles still update.
+**What the library watches:** a `MutationObserver` on **`<html>`** for **`data-theme`** and **`class`**. Charts call `@bndynet/icharts` `switchTheme('dark' | 'light')`. Mermaid re-runs `render()` with **`theme: 'base'`**, **`darkMode`** derived from the same signals, and **`themeVariables`** merged from optional **`--chat-mermaid-*`** tokens (falling back to **`--chat-*`** as in [Mermaid CSS custom properties](#mermaid-css-custom-properties)). Message bodies use **Shadow DOM**; the implementation **walks open shadow roots** to find `<i-chart>` / `<i-chat-mermaid>` so diagrams inside bubbles still update.
 
 **CSS-only dark:** the [Quick example — dark theme](#quick-example--dark-theme) below uses `:root[data-theme="dark"] { … }`. You can instead put the `dark` **class** on `<html>` and drive `--chat-*` from `html.dark { … }` — both satisfy the contract above.
 
@@ -411,6 +436,20 @@ Component-specific tokens chain to base tokens. You can override any component t
 | `--chat-input-border` | `--chat-border` |
 | `--chat-input-text` | `--chat-text` |
 | `--chat-input-primary` | `--chat-primary` |
+| `--chat-mermaid-background` | `--chat-bg` |
+| `--chat-mermaid-text` | `--chat-text` |
+| `--chat-mermaid-text-secondary` | `--chat-text-secondary` |
+| `--chat-mermaid-line` | `--chat-border` |
+| `--chat-mermaid-node-fill` | `--chat-surface-alt` |
+| `--chat-mermaid-cluster-fill` | `--chat-surface-alt` |
+| `--chat-mermaid-main-fill` | `--chat-surface`, then `--chat-surface-alt` (after `node-fill` in the shared block-fill chain) |
+| `--chat-mermaid-tertiary-fill` | `--chat-surface` |
+| `--chat-mermaid-primary` | `--chat-primary` |
+| `--chat-mermaid-primary-contrast` | `--chat-self-text`, `--chat-user-text`, `--chat-text` |
+| `--chat-mermaid-secondary-fill` | `--chat-primary-light` |
+| `--chat-mermaid-note-fill` | `--chat-code-bg` |
+| `--chat-mermaid-note-text` | `--chat-code-text` |
+| `--chat-mermaid-edge-label-bg` | `--chat-surface` |
 | `--chat-form-*` | Various `--chat-*` base tokens |
 
 ### Quick example — dark theme

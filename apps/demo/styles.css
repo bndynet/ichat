@@ -27,6 +27,20 @@
   --chat-code-text:                   #334155;
   --chat-code-inline-bg:              rgba(15, 23, 42, 0.08);
   --chat-user-code-inline-bg:         rgba(255, 255, 255, 0.22);
+
+  /* ── Demo: Mermaid-only palette (see README “Mermaid CSS custom properties”) ──
+     Accent / lines / fills differ from base `--chat-*` so you can confirm fenced
+     diagrams track `--chat-mermaid-*` without changing the rest of the UI. */
+  --chat-mermaid-primary:             #0d9488;
+  --chat-mermaid-primary-contrast:    #f0fdfa;
+  --chat-mermaid-line:                #055d56;
+  --chat-mermaid-node-fill:           #ecfdf5;
+  --chat-mermaid-cluster-fill:        #d1fae5;
+  --chat-mermaid-background:          #f1f5f9;
+  --chat-mermaid-secondary-fill:      #ccfbf1;
+  --chat-mermaid-note-fill:           #fef3c7;
+  --chat-mermaid-note-text:           #78350f;
+  --chat-mermaid-edge-label-bg:       #e0f2fe;
 }
 
 :root[data-theme="dark"] {
@@ -51,6 +65,18 @@
   --chat-user-code-inline-bg:         rgba(255, 255, 255, 0.18);
   --chat-shadow-sm:                   0 1px 2px rgba(0, 0, 0, 0.3);
   --chat-shadow-md:                   0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* ── Demo: Mermaid-only palette (dark) ───────────────────────────── */
+  --chat-mermaid-primary:             #34d399;
+  --chat-mermaid-primary-contrast:    #022c22;
+  --chat-mermaid-line:                #90eecc;
+  --chat-mermaid-node-fill:           #134e4a;
+  --chat-mermaid-cluster-fill:        #115e59;
+  --chat-mermaid-background:          #0f172a;
+  --chat-mermaid-secondary-fill:      #0d9488;
+  --chat-mermaid-note-fill:           #422006;
+  --chat-mermaid-note-text:           #fde68a;
+  --chat-mermaid-edge-label-bg:       #1e3a5f;
 }
 
 /* ── Global: site-content-inner fills parent ─────────────────────────── */

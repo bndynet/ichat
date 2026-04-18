@@ -19,6 +19,27 @@ onMounted(async () => {
 </script>
 
 <template>
+  <p class="mermaid-demo-hint">
+    Mermaid colors come from optional <code>--chat-mermaid-*</code> tokens in
+    <code>apps/demo/styles.css</code> (teal accent + mint block fills in light, emerald tones in dark).
+    Remove that block to fall back to normal <code>--chat-*</code> only.
+  </p>
   <ChatToolbar :chat-ref="chatRef" />
   <i-chat-messages ref="chatRef"></i-chat-messages>
 </template>
+
+<style scoped>
+.mermaid-demo-hint {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--chat-text-secondary, #64748b);
+  background: var(--chat-surface-alt, #f1f5f9);
+  border-radius: 6px;
+  border: 1px solid var(--chat-border, #e2e8f0);
+}
+.mermaid-demo-hint code {
+  font-size: 0.8em;
+}
+</style>
