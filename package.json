@@ -7,6 +7,7 @@
     "apps/*"
   ],
   "scripts": {
+    "version": "node tools/bump-workspace-version.mjs",
     "build": "npm run build -w @bndynet/chat-messages && npm run build -w @bndynet/chat-input && npm run build -w @bndynet/chat-renderers && npm run build -w @bndynet/chat && npm run build -w apps/demo",
     "dev": "concurrently -n messages,input,renderers,chat,demo -c cyan,magenta,yellow,blue,green \"npm run dev -w @bndynet/chat-messages\" \"npm run dev -w @bndynet/chat-input\" \"npm run dev -w @bndynet/chat-renderers\" \"npm run dev -w @bndynet/chat\" \"npm run dev -w chat-demo\"",
     "start": "npm run dev",

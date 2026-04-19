@@ -1,0 +1,42 @@
+name: Build+Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish_enabled:
+        description: 'Whether to publish to npm'
+        required: false
+        default: false
+        type: boolean
+      publish-version:
+        description: 'Version bump type'
+        required: false
+        default: none
+        type: choice
+        options:
+          - none
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    uses: bndynet/gh.flows/.github/workflows/npm.yml@main
+    with:
+      lint-command: ''
+      test-command: ''
+      build-command: 'npm run build'
+      publish-enabled: ${{ github.event_name == 'release' || inputs.publish_enabled }} 
+      publish-version: ${{ inputs['publish-version'] }}
+      publish-auth-method: 'token'                                 # token (or oidc)
+      publish-version-command: ${{ format('npm run version -- {0}', inputs['publish-version']) }}
+      publish-command: 'npm run publish:packages'
+      deploy-folder: 'apps/demo/demo-dist'
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}                          # when publish-enabled=true and publish-auth-method=token
