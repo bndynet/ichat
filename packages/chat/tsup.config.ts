@@ -26,7 +26,7 @@ const scssPlugin: Plugin = {
 export default defineConfig({
   entry: { index: 'src/index.ts' },
   format: ['esm', 'cjs', 'iife'],
-  globalName: 'NiceChatFull',
+  globalName: 'iChat',
   /** Keep Mermaid out of the main bundle; it is loaded asynchronously by `<i-chat-mermaid>`. */
   external: ['mermaid'],
   noExternal: [/^(?!mermaid$).+$/],

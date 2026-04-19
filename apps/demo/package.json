@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vs dev",
-    "build": "vs build",
+    "build": "vs build --base=/ichat/",
     "preview": "vs preview"
   },
   "dependencies": {

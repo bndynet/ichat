@@ -26,7 +26,7 @@ const scssPlugin: Plugin = {
 export default defineConfig({
   entry: { index: 'src/index.ts' },
   format: ['esm', 'cjs', 'iife'],
-  globalName: 'NiceChat',
+  globalName: 'iChatMessages',
   noExternal: [/.*/],
   dts: true,
   splitting: false,

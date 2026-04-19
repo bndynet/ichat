@@ -14,10 +14,14 @@ const props = defineProps({
   streaming: { type: Boolean, default: false },
   /**
    * Parent’s `<i-chat>` / `<i-chat-messages>` instance.
-   * Pass `ref(chat)` from template as `:chat-ref="chatRef"` — Vue unwraps refs there, so this is
-   * usually the element itself; `unref()` also accepts an actual Ref if passed from script.
+   * Pass `ref(chat)` from template as `:chat-ref="chatRef"` — Vue unwraps refs there, so before
+   * mount you get `null`; after mount, the host element/instance. `unref()` also accepts a Ref.
    */
-  chatRef: { type: Object, required: true },
+  chatRef: {
+    required: false,
+    default: null,
+    validator: (v) => v == null || typeof v === 'object',
+  },
 })
 
 /** Resolved host element (template `:chat-ref="r"` unwraps `r`, so it is not `r.value`). */

@@ -136,7 +136,7 @@ onMounted(async () => {
   margin: 0 -1rem -1rem -1rem;
   padding: var(--chat-spacing-sm, 12px) var(--chat-spacing-md, 16px)
     var(--chat-spacing-md, 16px);
-  background: var(--chat-surface, #fff);
+  background: var(--el-fill-color-light);
   border-top: 1px solid var(--chat-border, #e5e7eb);
 }
 

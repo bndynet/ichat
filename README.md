@@ -62,13 +62,21 @@ Use **`addMessage`**, **`updateMessage`**, **`removeMessage`**, **`clear`**, and
 
 ## Script tag (IIFE bundles)
 
-For pages without a bundler, load the **`@bndynet/chat`** IIFE build. The global object is **`NiceChatFull`** (named exports such as **`NiceChatFull.NiceChat`**, **`NiceChatFull.rendererRegistry`**, etc.).
+For pages without a bundler, load the **`@bndynet/chat`** IIFE build. The global object is **`iChat`** (named exports such as **`iChat.NiceChat`**, **`iChat.rendererRegistry`**, etc.).
 
 ```html
 <script src="/path/to/chat/dist/index.global.js"></script>
 ```
 
-Charts and other bundled renderers are registered automatically. When developing this monorepo with `npm run demo`, the Vue demo under `apps/demo/` imports `@bndynet/chat`.
+**Other packages (split IIFE):** if you load lower-level builds without `@bndynet/chat`, each bundle exposes its own global — load scripts in dependency order and match peers (`echarts`, `markdown-it`, etc. per package `package.json`):
+
+| Package | Global (IIFE) | Typical artifact |
+|---------|---------------|------------------|
+| `@bndynet/chat-messages` | `iChatMessages` | `…/chat-messages/dist/index.global.js` |
+| `@bndynet/chat-input` | `iChatInput` | `…/chat-input/dist/index.global.js` |
+| `@bndynet/chat-renderers` | `iChatRenderers` | `…/chat-renderers/dist/index.global.js` |
+
+Charts and other bundled renderers are registered automatically. When developing this monorepo, run **`npm run dev`** from the repo root: it starts watchers for all packages and the **`chat-demo`** app under `apps/demo/` (which imports `@bndynet/chat` via workspaces). The dev server URL and port are printed in the terminal (Vite defaults, often `http://localhost:5173/`).
 
 ## Features
 
@@ -205,7 +213,7 @@ rendererRegistry.register({
 
 **`@bndynet/chat`** already registers chart, KPI, and form renderers from **`@bndynet/chat-renderers`**. You normally do **not** need a second registration.
 
-If you use **`@bndynet/chat-messages`** without `@bndynet/chat`, install **`@bndynet/chat-renderers`** and call `registerChartWithRegistry(rendererRegistry)` (see that package’s README).
+If you use **`@bndynet/chat-messages`** without `@bndynet/chat`, install **`@bndynet/chat-renderers`** and call **`registerChartWithRegistry(rendererRegistry)`** (exported from `@bndynet/chat-renderers`; pass the same `rendererRegistry` you use for markdown fences).
 
 Optional **`markdown-it`** plugin when customizing the shared `md` instance:
 
@@ -657,17 +665,17 @@ Clone, install, build, run the static demo:
 
 ```bash
 npm install
-npm run build    # workspace order: chat-messages, chat-input, chat-renderers, chat, demo
-npm run dev      # concurrent watch on all packages (see root `package.json`)
-npm run demo     # serve repo root — open http://localhost:3000/apps/demo/ (port from `serve`)
+npm run build    # workspace order: chat-messages, chat-input, chat-renderers, chat, apps/demo
+npm run dev      # concurrent watch on all packages + chat-demo dev server (see root `package.json`)
 ```
 
 | Script | Description |
 |--------|----------------|
-| `npm run build` | Builds all packages in order |
-| `npm run dev` | Watch mode for packages (messages, input, renderers, chat, demo) |
-| `npm run demo` | `npx serve .` at monorepo root |
+| `npm run build` | Builds all workspaces in dependency order (ends with `apps/demo`) |
+| `npm run dev` | Watch mode for packages and the Vue demo app (`chat-demo`) |
 | `npm run start` | Alias for `npm run dev` (see root `package.json`) |
+
+To run **only** the demo app (after a successful `npm run build`): `npm run dev -w chat-demo`. Preview production build: `npm run preview -w chat-demo`.
 
 Layout:
 
