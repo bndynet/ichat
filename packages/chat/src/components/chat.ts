@@ -6,34 +6,23 @@ import type {
   ChatConfig,
   BlockRenderer,
 } from '@bndynet/chat-messages';
-import { ChatMessages, rendererRegistry, StreamingController } from '@bndynet/chat-messages';
+import { ChatMessages, StreamingController } from '@bndynet/chat-messages';
 import { ChatInput } from '@bndynet/chat-input';
-import {
-  chartRenderer,
-  kpiRenderer,
-  kpisRenderer,
-  formRenderer,
-  mermaidRenderer,
-} from '@bndynet/chat-renderers';
+import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 
 import styles from '../styles/chat.scss';
 
 void ChatMessages;
 void ChatInput;
 
-rendererRegistry.register(chartRenderer);
-rendererRegistry.register(kpiRenderer);
-rendererRegistry.register(kpisRenderer);
-rendererRegistry.register(formRenderer);
-rendererRegistry.register(mermaidRenderer);
-
 export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
 
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
  *
- * Bundles `<i-chat-messages>`, `<i-chat-input>`, and all built-in renderers
- * (chart, kpi, form, mermaid) so consumers only need a single import.
+ * Bundles `<i-chat-messages>` and `<i-chat-input>`. Optional fenced-block
+ * renderers (e.g. from `@bndynet/chat-renderers`) should be registered with
+ * `registerRenderer` from `@bndynet/chat` before messages use those blocks.
  *
  * ## Slots
  *
@@ -140,9 +129,9 @@ export class NiceChat extends LitElement {
     this._messages.addErrorMessage(error, content);
   }
 
-  /** Register an additional block renderer at runtime. */
+  /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/chat`). */
   registerRenderer(renderer: BlockRenderer): void {
-    rendererRegistry.register(renderer);
+    registerBlockRenderer(renderer);
   }
 
   /** Create a `StreamingController` bound to this component's message list. */

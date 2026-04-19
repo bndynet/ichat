@@ -1,26 +1,32 @@
 # iChat
 
-Monorepo of npm packages for a **Lit 3** chat UI: markdown, fenced-block renderers (charts, KPI, forms), reasoning blocks, and streaming. **Recommended:** install **`@bndynet/chat`** and use **`<i-chat>`** — one tag bundles the message list, default composer (`<i-chat-input>`), and built-in renderers. Lower-level packages exist if you compose the list and input yourself.
+Monorepo of npm packages for a **Lit 3** chat UI: markdown, optional fenced-block renderers (charts, KPI, forms, Mermaid), reasoning blocks, and streaming. **Recommended:** install **`@bndynet/chat`** and use **`<i-chat>`** — one tag bundles the message list and default composer (`<i-chat-input>`). Chart/KPI/form/Mermaid fences come from **`@bndynet/chat-renderers`**; register them once with **`registerRenderer`** from **`@bndynet/chat`** (see [Custom renderers](#custom-renderers)). Lower-level packages exist if you compose the list and input yourself.
 
 ## Packages
 
 | Package | Description |
 |--------|-------------|
-| [`@bndynet/chat`](packages/chat) | **Default.** `<i-chat>` — messages + input + chart/kpi/form renderers. Re-exports `rendererRegistry`, `StreamingController`, types, and `ChatMessages` for advanced use. |
+| [`@bndynet/chat`](packages/chat) | **Default.** `<i-chat>` — messages + input. Exports **`registerRenderer`**, re-exports **`rendererRegistry`**, **`StreamingController`**, types, and **`ChatMessages`** for advanced use. |
 | [`@bndynet/chat-messages`](packages/chat-messages) | Message list only (`<i-chat-messages>`, markdown pipeline, `BlockRenderer`, streaming). Use if you do **not** want `<i-chat>`. |
 | [`@bndynet/chat-input`](packages/chat-input) | Composer only (`<i-chat-input>`). |
-| [`@bndynet/chat-renderers`](packages/chat-renderers) | Fenced-block implementations. **Already included** by `@bndynet/chat`; install separately only with `chat-messages` when you need charts/extras without the full shell. |
+| [`@bndynet/chat-renderers`](packages/chat-renderers) | Optional fenced-block implementations (chart, KPI, form, Mermaid). Depends on **`@bndynet/chat-messages`**; pair with **`@bndynet/chat`** or use directly with **`chat-messages`** only. |
 
-**Peers:** `@bndynet/chat` expects **`echarts` ≥ 6** (charts). If you only use `@bndynet/chat-messages` + `@bndynet/chat-renderers`, also align **`markdown-it` ≥ 14** with your app.
+**Peers (when you use renderers):** **`@bndynet/chat-renderers`** expects **`echarts` ≥ 6**, **`mermaid` ≥ 11**, and **`markdown-it` ≥ 14** (see that package’s `package.json`). **`@bndynet/chat`** itself does not list those peers — install them next to **`@bndynet/chat-renderers`** in your app.
 
 ---
 
 ## Install
 
-**All-in-one (recommended):**
+**Shell + optional fenced blocks (recommended when you want charts / KPI / forms / Mermaid):**
 
 ```bash
-npm install @bndynet/chat echarts
+npm install @bndynet/chat @bndynet/chat-renderers echarts mermaid
+```
+
+**Shell only** (markdown + code highlighting; no chart/KPI/form/Mermaid fences unless you add your own renderers):
+
+```bash
+npm install @bndynet/chat
 ```
 
 **Message list only** (custom composer elsewhere):
@@ -31,9 +37,25 @@ npm install @bndynet/chat-messages
 
 ## Quick start (ES modules)
 
+Load **`@bndynet/chat`** and, if you want chart / KPI / form / Mermaid fences, register **`@bndynet/chat-renderers`** once **before** the first message that uses them (see `apps/demo/bootstrap.ts` in this repo):
+
 ```html
 <script type="module">
   import '@bndynet/chat';
+  import { registerRenderer } from '@bndynet/chat';
+  import {
+    chartRenderer,
+    kpiRenderer,
+    kpisRenderer,
+    formRenderer,
+    mermaidRenderer,
+  } from '@bndynet/chat-renderers';
+
+  registerRenderer(chartRenderer);
+  registerRenderer(kpiRenderer);
+  registerRenderer(kpisRenderer);
+  registerRenderer(formRenderer);
+  registerRenderer(mermaidRenderer);
 </script>
 
 <i-chat id="chat"></i-chat>
@@ -62,7 +84,7 @@ Use **`addMessage`**, **`updateMessage`**, **`removeMessage`**, **`clear`**, and
 
 ## Script tag (IIFE bundles)
 
-For pages without a bundler, load the **`@bndynet/chat`** IIFE build. The global object is **`iChat`** (named exports such as **`iChat.NiceChat`**, **`iChat.rendererRegistry`**, etc.).
+For pages without a bundler, load the **`@bndynet/chat`** IIFE build. The global object is **`iChat`** (e.g. **`iChat.NiceChat`**, **`iChat.registerRenderer`**, **`iChat.rendererRegistry`**, …). Optional renderers still come from the **`@bndynet/chat-renderers`** IIFE (global **`iChatRenderers`**) — after both scripts load, call **`iChat.registerRenderer(iChatRenderers.chartRenderer)`** (and **`kpiRenderer`**, **`kpisRenderer`**, **`formRenderer`**, **`mermaidRenderer`** as needed).
 
 ```html
 <script src="/path/to/chat/dist/index.global.js"></script>
@@ -76,14 +98,14 @@ For pages without a bundler, load the **`@bndynet/chat`** IIFE build. The global
 | `@bndynet/chat-input` | `iChatInput` | `…/chat-input/dist/index.global.js` |
 | `@bndynet/chat-renderers` | `iChatRenderers` | `…/chat-renderers/dist/index.global.js` |
 
-Charts and other bundled renderers are registered automatically. When developing this monorepo, run **`npm run dev`** from the repo root: it starts watchers for all packages and the **`chat-demo`** app under `apps/demo/` (which imports `@bndynet/chat` via workspaces). The dev server URL and port are printed in the terminal (Vite defaults, often `http://localhost:5173/`).
+The demo app registers **`@bndynet/chat-renderers`** in **`apps/demo/bootstrap.ts`**. When developing this monorepo, run **`npm run dev`** from the repo root: it starts watchers for all packages and the **`chat-demo`** app under `apps/demo/`. The dev server URL and port are printed in the terminal (Vite defaults, often `http://localhost:5173/`).
 
 ## Features
 
 - **`<i-chat>` shell** — default textarea + send/cancel, or replace the footer with **`slot="input"`**
 - **Lit 3 Web Components** — works with any framework or vanilla HTML
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
-- **Extensible fenced blocks** — `rendererRegistry` + `BlockRenderer` (from `@bndynet/chat` or `@bndynet/chat-messages`)
+- **Extensible fenced blocks** — **`registerRenderer`** from **`@bndynet/chat`**, or **`rendererRegistry`** + **`BlockRenderer`** for lower-level control (from `@bndynet/chat` or `@bndynet/chat-messages`)
 - **Reasoning blocks** — collapsible “thinking” UI + streaming
 - **Streaming typewriter** — progressive reveal and cursor state
 - **Slots** — avatars, actions, empty state
@@ -197,23 +219,45 @@ chat.addMessage({
 
 ## Custom renderers
 
-Use the **`BlockRenderer`** type and **`rendererRegistry`** from **`@bndynet/chat`** (or from `@bndynet/chat-messages` if you do not use the shell package):
+Prefer **`registerRenderer`** from **`@bndynet/chat`** so your app does not need to import **`@bndynet/chat-messages`** just to touch the registry:
 
 ```typescript
-import { rendererRegistry } from '@bndynet/chat';
+import { registerRenderer } from '@bndynet/chat';
+import type { BlockRenderer } from '@bndynet/chat';
 
-rendererRegistry.register({
-  name: 'mermaid',
-  test: (lang) => lang === 'mermaid',
-  render: (code, _lang) => `<div class="mermaid">${code}</div>`,
-});
+const myRenderer: BlockRenderer = {
+  name: 'mylang',
+  test: (lang) => lang === 'mylang',
+  render: (code) => `<pre>${code}</pre>`,
+};
+
+registerRenderer(myRenderer);
 ```
 
-### Charts and bundled fenced blocks
+For **`unregister`**, **`list`**, or other registry methods, import **`rendererRegistry`** from **`@bndynet/chat`** (re-exported from **`@bndynet/chat-messages`**).
 
-**`@bndynet/chat`** already registers chart, KPI, and form renderers from **`@bndynet/chat-renderers`**. You normally do **not** need a second registration.
+### Charts, KPI, form, and Mermaid (`@bndynet/chat-renderers`)
 
-If you use **`@bndynet/chat-messages`** without `@bndynet/chat`, install **`@bndynet/chat-renderers`** and call **`registerChartWithRegistry(rendererRegistry)`** (exported from `@bndynet/chat-renderers`; pass the same `rendererRegistry` you use for markdown fences).
+**`@bndynet/chat`** does **not** ship or auto-register **`@bndynet/chat-renderers`**. Install **`@bndynet/chat-renderers`** plus its peers (**`echarts`**, **`mermaid`**, **`markdown-it`** as required by that package), then register the built-in objects (same as the [Quick start](#quick-start-es-modules) snippet):
+
+```typescript
+import { registerRenderer } from '@bndynet/chat';
+import {
+  chartRenderer,
+  kpiRenderer,
+  kpisRenderer,
+  formRenderer,
+  mermaidRenderer,
+} from '@bndynet/chat-renderers';
+
+registerRenderer(chartRenderer);
+registerRenderer(kpiRenderer);
+registerRenderer(kpisRenderer);
+registerRenderer(formRenderer);
+registerRenderer(mermaidRenderer);
+```
+
+If you use **`@bndynet/chat-messages`** without **`@bndynet/chat`**, import **`rendererRegistry`** from **`@bndynet/chat-messages`** and call **`rendererRegistry.register(...)`** with the same renderer objects from **`@bndynet/chat-renderers`**.
 
 Optional **`markdown-it`** plugin when customizing the shared `md` instance:
 
@@ -683,8 +727,8 @@ Layout:
 apps/demo/              
 packages/chat-messages/
 packages/chat-input/
-packages/chat/            # @bndynet/chat — bundles the above + chat-renderers
-packages/chat-renderers/  # Fenced blocks; bundled by @bndynet/chat
+packages/chat/            # @bndynet/chat — <i-chat> shell (messages + input); registerRenderer API
+packages/chat-renderers/  # Optional fenced blocks; consumed by apps that call registerRenderer
 ```
 
 ## License

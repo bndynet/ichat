@@ -1,9 +1,6 @@
 import './styles.css'
-// Importing registers the <i-chat-messages> custom element via @customElement decorator
-import '@bndynet/chat-messages'
-
-// Register optional fenced-block renderers
-import { rendererRegistry } from '@bndynet/chat-messages'
+import '@bndynet/chat'
+import { registerRenderer } from '@bndynet/chat'
 import {
   chartRenderer,
   kpiRenderer,
@@ -11,8 +8,9 @@ import {
   formRenderer,
   mermaidRenderer,
 } from '@bndynet/chat-renderers'
-rendererRegistry.register(chartRenderer)
-rendererRegistry.register(kpiRenderer)
-rendererRegistry.register(kpisRenderer)
-rendererRegistry.register(formRenderer)
-rendererRegistry.register(mermaidRenderer)
+
+registerRenderer(chartRenderer)
+registerRenderer(kpiRenderer)
+registerRenderer(kpisRenderer)
+registerRenderer(formRenderer)
+registerRenderer(mermaidRenderer)
