@@ -103,6 +103,7 @@ The demo app registers **`@bndynet/chat-renderers`** in **`apps/demo/bootstrap.t
 ## Features
 
 - **`<i-chat>` shell** — default textarea + send/cancel, or replace the footer with **`slot="input"`**
+- **Voice input (default composer)** — microphone button uses Web Speech API when available; hidden automatically on unsupported browsers
 - **Lit 3 Web Components** — works with any framework or vanilla HTML
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
 - **Extensible fenced blocks** — **`registerRenderer`** from **`@bndynet/chat`**, or **`rendererRegistry`** + **`BlockRenderer`** for lower-level control (from `@bndynet/chat` or `@bndynet/chat-messages`)
@@ -134,6 +135,7 @@ Each `ChatMessage` has `role: 'self' | 'peer' | 'assistant' | 'system'`.
 | `emptyText` | `string` | `''` | Plain text when there are no messages and no `empty` slot |
 | `placeholder` | `string` | `'Type a message…'` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`) |
 | `disabled` | `boolean` | `false` | Disables the default composer |
+| `showVoiceInput` | `boolean` | `true` | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition |
 
 **Methods (forwarded to the inner message list):** `addMessage`, `updateMessage`, `removeMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
 
@@ -200,6 +202,23 @@ Message-related slots are **forwarded** with declarative `<slot name="…" slot=
 ```
 
 **Custom composer (`slot="input"`):** put a single root with `slot="input"`; the default `<i-chat-input>` is not rendered. Vue/Svelte apps that add slotted nodes after mount are supported via a `MutationObserver` on `<i-chat>`.
+
+### Default composer voice input
+
+The built-in `<i-chat-input>` can show a voice button next to Send:
+
+- `showVoiceInput=true` (default): render the voice button **only** when Web Speech API is supported by the current browser.
+- `showVoiceInput=false`: never render the voice button.
+
+```html
+<!-- Hide voice button in the default composer -->
+<i-chat show-voice-input="false"></i-chat>
+```
+
+When using `<i-chat-input>` directly, the same properties are available:
+
+- `showVoiceInput` (`boolean`, default `true`)
+- `voiceLang` (`string`, BCP 47, e.g. `zh-CN`, `en-US`; defaults to `navigator.language`)
 
 ### Per-message `avatar`
 

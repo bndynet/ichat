@@ -167,3 +167,27 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 85%, var(--_input-text));
   }
 }
+
+.chat-input-voice {
+  background: color-mix(in srgb, var(--_input-bg) 88%, var(--_input-border));
+  color: var(--_input-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 65%, transparent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--_input-border) 22%, var(--_input-bg));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--_input-border) 85%, var(--_input-text));
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  &.chat-input-voice--active {
+    background: color-mix(in srgb, var(--_input-primary) 18%, var(--_input-bg));
+    color: var(--_input-primary);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--_input-primary) 40%, transparent),
+      0 0 0 2px color-mix(in srgb, var(--_input-primary) 22%, transparent);
+  }
+}

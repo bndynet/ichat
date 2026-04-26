@@ -37,6 +37,9 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * | `actions`            | Toolbar row **inside** the default `<i-chat-input>` (left side) |
  * | `input`              | Replace the default `<i-chat-input>` entirely           |
  *
+ * Use the `showVoiceInput` property to hide the voice button entirely; when true (default),
+ * it is still only rendered if the browser supports speech recognition (same as `<i-chat-input>`).
+ *
  * @fires send - `{ detail: { content: string } }` when user submits a message
  * @fires cancel - Fired when user clicks cancel during streaming
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
@@ -77,6 +80,12 @@ export class NiceChat extends LitElement {
   @property() placeholder = 'Type a message…';
   /** Disable the input area. */
   @property({ type: Boolean, reflect: true }) disabled = false;
+
+  /**
+   * When true (default), the default `<i-chat-input>` shows a voice button if the browser
+   * supports speech recognition. When false, the voice button is never shown.
+   */
+  @property({ type: Boolean, reflect: true }) showVoiceInput = true;
 
   @query('i-chat-messages') private _messages!: ChatMessages;
   @query('i-chat-input') private _input!: ChatInput;
@@ -291,6 +300,7 @@ export class NiceChat extends LitElement {
               <i-chat-input
                 .placeholder=${this.placeholder}
                 .streaming=${this._streaming}
+                .showVoiceInput=${this.showVoiceInput}
                 ?disabled=${this.disabled}
                 @send=${this._handleSend}
                 @cancel=${this._handleCancel}
