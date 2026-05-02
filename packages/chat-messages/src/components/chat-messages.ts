@@ -40,6 +40,8 @@ export class ChatMessages extends LitElement {
   private _resizeScrollLock = false;
   private _resizeDebounceTimer?: ReturnType<typeof setTimeout>;
   private _errorDismissTimer?: ReturnType<typeof setTimeout>;
+  /** Invalidates in-flight multi-pass scroll when a newer scroll is requested. */
+  private _scrollToBottomSeq = 0;
 
   private get _config(): Required<ChatConfig> {
     return { ...DEFAULT_CONFIG, ...this.config };
@@ -192,15 +194,41 @@ export class ChatMessages extends LitElement {
     clearTimeout(this._errorDismissTimer);
   }
 
+  /**
+   * Scroll the message list to the latest content. Uses several passes because
+   * nested shadow/custom elements (e.g. `i-chat-form`, mermaid) often finish
+   * layout after the first frame — a single rAF can leave `_autoScroll` true
+   * while the viewport is still above new content (scroll-down button hidden).
+   */
   private _scrollToBottom(): void {
-    requestAnimationFrame(() => {
+    const seq = ++this._scrollToBottomSeq;
+    const apply = (): void => {
+      if (seq !== this._scrollToBottomSeq || !this.isConnected) return;
       const el = this._scrollContainer;
-      if (el) {
-        el.scrollTop = el.scrollHeight;
-      }
-      this._hasNewContent = false;
+      if (el) el.scrollTop = el.scrollHeight;
+    };
+
+    requestAnimationFrame(() => {
+      apply();
+      requestAnimationFrame(() => {
+        apply();
+        queueMicrotask(apply);
+        requestAnimationFrame(() => {
+          apply();
+          if (seq !== this._scrollToBottomSeq) return;
+          setTimeout(apply, 0);
+        });
+      });
     });
+    this._hasNewContent = false;
   }
+
+  /** `i-chat-message` morphdom / embedded widgets may resize without `messages` changing. */
+  private _onChatContentResize = (): void => {
+    if (this._autoScroll) {
+      this._scrollToBottom();
+    }
+  };
 
   private _handleScrollToBottom(): void {
     this._autoScroll = true;
@@ -380,7 +408,7 @@ export class ChatMessages extends LitElement {
                 </slot>
               </div>`
             : html`
-                <div class="chat-messages-inner">
+                <div class="chat-messages-inner" @chat-content-resize=${this._onChatContentResize}>
                   ${repeat(
                     this._messageRenderItems(),
                     (item) => item.key,

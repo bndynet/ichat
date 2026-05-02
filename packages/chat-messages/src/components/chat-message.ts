@@ -353,6 +353,14 @@ export class ChatMessageElement extends LitElement {
           },
         });
         this._cachedContentHtml = newHtml;
+        // Morph runs outside Lit's `messages` updates; nested CEs (forms, charts)
+        // may grow layout on later frames — parent listens to re-run autoscroll.
+        this.dispatchEvent(
+          new CustomEvent('chat-content-resize', {
+            bubbles: true,
+            composed: true,
+          })
+        );
       }
     }
 
