@@ -113,6 +113,14 @@ function handleCancel() {
   chatRef.value.cancel('*— Response stopped —*');
 }
 
+/** Web Speech API diagnostics from `<i-chat-input>` (bubbles + composed). */
+function handleVoiceInput(e) {
+  console.log('[ChatPage voice-input]', e.detail);
+  if (e.detail?.kind === 'error' && e.detail?.code === 'network') {
+    console.warn('[ChatPage] Voice `network`:', e.detail.hint ?? 'Cannot reach speech service — check network / VPN / firewall.');
+  }
+}
+
 /** `form-submit` — `detail` has `formId`, `title`, `values`, `messageId`, `message` (full row). */
 function handleFormSubmit(e) {
   console.log('form submit:', e.detail);
@@ -138,9 +146,12 @@ function handleFormSubmit(e) {
     ref="chatRef"
     :config="chatConfig"
     placeholder="Type something…"
+    voice-lang="zh-CN"
+    :voice-diagnostics="true"
     @send="handleSend"
     @cancel="handleCancel"
     @form-submit="handleFormSubmit"
+    @voice-input="handleVoiceInput"
   >
     <div slot="empty" style="text-align: center">
       <h2 v-if="loading">Fetching history messages...</h2>

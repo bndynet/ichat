@@ -20,6 +20,25 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  margin-bottom: 0.25rem;
+
+  /* Soft bottom fade into the input area: eases the edge so message chrome
+     does not visually compete with the text field focus ring below. */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--chat-messages-bottom-fade-height, 28px);
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--chat-bg, #{$color-bg})
+    );
+  }
 }
 
 .error-banner {
@@ -119,7 +138,7 @@
     color var(--chat-transition-fast, #{$transition-fast}),
     transform var(--chat-transition-fast, #{$transition-fast});
   animation: fadeInUp 0.2s ease, scrollBtnPulse 1.5s ease-in-out 0.2s infinite;
-  z-index: 1;
+  z-index: 2;
 
   &:hover {
     background: var(--chat-primary, #{$color-primary});

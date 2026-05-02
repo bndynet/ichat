@@ -34,6 +34,70 @@
 
 .chat-input-field {
   min-height: 0;
+  position: relative;
+
+  &--listening .chat-input-textarea {
+    cursor: not-allowed;
+  }
+}
+
+.chat-input-listening-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.chat-input-listening-overlay__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--_input-primary);
+  /* Keep label readable on top of live transcript text without a scrim */
+  text-shadow:
+    0 0 10px color-mix(in srgb, var(--_input-bg) 92%, transparent),
+    0 0 18px color-mix(in srgb, var(--_input-bg) 75%, transparent),
+    0 1px 0 color-mix(in srgb, var(--_input-bg) 55%, transparent);
+
+  &::before {
+    content: '';
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--_input-primary);
+    animation: chat-input-listening-pulse 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes chat-input-listening-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.88);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-input-listening-overlay__label::before {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .chat-input-textarea {

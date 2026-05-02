@@ -136,6 +136,9 @@ Each `ChatMessage` has `role: 'self' | 'peer' | 'assistant' | 'system'`.
 | `placeholder` | `string` | `'Type a message…'` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`) |
 | `disabled` | `boolean` | `false` | Disables the default composer |
 | `showVoiceInput` | `boolean` | `true` | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition |
+| `voiceLang` | `string` | `''` | Forwarded to the default `<i-chat-input>` — BCP 47 tag for speech recognition (e.g. `zh-CN`; empty uses `navigator.language`) |
+| `voiceListeningLabel` | `string` | `'Listening…'` | Forwarded to the default `<i-chat-input>` — text on the listening overlay |
+| `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
 
 **Methods (forwarded to the inner message list):** `addMessage`, `updateMessage`, `removeMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
 
@@ -215,10 +218,48 @@ The built-in `<i-chat-input>` can show a voice button next to Send:
 <i-chat show-voice-input="false"></i-chat>
 ```
 
+On **`<i-chat>`**, you can set the same voice-related attributes; they are passed through to the default `<i-chat-input>` (ignored when using `slot="input"`):
+
+- `show-voice-input`
+- `voice-lang`
+- `voice-listening-label`
+- `voice-diagnostics`
+
 When using `<i-chat-input>` directly, the same properties are available:
 
 - `showVoiceInput` (`boolean`, default `true`)
 - `voiceLang` (`string`, BCP 47, e.g. `zh-CN`, `en-US`; defaults to `navigator.language`)
+- `voiceListeningLabel` (`string`, default `Listening…`) — shown centered over the textarea while dictating (no scrim; light text shadow keeps it readable on top of live transcript)
+- `voiceDiagnostics` (`boolean`, default `false`) — logs recognition milestones to the console (`console.debug`)
+
+**Testing speech-to-text (Web Speech API):**
+
+- Use a **supported browser** (e.g. **Chrome / Edge**; Safari has partial support; **Firefox** usually has no `SpeechRecognition`).
+- Serve the page over **HTTPS** or **`http://localhost`** so the browser will prompt for **microphone** access; allow it when asked.
+- **Chrome** typically sends audio to a **cloud** recognition service — you need **network access**; offline or blocked Google endpoints can yield no transcript.
+- Match **`voice-lang`** to what you speak (e.g. `zh-CN` for Mandarin, `en-US` for American English).
+- Open DevTools → **Console** if nothing appears: errors like `not-allowed` (permission) or `network` point to environment issues, not the component.
+
+**If there is no transcript and no red errors in the console**, use **`voice-input` events** (they bubble with `composed: true`, so you can listen on `<i-chat>` or `document`). Expected order after clicking the mic:
+
+| `detail.kind` | Meaning |
+|---------------|---------|
+| `session-started` | `start()` succeeded (`lang` in `detail`). |
+| `recognition-started` | The recognition service actually began listening — if this never fires, the engine did not start. |
+| `result` | (Only if `voice-diagnostics` / `voiceDiagnostics` is on) partial stats while text updates. |
+| `error` | Always emitted for engine errors; check `detail.code` (`no-speech`, `network`, `not-allowed`, …). For `network`, `detail.hint` explains that Chrome needs outbound access to the speech backend. |
+| `session-stopped` | You clicked the button to stop dictation. |
+| `session-ended` | Dictation ended after a fatal error (e.g. `network`, `not-allowed`); the Listening overlay is cleared. |
+
+**`detail.code === 'network'` (Chrome / Edge):** the browser could not reach the **remote speech recognition service** (not a bug in this component). Fix by: using a network that allows that traffic, disabling VPN/proxy that blocks it, trying another network, or using **server-side ASR** instead of Web Speech API for locked-down environments.
+
+Enable extra logging: set **`voice-diagnostics`** on `<i-chat>` or `<i-chat-input>` (property `voiceDiagnostics`). That turns on `console.debug` lines (in Chrome you may need **Default levels → Verbose** to see them).
+
+```javascript
+document.querySelector('i-chat').addEventListener('voice-input', (e) => {
+  console.log('voice-input', e.detail);
+});
+```
 
 ### Per-message `avatar`
 

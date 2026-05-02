@@ -37,8 +37,8 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * | `actions`            | Toolbar row **inside** the default `<i-chat-input>` (left side) |
  * | `input`              | Replace the default `<i-chat-input>` entirely           |
  *
- * Use the `showVoiceInput` property to hide the voice button entirely; when true (default),
- * it is still only rendered if the browser supports speech recognition (same as `<i-chat-input>`).
+ * Voice-related props `showVoiceInput`, `voiceLang`, and `voiceListeningLabel` are forwarded to
+ * the default `<i-chat-input>` (same behavior as using that element directly).
  *
  * @fires send - `{ detail: { content: string } }` when user submits a message
  * @fires cancel - Fired when user clicks cancel during streaming
@@ -85,7 +85,16 @@ export class NiceChat extends LitElement {
    * When true (default), the default `<i-chat-input>` shows a voice button if the browser
    * supports speech recognition. When false, the voice button is never shown.
    */
-  @property({ type: Boolean, reflect: true }) showVoiceInput = true;
+  @property({ type: Boolean, reflect: true, attribute: 'show-voice-input' }) showVoiceInput = true;
+
+  /** Passed to the default `<i-chat-input>` for speech recognition language (BCP 47). */
+  @property({ attribute: 'voice-lang' }) voiceLang = '';
+
+  /** Passed to the default `<i-chat-input>` — label on the listening overlay. */
+  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = 'Listening…';
+
+  /** Passed to the default `<i-chat-input>` — enables `console.debug` speech logs. */
+  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics = false;
 
   @query('i-chat-messages') private _messages!: ChatMessages;
   @query('i-chat-input') private _input!: ChatInput;
@@ -301,6 +310,9 @@ export class NiceChat extends LitElement {
                 .placeholder=${this.placeholder}
                 .streaming=${this._streaming}
                 .showVoiceInput=${this.showVoiceInput}
+                .voiceLang=${this.voiceLang}
+                .voiceListeningLabel=${this.voiceListeningLabel}
+                .voiceDiagnostics=${this.voiceDiagnostics}
                 ?disabled=${this.disabled}
                 @send=${this._handleSend}
                 @cancel=${this._handleCancel}
