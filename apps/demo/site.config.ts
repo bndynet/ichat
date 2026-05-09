@@ -1,7 +1,7 @@
 import { defineConfig } from '@bndynet/vue-site'
 
 export default defineConfig({
-  title: 'Chat Demo',
+  title: '<i-chat />',
   nav: [
     { label: 'Home', icon: 'home', page: () => import('../../README.md?raw') },
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
@@ -54,13 +54,13 @@ export default defineConfig({
       name: '@bndynet/renderers',
       entryPath: '../../packages/renderers/src/index.ts',
     }, {
-      name: '@bndynet/chat-input',
+      name: '@bndynet/ichat-input',
       entryPath: '../../packages/chat-input/src/index.ts',
     }, {
-      name: '@bndynet/chat-renderers',
+      name: '@bndynet/ichat-renderers',
       entryPath: '../../packages/chat-renderers/src/index.ts',
     }, {
-      name: '@bndynet/chat',
+      name: '@bndynet/ichat',
       entryPath: '../../packages/chat/src/index.ts',
     }],
   },

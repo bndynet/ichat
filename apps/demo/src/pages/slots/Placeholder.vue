@@ -1,5 +1,5 @@
 <script setup>
-import '@bndynet/chat';
+import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
 import { reply } from '../../composables/demo-data';
 import ChatToolbar from '../../components/ChatToolbar.vue';

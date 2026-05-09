@@ -1,4 +1,4 @@
-import type { BlockRenderer } from '@bndynet/chat-messages';
+import type { BlockRenderer } from '@bndynet/ichat-messages';
 import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

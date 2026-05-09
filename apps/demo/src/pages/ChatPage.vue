@@ -1,7 +1,7 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue';
 import { reply, nextId } from '../composables/demo-data.js';
-import '@bndynet/chat';
+import '@bndynet/ichat';
 import ChatToolbar from '../components/ChatToolbar.vue';
 
 const loading = ref(true);

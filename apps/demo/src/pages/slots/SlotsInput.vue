@@ -1,7 +1,7 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue';
 import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
-import '@bndynet/chat';
+import '@bndynet/ichat';
 import {
   reply,
   setStreamingFromDetail,

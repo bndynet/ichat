@@ -1,17 +1,17 @@
 {
   "name": "bndynet-chat-monorepo",
   "private": true,
-  "description": "Monorepo for @bndynet/chat-* packages",
+  "description": "Monorepo for @bndynet/ichat-* packages",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
     "version": "node tools/bump-workspace-version.mjs",
-    "build": "npm run build -w @bndynet/chat-messages && npm run build -w @bndynet/chat-input && npm run build -w @bndynet/chat-renderers && npm run build -w @bndynet/chat && npm run build -w apps/demo",
-    "dev": "concurrently -n messages,input,renderers,chat,demo -c cyan,magenta,yellow,blue,green \"npm run dev -w @bndynet/chat-messages\" \"npm run dev -w @bndynet/chat-input\" \"npm run dev -w @bndynet/chat-renderers\" \"npm run dev -w @bndynet/chat\" \"npm run dev -w chat-demo\"",
+    "build": "npm run build -w @bndynet/ichat-messages && npm run build -w @bndynet/ichat-input && npm run build -w @bndynet/ichat-renderers && npm run build -w @bndynet/ichat && npm run build -w apps/demo",
+    "dev": "concurrently -n messages,input,renderers,chat,demo -c cyan,magenta,yellow,blue,green \"npm run dev -w @bndynet/ichat-messages\" \"npm run dev -w @bndynet/ichat-input\" \"npm run dev -w @bndynet/ichat-renderers\" \"npm run dev -w @bndynet/ichat\" \"npm run dev -w chat-demo\"",
     "start": "npm run dev",
-    "publish:packages": "npm run build && npm publish -w @bndynet/chat-messages --access public && npm publish -w @bndynet/chat-input --access public && npm publish -w @bndynet/chat-renderers --access public && npm publish -w @bndynet/chat --access public",
+    "publish:packages": "npm run build && npm publish -w @bndynet/ichat-messages --access public && npm publish -w @bndynet/ichat-input --access public && npm publish -w @bndynet/ichat-renderers --access public && npm publish -w @bndynet/ichat --access public",
     "sync": "cli-sync -t ../chat-g"
   },
   "devDependencies": {

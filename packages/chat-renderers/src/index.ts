@@ -1,4 +1,4 @@
-export type { BlockRenderer } from '@bndynet/chat-messages';
+export type { BlockRenderer } from '@bndynet/ichat-messages';
 
 export { chartRenderer, chartPlugin, createChartRenderer } from './chart-renderer.js';
 export type { ChartInput } from './chart-renderer.js';

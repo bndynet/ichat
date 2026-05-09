@@ -12,7 +12,7 @@ export type {
   ChatFormSubmitDetail,
   ChatFormFieldValues,
   ChatFormDateRangeValue,
-} from '@bndynet/chat-messages';
+} from '@bndynet/ichat-messages';
 export {
   DEFAULT_CONFIG,
   rendererRegistry,
@@ -21,6 +21,6 @@ export {
   DATE_SEPARATOR_LABELS_EN,
   DATE_SEPARATOR_LABELS_ZH_CN,
   formatAssistantDurationMs,
-} from '@bndynet/chat-messages';
-export { ChatInput } from '@bndynet/chat-input';
-export { ChatMessages } from '@bndynet/chat-messages';
+} from '@bndynet/ichat-messages';
+export { ChatInput } from '@bndynet/ichat-input';
+export { ChatMessages } from '@bndynet/ichat-messages';

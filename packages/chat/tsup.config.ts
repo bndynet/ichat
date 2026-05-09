@@ -28,7 +28,7 @@ export default defineConfig({
   format: ['esm', 'cjs', 'iife'],
   globalName: 'iChat',
   /** Bundle workspace packages + Lit for a single-file drop-in build. */
-  noExternal: ['@bndynet/chat-messages', '@bndynet/chat-input', 'lit'],
+  noExternal: ['@bndynet/ichat-messages', '@bndynet/ichat-input', 'lit'],
   dts: true,
   splitting: false,
   sourcemap: true,

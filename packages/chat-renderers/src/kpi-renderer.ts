@@ -1,4 +1,4 @@
-import type { BlockRenderer } from '@bndynet/chat-messages';
+import type { BlockRenderer } from '@bndynet/ichat-messages';
 import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 interface KpiData {

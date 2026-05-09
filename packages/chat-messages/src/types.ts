@@ -51,7 +51,7 @@ export interface ChatFormDateRangeValue {
   end: string;
 }
 
-/** Field values from `i-chat-form` (aligned with `@bndynet/chat-renderers` `FormSubmitDetail.values`). */
+/** Field values from `i-chat-form` (aligned with `@bndynet/ichat-renderers` `FormSubmitDetail.values`). */
 export type ChatFormFieldValues = Record<
   string,
   string | boolean | string[] | ChatFormDateRangeValue

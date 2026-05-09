@@ -1,5 +1,5 @@
 import type MarkdownIt from 'markdown-it';
-import type { BlockRenderer } from '@bndynet/chat-messages';
+import type { BlockRenderer } from '@bndynet/ichat-messages';
 import type { ChartData, ChartOptions } from '@bndynet/icharts';
 import { switchTheme } from '@bndynet/icharts';
 import '@bndynet/icharts'; // registers <i-chart>

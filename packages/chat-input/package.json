@@ -1,5 +1,5 @@
 {
-  "name": "@bndynet/chat-input",
+  "name": "@bndynet/ichat-input",
   "version": "0.1.0",
   "description": "Lit 3 chat input Web Component: auto-resize textarea, send button, streaming cancel, and keyboard shortcuts.",
   "type": "module",

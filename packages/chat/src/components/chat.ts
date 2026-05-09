@@ -5,9 +5,9 @@ import type {
   ChatMessage,
   ChatConfig,
   BlockRenderer,
-} from '@bndynet/chat-messages';
-import { ChatMessages, StreamingController } from '@bndynet/chat-messages';
-import { ChatInput } from '@bndynet/chat-input';
+} from '@bndynet/ichat-messages';
+import { ChatMessages, StreamingController } from '@bndynet/ichat-messages';
+import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 
 import styles from '../styles/chat.scss';
@@ -21,8 +21,8 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * `<i-chat>` — A complete, drop-in chat Web Component.
  *
  * Bundles `<i-chat-messages>` and `<i-chat-input>`. Optional fenced-block
- * renderers (e.g. from `@bndynet/chat-renderers`) should be registered with
- * `registerRenderer` from `@bndynet/chat` before messages use those blocks.
+ * renderers (e.g. from `@bndynet/ichat-renderers`) should be registered with
+ * `registerRenderer` from `@bndynet/ichat` before messages use those blocks.
  *
  * ## Slots
  *
@@ -147,7 +147,7 @@ export class NiceChat extends LitElement {
     this._messages.addErrorMessage(error, content);
   }
 
-  /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/chat`). */
+  /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/ichat`). */
   registerRenderer(renderer: BlockRenderer): void {
     registerBlockRenderer(renderer);
   }

@@ -1,7 +1,7 @@
 {
-  "name": "@bndynet/chat",
+  "name": "@bndynet/ichat",
   "version": "0.1.0",
-  "description": "Complete Lit 3 chat Web Component: messages + input. Register optional renderers (e.g. @bndynet/chat-renderers) in your app.",
+  "description": "Complete Lit 3 chat Web Component: messages + input. Register optional renderers (e.g. @bndynet/ichat-renderers) in your app.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -21,13 +21,13 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@bndynet/chat-messages": "^0.1.0",
-    "@bndynet/chat-input": "^0.1.0",
+    "@bndynet/ichat-messages": "^0.1.0",
+    "@bndynet/ichat-input": "^0.1.0",
     "lit": "^3.3.0"
   },
   "devDependencies": {
-    "@bndynet/chat-messages": "file:../chat-messages",
-    "@bndynet/chat-input": "file:../chat-input",
+    "@bndynet/ichat-messages": "file:../chat-messages",
+    "@bndynet/ichat-input": "file:../chat-input",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"

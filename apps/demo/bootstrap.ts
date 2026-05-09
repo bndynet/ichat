@@ -1,13 +1,13 @@
 import './styles.css'
-import '@bndynet/chat'
-import { registerRenderer } from '@bndynet/chat'
+import '@bndynet/ichat'
+import { registerRenderer } from '@bndynet/ichat'
 import {
   chartRenderer,
   kpiRenderer,
   kpisRenderer,
   formRenderer,
   mermaidRenderer,
-} from '@bndynet/chat-renderers'
+} from '@bndynet/ichat-renderers'
 
 registerRenderer(chartRenderer)
 registerRenderer(kpiRenderer)

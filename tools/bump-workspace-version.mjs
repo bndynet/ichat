@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bump a single semver across all npm workspaces and sync internal @bndynet/chat-* ranges.
+ * Bump a single semver across all npm workspaces and sync internal @bndynet/ichat-* ranges.
  *
  * Usage: npm run version -- <major|minor|patch>
  */

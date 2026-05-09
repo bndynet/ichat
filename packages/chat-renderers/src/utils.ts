@@ -229,7 +229,7 @@ export function wrapWithCodeToggle(lang: string, code: string, renderedHtml: str
  * the raw source is more useful to developers than a bare error string.
  *
  * All styles use `var(--chat-*)`. Tokens are defined in `chat-host-tokens.scss`
- * (@bndynet/chat-messages); override on `<i-chat-messages>`, `<i-chat>`, or any ancestor.
+ * (@bndynet/ichat-messages); override on `<i-chat-messages>`, `<i-chat>`, or any ancestor.
  */
 export function renderCodeFallback(_lang: string, code: string): string {
   const escaped = escapeHtml(code);

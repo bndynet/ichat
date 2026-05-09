@@ -1,7 +1,7 @@
 <script setup>
 import { ElButton } from 'element-plus';
 import { nextTick, onMounted, ref } from 'vue';
-import '@bndynet/chat';
+import '@bndynet/ichat';
 import {
   addMessage as addChatMessage,
   setStreamingFromDetail,
