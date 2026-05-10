@@ -71,7 +71,7 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * ```
  */
 @customElement('i-chat')
-export class NiceChat extends LitElement {
+export class Chat extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ type: Array }) messages: ChatMessage[] = [];
@@ -160,6 +160,34 @@ export class NiceChat extends LitElement {
   /** Focus the input textarea. */
   focusInput(): void {
     this._input?.focus();
+  }
+
+  /**
+   * Add a reply block beneath the message with the given `id`.
+   *
+   * The composer/input is external — this only displays the reply block(s)
+   * under their message(s). Each call **adds** a block, so one message can
+   * stack multiple blocks and different messages can each have their own. Pass
+   * the message you are replying to (or just the fields you want shown).
+   * Mirrors `updateMessage(id, partial)`.
+   *
+   * @param id    The id of the message the reply block is attached under.
+   * @param info  Optional display fields (`content`, `avatar`, `role`, …).
+   * @returns A unique key for the created block — pass it to
+   *          `clearReplyMessage(key)` to remove just that block.
+   */
+  replyMessage(id: string, info?: Partial<ChatMessage>): string {
+    return this._messages.replyMessage(id, info);
+  }
+
+  /**
+   * Remove reply block(s).
+   * @param idOrKey  A message `id` removes all blocks under that message; a
+   *                 block `key` (returned by `replyMessage`) removes just that
+   *                 block. When omitted, clears all reply blocks.
+   */
+  clearReplyMessage(idOrKey?: string): void {
+    this._messages.clearReplyMessage(idOrKey);
   }
 
   // ── Slot forwarding ────────────────────────────────────────────────
@@ -327,6 +355,6 @@ export class NiceChat extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat': NiceChat;
+    'i-chat': Chat;
   }
 }

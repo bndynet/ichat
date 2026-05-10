@@ -1,4 +1,4 @@
-export { NiceChat } from './components/chat.js';
+export { Chat } from './components/chat.js';
 export { registerRenderer } from './register-renderer.js';
 
 // Re-export commonly used types and utilities so consumers don't need

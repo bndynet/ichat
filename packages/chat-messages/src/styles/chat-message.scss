@@ -24,7 +24,7 @@
 
 .message {
   display: flex;
-  gap: var(--chat-spacing-md, #{$spacing-md});
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
   max-width: var(--chat-message-max-width, #{$message-max-width});
   animation: messageIn var(--chat-transition-normal, #{$transition-normal}) forwards;
 
@@ -43,6 +43,14 @@
   &--system {
     margin-right: auto;
   }
+}
+
+// Replies are always left-aligned regardless of role (overrides `--self`).
+.message--reply {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: auto;
+  flex-direction: row;
 }
 
 .avatar {
@@ -131,7 +139,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--chat-spacing-xs, #{$spacing-xs});
-  margin-bottom: var(--chat-spacing-md, #{$spacing-md});
 
   .message--peer &,
   .message--assistant &,
@@ -166,6 +173,13 @@
     color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
     border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
+  }
+
+  // Replies are left-aligned regardless of role: flip the rounded "tail" to the
+  // bottom-left (overrides the `--self` bottom-right tail).
+  .message--reply & {
+    border-bottom-right-radius: var(--chat-radius-lg, #{$radius-lg});
+    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 }
 
@@ -459,6 +473,11 @@
   .message--self & {
     flex-direction: row-reverse;
   }
+
+  // Replies are left-aligned: keep footer left-to-right (overrides `--self`).
+  .message--reply & {
+    flex-direction: row;
+  }
 }
 
 .message-actions {
@@ -499,6 +518,38 @@
       width: 14px;
       height: 14px;
     }
+  }
+}
+
+// Reply blocks — all wrapped in one container beneath the message, styled as a
+// grouped quote. Each block reuses <i-chat-message quote> to render its content
+// so any content type (charts, forms, mermaid, …) renders identically.
+.message-replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-spacing-xs, #{$spacing-xs});
+  max-width: 100%;
+  margin-top: var(--chat-spacing-xs, #{$spacing-xs});
+  padding: var(--chat-spacing-xs, #{$spacing-xs});
+  border-left: 3px solid var(--chat-primary, #{$color-primary});
+  animation: messageIn var(--chat-transition-fast, #{$transition-fast}) forwards;
+
+  .message--self & {
+    border-left: none;
+    border-right: 3px solid var(--chat-primary, #{$color-primary});
+  }
+}
+
+.message-reply {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--chat-spacing-xs, #{$spacing-xs});
+
+  // Nested quote message fills the row; the dismiss button keeps its own space.
+  > i-chat-message {
+    flex: 1;
+    min-width: 0;
   }
 }
 

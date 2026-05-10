@@ -43,6 +43,13 @@ export interface ChatMessage {
   cancelled?: boolean;
   /** Response duration in milliseconds. Auto-tracked by the component when streaming completes; can also be set explicitly. */
   duration?: number;
+  /**
+   * Id of the message this one replies to. When set, the message is treated as a
+   * reply and rendered in the compact "quote" style (avatar + content only, no
+   * footer / reasoning / actions). Lets the host and the component both tell
+   * whether a message is a reply.
+   */
+  parentId?: string;
 }
 
 /** Start/end pair for `date-range` fields in embedded fenced `form` blocks. */

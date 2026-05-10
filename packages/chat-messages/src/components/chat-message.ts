@@ -33,6 +33,12 @@ export class ChatMessageElement extends LitElement {
   @property() actionsHtml = '';
   @property() reasoningHeaderHtml = '';
   /**
+   * Reply blocks rendered beneath this message. Each entry has a unique `key`
+   * (for `clearReplyMessage(key)`) and `data` holding the replied-to message's display fields
+   * (`content`, `avatar`, `role`, …). The list passes only this message's blocks.
+   */
+  @property({ attribute: false }) replyTargets?: Array<{ key: string; data: Partial<ChatMessage> }>;
+  /**
    * BCP 47 tag for `Intl` date/time (from parent `ChatConfig.locale`).
    * Empty → browser default locale for `toLocaleString` / `toLocaleTimeString`.
    */
@@ -41,6 +47,7 @@ export class ChatMessageElement extends LitElement {
   private _contentCtrl = new StreamingController(this, {
     speed: this.speed,
     onComplete: () => {
+      if (this.message?.parentId) return;
       this.dispatchEvent(
         new CustomEvent('message-complete', {
           detail: { id: this.message?.id },
@@ -233,6 +240,41 @@ export class ChatMessageElement extends LitElement {
     return html`<div class="avatar">${label}</div>`;
   }
 
+  /**
+   * Reply blocks shown beneath the message, all wrapped in a single container
+   * (easy to style as a grouped quote). Each block reuses `<i-chat-message>`
+   * with a `parentId` set, which renders the compact quote variant so any
+   * content type (charts, forms, mermaid, …) renders.
+   */
+  private _renderReplyBlocks() {
+    const blocks = this.replyTargets;
+    console.log('blocks', blocks);
+    if (!blocks || blocks.length === 0) return nothing;
+    return html`
+      <div class="message-replies">
+        ${blocks.map(
+          (block) => html`
+            <div class="message-reply">
+              <i-chat-message
+                inert
+                data-message-id=${block.data.id}
+                .message=${{ ...block.data, parentId: block.data.parentId ?? this.message?.id }}
+                .locale=${this.locale}
+                .speed=${0}
+                .selfAvatar=${this.selfAvatar}
+                .peerAvatar=${this.peerAvatar}
+                .assistantAvatar=${this.assistantAvatar}
+                .selfAvatarHtml=${this.selfAvatarHtml}
+                .peerAvatarHtml=${this.peerAvatarHtml}
+                .assistantAvatarHtml=${this.assistantAvatarHtml}
+              ></i-chat-message>
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
   private _handleActionClick(e: Event): void {
     const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
     if (!target) return;
@@ -355,12 +397,15 @@ export class ChatMessageElement extends LitElement {
         this._cachedContentHtml = newHtml;
         // Morph runs outside Lit's `messages` updates; nested CEs (forms, charts)
         // may grow layout on later frames — parent listens to re-run autoscroll.
-        this.dispatchEvent(
-          new CustomEvent('chat-content-resize', {
-            bubbles: true,
-            composed: true,
-          })
-        );
+        // Reply quotes (parentId set) are static and must not drive autoscroll.
+        if (!this.message?.parentId) {
+          this.dispatchEvent(
+            new CustomEvent('chat-content-resize', {
+              bubbles: true,
+              composed: true,
+            })
+          );
+        }
       }
     }
 
@@ -419,7 +464,11 @@ export class ChatMessageElement extends LitElement {
     const hasMainBody = (this._parsedContent ?? '').trim().length > 0;
 
     return html`
-      <div class="message message--${role} ${error ? 'message--error' : ''}">
+      <div
+        class="message message--${role} ${this.message.parentId ? 'message--reply' : ''} ${error
+          ? 'message--error'
+          : ''}"
+      >
         ${this._renderAvatar(resolvedAvatar, role)}
         <div class="bubble-wrapper">
           ${this._showReasoning
@@ -454,12 +503,13 @@ export class ChatMessageElement extends LitElement {
             ${role === 'assistant' && !streaming && this._duration !== null
               ? html`<div class="duration">${this._formatDuration(this._duration)}</div>`
               : nothing}
-            ${this.actionsHtml && role === 'assistant' && !streaming
+            ${this.actionsHtml && !streaming
               ? html`<div class="message-actions" @click=${this._handleActionClick}>
                   ${unsafeHTML(this.actionsHtml)}
                 </div>`
               : nothing}
           </div>
+          ${this._renderReplyBlocks()}
         </div>
       </div>
     `;

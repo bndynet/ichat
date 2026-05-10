@@ -33,6 +33,10 @@ export class ChatMessages extends LitElement {
   @state() private _assistantAvatarHtml = '';
   @state() private _messageActionsHtml = '';
   @state() private _reasoningHeaderHtml = '';
+  /** Active reply blocks. Multiple blocks may share the same `id` (stacked under one message). */
+  @state() private _replies: Array<{ key: string; id: string; data: Partial<ChatMessage> }> = [];
+  /** Monotonic counter for unique reply-block keys. */
+  private _replyKeySeq = 0;
   @query('.chat-messages') private _scrollContainer!: HTMLElement;
   private _resizeObserver?: ResizeObserver;
   private _observedEl?: Element;
@@ -259,6 +263,44 @@ export class ChatMessages extends LitElement {
 
   removeMessage(id: string): void {
     this.messages = this.messages.filter((m) => m.id !== id);
+    this.clearReplyMessage(id);
+  }
+
+  /**
+   * Add a reply block beneath the message with the given `id`.
+   *
+   * The composer/input is provided by the host; this only renders the reply
+   * block(s) under their message(s). Each call **adds** a new block, so a
+   * single message can stack multiple blocks and different messages can each
+   * have their own. Mirrors the `updateMessage(id, partial)` convention.
+   *
+   * @param id    The id of the message the reply block is attached under.
+   * @param info  Optional fields to display (`content`, `avatar`, `role`, …).
+   *              You can pass the whole `ChatMessage` you are replying to.
+   * @returns A unique key for the created block — pass it to
+   *          `clearReplyMessage(key)` to remove just that block.
+   */
+  replyMessage(id: string, info?: Partial<ChatMessage>): string {
+    const key = `reply-${++this._replyKeySeq}`;
+    this._replies = [...this._replies, { key, id, data: { ...info } }];
+    return key;
+  }
+
+  /**
+   * Remove reply block(s).
+   * @param idOrKey  A message `id` removes **all** blocks under that message; a
+   *                 block `key` (returned by `replyMessage`) removes just that
+   *                 block. When omitted, clears all reply blocks. No-op when
+   *                 there is nothing to remove.
+   */
+  clearReplyMessage(idOrKey?: string): void {
+    if (idOrKey == null) {
+      if (this._replies.length === 0) return;
+      this._replies = [];
+      return;
+    }
+    const next = this._replies.filter((r) => r.id !== idOrKey && r.key !== idOrKey);
+    if (next.length !== this._replies.length) this._replies = next;
   }
 
   /**
@@ -313,6 +355,7 @@ export class ChatMessages extends LitElement {
     this.messages = [];
     this._autoScroll = true;
     this._hasNewContent = false;
+    this._replies = [];
     this.dismissError();
   }
 
@@ -374,6 +417,13 @@ export class ChatMessages extends LitElement {
   render() {
     const cfg = this._config;
 
+    const replyBlocks = new Map<string, Array<{ key: string; data: Partial<ChatMessage> }>>();
+    for (const r of this._replies) {
+      const list = replyBlocks.get(r.id);
+      if (list) list.push({ key: r.key, data: r.data });
+      else replyBlocks.set(r.id, [{ key: r.key, data: r.data }]);
+    }
+
     return html`
       <div class="template-slots" hidden>
         <slot name="self-avatar" @slotchange=${(e: Event) => this._handleSlotChange('self-avatar', e)}></slot>
@@ -408,7 +458,10 @@ export class ChatMessages extends LitElement {
                 </slot>
               </div>`
             : html`
-                <div class="chat-messages-inner" @chat-content-resize=${this._onChatContentResize}>
+                <div
+                  class="chat-messages-inner"
+                  @chat-content-resize=${this._onChatContentResize}
+                >
                   ${repeat(
                     this._messageRenderItems(),
                     (item) => item.key,
@@ -435,6 +488,7 @@ export class ChatMessages extends LitElement {
                               .assistantAvatarHtml=${this._assistantAvatarHtml}
                               .actionsHtml=${this._messageActionsHtml}
                               .reasoningHeaderHtml=${this._reasoningHeaderHtml}
+                              .replyTargets=${replyBlocks.get(item.message.id)}
                               @message-cancel=${(e: CustomEvent<{ id: string }>) =>
                                 this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
                             ></i-chat-message>

@@ -113,6 +113,25 @@ function handleCancel() {
   chatRef.value.cancel('*— Response stopped —*');
 }
 
+/** `message-action` — `data-action` from the `message-actions` slot. */
+function handleMessageAction(e) {
+  const { action, message } = e.detail;
+  if (action === 'reply') {
+    const isSelf = Math.random() > 0.5;
+    chatRef.value.replyMessage(message.id, {
+      id: nextId(),
+      content: `Reply to message #${message.id}`,
+      avatar: isSelf ? DEMO_PNG_DATA_URL : DEMO_INLINE_SVG_AVATAR,
+      role: isSelf ? 'self' : 'peer',
+      timestamp: Date.now(),
+    });
+  } else if (action === 'copy') {
+    navigator.clipboard?.writeText(message.content ?? '');
+  } else if (action === 'clear-reply') {
+    chatRef.value.clearReplyMessage(message.id);
+  }
+}
+
 /** Web Speech API diagnostics from `<i-chat-input>` (bubbles + composed). */
 function handleVoiceInput(e) {
   console.log('[ChatPage voice-input]', e.detail);
@@ -152,10 +171,16 @@ function handleFormSubmit(e) {
     @cancel="handleCancel"
     @form-submit="handleFormSubmit"
     @voice-input="handleVoiceInput"
+    @message-action="handleMessageAction"
   >
     <div slot="empty" style="text-align: center">
       <h2 v-if="loading">Fetching history messages...</h2>
       <h2 v-else>Start chatting...</h2>
+    </div>
+    <div slot="message-actions" style="position: relative; top: -3px;">
+      <span data-action="reply" title="Reply">Reply</span>
+      <span data-action="copy" title="Copy">Copy</span>
+      <span data-action="clear-reply" title="Clear Reply">Clear Reply</span>
     </div>
   </i-chat>
 </template>
