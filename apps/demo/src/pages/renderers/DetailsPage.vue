@@ -11,7 +11,7 @@ onMounted(async () => {
   chatRef.value.addMessage({
     id: nextId(),
     role: 'assistant',
-    content: demoData.detailsFence,
+    content: `${demoData.detailsFence}\n\n${demoData.detailsContainer}`,
     timestamp: Date.now(),
   })
 })

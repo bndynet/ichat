@@ -248,7 +248,6 @@ export class ChatMessageElement extends LitElement {
    */
   private _renderReplyBlocks() {
     const blocks = this.replyTargets;
-    console.log('blocks', blocks);
     if (!blocks || blocks.length === 0) return nothing;
     return html`
       <div class="message-replies">

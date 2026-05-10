@@ -6,6 +6,10 @@ import ChatToolbar from '../components/ChatToolbar.vue';
 
 const loading = ref(true);
 const chatRef = ref(null);
+
+const replyDialogVisible = ref(false);
+const replyContent = ref('');
+const replyTargetMessage = ref(null);
 /** Default English; switch to `{ locale: 'zh-CN' }` to demo Chinese separators */
 const chatConfig = { locale: 'zh-CN' };
 
@@ -113,18 +117,39 @@ function handleCancel() {
   chatRef.value.cancel('*— Response stopped —*');
 }
 
+function openReplyDialog(message) {
+  replyTargetMessage.value = message;
+  replyContent.value = '';
+  replyDialogVisible.value = true;
+}
+
+function cancelReplyDialog() {
+  replyDialogVisible.value = false;
+  replyTargetMessage.value = null;
+  replyContent.value = '';
+}
+
+function confirmReplyDialog() {
+  const message = replyTargetMessage.value;
+  const content = replyContent.value.trim();
+  if (!message || !content) return;
+
+  const isSelf = Math.random() > 0.5;
+  chatRef.value.replyMessage(message.id, {
+    id: nextId(),
+    content,
+    avatar: isSelf ? DEMO_PNG_DATA_URL : DEMO_INLINE_SVG_AVATAR,
+    role: isSelf ? 'self' : 'peer',
+    timestamp: Date.now(),
+  });
+  cancelReplyDialog();
+}
+
 /** `message-action` — `data-action` from the `message-actions` slot. */
 function handleMessageAction(e) {
   const { action, message } = e.detail;
   if (action === 'reply') {
-    const isSelf = Math.random() > 0.5;
-    chatRef.value.replyMessage(message.id, {
-      id: nextId(),
-      content: `Reply to message #${message.id}`,
-      avatar: isSelf ? DEMO_PNG_DATA_URL : DEMO_INLINE_SVG_AVATAR,
-      role: isSelf ? 'self' : 'peer',
-      timestamp: Date.now(),
-    });
+    openReplyDialog(message);
   } else if (action === 'copy') {
     navigator.clipboard?.writeText(message.content ?? '');
   } else if (action === 'clear-reply') {
@@ -183,4 +208,31 @@ function handleFormSubmit(e) {
       <span data-action="clear-reply" title="Clear Reply">Clear Reply</span>
     </div>
   </i-chat>
+
+  <el-dialog
+    v-model="replyDialogVisible"
+    title="Reply"
+    width="420px"
+    :close-on-click-modal="false"
+    @closed="cancelReplyDialog"
+  >
+    <el-input
+      v-model="replyContent"
+      type="textarea"
+      :rows="4"
+      placeholder="Enter reply content…"
+      autofocus
+      @keydown.ctrl.enter="confirmReplyDialog"
+    />
+    <template #footer>
+      <el-button @click="cancelReplyDialog">Cancel</el-button>
+      <el-button
+        type="primary"
+        :disabled="!replyContent.trim()"
+        @click="confirmReplyDialog"
+      >
+        Send reply
+      </el-button>
+    </template>
+  </el-dialog>
 </template>

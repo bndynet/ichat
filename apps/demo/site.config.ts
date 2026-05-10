@@ -12,8 +12,7 @@ export default defineConfig({
       { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
       { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/renderers/KpiGroupPage.vue') },
       { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },
-      { label: 'Details (fence)', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsFencePage.vue') },
-      { label: 'Details (container)', icon: 'panel-bottom-dashed', page: () => import('./src/pages/renderers/DetailsContainerPage.vue') },
+      { label: 'Details', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsPage.vue') },
     ]},
     {
       label: 'Slots',
