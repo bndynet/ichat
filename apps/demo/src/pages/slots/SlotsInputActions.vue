@@ -2,12 +2,7 @@
 import { ElButton } from 'element-plus';
 import { nextTick, onMounted, ref } from 'vue';
 import '@bndynet/ichat';
-import {
-  addMessage as addChatMessage,
-  setStreamingFromDetail,
-  reply,
-} from '../../composables/demo-data.js';
-import ChatToolbar from '../../components/ChatToolbar.vue';
+import { reply } from '../../composables/demo-data.js';
 
 const chatRef = ref(null);
 
@@ -22,7 +17,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ChatToolbar :streaming="streaming" :chat-ref="chatRef" />
   <i-chat
     ref="chatRef"
     @send="handleSend"

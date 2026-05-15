@@ -2,7 +2,6 @@
 import '@bndynet/ichat';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { nextId } from '../../composables/demo-data.js'
-import ChatToolbar from '../../components/ChatToolbar.vue'
 
 const chatRef = ref(null)
 /** Id of the human-in-the-loop demo message, so we can target it from the event handler. */
@@ -141,6 +140,5 @@ function handleToolAction(e) {
 </script>
 
 <template>
-  <ChatToolbar :chat-ref="chatRef" />
   <i-chat ref="chatRef" @tool-action="handleToolAction"></i-chat>
 </template>

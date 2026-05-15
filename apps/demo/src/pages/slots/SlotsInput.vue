@@ -2,22 +2,16 @@
 import { ref, nextTick, onMounted } from 'vue';
 import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
 import '@bndynet/ichat';
-import {
-  reply,
-  setStreamingFromDetail,
-} from '../../composables/demo-data.js';
-import ChatToolbar from '../../components/ChatToolbar.vue';
+import { reply } from '../../composables/demo-data.js';
 
 const draft = ref('');
 const model = ref('');
 const textareaRef = ref(null);
 const streamingUi = ref(false);
 const chatRef = ref(null);
-const streaming = ref(false);
 
 function onStreamingChange(e) {
   streamingUi.value = e.detail.streaming;
-  setStreamingFromDetail(streaming, e);
 }
 
 function emitSendToHost() {
@@ -60,8 +54,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ChatToolbar :streaming="streaming" :chat-ref="chatRef" />
-
   <i-chat
     ref="chatRef"
     @streaming-change="onStreamingChange"

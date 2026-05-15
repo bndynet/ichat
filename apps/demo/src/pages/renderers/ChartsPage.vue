@@ -3,7 +3,6 @@ import '@bndynet/ichat';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
-import ChatToolbar from '../../components/ChatToolbar.vue'
 
 const chatRef = ref(null)
 let cancelled = false
@@ -48,6 +47,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <ChatToolbar :chat-ref="chatRef" />
   <i-chat-messages ref="chatRef"></i-chat-messages>
 </template>

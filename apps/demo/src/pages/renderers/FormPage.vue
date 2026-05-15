@@ -3,7 +3,6 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
-import ChatToolbar from '../../components/ChatToolbar.vue'
 
 const chatRef = ref(null)
 
@@ -30,6 +29,5 @@ function onFormSubmit(e) {
 </script>
 
 <template>
-  <ChatToolbar :chat-ref="chatRef" />
   <i-chat-messages ref="chatRef" @form-submit="onFormSubmit"></i-chat-messages>
 </template>

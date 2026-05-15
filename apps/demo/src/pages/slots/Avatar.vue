@@ -3,7 +3,6 @@ import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { nextId, reply } from '../../composables/demo-data.js';
-import ChatToolbar from '../../components/ChatToolbar.vue';
 
 const chatRef = ref(null);
 
@@ -36,7 +35,6 @@ function handleSend(e) {
 </script>
 
 <template>
-  <ChatToolbar :chat-ref="chatRef" />
   <i-chat ref="chatRef" @send="handleSend" @message-action="handleMessageAction">
     <!-- avatar slots -->
     <div slot="self-avatar">
