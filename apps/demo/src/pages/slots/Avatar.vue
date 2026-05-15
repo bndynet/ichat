@@ -1,6 +1,7 @@
 <script setup>
 import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
+import { textPart } from '@bndynet/ichat';
 import { nextId, reply } from '../../composables/demo-data.js';
 import ChatToolbar from '../../components/ChatToolbar.vue';
 
@@ -11,18 +12,18 @@ onMounted(async () => {
   chatRef.value.addMessage({
     id: nextId(),
     role: 'assistant',
-    content: 'Hello from assistant',
+    parts: [textPart('Hello from assistant')],
   });
   chatRef.value.addMessage({
     id: nextId(),
     role: 'peer',
-    content: 'Hello from peer',
+    parts: [textPart('Hello from peer')],
   });
   chatRef.value.addMessage({
     id: nextId(),
     avatar: 'https://static.bndy.net/images/logo_white_blue_circle.svg',
     role: 'peer',
-    content: 'Hello from your friend',
+    parts: [textPart('Hello from your friend')],
   });
   setTimeout(() => {}, 5000);
 });

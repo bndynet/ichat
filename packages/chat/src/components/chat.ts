@@ -77,7 +77,11 @@ export class Chat extends LitElement {
   @property({ type: Array }) messages: ChatMessage[] = [];
   @property({ type: Object }) config: ChatConfig = {};
   @property() emptyText = '';
-  @property() placeholder = 'Type a message…';
+  /**
+   * Composer placeholder. When empty (default), the localized placeholder from
+   * `config.locale` / `config.labels.composer` is used; set it to override.
+   */
+  @property() placeholder = '';
   /** Disable the input area. */
   @property({ type: Boolean, reflect: true }) disabled = false;
 
@@ -90,8 +94,12 @@ export class Chat extends LitElement {
   /** Passed to the default `<i-chat-input>` for speech recognition language (BCP 47). */
   @property({ attribute: 'voice-lang' }) voiceLang = '';
 
-  /** Passed to the default `<i-chat-input>` — label on the listening overlay. */
-  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = 'Listening…';
+  /**
+   * Passed to the default `<i-chat-input>` — label on the listening overlay.
+   * When empty (default), the localized string from `config.locale` /
+   * `config.labels.composer` is used.
+   */
+  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = '';
 
   /** Passed to the default `<i-chat-input>` — enables `console.debug` speech logs. */
   @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics = false;
@@ -113,6 +121,29 @@ export class Chat extends LitElement {
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
     this._messages.updateMessage(id, partial);
+  }
+
+  /** Append a structured body part to a message. */
+  appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
+    this._messages.appendPart(messageId, part);
+  }
+
+  /** Patch a single body part by its `id`. */
+  updatePart(
+    messageId: string,
+    partId: string,
+    patch: Parameters<ChatMessages['updatePart']>[2]
+  ): void {
+    this._messages.updatePart(messageId, partId, patch);
+  }
+
+  /** Convenience wrapper around {@link updatePart} for `tool-call` parts. */
+  updateToolCall(
+    messageId: string,
+    partId: string,
+    patch: Parameters<ChatMessages['updateToolCall']>[2]
+  ): void {
+    this._messages.updateToolCall(messageId, partId, patch);
   }
 
   removeMessage(id: string): void {
@@ -143,8 +174,8 @@ export class Chat extends LitElement {
     return this._messages.updateTimeline(messageId, step, status as Parameters<ChatMessages['updateTimeline']>[2], bid);
   }
 
-  addErrorMessage(error: string, content = ''): void {
-    this._messages.addErrorMessage(error, content);
+  addErrorMessage(error: string, text = ''): void {
+    this._messages.addErrorMessage(error, text);
   }
 
   /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/ichat`). */
@@ -172,7 +203,7 @@ export class Chat extends LitElement {
    * Mirrors `updateMessage(id, partial)`.
    *
    * @param id    The id of the message the reply block is attached under.
-   * @param info  Optional display fields (`content`, `avatar`, `role`, …).
+   * @param info  Optional display fields (`parts`, `avatar`, `role`, …).
    * @returns A unique key for the created block — pass it to
    *          `clearReplyMessage(key)` to remove just that block.
    */
@@ -336,6 +367,8 @@ export class Chat extends LitElement {
           : html`
               <i-chat-input
                 .placeholder=${this.placeholder}
+                .locale=${this.config.locale ?? ''}
+                .labels=${this.config.labels?.composer}
                 .streaming=${this._streaming}
                 .showVoiceInput=${this.showVoiceInput}
                 .voiceLang=${this.voiceLang}

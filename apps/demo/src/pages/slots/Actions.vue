@@ -1,6 +1,7 @@
 <script setup>
 import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
+import { textPart } from '@bndynet/ichat';
 import { reply, nextId } from '../../composables/demo-data';
 import ChatToolbar from '../../components/ChatToolbar.vue';
 
@@ -11,13 +12,13 @@ onMounted(async () => {
   chatRef.value.addMessage({
     id: nextId(),
     role: 'self',
-    content: 'Hi',
+    parts: [textPart('Hi')],
     timestamp: Date.now(),
   });
   chatRef.value.addMessage({
     id: nextId(),
     role: 'assistant',
-    content: 'Hover over this message to see the actions',
+    parts: [textPart('Hover over this message to see the actions')],
     timestamp: Date.now(),
   });
 });

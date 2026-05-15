@@ -135,7 +135,7 @@ const FORM_STYLES = `
   }
   .chat-form__required {
     color: var(--_form-required);
-    margin-left: 2px;
+    margin-inline-start: 2px;
   }
   .chat-form__input,
   .chat-form__select,

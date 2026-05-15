@@ -29,7 +29,7 @@
   animation: messageIn var(--chat-transition-normal, #{$transition-normal}) forwards;
 
   &--self {
-    margin-left: auto;
+    margin-inline-start: auto;
     flex-direction: row-reverse;
 
     .bubble {
@@ -41,15 +41,15 @@
   &--peer,
   &--assistant,
   &--system {
-    margin-right: auto;
+    margin-inline-end: auto;
   }
 }
 
-// Replies are always left-aligned regardless of role (overrides `--self`).
+// Replies are always start-aligned regardless of role (overrides `--self`).
 .message--reply {
   max-width: 100%;
-  margin-left: 0;
-  margin-right: auto;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
   flex-direction: row;
 }
 
@@ -157,13 +157,13 @@
   .message--self & {
     background: var(--chat-self-bg, var(--chat-user-bg, var(--chat-primary, #{$color-primary})));
     color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
-    border-bottom-right-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-end-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 
   .message--peer & {
     background: var(--chat-peer-bg, var(--chat-assistant-bg, var(--chat-surface, #{$color-surface})));
     color: var(--chat-peer-text, var(--chat-assistant-text, var(--chat-text, #{$color-text})));
-    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
 
@@ -171,15 +171,15 @@
   .message--system & {
     background: var(--chat-assistant-bg, var(--chat-surface, #{$color-surface}));
     color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
-    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
 
-  // Replies are left-aligned regardless of role: flip the rounded "tail" to the
-  // bottom-left (overrides the `--self` bottom-right tail).
+  // Replies are start-aligned regardless of role: flip the rounded "tail" to the
+  // block-end/inline-start corner (overrides the `--self` end-end tail).
   .message--reply & {
-    border-bottom-right-radius: var(--chat-radius-lg, #{$radius-lg});
-    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-end-radius: var(--chat-radius-lg, #{$radius-lg});
+    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 }
 
@@ -205,7 +205,7 @@
 
   ul, ol {
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    padding-left: var(--chat-spacing-lg, #{$spacing-lg});
+    padding-inline-start: var(--chat-spacing-lg, #{$spacing-lg});
   }
 
   li {
@@ -229,10 +229,13 @@
   blockquote {
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
     padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    border-left: 3px solid var(--chat-border, #{$color-border});
+    border-inline-start: 3px solid var(--chat-border, #{$color-border});
     color: var(--chat-text-secondary, #{$color-text-secondary});
     background: var(--chat-blockquote-bg, #{$color-blockquote-bg});
-    border-radius: 0 var(--chat-radius-sm, #{$radius-sm}) var(--chat-radius-sm, #{$radius-sm}) 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    border-start-end-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-end-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 
   code {
@@ -276,7 +279,7 @@
     th, td {
       padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
       border: 1px solid var(--chat-border, #{$color-border});
-      text-align: left;
+      text-align: start;
     }
 
     th {
@@ -326,7 +329,7 @@
   .chart-bar-label {
     width: 80px;
     font-size: var(--chat-font-size-sm, #{$font-size-sm});
-    text-align: right;
+    text-align: end;
     flex-shrink: 0;
     color: var(--chat-text-secondary, #{$color-text-secondary});
   }
@@ -421,7 +424,7 @@
     color: var(--chat-error-color, var(--chat-error, #{$color-error}));
     word-break: break-word;
     overflow-wrap: break-word;
-    border-bottom-left-radius: var(--chat-radius-sm, #{$radius-sm});
+    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 
   .error-indicator {
@@ -457,7 +460,7 @@
   animation: blink 0.7s step-end infinite;
   color: var(--chat-primary, #{$color-primary});
   font-weight: 400;
-  margin-left: 1px;
+  margin-inline-start: 1px;
 
   .message--self & {
     color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
@@ -531,12 +534,12 @@
   max-width: 100%;
   margin-top: var(--chat-spacing-xs, #{$spacing-xs});
   padding: var(--chat-spacing-xs, #{$spacing-xs});
-  border-left: 3px solid var(--chat-primary, #{$color-primary});
+  border-inline-start: 3px solid var(--chat-primary, #{$color-primary});
   animation: messageIn var(--chat-transition-fast, #{$transition-fast}) forwards;
 
   .message--self & {
-    border-left: none;
-    border-right: 3px solid var(--chat-primary, #{$color-primary});
+    border-inline-start: none;
+    border-inline-end: 3px solid var(--chat-primary, #{$color-primary});
   }
 }
 
@@ -567,7 +570,7 @@
 
   &::before {
     content: '·';
-    margin-right: var(--chat-spacing-xs, #{$spacing-xs});
+    margin-inline-end: var(--chat-spacing-xs, #{$spacing-xs});
     opacity: 0.6;
   }
 }

@@ -51,6 +51,11 @@
       transition: transform var(--chat-transition-fast, #{$transition-fast});
     }
 
+    // RTL: closed triangle points toward the inline-start (▶ → ◀).
+    &:dir(rtl)::before {
+      transform: rotate(180deg);
+    }
+
     &:hover {
       background: color-mix(
         in srgb,

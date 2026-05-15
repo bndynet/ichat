@@ -1,9 +1,10 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { ChatMessage, ChatConfig } from '../types.js';
-import { DEFAULT_CONFIG } from '../types.js';
-import { getDateSeparatorInfo, resolveDateSeparatorLabels } from '../date-separator.js';
+import type { ChatMessage, ChatConfig, MessagePart, ToolCallPart } from '../types.js';
+import { DEFAULT_CONFIG, textPart } from '../types.js';
+import { getDateSeparatorInfo } from '../date-separator.js';
+import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
@@ -47,8 +48,17 @@ export class ChatMessages extends LitElement {
   /** Invalidates in-flight multi-pass scroll when a newer scroll is requested. */
   private _scrollToBottomSeq = 0;
 
-  private get _config(): Required<ChatConfig> {
+  private get _config() {
     return { ...DEFAULT_CONFIG, ...this.config };
+  }
+
+  /** Fully-resolved UI strings (built-ins from `locale` + host `labels` overrides). */
+  private get _labels(): ChatLabels {
+    return resolveLabels({
+      locale: this.config.locale ?? DEFAULT_CONFIG.locale,
+      labels: this.config.labels,
+      dateSeparatorLabels: this.config.dateSeparatorLabels,
+    });
   }
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
@@ -60,10 +70,7 @@ export class ChatMessages extends LitElement {
       | { kind: 'sep'; key: string; label: string }
       | { kind: 'msg'; key: string; message: ChatMessage }
     > = [];
-    const sepLabels = resolveDateSeparatorLabels({
-      locale: this._config.locale,
-      labels: this._config.dateSeparatorLabels,
-    });
+    const sepLabels = this._labels.dateSeparator;
     const onlyToday =
       this.messages.length > 0 &&
       this.messages.every((m) => {
@@ -261,6 +268,41 @@ export class ChatMessages extends LitElement {
     );
   }
 
+  /**
+   * Append a structured body part to a message (e.g. a streaming text segment,
+   * a reasoning block, or a tool call). Creates the `parts` array if absent.
+   */
+  appendPart(messageId: string, part: MessagePart): void {
+    this.messages = this.messages.map((m) =>
+      m.id === messageId ? { ...m, parts: [...(m.parts ?? []), part] } : m
+    );
+  }
+
+  /**
+   * Patch a single part by its `id`. Shallow-merges `patch` into the matching
+   * part; stateful elements (e.g. `<i-chat-tool-call>`) are preserved because
+   * parts are rendered keyed by `id`.
+   */
+  updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
+    this.messages = this.messages.map((m) => {
+      if (m.id !== messageId || !m.parts) return m;
+      return {
+        ...m,
+        parts: m.parts.map((p) =>
+          p.id === partId ? ({ ...p, ...patch } as MessagePart) : p
+        ),
+      };
+    });
+  }
+
+  /**
+   * Convenience wrapper around {@link updatePart} for `tool-call` parts (advance
+   * the state machine, attach `result`, set `durationMs`, etc.).
+   */
+  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): void {
+    this.updatePart(messageId, partId, patch as Partial<MessagePart>);
+  }
+
   removeMessage(id: string): void {
     this.messages = this.messages.filter((m) => m.id !== id);
     this.clearReplyMessage(id);
@@ -275,7 +317,7 @@ export class ChatMessages extends LitElement {
    * have their own. Mirrors the `updateMessage(id, partial)` convention.
    *
    * @param id    The id of the message the reply block is attached under.
-   * @param info  Optional fields to display (`content`, `avatar`, `role`, …).
+   * @param info  Optional fields to display (`parts`, `avatar`, `role`, …).
    *              You can pass the whole `ChatMessage` you are replying to.
    * @returns A unique key for the created block — pass it to
    *          `clearReplyMessage(key)` to remove just that block.
@@ -333,9 +375,23 @@ export class ChatMessages extends LitElement {
     if (hint) {
       const msg = this.messages.find((m) => m.id === id);
       if (msg) {
-        this.updateMessage(id, {
-          content: (msg.content ? msg.content + '\n\n' : '') + hint,
-        });
+        // Append the hint to the last text part, or add a new one.
+        const parts = msg.parts ?? [];
+        let lastTextIdx = -1;
+        for (let i = parts.length - 1; i >= 0; i--) {
+          if (parts[i].type === 'text') {
+            lastTextIdx = i;
+            break;
+          }
+        }
+        if (lastTextIdx >= 0) {
+          const target = parts[lastTextIdx] as Extract<MessagePart, { type: 'text' }>;
+          const nextParts = parts.slice();
+          nextParts[lastTextIdx] = { ...target, text: `${target.text}\n\n${hint}` };
+          this.updateMessage(id, { parts: nextParts });
+        } else {
+          this.updateMessage(id, { parts: [...parts, textPart(hint)] });
+        }
       }
     }
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
@@ -403,12 +459,15 @@ export class ChatMessages extends LitElement {
     this._errorBanner = '';
   }
 
-  /** Convenience: add a message with `role: 'assistant'` and `error` set. */
-  addErrorMessage(error: string, content = ''): void {
+  /**
+   * Convenience: add a message with `role: 'assistant'` and `error` set.
+   * @param text  Optional markdown body shown beneath the error indicator.
+   */
+  addErrorMessage(error: string, text = ''): void {
     this.addMessage({
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       role: 'assistant',
-      content,
+      parts: text ? [textPart(text)] : [],
       error,
       timestamp: Date.now(),
     });
@@ -416,6 +475,7 @@ export class ChatMessages extends LitElement {
 
   render() {
     const cfg = this._config;
+    const labels = this._labels;
 
     const replyBlocks = new Map<string, Array<{ key: string; data: Partial<ChatMessage> }>>();
     for (const r of this._replies) {
@@ -442,7 +502,7 @@ export class ChatMessages extends LitElement {
               <button
                 class="error-banner-dismiss"
                 @click=${() => this.dismissError()}
-                aria-label="Dismiss error"
+                aria-label=${labels.messages.dismissError}
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                   <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
@@ -454,7 +514,7 @@ export class ChatMessages extends LitElement {
           ${this.messages.length === 0
             ? html`<div class="chat-empty">
                 <slot name="empty">
-                  ${this.emptyText || 'No messages yet. Start a conversation!'}
+                  ${this.emptyText || labels.messages.empty}
                 </slot>
               </div>`
             : html`
@@ -479,6 +539,7 @@ export class ChatMessages extends LitElement {
                               data-message-id=${item.message.id}
                               .message=${item.message}
                               .locale=${cfg.locale}
+                              .labels=${labels}
                               .speed=${cfg.streamingSpeed}
                               .selfAvatar=${cfg.selfAvatar}
                               .peerAvatar=${cfg.peerAvatar}
@@ -502,7 +563,7 @@ export class ChatMessages extends LitElement {
               <button
                 class="scroll-down-btn"
                 @click=${this._handleScrollToBottom}
-                aria-label="Scroll to latest message"
+                aria-label=${labels.messages.scrollToLatest}
               >
                 <svg viewBox="0 0 24 24" width="20" height="20">
                   <path d="M7 10l5 5 5-5z" fill="currentColor"/>

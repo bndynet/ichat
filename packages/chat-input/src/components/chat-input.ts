@@ -1,5 +1,6 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import { resolveComposerLabels, type ComposerLabels } from '../i18n.js';
 import styles from '../styles/chat-input.scss';
 
 type SpeechRecognitionCtor = new () => SpeechRecognition;
@@ -108,7 +109,23 @@ export class ChatInput extends LitElement {
     </svg>
   `;
 
-  @property() placeholder = 'Type a message…';
+  /**
+   * Textarea placeholder. When empty (default), the localized placeholder from
+   * `locale` / `labels` is used; set it to override that for this composer.
+   */
+  @property() placeholder = '';
+
+  /**
+   * BCP 47 locale for built-in composer strings. Built-ins: `en` (default),
+   * `zh` / `zh-CN`. Unknown locales fall back to English.
+   */
+  @property() locale = '';
+
+  /**
+   * Partial overrides merged on top of the strings chosen via `locale`. Provide
+   * only the keys you want to change.
+   */
+  @property({ attribute: false }) labels?: Partial<ComposerLabels>;
 
   /** When true the cancel button is shown instead of the send button. */
   @property({ type: Boolean, reflect: true }) streaming = false;
@@ -119,8 +136,11 @@ export class ChatInput extends LitElement {
   /** BCP 47 language tag for speech recognition (e.g. `zh-CN`, `en-US`). Defaults to `navigator.language`. */
   @property({ attribute: 'voice-lang' }) voiceLang = '';
 
-  /** Shown on the listening overlay while speech recognition is active. */
-  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = 'Listening…';
+  /**
+   * Shown on the listening overlay while speech recognition is active. When
+   * empty (default), the localized string from `locale` / `labels` is used.
+   */
+  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = '';
 
   /**
    * When true (default), the voice button is shown **only if** the browser supports
@@ -141,6 +161,20 @@ export class ChatInput extends LitElement {
   private _recognition: SpeechRecognition | null = null;
   /** Text before the current browser recognition segment; refreshed on each `onend` when dictation stays on. */
   private _voiceSnapshot = '';
+
+  /**
+   * Effective composer strings: built-ins from `locale`, host `labels`
+   * overrides, then the explicit `placeholder` / `voiceListeningLabel`
+   * attributes (kept for backward compatibility) win when non-empty.
+   */
+  private get _labels(): ComposerLabels {
+    const resolved = resolveComposerLabels({ locale: this.locale, labels: this.labels });
+    return {
+      ...resolved,
+      placeholder: this.placeholder || resolved.placeholder,
+      voiceListening: this.voiceListeningLabel || resolved.voiceListening,
+    };
+  }
 
   override firstUpdated(): void {
     this._autoResize();
@@ -385,6 +419,7 @@ export class ChatInput extends LitElement {
       this._value.trim().length > 0 && !this.streaming && !this.disabled && !this._listening;
     const showVoiceButton = this.showVoiceInput && ChatInput.isVoiceInputSupported();
     const fieldLocked = this.disabled || this._listening;
+    const L = this._labels;
 
     return html`
       <div class="chat-input-wrapper">
@@ -392,7 +427,7 @@ export class ChatInput extends LitElement {
           <textarea
             class="chat-input-textarea"
             rows="1"
-            placeholder=${this._listening ? '' : this.placeholder}
+            placeholder=${this._listening ? '' : L.placeholder}
             ?disabled=${fieldLocked}
             .value=${this._value}
             @input=${this._handleInput}
@@ -401,7 +436,7 @@ export class ChatInput extends LitElement {
           ${this._listening
             ? html`
                 <div class="chat-input-listening-overlay" role="status" aria-live="polite">
-                  <span class="chat-input-listening-overlay__label">${this.voiceListeningLabel}</span>
+                  <span class="chat-input-listening-overlay__label">${L.voiceListening}</span>
                 </div>
               `
             : nothing}
@@ -416,8 +451,8 @@ export class ChatInput extends LitElement {
                   <button
                     class="chat-input-btn chat-input-cancel"
                     @click=${this._cancel}
-                    aria-label="Cancel"
-                    title="Stop generating"
+                    aria-label=${L.cancel}
+                    title=${L.cancelTitle}
                   >
                     ${ChatInput._cancelIcon}
                   </button>
@@ -430,9 +465,9 @@ export class ChatInput extends LitElement {
                           class="chat-input-btn chat-input-voice ${this._listening ? 'chat-input-voice--active' : ''}"
                           @click=${this._toggleVoice}
                           ?disabled=${this.disabled}
-                          aria-label=${this._listening ? 'Stop voice input' : 'Voice input'}
+                          aria-label=${this._listening ? L.voiceStop : L.voiceStart}
                           aria-pressed=${this._listening}
-                          title=${this._listening ? 'Stop dictation' : 'Voice input'}
+                          title=${this._listening ? L.voiceStopTitle : L.voiceStartTitle}
                         >
                           ${this._listening ? ChatInput._voiceStopDictationIcon : ChatInput._micIcon}
                         </button>
@@ -442,8 +477,8 @@ export class ChatInput extends LitElement {
                     class="chat-input-btn chat-input-send"
                     @click=${this._submit}
                     ?disabled=${!canSend}
-                    aria-label="Send"
-                    title="Send message"
+                    aria-label=${L.send}
+                    title=${L.sendTitle}
                   >
                     ${ChatInput._sendIcon}
                   </button>

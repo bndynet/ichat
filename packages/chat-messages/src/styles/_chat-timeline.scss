@@ -22,7 +22,7 @@
     &:not(:last-child)::after {
       content: '';
       position: absolute;
-      left: calc(var(--chat-timeline-indicator-size, #{$timeline-indicator-size}) / 2 - 0.5px);
+      inset-inline-start: calc(var(--chat-timeline-indicator-size, #{$timeline-indicator-size}) / 2 - 0.5px);
       top: calc(
         (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em
         + var(--chat-timeline-indicator-size, #{$timeline-indicator-size})

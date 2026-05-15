@@ -6,6 +6,7 @@ import {
   Delete,
   CircleClose,
 } from '@element-plus/icons-vue'
+import { textPart } from '@bndynet/ichat'
 import { cancelPendingStreamPlayback } from '../composables/demo-data.js'
 
 const CANCEL_HINT = '*— Response stopped —*'
@@ -38,14 +39,14 @@ function onErrorMessage() {
   chat.addMessage({
     id: nextMsgId(),
     role: 'self',
-    content: 'Tell me about quantum computing',
+    parts: [textPart('Tell me about quantum computing')],
     timestamp: Date.now(),
   })
   setTimeout(() => {
     chat.addMessage({
       id: nextMsgId(),
       role: 'assistant',
-      content: '',
+      parts: [],
       error: 'Service temporarily unavailable. Please try again later.',
       timestamp: Date.now(),
     })
@@ -116,10 +117,5 @@ function onClear() {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  margin: 0 0 8px 0;
-  border-radius: 8px;
-  border: 1px dashed var(--el-border-color, #dcdfe6);
-  background: var(--el-fill-color-light, #f5f7fa);
 }
 </style>

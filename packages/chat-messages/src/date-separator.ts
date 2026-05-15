@@ -40,6 +40,42 @@ function pickBuiltInLabels(locale: string): DateSeparatorLabels {
   return DATE_SEPARATOR_LABELS_EN;
 }
 
+/** CLDR plural categories; `other` is the required fallback. */
+export type PluralForms = Partial<Record<Intl.LDMLPluralRule, (n: number) => string>> & {
+  other: (n: number) => string;
+};
+
+/**
+ * Build a plural-aware `daysAgo(n)` (or any count formatter) using
+ * `Intl.PluralRules`. Provide one template per CLDR plural category for the
+ * `locale`; `other` is required as the fallback. Useful for languages with
+ * several plural forms (e.g. Russian, Arabic, Polish) where a single template
+ * is grammatically wrong. Pass the result as `labels.dateSeparator.daysAgo`.
+ *
+ * @example
+ * ```ts
+ * makeDaysAgo('ru', {
+ *   one: (n) => `${n} день назад`,
+ *   few: (n) => `${n} дня назад`,
+ *   many: (n) => `${n} дней назад`,
+ *   other: (n) => `${n} дней назад`,
+ * });
+ * ```
+ */
+export function makeDaysAgo(locale: string, forms: PluralForms): (days: number) => string {
+  let rules: Intl.PluralRules | undefined;
+  try {
+    rules = new Intl.PluralRules(locale || undefined);
+  } catch {
+    rules = undefined;
+  }
+  return (days: number) => {
+    const category = rules ? rules.select(days) : 'other';
+    const fn = forms[category] ?? forms.other;
+    return fn(days);
+  };
+}
+
 /**
  * Resolves final date-separator strings: built-ins from `locale`, then shallow merge of `labels`.
  */

@@ -1,6 +1,7 @@
 <script setup>
 import '@bndynet/ichat';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
+import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
 import ChatToolbar from '../../components/ChatToolbar.vue'
 
@@ -26,7 +27,7 @@ onMounted(async () => {
   host.addMessage({
     id,
     role: 'assistant',
-    content: demoData.timeline,
+    parts: [textPart(demoData.timeline)],
     timestamp: Date.now(),
   })
 

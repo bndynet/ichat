@@ -1,3 +1,5 @@
+import { textPart, reasoningPart, getMessageText } from '@bndynet/ichat';
+
 // Chart JSON helpers
 const chart = (obj) => '```chart\n' + JSON.stringify(obj, null, 2) + '\n```';
 
@@ -219,8 +221,15 @@ let cancelStream = null;
 
 export const nextId = () => 'msg-' + ++msgId;
 
+// Fixed part ids within a streaming assistant message.
+const REASONING_PART_ID = 'reasoning';
+const CONTENT_PART_ID = 'content';
+
 function playEvents(chatRef, messageId, events) {
-  const acc = { reasoning: undefined, content: '' };
+  const chat = chatRef.value;
+  let reasoningText = '';
+  let contentText = '';
+  let hasContentPart = false;
   let i = 0;
   let cancelled = false;
   let timer = null;
@@ -242,15 +251,36 @@ function playEvents(chatRef, messageId, events) {
   function step() {
     if (cancelled) return;
     if (i >= events.length) {
-      chatRef.value.updateMessage(messageId, { ...acc, streaming: false });
+      chat.updatePart(messageId, REASONING_PART_ID, { status: 'complete' });
+      if (hasContentPart)
+        chat.updatePart(messageId, CONTENT_PART_ID, { status: 'complete' });
+      chat.updateMessage(messageId, { streaming: false });
       cancelStream = null;
       return;
     }
     const ev = events[i++];
-    if (typeof ev.reasoning === 'string')
-      acc.reasoning = (acc.reasoning ?? '') + ev.reasoning;
-    if (typeof ev.content === 'string') acc.content += ev.content;
-    chatRef.value.updateMessage(messageId, { ...acc, streaming: true });
+    if (typeof ev.reasoning === 'string') {
+      reasoningText += ev.reasoning;
+      chat.updatePart(messageId, REASONING_PART_ID, {
+        text: reasoningText,
+        status: 'streaming',
+      });
+    }
+    if (typeof ev.content === 'string') {
+      contentText += ev.content;
+      if (!hasContentPart) {
+        chat.appendPart(
+          messageId,
+          textPart(contentText, { id: CONTENT_PART_ID, status: 'streaming' }),
+        );
+        hasContentPart = true;
+      } else {
+        chat.updatePart(messageId, CONTENT_PART_ID, {
+          text: contentText,
+          status: 'streaming',
+        });
+      }
+    }
     timer = setTimeout(step, nextDelay(ev));
   }
   step();
@@ -263,8 +293,7 @@ function responseThinking(chatRef) {
     chat.addMessage({
       id: aiId,
       role: 'assistant',
-      content: '',
-      reasoning: '',
+      parts: [reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' })],
       streaming: true,
       timestamp: Date.now(),
     });
@@ -292,7 +321,7 @@ export function setStreamingFromDetail(streamingRef, e) {
 
 export function handleDemoMessageAction(e) {
   const { action, message } = e.detail;
-  if (action === 'copy') navigator.clipboard.writeText(message.content);
+  if (action === 'copy') navigator.clipboard.writeText(getMessageText(message));
   else if (action === 'like') console.info('[chat-demo] like', message.id);
 }
 
@@ -301,7 +330,7 @@ export function reply(chatRef, question) {
   chat.addMessage({
     id: nextId(),
     role: 'self',
-    content: question,
+    parts: [textPart(question)],
     timestamp: Date.now(),
   });
 
@@ -313,7 +342,7 @@ export function reply(chatRef, question) {
     chat.addMessage({
       id: nextId(),
       role: 'assistant',
-      content: result,
+      parts: [textPart(result)],
       timestamp: Date.now(),
       streaming: false,
     });

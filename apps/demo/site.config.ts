@@ -6,6 +6,7 @@ export default defineConfig({
     { label: 'Home', icon: 'home', page: () => import('../../README.md?raw') },
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
     { label: 'Renderers', icon: 'layout-list',  children: [
+      { label: 'Tool calls', icon: 'wrench', page: () => import('./src/pages/renderers/ToolCallsPage.vue') },
       { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
       { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
       { label: 'Mermaid', icon: 'git-fork', page: () => import('./src/pages/renderers/MermaidPage.vue') },

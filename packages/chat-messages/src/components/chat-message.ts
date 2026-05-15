@@ -2,13 +2,17 @@ import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ref, createRef } from 'lit/directives/ref.js';
+import { repeat } from 'lit/directives/repeat.js';
 import morphdom from 'morphdom';
 import type {
   ChatFormFieldValues,
   ChatFormSubmitDetail,
   ChatMessage,
   ChatMessageRole,
+  MessagePart,
+  TextPart,
 } from '../types.js';
+import type { ChatLabels } from '../i18n.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
@@ -17,6 +21,7 @@ import { formatAssistantDurationMs } from '../duration-format.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-reasoning.js';
+import './chat-tool-call.js';
 
 @customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
@@ -35,7 +40,7 @@ export class ChatMessageElement extends LitElement {
   /**
    * Reply blocks rendered beneath this message. Each entry has a unique `key`
    * (for `clearReplyMessage(key)`) and `data` holding the replied-to message's display fields
-   * (`content`, `avatar`, `role`, …). The list passes only this message's blocks.
+   * (`parts`, `avatar`, `role`, …). The list passes only this message's blocks.
    */
   @property({ attribute: false }) replyTargets?: Array<{ key: string; data: Partial<ChatMessage> }>;
   /**
@@ -44,6 +49,19 @@ export class ChatMessageElement extends LitElement {
    */
   @property() locale = '';
 
+  /**
+   * Resolved UI strings forwarded from `<i-chat-messages>`. When omitted (e.g.
+   * the element is used standalone), child components fall back to their own
+   * English defaults.
+   */
+  @property({ attribute: false }) labels?: ChatLabels;
+
+  /**
+   * Single typewriter controller, bound to the message's currently-streaming
+   * `text` part (`status === 'streaming'`). Non-streaming text parts render
+   * their full markdown directly. A message has at most one streaming text part
+   * at a time, so one controller is enough.
+   */
   private _contentCtrl = new StreamingController(this, {
     speed: this.speed,
     onComplete: () => {
@@ -117,19 +135,18 @@ export class ChatMessageElement extends LitElement {
       this._contentCtrl.setSpeed(this.speed);
     }
     if (changed.has('message') && this.message) {
-      const r = this.message.reasoning;
-      this._parsedReasoning = r ?? '';
-      this._parsedContent = this.message.content;
-      // Show reasoning when the field is present: non-empty text, or streaming with an empty buffer
-      // (e.g. SSE reasoning track started before the first chunk). Omit `reasoning` entirely for answer-only.
-      this._showReasoning =
-        r !== undefined &&
-        (r.length > 0 ||
-          (this.message.streaming === true && this.message.role === 'assistant'));
-
+      // Bind the typewriter to the streaming text part (if any). Everything else
+      // renders its full markdown directly via morphdom in updated().
+      const streamingText = (this.message.parts ?? []).find(
+        (p): p is TextPart => p.type === 'text' && p.status === 'streaming'
+      );
+      this._streamingTextId = streamingText?.id ?? null;
       const shouldAnimate =
-        this.message.streaming && !this.message.error && this.message.role === 'assistant';
-      this._contentCtrl.setContent(this._parsedContent, shouldAnimate);
+        !!streamingText &&
+        this.message.streaming === true &&
+        !this.message.error &&
+        this.message.role === 'assistant';
+      this._contentCtrl.setContent(streamingText?.text ?? '', shouldAnimate);
 
       // Track streaming duration for assistant messages
       if (this.message.role === 'assistant') {
@@ -150,18 +167,27 @@ export class ChatMessageElement extends LitElement {
     }
   }
 
-  private _parsedReasoning = '';
-  private _parsedContent = '';
-  private _showReasoning = false;
   private _streamStartTime: number | null = null;
   private _duration: number | null = null;
   private _timelineOverrides = new Map<string, { step: number; status: TimelineStatus; bid?: string }>();
   private _pendingTimelineRetry = false;
 
-  /** Ref to the `.content` div so we can morph it directly without tearing down custom elements. */
-  private _contentRef = createRef<HTMLDivElement>();
-  /** Last HTML string written into the content div via morphdom – used to skip no-op patches. */
-  private _cachedContentHtml = '';
+  /** Id of the `text` part currently driven by the typewriter, or `null`. */
+  private _streamingTextId: string | null = null;
+  /** Per-`text`-part refs to the `.content` div we morph into (keyed by part id). */
+  private _textRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
+  /** Last HTML morphed into each text part – used to skip no-op patches (keyed by part id). */
+  private _textCache = new Map<string, string>();
+
+  /** Stable ref for a `text` part's content container (created on first use). */
+  private _textRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
+    let r = this._textRefs.get(id);
+    if (!r) {
+      r = createRef<HTMLDivElement>();
+      this._textRefs.set(id, r);
+    }
+    return r;
+  }
 
   private _isImageUrl(str: string): boolean {
     return /^(https?:\/\/|data:image\/)/.test(str) || /\.(png|jpe?g|gif|svg|webp)$/i.test(str);
@@ -259,6 +285,7 @@ export class ChatMessageElement extends LitElement {
                 data-message-id=${block.data.id}
                 .message=${{ ...block.data, parentId: block.data.parentId ?? this.message?.id }}
                 .locale=${this.locale}
+                .labels=${this.labels}
                 .speed=${0}
                 .selfAvatar=${this.selfAvatar}
                 .peerAvatar=${this.peerAvatar}
@@ -272,6 +299,75 @@ export class ChatMessageElement extends LitElement {
         )}
       </div>
     `;
+  }
+
+  /**
+   * Render the structured `parts` body. Each part is keyed by its `id` so
+   * stateful elements (e.g. `<i-chat-tool-call>` expand state) survive updates,
+   * and `<i-chat-tool-call>` receives `.data` as a property for in-place patching.
+   */
+  private _renderParts() {
+    const parts = this.message.parts ?? [];
+    return html`${repeat(
+      parts,
+      (p) => p.id,
+      (p) => this._renderPart(p)
+    )}`;
+  }
+
+  private _renderPart(part: MessagePart) {
+    switch (part.type) {
+      case 'reasoning':
+        return html`<i-chat-reasoning
+          .content=${part.text}
+          .streaming=${part.status === 'streaming'}
+          .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
+          .headerHtml=${this.reasoningHeaderHtml}
+          .labels=${this.labels?.reasoning}
+        ></i-chat-reasoning>`;
+      case 'tool-call':
+        return html`<i-chat-tool-call
+          data-tool-call-id=${part.toolCallId}
+          .data=${part}
+          .labels=${this.labels?.toolCall}
+        ></i-chat-tool-call>`;
+      case 'file': {
+        if (part.mediaType.startsWith('image/')) {
+          const src =
+            part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
+          return src
+            ? html`<div class="bubble">
+                <img class="part-file-image" src=${src} alt=${part.name ?? 'image'} />
+              </div>`
+            : nothing;
+        }
+        const href = part.url ?? '';
+        return html`<div class="bubble">
+          <a class="part-file-link" href=${href} target="_blank" rel="noopener noreferrer"
+            >${part.name ?? href}</a
+          >
+        </div>`;
+      }
+      case 'source':
+        return html`<div class="bubble">
+          <a class="part-source" href=${part.url} target="_blank" rel="noopener noreferrer"
+            >${part.title ?? part.url}</a
+          >
+          ${part.snippet ? html`<div class="part-source-snippet">${part.snippet}</div>` : nothing}
+        </div>`;
+      case 'text': {
+        // Content is morphed in updated() (preserves charts/mermaid; drives the
+        // typewriter for the streaming part). The container starts empty.
+        const animatingHere = part.id === this._streamingTextId && this._contentCtrl.isAnimating;
+        return html`<div class="bubble">
+          <div class="content ${animatingHere ? 'typing-cursor' : ''}" ${ref(this._textRef(part.id))}></div>
+        </div>`;
+      }
+      default:
+        return html`<div class="bubble">
+          <pre class="part-custom">${JSON.stringify(part, null, 2)}</pre>
+        </div>`;
+    }
   }
 
   private _handleActionClick(e: Event): void {
@@ -346,66 +442,83 @@ export class ChatMessageElement extends LitElement {
     return false;
   }
 
+  /** Patch `html` into `el` via morphdom, preserving unchanged custom elements. */
+  private _morphInto(el: HTMLElement, html: string): void {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    morphdom(el, temp, {
+      childrenOnly: true,
+      onBeforeElUpdated(fromEl, toEl) {
+        // Mermaid source lives in a <pre> child, not in attributes. The generic
+        // "skip if attrs unchanged" rule would always skip (zero attrs on both
+        // sides), leaving a stale fragment from the first streaming frame (e.g. "s").
+        if (fromEl.tagName === 'I-CHAT-MERMAID' && toEl.tagName === 'I-CHAT-MERMAID') {
+          return true;
+        }
+        // Source lives in a hidden <pre> child, not only in attributes — same as mermaid.
+        if (fromEl.tagName === 'I-CHAT-CODE-TOGGLE' && toEl.tagName === 'I-CHAT-CODE-TOGGLE') {
+          return true;
+        }
+        // Skip custom elements whose attributes are all unchanged.
+        // Tag names with a hyphen are custom elements (web components).
+        if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {
+          const fa = fromEl.attributes;
+          const ta = toEl.attributes;
+          if (fa.length === ta.length) {
+            let same = true;
+            for (let i = 0; i < ta.length; i++) {
+              if (fromEl.getAttribute(ta[i].name) !== ta[i].value) {
+                same = false;
+                break;
+              }
+            }
+            if (same) return false;
+          }
+        }
+        return true;
+      },
+    });
+  }
+
   override updated(_changed: Map<string, unknown>): void {
     this._pendingTimelineRetry = false;
 
-    // ── morphdom content patch ──────────────────────────────────────────────
+    // ── morphdom content patch (per text part) ──────────────────────────────
     // Instead of using unsafeHTML (which replaces the entire DOM subtree on
     // every Lit update), we patch only the changed nodes via morphdom.
     // This preserves custom elements such as <i-chart> when their attributes
     // haven't changed, preventing ECharts from re-initializing at 60 fps and
     // causing the chart-flicker that occurs during the streaming animation.
-    const contentEl = this._contentRef.value;
-    if (contentEl) {
-      const newHtml = renderMarkdown(this._contentCtrl.displayedContent);
-      if (newHtml !== this._cachedContentHtml) {
-        const temp = document.createElement('div');
-        temp.innerHTML = newHtml;
-        morphdom(contentEl, temp, {
-          childrenOnly: true,
-          onBeforeElUpdated(fromEl, toEl) {
-            // Mermaid source lives in a <pre> child, not in attributes. The generic
-            // "skip if attrs unchanged" rule would always skip (zero attrs on both
-            // sides), leaving a stale fragment from the first streaming frame (e.g. "s").
-            if (fromEl.tagName === 'I-CHAT-MERMAID' && toEl.tagName === 'I-CHAT-MERMAID') {
-              return true;
-            }
-            // Source lives in a hidden <pre> child, not only in attributes — same as mermaid.
-            if (fromEl.tagName === 'I-CHAT-CODE-TOGGLE' && toEl.tagName === 'I-CHAT-CODE-TOGGLE') {
-              return true;
-            }
-            // Skip custom elements whose attributes are all unchanged.
-            // Tag names with a hyphen are custom elements (web components).
-            if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {
-              const fa = fromEl.attributes;
-              const ta = toEl.attributes;
-              if (fa.length === ta.length) {
-                let same = true;
-                for (let i = 0; i < ta.length; i++) {
-                  if (fromEl.getAttribute(ta[i].name) !== ta[i].value) {
-                    same = false;
-                    break;
-                  }
-                }
-                if (same) return false;
-              }
-            }
-            return true;
-          },
-        });
-        this._cachedContentHtml = newHtml;
-        // Morph runs outside Lit's `messages` updates; nested CEs (forms, charts)
-        // may grow layout on later frames — parent listens to re-run autoscroll.
-        // Reply quotes (parentId set) are static and must not drive autoscroll.
-        if (!this.message?.parentId) {
-          this.dispatchEvent(
-            new CustomEvent('chat-content-resize', {
-              bubbles: true,
-              composed: true,
-            })
-          );
-        }
+    const parts = this.message?.parts ?? [];
+    const liveTextIds = new Set<string>();
+    let didMorph = false;
+    for (const p of parts) {
+      if (p.type !== 'text') continue;
+      liveTextIds.add(p.id);
+      const el = this._textRefs.get(p.id)?.value;
+      if (!el) continue;
+      // The streaming part shows the typewriter buffer; others show full text.
+      const source = p.id === this._streamingTextId ? this._contentCtrl.displayedContent : p.text;
+      const newHtml = renderMarkdown(source);
+      if (newHtml === this._textCache.get(p.id)) continue;
+      this._morphInto(el, newHtml);
+      this._textCache.set(p.id, newHtml);
+      didMorph = true;
+    }
+    // Drop refs/caches for text parts that no longer exist.
+    for (const id of [...this._textCache.keys()]) {
+      if (!liveTextIds.has(id)) {
+        this._textCache.delete(id);
+        this._textRefs.delete(id);
       }
+    }
+    // Morph runs outside Lit's `messages` updates; nested CEs (forms, charts)
+    // may grow layout on later frames — parent listens to re-run autoscroll.
+    // Reply quotes (parentId set) are static and must not drive autoscroll.
+    if (didMorph && !this.message?.parentId) {
+      this.dispatchEvent(
+        new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
+      );
     }
 
     // ── timeline re-apply ───────────────────────────────────────────────────
@@ -452,7 +565,6 @@ export class ChatMessageElement extends LitElement {
     if (!this.message) return nothing;
 
     const { role, timestamp, streaming, avatar, error } = this.message;
-    const isAnimating = this._contentCtrl.isAnimating;
     const resolvedAvatar =
       avatar ||
       (role === 'self'
@@ -460,7 +572,6 @@ export class ChatMessageElement extends LitElement {
         : role === 'peer'
           ? this.peerAvatar
           : this.assistantAvatar);
-    const hasMainBody = (this._parsedContent ?? '').trim().length > 0;
 
     return html`
       <div
@@ -470,14 +581,6 @@ export class ChatMessageElement extends LitElement {
       >
         ${this._renderAvatar(resolvedAvatar, role)}
         <div class="bubble-wrapper">
-          ${this._showReasoning
-            ? html`<i-chat-reasoning
-                .content=${this._parsedReasoning}
-                .streaming=${!!streaming}
-                .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
-                .headerHtml=${this.reasoningHeaderHtml}
-              ></i-chat-reasoning>`
-            : nothing}
           ${error
             ? html`<div class="bubble bubble--error">
                 <div class="error-indicator">
@@ -486,15 +589,9 @@ export class ChatMessageElement extends LitElement {
                   </svg>
                   <span class="error-text">${error}</span>
                 </div>
-                ${hasMainBody
-                  ? html`<div class="content" ${ref(this._contentRef)}></div>`
-                  : nothing}
               </div>`
-            : hasMainBody
-              ? html`<div class="bubble">
-                  <div class="content ${isAnimating ? 'typing-cursor' : ''}" ${ref(this._contentRef)}></div>
-                </div>`
-              : nothing}
+            : nothing}
+          ${this._renderParts()}
           <div class="message-footer">
             ${timestamp && !streaming
               ? html`<div class="timestamp">${this._formatTimestamp(timestamp)}</div>`

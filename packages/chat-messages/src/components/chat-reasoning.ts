@@ -1,6 +1,8 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import type { ReasoningLabels } from '../i18n.js';
+import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
 import styles from '../styles/chat-reasoning.scss';
@@ -14,6 +16,8 @@ export class ChatReasoning extends LitElement {
   @property({ type: Boolean }) streaming = false;
   @property({ type: Number }) speed = 2;
   @property() headerHtml = '';
+  /** Localized header strings; falls back to English when omitted. */
+  @property({ attribute: false }) labels?: ReasoningLabels;
   @state() private _expanded = false;
   /** Tracks last render’s streaming flag so we can detect true→false without relying on changed.get quirks. */
   private _prevStreaming = false;
@@ -82,7 +86,9 @@ export class ChatReasoning extends LitElement {
             ? html`<span class="reasoning-header-custom ${isThinking ? 'is-thinking' : ''}">${unsafeHTML(this.headerHtml)}</span>`
             : html`<span class="reasoning-icon">💭</span>
               <span class="reasoning-title">
-                ${isThinking ? 'Thinking...' : 'Reasoning'}
+                ${isThinking
+                  ? (this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking)
+                  : (this.labels?.reasoning ?? CHAT_LABELS_EN.reasoning.reasoning)}
                 ${isThinking
                   ? html`<span class="reasoning-thinking">
                       <span class="dot"></span>

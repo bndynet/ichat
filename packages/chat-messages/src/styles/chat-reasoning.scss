@@ -60,7 +60,7 @@
 }
 
 .reasoning-chevron {
-  margin-left: auto;
+  margin-inline-start: auto;
   transition: transform var(--chat-transition-normal, #{$transition-normal});
   display: flex;
   align-items: center;
