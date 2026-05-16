@@ -40,6 +40,13 @@
     "typescript": "^5.8.2"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@bndynet/icharts": "^6.0.0"
   }

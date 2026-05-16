@@ -32,5 +32,12 @@
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
