@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderers",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Optional peer add-on for @bndynet/ichat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -21,7 +21,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^0.1.0",
+    "@bndynet/ichat-messages": "^1.0.0",
     "echarts": ">=6",
     "markdown-it": ">=14",
     "mermaid": ">=11"

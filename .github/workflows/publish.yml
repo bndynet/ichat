@@ -1,4 +1,4 @@
-name: Build+Publish
+name: Build+Publish+Deploy
 
 on:
   release:
@@ -29,12 +29,9 @@ jobs:
   publish:
     uses: bndynet/gh.flows/.github/workflows/npm.yml@main
     with:
-      lint-command: ''
-      test-command: ''
-      build-command: 'npm run build'
       publish-enabled: ${{ github.event_name == 'release' || inputs.publish_enabled }} 
       publish-version: ${{ inputs['publish-version'] }}
-      publish-auth-method: 'token'                                 # token (or oidc)
+      publish-auth-method: 'oidc'                                 # token (or oidc)
       publish-version-command: ${{ format('npm run version -- {0}', inputs['publish-version']) }}
       publish-command: 'npm run publish:packages'
       deploy-folder: 'apps/demo/demo-dist'
