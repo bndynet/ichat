@@ -109,6 +109,7 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 - **Lit 3 Web Components** — works with any framework or vanilla HTML
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
 - **Extensible fenced blocks** — **`registerRenderer`** from **`@bndynet/ichat`**, or **`rendererRegistry`** + **`BlockRenderer`** for lower-level control (from `@bndynet/ichat` or `@bndynet/ichat-messages`)
+- **Extensible `x-*` parts** — **`registerPartRenderer`** from **`@bndynet/ichat`** maps custom part types to a Web Component (element mode) or an HTML string (string mode); see [`x-*` custom parts](#x--custom-extension-parts)
 - **Structured `parts[]` body** — every message body is an ordered list of typed parts (`text`, `reasoning`, `tool-call`, `file`, `source`, custom `x-*`); parts stream and update independently (see [Message body](#message-body--parts))
 - **Reasoning parts** — collapsible “thinking” UI + streaming
 - **Tool calls** — first-class `tool-call` parts with a state machine, rich nested results, and human-in-the-loop approval
@@ -155,9 +156,9 @@ Every part has a stable **`id`** (used for keyed rendering + targeted updates) a
 | `text` | `text: string` | Markdown bubble (typewriter while `status: 'streaming'`; charts/Mermaid/forms fences still render) |
 | `reasoning` | `text: string` | Collapsible “thinking” block (`<i-chat-reasoning>`) |
 | `tool-call` | `toolCallId`, `toolName`, `title?`, `args?`, `state`, `result?`, `resultParts?`, `error?`, `approval?`, `durationMs?` | Tool-call card (`<i-chat-tool-call>`) — see [Tool calls](#tool-calls) |
-| `file` | `mediaType`, `url?` \| `data?` (base64), `name?`, `size?` | Inline image or download link |
-| `source` | `url`, `title?`, `snippet?` | Citation link with optional snippet |
-| `x-*` (custom) | `data: unknown` | Readable JSON dump (host can register richer rendering) |
+| `file` | `mediaType`, `url?` \| `data?` (base64), `name?`, `size?` | Inline image or download link — see [File, source, and custom parts](#file-source-and-custom-parts) |
+| `source` | `url`, `title?`, `snippet?` | Citation link with optional snippet — see [File, source, and custom parts](#file-source-and-custom-parts) |
+| `x-*` (custom) | `data: unknown` | Readable JSON dump — see [File, source, and custom parts](#file-source-and-custom-parts) |
 
 ### Factories
 
@@ -599,6 +600,133 @@ chat.addEventListener('tool-action', (e) => {
   }
 });
 ```
+
+## File, source, and custom parts
+
+Attachments, citations, and host-defined payloads are first-class **`parts[]` entries** — not markdown fences. Mix them with `text`, `reasoning`, and `tool-call` parts in the same message; stream or patch them by `id` via `appendPart` / `updatePart` like any other part.
+
+### `file` — attachments
+
+Images (`mediaType` starts with `image/`) render inline. Everything else becomes a download link (`name` or `url` as the label). Supply either **`url`** (HTTP(S) or `data:` URL) or raw **`data`** (base64 without the `data:` prefix).
+
+```javascript
+import { textPart, nextPartId } from '@bndynet/ichat';
+
+chat.addMessage({
+  id: 'a4',
+  role: 'assistant',
+  parts: [
+    textPart('Here is the diagram and the spec:'),
+    {
+      id: nextPartId('file'),
+      type: 'file',
+      mediaType: 'image/png',
+      url: 'https://example.com/chart.png',
+      name: 'chart.png',
+    },
+    {
+      id: nextPartId('file'),
+      type: 'file',
+      mediaType: 'application/pdf',
+      url: 'https://example.com/spec.pdf',
+      name: 'spec.pdf',
+      size: 245760,
+    },
+  ],
+  timestamp: Date.now(),
+});
+```
+
+### `source` — citations (RAG / search)
+
+Each `source` part renders a link (`title` if set, otherwise `url`) and an optional **`snippet`**. Typical for web-search or retrieval citations returned alongside an answer.
+
+```javascript
+chat.addMessage({
+  id: 'a5',
+  role: 'assistant',
+  parts: [
+    textPart('Based on the docs:'),
+    {
+      id: nextPartId('source'),
+      type: 'source',
+      url: 'https://lit.dev/docs/components/overview/',
+      title: 'Lit – Overview',
+      snippet: 'Lit is a library for building fast, lightweight web components.',
+    },
+  ],
+  timestamp: Date.now(),
+});
+```
+
+### `x-*` — custom extension parts
+
+When built-in part types are not enough — e.g. a vendor-specific block from your AI SDK, a product card, or a structured widget — use a **custom part**: `type` must start with `x-` (e.g. `x-weather`, `x-product-card`); payload lives in **`data`** (any JSON-serialisable shape).
+
+```javascript
+chat.addMessage({
+  id: 'a6',
+  role: 'assistant',
+  parts: [
+    textPart('Current conditions:'),
+    {
+      id: nextPartId('x'),
+      type: 'x-weather',
+      data: { city: 'Shanghai', temp: 22, unit: '°C', condition: 'Cloudy' },
+    },
+  ],
+  timestamp: Date.now(),
+});
+```
+
+**Default rendering:** unregistered custom parts are shown as a formatted JSON dump inside the message bubble (`<pre class="part-custom">`).
+
+**Registering a renderer:** give `x-*` parts rich UI with **`registerPartRenderer`** (from `@bndynet/ichat`, or `partRendererRegistry` from `@bndynet/ichat` / `@bndynet/ichat-messages` for lower-level control). A `PartRenderer` matches a part `type` via `test(type)` and renders it in one of two modes:
+
+- **Element mode** (`element`, recommended) — name a custom element; the library renders `<your-tag .data=${part.data} .part=${part}>`. The element instance is preserved across `updatePart`, so streaming updates patch properties without rebuilding the DOM (the same approach `tool-call` uses). You define the Web Component, so it works with any framework or vanilla HTML.
+- **String mode** (`render`) — return an HTML string; it is sanitised with DOMPurify and patched in place via morphdom (the same channel as `text` parts). Use inline `style="…"` rather than `<style>` blocks, which DOMPurify strips.
+
+Provide at least one of `element` / `render`; when both are present, `element` wins.
+
+```javascript
+import { registerPartRenderer } from '@bndynet/ichat';
+
+// Element mode: you own the Web Component, the library passes `data` as a property.
+class WeatherCard extends HTMLElement {
+  set data(v) { this._d = v; this.innerHTML = `<div class="wx">${v.city} ${v.temp}${v.unit}</div>`; }
+}
+customElements.define('x-weather-card', WeatherCard);
+
+registerPartRenderer({
+  name: 'weather',
+  test: (type) => type === 'x-weather',
+  element: 'x-weather-card',
+});
+
+// String mode alternative:
+registerPartRenderer({
+  name: 'weather-html',
+  test: (type) => type === 'x-weather-html',
+  render: (part) => `<div style="font-weight:600">${part.data.city}: ${part.data.temp}${part.data.unit}</div>`,
+});
+```
+
+The library ships only the `registerPartRenderer` capability — you define and register your own `x-*` renderers. The demo app includes a working example under **Custom part (x-\*)**.
+
+### vs. `registerRenderer` (markdown fences)
+
+These are **two different extension points**:
+
+| | **`parts[]` types** (`file`, `source`, `x-*`) | **`registerRenderer`** ([Custom renderers](#custom-renderers)) |
+|--|--|--|
+| **Where it lives** | Top-level entries in `message.parts` | Inside a **`text`** part’s markdown (fenced code block) |
+| **Registration** | Built-in renderers for `file` / `source`; `x-*` via `registerPartRenderer({ name, test, element \| render })` (falls back to JSON when unregistered) | `registerRenderer({ name, test, render })` on the markdown pipeline |
+| **Streaming / updates** | Each part has its own `id` — patch with `updatePart` | Grows with the surrounding `text` part’s markdown stream |
+| **Good for** | Protocol-aligned blocks (files, citations, vendor parts), tool `resultParts` | Charts, KPI cards, forms, Mermaid — content authored as markdown |
+
+Use **`registerRenderer`** when the assistant’s answer is markdown and you want a fenced block (e.g. ` ```chart `). Use **`file` / `source` / `x-*` parts** when your backend already emits structured part arrays (Anthropic content blocks, Vercel AI SDK message parts, etc.) or when a block should update independently of the markdown body.
+
+The demo app includes a **Custom part (x-\*)** page under Renderers showing both modes plus the JSON fallback, and a **File & source** page for `file` / `source` parts.
 
 ## Timeline
 

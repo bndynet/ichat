@@ -6,9 +6,11 @@ export { ChatToolCall } from './components/chat-tool-call.js';
 export { StreamingController } from './controllers/streaming-controller.js';
 
 export { rendererRegistry } from './renderers/registry.js';
+export { partRendererRegistry } from './renderers/part-registry.js';
 export {
   md,
   renderMarkdown,
+  sanitizeHtml,
   extractReasoning,
   hasUnclosedReasoning,
 } from './renderers/markdown-renderer.js';
@@ -20,6 +22,7 @@ export type {
   ChatMessage,
   ChatMessageRole,
   BlockRenderer,
+  PartRenderer,
   ChatConfig,
   DateSeparatorLabels,
   ChatFormFieldValues,

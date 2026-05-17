@@ -1,4 +1,5 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ref, createRef } from 'lit/directives/ref.js';
@@ -9,11 +10,13 @@ import type {
   ChatFormSubmitDetail,
   ChatMessage,
   ChatMessageRole,
+  CustomPart,
   MessagePart,
   TextPart,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
-import { renderMarkdown } from '../renderers/markdown-renderer.js';
+import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
+import { partRendererRegistry } from '../renderers/part-registry.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
 import { calendarDaysAgo } from '../date-separator.js';
@@ -179,12 +182,27 @@ export class ChatMessageElement extends LitElement {
   /** Last HTML morphed into each text part – used to skip no-op patches (keyed by part id). */
   private _textCache = new Map<string, string>();
 
+  /** Per-string-mode-custom-part refs to the host container we morph into (keyed by part id). */
+  private _customRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
+  /** Last HTML morphed into each string-mode custom part – used to skip no-op patches (keyed by part id). */
+  private _customCache = new Map<string, string>();
+
   /** Stable ref for a `text` part's content container (created on first use). */
   private _textRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
     let r = this._textRefs.get(id);
     if (!r) {
       r = createRef<HTMLDivElement>();
       this._textRefs.set(id, r);
+    }
+    return r;
+  }
+
+  /** Stable ref for a string-mode custom part's host container (created on first use). */
+  private _customRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
+    let r = this._customRefs.get(id);
+    if (!r) {
+      r = createRef<HTMLDivElement>();
+      this._customRefs.set(id, r);
     }
     return r;
   }
@@ -363,10 +381,28 @@ export class ChatMessageElement extends LitElement {
           <div class="content ${animatingHere ? 'typing-cursor' : ''}" ${ref(this._textRef(part.id))}></div>
         </div>`;
       }
-      default:
+      default: {
+        const renderer = partRendererRegistry.getRenderer(part.type);
+        // Element mode wins when both are present: it preserves the element
+        // instance across streaming updates (Lit patches only the properties).
+        if (renderer?.element) {
+          const tag = unsafeStatic(renderer.element);
+          return staticHtml`<div class="bubble">
+            <${tag} .data=${(part as CustomPart).data} .part=${part}></${tag}>
+          </div>`;
+        }
+        // String mode renders an empty host; content is sanitised + morphed in
+        // updated(), the same channel used for `text` parts (streaming-friendly).
+        if (renderer?.render) {
+          return html`<div class="bubble">
+            <div class="part-custom-host" ${ref(this._customRef(part.id))}></div>
+          </div>`;
+        }
+        // Unregistered custom part — readable JSON fallback.
         return html`<div class="bubble">
           <pre class="part-custom">${JSON.stringify(part, null, 2)}</pre>
         </div>`;
+      }
     }
   }
 
@@ -512,6 +548,33 @@ export class ChatMessageElement extends LitElement {
         this._textRefs.delete(id);
       }
     }
+
+    // ── morphdom content patch (per string-mode custom part) ────────────────
+    // Element-mode custom parts patch themselves via Lit property bindings;
+    // string-mode renderers return HTML, sanitised + morphed here so they also
+    // update smoothly while streaming (mirrors the text-part path above).
+    const liveCustomIds = new Set<string>();
+    for (const p of parts) {
+      if (!p.type.startsWith('x-')) continue;
+      const renderer = partRendererRegistry.getRenderer(p.type);
+      if (!renderer || renderer.element || !renderer.render) continue;
+      liveCustomIds.add(p.id);
+      const el = this._customRefs.get(p.id)?.value;
+      if (!el) continue;
+      const newHtml = sanitizeHtml(renderer.render(p as CustomPart));
+      if (newHtml === this._customCache.get(p.id)) continue;
+      this._morphInto(el, newHtml);
+      this._customCache.set(p.id, newHtml);
+      didMorph = true;
+    }
+    // Drop refs/caches for custom parts that no longer exist.
+    for (const id of [...this._customCache.keys()]) {
+      if (!liveCustomIds.has(id)) {
+        this._customCache.delete(id);
+        this._customRefs.delete(id);
+      }
+    }
+
     // Morph runs outside Lit's `messages` updates; nested CEs (forms, charts)
     // may grow layout on later frames — parent listens to re-run autoscroll.
     // Reply quotes (parentId set) are static and must not drive autoscroll.

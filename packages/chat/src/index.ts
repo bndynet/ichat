@@ -1,5 +1,6 @@
 export { Chat } from './components/chat.js';
 export { registerRenderer } from './register-renderer.js';
+export { registerPartRenderer } from './register-part-renderer.js';
 
 // Re-export commonly used types and utilities so consumers don't need
 // to install the sub-packages separately.
@@ -8,6 +9,7 @@ export type {
   ChatMessageRole,
   ChatConfig,
   BlockRenderer,
+  PartRenderer,
   DateSeparatorLabels,
   ChatFormSubmitDetail,
   ChatFormFieldValues,
@@ -38,6 +40,7 @@ export {
   reasoningPart,
   nextPartId,
   rendererRegistry,
+  partRendererRegistry,
   StreamingController,
   resolveDateSeparatorLabels,
   makeDaysAgo,

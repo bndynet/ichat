@@ -14,6 +14,33 @@ export interface BlockRenderer {
   render: (code: string, lang: string, info?: string) => string;
 }
 
+/**
+ * Renderer for a host-defined `x-*` {@link CustomPart}. Registered via
+ * `registerPartRenderer` and matched by {@link PartRenderer.test} against the
+ * part `type`. Provide **at least one** of `element` / `render`; when both are
+ * present, `element` wins (it preserves the element instance across streaming
+ * updates, so prefer it for stateful widgets).
+ */
+export interface PartRenderer {
+  /** Unique name for this renderer. */
+  name: string;
+  /** Return true if this renderer handles the given custom part `type` (e.g. `"x-weather"`). */
+  test: (type: string) => boolean;
+  /**
+   * Element mode (recommended). Name of a custom element to render as
+   * `<tag .data=${part.data} .part=${part}>`. The host defines the element;
+   * Lit keeps the same instance across updates and only patches the properties,
+   * so streaming `updatePart` does not rebuild the DOM.
+   */
+  element?: string;
+  /**
+   * String mode. Return an HTML string for the part. Output is sanitised with
+   * DOMPurify and patched in place via morphdom (same channel as `text` parts),
+   * so it updates smoothly while streaming.
+   */
+  render?: (part: CustomPart) => string;
+}
+
 /** Who sent the message (layout + default styling). Viewer-relative: `self` = current user. */
 export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
 
@@ -103,7 +130,8 @@ export interface SourcePart extends PartBase {
 
 /**
  * Host-defined extension part. `type` must start with `x-` and is routed to a
- * registered part renderer; falls back to a readable dump when unregistered.
+ * {@link PartRenderer} registered via `registerPartRenderer` (matched by
+ * `test(type)`). When no renderer matches, it falls back to a readable JSON dump.
  */
 export interface CustomPart extends PartBase {
   type: `x-${string}`;

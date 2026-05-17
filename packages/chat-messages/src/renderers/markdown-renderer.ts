@@ -105,6 +105,14 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
  */
 export { md };
 
+/**
+ * Sanitise a trusted-but-not-guaranteed HTML string with the same DOMPurify
+ * config used for markdown output. Used by string-mode custom part renderers.
+ */
+export function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
+}
+
 export function renderMarkdown(content: string): string {
   pendingBlockHTML.clear();
   const raw = md.render(content);
