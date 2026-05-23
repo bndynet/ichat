@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   gap: var(--chat-spacing-sm, #{$spacing-sm});
-  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+  padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
   cursor: pointer;
   user-select: none;
   font-size: var(--chat-font-size-sm, #{$font-size-sm});

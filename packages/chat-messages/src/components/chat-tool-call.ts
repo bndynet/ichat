@@ -1,10 +1,11 @@
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { MessagePart, ToolCallPart, ToolCallState } from '../types.js';
 import type { ToolCallLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
+import styles from '../styles/chat-tool-call.scss';
 
 /** Map the tool-call state to a coarse visual status used for theming. */
 function statusOf(state: ToolCallState): 'pending' | 'running' | 'success' | 'error' {
@@ -65,174 +66,7 @@ function formatDuration(ms: number): string {
  */
 @customElement('i-chat-tool-call')
 export class ChatToolCall extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      font-family: var(--chat-font-family, inherit);
-      --_tc-bg: var(--chat-tool-bg, var(--chat-surface-alt, #f0f2f5));
-      --_tc-border: var(--chat-tool-border, var(--chat-border, #e5e7eb));
-      --_tc-text: var(--chat-tool-text, var(--chat-text, #1a1a2e));
-      --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary, #6b7280));
-      --_tc-primary: var(--chat-tool-primary, var(--chat-primary, #2563eb));
-      --_tc-success: var(--chat-tool-success, var(--chat-success, #10b981));
-      --_tc-error: var(--chat-tool-error, var(--chat-error, #ef4444));
-      --_tc-code-bg: var(--chat-code-bg, #1e1e2e);
-      --_tc-code-text: var(--chat-code-text, #cdd6f4);
-    }
-    .tc {
-      border: 1px solid var(--_tc-border);
-      border-radius: var(--chat-radius, 12px);
-      background: var(--_tc-bg);
-      margin: 6px 0;
-      max-width: 560px;
-      overflow: hidden;
-      transition: border-color 0.25s;
-    }
-    .tc--success {
-      border-color: color-mix(in srgb, var(--_tc-success) 55%, var(--_tc-border));
-    }
-    .tc--error {
-      border-color: color-mix(in srgb, var(--_tc-error) 55%, var(--_tc-border));
-    }
-    .tc--running {
-      border-color: color-mix(in srgb, var(--_tc-primary) 55%, var(--_tc-border));
-    }
-    summary {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      cursor: pointer;
-      list-style: none;
-      font-size: var(--chat-font-size-sm, 0.8125rem);
-      font-weight: 600;
-      color: var(--_tc-text);
-      user-select: none;
-    }
-    summary::-webkit-details-marker {
-      display: none;
-    }
-    .tc__icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-size: 11px;
-    }
-    .tc__icon--pending {
-      background: var(--_tc-secondary);
-    }
-    .tc__icon--running {
-      background: var(--_tc-primary);
-    }
-    .tc__icon--success {
-      background: var(--_tc-success);
-    }
-    .tc__icon--error {
-      background: var(--_tc-error);
-    }
-    .tc__icon svg {
-      width: 11px;
-      height: 11px;
-    }
-    .spin {
-      animation: tc-spin 0.9s linear infinite;
-    }
-    @keyframes tc-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .tc__name {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .tc__state {
-      margin-inline-start: auto;
-      font-weight: 400;
-      font-size: var(--chat-font-size-sm, 0.8125rem);
-      color: var(--_tc-secondary);
-      flex-shrink: 0;
-    }
-    .tc__chevron {
-      flex-shrink: 0;
-      color: var(--_tc-secondary);
-      transition: transform 0.2s;
-    }
-    details[open] .tc__chevron {
-      transform: rotate(180deg);
-    }
-    .tc__body {
-      padding: 0 12px 12px;
-      font-size: var(--chat-font-size-sm, 0.8125rem);
-      color: var(--_tc-text);
-    }
-    .tc__section {
-      margin: 10px 0 4px;
-      font-size: 0.7rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--_tc-secondary);
-    }
-    pre.tc__code {
-      margin: 0;
-      background: var(--_tc-code-bg);
-      color: var(--_tc-code-text);
-      padding: 10px 12px;
-      border-radius: 8px;
-      overflow: auto;
-      font-family: var(--chat-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-      font-size: 0.78rem;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .tc__error {
-      margin-top: 8px;
-      color: var(--_tc-error);
-    }
-    .tc__result-parts > * + * {
-      margin-top: 8px;
-    }
-    .tc__result-parts img {
-      max-width: 100%;
-      border-radius: 8px;
-    }
-    .tc__approval {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .tc__btn {
-      font: inherit;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border-radius: 6px;
-      padding: 6px 14px;
-      cursor: pointer;
-      border: 1px solid var(--_tc-border);
-      background: var(--chat-surface, #fff);
-      color: var(--_tc-text);
-      transition: opacity 0.15s, background 0.15s;
-    }
-    .tc__btn:hover {
-      opacity: 0.85;
-    }
-    .tc__btn--approve {
-      background: var(--_tc-primary);
-      border-color: var(--_tc-primary);
-      color: #fff;
-    }
-    .tc__approval-state {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--_tc-secondary);
-    }
-  `;
+  static styles = unsafeCSS(styles);
 
   /** The tool-call part to render. */
   @property({ attribute: false }) data!: ToolCallPart;

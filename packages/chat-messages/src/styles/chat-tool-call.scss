@@ -1,0 +1,197 @@
+@use 'variables' as *;
+@use 'chat-host-tokens';
+
+:host {
+  display: block;
+  font-family: var(--chat-font-family, inherit);
+  --_tc-bg: var(--chat-tool-bg, var(--chat-surface-alt, #{$color-surface-alt}));
+  --_tc-border: var(--chat-tool-border, var(--chat-border, #{$color-border}));
+  --_tc-text: var(--chat-tool-text, var(--chat-text, #{$color-text}));
+  --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
+  --_tc-primary: var(--chat-tool-primary, var(--chat-primary, #{$color-primary}));
+  --_tc-success: var(--chat-tool-success, var(--chat-success, #{$color-success}));
+  --_tc-error: var(--chat-tool-error, var(--chat-error, #{$color-error}));
+  --_tc-code-bg: var(--chat-code-bg, #{$color-code-bg});
+  --_tc-code-text: var(--chat-code-text, #{$color-code-text});
+}
+
+.tc {
+  border: 1px solid var(--_tc-border);
+  border-radius: var(--chat-radius, #{$radius-md});
+  background: var(--_tc-bg);
+  margin: 6px 0;
+  overflow: hidden;
+  transition: border-color var(--chat-transition-normal, #{$transition-normal});
+}
+
+.tc--success {
+  border-color: color-mix(in srgb, var(--_tc-success) 55%, var(--_tc-border));
+}
+
+.tc--error {
+  border-color: color-mix(in srgb, var(--_tc-error) 55%, var(--_tc-border));
+}
+
+.tc--running {
+  border-color: color-mix(in srgb, var(--_tc-primary) 55%, var(--_tc-border));
+}
+
+summary {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
+  padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--chat-font-size-sm, #{$font-size-sm});
+  font-weight: 600;
+  color: var(--_tc-text);
+  user-select: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.tc__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 11px;
+}
+
+.tc__icon--pending {
+  background: var(--_tc-secondary);
+}
+
+.tc__icon--running {
+  background: var(--_tc-primary);
+}
+
+.tc__icon--success {
+  background: var(--_tc-success);
+}
+
+.tc__icon--error {
+  background: var(--_tc-error);
+}
+
+.tc__icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.spin {
+  animation: tc-spin 0.9s linear infinite;
+}
+
+@keyframes tc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tc__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tc__state {
+  margin-inline-start: auto;
+  font-weight: 400;
+  font-size: var(--chat-font-size-sm, #{$font-size-sm});
+  color: var(--_tc-secondary);
+  flex-shrink: 0;
+}
+
+.tc__chevron {
+  flex-shrink: 0;
+  color: var(--_tc-secondary);
+  transition: transform 0.2s;
+}
+
+details[open] .tc__chevron {
+  transform: rotate(180deg);
+}
+
+.tc__body {
+  padding: 0 var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-md, #{$spacing-md});
+  font-size: var(--chat-font-size-sm, #{$font-size-sm});
+  color: var(--_tc-text);
+}
+
+.tc__section {
+  margin: 10px 0 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--_tc-secondary);
+}
+
+pre.tc__code {
+  margin: 0;
+  background: var(--_tc-code-bg);
+  color: var(--_tc-code-text);
+  padding: 10px 12px;
+  border-radius: var(--chat-radius-sm, #{$radius-sm});
+  overflow: auto;
+  font-family: var(--chat-font-mono, #{$font-mono});
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tc__error {
+  margin-top: 8px;
+  color: var(--_tc-error);
+}
+
+.tc__result-parts > * + * {
+  margin-top: 8px;
+}
+
+.tc__result-parts img {
+  max-width: 100%;
+  border-radius: var(--chat-radius-sm, #{$radius-sm});
+}
+
+.tc__approval {
+  display: flex;
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
+  margin-top: 12px;
+}
+
+.tc__btn {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--chat-radius-sm, #{$radius-sm});
+  padding: 6px 14px;
+  cursor: pointer;
+  border: 1px solid var(--_tc-border);
+  background: var(--chat-surface, #{$color-surface});
+  color: var(--_tc-text);
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.tc__btn:hover {
+  opacity: 0.85;
+}
+
+.tc__btn--approve {
+  background: var(--_tc-primary);
+  border-color: var(--_tc-primary);
+  color: #fff;
+}
+
+.tc__approval-state {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--_tc-secondary);
+}
