@@ -183,7 +183,9 @@ const thinkingDemoEvents = [
   },
   {
     reasoning:
-      '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n',
+      '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n' +
+      '> **Note:** This is a blockquote inside the reasoning body — handy for highlighting assumptions or caveats while thinking.\n>\n> It can span multiple lines too.\n\n' +
+      '> **Second quote (reasoning):** Another blockquote to check spacing between two consecutive quotes.\n\n',
     delay: 8000,
   },
   { content: '## All-in-one streaming demo\n\n' },
@@ -201,6 +203,11 @@ const thinkingDemoEvents = [
   {
     content:
       '## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Reasoning** — optional collapsible block above the fold.\n- **Markdown** — headings, lists, tables, and fences.\n\n',
+  },
+  {
+    content:
+      '> **Note:** This is a blockquote inside the message content — compare its spacing with the one in the reasoning body.\n>\n> It can span multiple lines too.\n\n' +
+      '> **Second quote (content):** Another blockquote to check spacing between two consecutive quotes.\n\n',
   },
   {
     content:
