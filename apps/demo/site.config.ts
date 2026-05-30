@@ -46,6 +46,11 @@ export default defineConfig({
           icon: 'banknote',
           page: () => import('./src/pages/slots/SlotsInputActions.vue'),
         },
+        {
+          label: 'Confirmation',
+          icon: 'badge-check',
+          page: () => import('./src/pages/slots/Confirmation.vue'),
+        },
       ],
     },
   ],

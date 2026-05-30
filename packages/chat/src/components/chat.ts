@@ -5,8 +5,9 @@ import type {
   ChatMessage,
   ChatConfig,
   BlockRenderer,
+  ConfirmationLabels,
 } from '@bndynet/ichat-messages';
-import { ChatMessages, StreamingController } from '@bndynet/ichat-messages';
+import { ChatMessages, StreamingController, resolveLabels } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 
@@ -16,6 +17,41 @@ void ChatMessages;
 void ChatInput;
 
 export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
+
+export type ChatConfirmationVariant = 'default' | 'danger';
+
+export interface ChatConfirmationRequest {
+  id?: string;
+  title: string;
+  description?: string;
+  details?: unknown;
+  requiredLabel?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: ChatConfirmationVariant;
+  payload?: unknown;
+}
+
+export type ChatConfirmationResolvedRequest = ChatConfirmationRequest & { id: string };
+export type ChatConfirmationAction = 'confirm' | 'cancel';
+
+export interface ChatConfirmationResult {
+  id: string;
+  action: ChatConfirmationAction;
+  confirmed: boolean;
+  request: ChatConfirmationResolvedRequest;
+}
+
+export interface ChatConfirmationChangeDetail {
+  active: ChatConfirmationResolvedRequest | null;
+  queue: ChatConfirmationResolvedRequest[];
+  queueLength: number;
+}
+
+type PendingConfirmation = {
+  request: ChatConfirmationResolvedRequest;
+  resolve: (result: ChatConfirmationResult) => void;
+};
 
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
@@ -45,6 +81,8 @@ export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires form-submit - `{ detail: ChatFormSubmitDetail }` when an embedded chat form is submitted (`formId`, `title`, `values`, `messageId`, `message`)
+ * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
+ * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
  *
  * @example
  * ```html
@@ -109,9 +147,12 @@ export class Chat extends LitElement {
 
   @state() private _streaming = false;
   @state() private _hasCustomInput = false;
+  @state() private _activeConfirmation: PendingConfirmation | null = null;
 
   /** Observes light-DOM children so slots added after first render (e.g. Vue `onMounted`) are forwarded. */
   private _lightChildObserver?: MutationObserver;
+  private _confirmationQueue: PendingConfirmation[] = [];
+  private _confirmationId = 0;
 
   // ── Proxy methods to <i-chat-messages> ──────────────────────────────
 
@@ -190,7 +231,36 @@ export class Chat extends LitElement {
 
   /** Focus the input textarea. */
   focusInput(): void {
+    if (this._activeConfirmation) return;
     this._input?.focus();
+  }
+
+  /**
+   * Request a user decision before continuing a host-defined action. While a
+   * confirmation is active, the composer area is replaced by the confirmation
+   * panel. Requests are shown FIFO, one at a time.
+   */
+  requestConfirmation(request: ChatConfirmationRequest): Promise<ChatConfirmationResult> {
+    const normalized: ChatConfirmationResolvedRequest = {
+      ...request,
+      id: request.id?.trim() || this._nextConfirmationId(),
+      variant: request.variant ?? 'default',
+    };
+
+    return new Promise((resolve) => {
+      const pending: PendingConfirmation = { request: normalized, resolve };
+      if (this._activeConfirmation) {
+        this._confirmationQueue = [...this._confirmationQueue, pending];
+      } else {
+        this._activeConfirmation = pending;
+      }
+      this._emitConfirmationChange();
+    });
+  }
+
+  /** Cancel the active confirmation and any queued confirmations. */
+  clearConfirmations(): void {
+    this._cancelAllConfirmations();
   }
 
   /**
@@ -240,6 +310,7 @@ export class Chat extends LitElement {
   override disconnectedCallback(): void {
     this._lightChildObserver?.disconnect();
     this._lightChildObserver = undefined;
+    this._cancelAllConfirmations();
     super.disconnectedCallback();
   }
 
@@ -336,6 +407,145 @@ export class Chat extends LitElement {
     this._hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
   }
 
+  private get _confirmationLabels(): ConfirmationLabels {
+    return resolveLabels({
+      locale: this.config.locale,
+      labels: this.config.labels,
+      dateSeparatorLabels: this.config.dateSeparatorLabels,
+    }).confirmation;
+  }
+
+  private _nextConfirmationId(): string {
+    this._confirmationId += 1;
+    return `confirm-${Date.now().toString(36)}-${this._confirmationId.toString(36)}`;
+  }
+
+  private _emitConfirmationChange(): void {
+    this.dispatchEvent(
+      new CustomEvent<ChatConfirmationChangeDetail>('confirmation-change', {
+        detail: {
+          active: this._activeConfirmation?.request ?? null,
+          queue: this._confirmationQueue.map((item) => item.request),
+          queueLength: this._confirmationQueue.length,
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _resultFor(
+    item: PendingConfirmation,
+    action: ChatConfirmationAction
+  ): ChatConfirmationResult {
+    return {
+      id: item.request.id,
+      action,
+      confirmed: action === 'confirm',
+      request: item.request,
+    };
+  }
+
+  private _settleActiveConfirmation(action: ChatConfirmationAction): void {
+    const item = this._activeConfirmation;
+    if (!item) return;
+
+    this._activeConfirmation = this._confirmationQueue[0] ?? null;
+    this._confirmationQueue = this._confirmationQueue.slice(1);
+
+    const result = this._resultFor(item, action);
+    item.resolve(result);
+    this.dispatchEvent(
+      new CustomEvent<ChatConfirmationResult>('confirmation-decision', {
+        detail: result,
+        bubbles: true,
+        composed: true,
+      })
+    );
+    this._emitConfirmationChange();
+  }
+
+  private _cancelAllConfirmations(): void {
+    const pending = [
+      ...(this._activeConfirmation ? [this._activeConfirmation] : []),
+      ...this._confirmationQueue,
+    ];
+    if (pending.length === 0) return;
+
+    this._activeConfirmation = null;
+    this._confirmationQueue = [];
+    pending.forEach((item) => item.resolve(this._resultFor(item, 'cancel')));
+    this._emitConfirmationChange();
+  }
+
+  private _formatConfirmationDetails(details: unknown): string {
+    if (details == null) return '';
+    if (typeof details === 'string') return details;
+    try {
+      return JSON.stringify(details, null, 2);
+    } catch {
+      return String(details);
+    }
+  }
+
+  private _renderConfirmationDetails(request: ChatConfirmationResolvedRequest) {
+    const details = this._formatConfirmationDetails(request.details);
+    if (!details) return nothing;
+    const labels = this._confirmationLabels;
+
+    if (typeof request.details === 'string') {
+      return html`<div class="chat-confirmation__details-text">${details}</div>`;
+    }
+
+    return html`
+      <details class="chat-confirmation__details">
+        <summary>${labels.details}</summary>
+        <pre>${details}</pre>
+      </details>
+    `;
+  }
+
+  private _renderConfirmation(request: ChatConfirmationResolvedRequest) {
+    const labels = this._confirmationLabels;
+    const variant = request.variant ?? 'default';
+    const requiredLabel = (request.requiredLabel ?? labels.required).trim();
+
+    return html`
+      <section
+        class="chat-confirmation chat-confirmation--${variant}"
+        role="group"
+        aria-label=${request.title}
+      >
+        <div class="chat-confirmation__body">
+          ${requiredLabel
+            ? html`<div class="chat-confirmation__eyebrow">${requiredLabel}</div>`
+            : nothing}
+          <div class="chat-confirmation__title">${request.title}</div>
+          ${request.description
+            ? html`<div class="chat-confirmation__description">${request.description}</div>`
+            : nothing}
+          ${this._renderConfirmationDetails(request)}
+        </div>
+        <div class="chat-confirmation__actions">
+          <button
+            type="button"
+            class="chat-confirmation__btn chat-confirmation__btn--cancel"
+            @click=${() => this._settleActiveConfirmation('cancel')}
+          >
+            ${request.cancelLabel || labels.cancel}
+          </button>
+          <button
+            type="button"
+            class="chat-confirmation__btn chat-confirmation__btn--confirm"
+            @click=${() => this._settleActiveConfirmation('confirm')}
+          >
+            ${request.confirmLabel || labels.confirm}
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
   // ── Render ────────────────────────────────────────────────────────
   //
   // Property bindings (.messages, .config, .emptyText) are intentionally
@@ -345,6 +555,8 @@ export class Chat extends LitElement {
   // (addMessage, updateMessage, …) are used instead of the property.
 
   render() {
+    const confirmation = this._activeConfirmation?.request;
+
     return html`
       <div class="chat-body">
         <i-chat-messages
@@ -361,25 +573,29 @@ export class Chat extends LitElement {
         </i-chat-messages>
       </div>
       <div class="chat-footer">
-        <slot name="input" @slotchange=${this._handleInputSlotChange}></slot>
-        ${this._hasCustomInput
-          ? nothing
+        ${confirmation
+          ? this._renderConfirmation(confirmation)
           : html`
-              <i-chat-input
-                .placeholder=${this.placeholder}
-                .locale=${this.config.locale ?? ''}
-                .labels=${this.config.labels?.composer}
-                .streaming=${this._streaming}
-                .showVoiceInput=${this.showVoiceInput}
-                .voiceLang=${this.voiceLang}
-                .voiceListeningLabel=${this.voiceListeningLabel}
-                .voiceDiagnostics=${this.voiceDiagnostics}
-                ?disabled=${this.disabled}
-                @send=${this._handleSend}
-                @cancel=${this._handleCancel}
-              >
-                <slot name="actions" slot="actions"></slot>
-              </i-chat-input>
+              <slot name="input" @slotchange=${this._handleInputSlotChange}></slot>
+              ${this._hasCustomInput
+                ? nothing
+                : html`
+                    <i-chat-input
+                      .placeholder=${this.placeholder}
+                      .locale=${this.config.locale ?? ''}
+                      .labels=${this.config.labels?.composer}
+                      .streaming=${this._streaming}
+                      .showVoiceInput=${this.showVoiceInput}
+                      .voiceLang=${this.voiceLang}
+                      .voiceListeningLabel=${this.voiceListeningLabel}
+                      .voiceDiagnostics=${this.voiceDiagnostics}
+                      ?disabled=${this.disabled}
+                      @send=${this._handleSend}
+                      @cancel=${this._handleCancel}
+                    >
+                      <slot name="actions" slot="actions"></slot>
+                    </i-chat-input>
+                  `}
             `}
       </div>
     `;

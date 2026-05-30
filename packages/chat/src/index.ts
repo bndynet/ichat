@@ -1,4 +1,12 @@
 export { Chat } from './components/chat.js';
+export type {
+  ChatConfirmationAction,
+  ChatConfirmationChangeDetail,
+  ChatConfirmationRequest,
+  ChatConfirmationResolvedRequest,
+  ChatConfirmationResult,
+  ChatConfirmationVariant,
+} from './components/chat.js';
 export { registerRenderer } from './register-renderer.js';
 export { registerPartRenderer } from './register-part-renderer.js';
 
@@ -30,6 +38,7 @@ export type {
   ReasoningLabels,
   ToolCallLabels,
   MessagesLabels,
+  ConfirmationLabels,
   DeepPartial,
   PluralForms,
 } from '@bndynet/ichat-messages';

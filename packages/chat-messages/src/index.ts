@@ -65,6 +65,7 @@ export type {
   ReasoningLabels,
   ToolCallLabels,
   MessagesLabels,
+  ConfirmationLabels,
   DeepPartial,
 } from './i18n.js';
 export {

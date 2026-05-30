@@ -71,6 +71,18 @@ export interface MessagesLabels {
   scrollToLatest: string;
 }
 
+/** Strings for composer-level confirmations (`<i-chat>`). */
+export interface ConfirmationLabels {
+  /** Short label shown above the confirmation title. */
+  required: string;
+  /** Default confirm button text. */
+  confirm: string;
+  /** Default cancel button text. */
+  cancel: string;
+  /** Summary label for structured details. */
+  details: string;
+}
+
 /**
  * Complete set of user-facing UI strings for the chat components. Built-ins are
  * provided for `en` (default) and `zh` / `zh-CN`. Hosts override any subset via
@@ -82,6 +94,7 @@ export interface ChatLabels {
   reasoning: ReasoningLabels;
   toolCall: ToolCallLabels;
   messages: MessagesLabels;
+  confirmation: ConfirmationLabels;
   dateSeparator: DateSeparatorLabels;
 }
 
@@ -127,6 +140,12 @@ export const CHAT_LABELS_EN: ChatLabels = {
     dismissError: 'Dismiss error',
     scrollToLatest: 'Scroll to latest message',
   },
+  confirmation: {
+    required: 'Confirmation required',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    details: 'Details',
+  },
   dateSeparator: DATE_SEPARATOR_LABELS_EN,
 };
 
@@ -166,6 +185,12 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
     empty: '还没有消息，开始对话吧！',
     dismissError: '关闭错误提示',
     scrollToLatest: '滚动到最新消息',
+  },
+  confirmation: {
+    required: '需要确认',
+    confirm: '确认',
+    cancel: '取消',
+    details: '详情',
   },
   dateSeparator: DATE_SEPARATOR_LABELS_ZH_CN,
 };
@@ -215,6 +240,7 @@ export function resolveLabels(options: {
     reasoning: mergeSection(base.reasoning, o?.reasoning),
     toolCall: mergeSection(base.toolCall, o?.toolCall),
     messages: mergeSection(base.messages, o?.messages),
+    confirmation: mergeSection(base.confirmation, o?.confirmation),
     dateSeparator: mergeSection(base.dateSeparator, dateSeparatorOverride),
   };
 }
