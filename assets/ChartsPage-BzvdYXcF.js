@@ -1,0 +1,3 @@
+import{o as l,n as i,t as u,a as m,b as d,c as p,r as f}from"./index-Bp0ACXWZ.js";import{d as h,n as _}from"./demo-data-DaMK969m.js";const y={__name:"ChartsPage",setup(g){const n=f(null);let s=!1;const c=t=>new Promise(e=>setTimeout(e,t));return l(async()=>{await i();const t=n.value,e=_();t.addMessage({id:e,role:"assistant",parts:[u("",{id:"body",status:"streaming"})],streaming:!0,timestamp:Date.now()});const r=h.chart.split(/\n{2,}/);let o="";for(let a=0;a<r.length;a++){if(s)return;o+=(a?`
+
+`:"")+r[a],t.updatePart(e,"body",{text:o}),await c(220)}s||(t.updatePart(e,"body",{status:"complete"}),t.updateMessage(e,{streaming:!1}))}),m(()=>{s=!0}),(t,e)=>(d(),p("i-chat-messages",{ref_key:"chatRef",ref:n},null,512))}};export{y as default};
