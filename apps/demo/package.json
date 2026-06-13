@@ -13,7 +13,7 @@
     "@bndynet/ichat-input": "*",
     "@bndynet/ichat-messages": "*",
     "@bndynet/ichat-renderers": "*",
-    "@bndynet/vue-site": "^0.1.12",
+    "@bndynet/vue-site": "^1.0.4",
     "echarts": "^6.0.0",
     "mermaid": "^11.4.0"
   }
