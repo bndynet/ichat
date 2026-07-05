@@ -8,6 +8,7 @@ import morphdom from 'morphdom';
 import type {
   ChatFormFieldValues,
   ChatFormSubmitDetail,
+  ChatLinkClickDetail,
   ChatMessage,
   ChatMessageRole,
   CustomPart,
@@ -21,6 +22,7 @@ import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline
 import { StreamingController } from '../controllers/streaming-controller.js';
 import { calendarDaysAgo } from '../date-separator.js';
 import { formatAssistantDurationMs } from '../duration-format.js';
+import { isAllowedLinkHref } from '../link-protocols.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-reasoning.js';
@@ -58,6 +60,7 @@ export class ChatMessageElement extends LitElement {
    * English defaults.
    */
   @property({ attribute: false }) labels?: ChatLabels;
+  @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
 
   /**
    * Single typewriter controller, bound to the message's currently-streaming
@@ -211,6 +214,10 @@ export class ChatMessageElement extends LitElement {
     return /^(https?:\/\/|data:image\/)/.test(str) || /\.(png|jpe?g|gif|svg|webp)$/i.test(str);
   }
 
+  private _linkHref(rawHref: string): string | typeof nothing {
+    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
+  }
+
   /** True when `message.avatar` is set and non-empty after trim; used to override slot avatars. */
   private _hasPerMessageAvatar(): boolean {
     const a = this.message?.avatar;
@@ -304,6 +311,7 @@ export class ChatMessageElement extends LitElement {
                 .message=${{ ...block.data, parentId: block.data.parentId ?? this.message?.id }}
                 .locale=${this.locale}
                 .labels=${this.labels}
+                .allowedLinkProtocols=${this.allowedLinkProtocols}
                 .speed=${0}
                 .selfAvatar=${this.selfAvatar}
                 .peerAvatar=${this.peerAvatar}
@@ -337,17 +345,23 @@ export class ChatMessageElement extends LitElement {
     switch (part.type) {
       case 'reasoning':
         return html`<i-chat-reasoning
+          data-part-id=${part.id}
+          data-part-type=${part.type}
           .content=${part.text}
           .streaming=${part.status === 'streaming'}
           .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
           .headerHtml=${this.reasoningHeaderHtml}
           .labels=${this.labels?.reasoning}
+          .allowedLinkProtocols=${this.allowedLinkProtocols}
         ></i-chat-reasoning>`;
       case 'tool-call':
         return html`<i-chat-tool-call
+          data-part-id=${part.id}
+          data-part-type=${part.type}
           data-tool-call-id=${part.toolCallId}
           .data=${part}
           .labels=${this.labels?.toolCall}
+          .allowedLinkProtocols=${this.allowedLinkProtocols}
         ></i-chat-tool-call>`;
       case 'file': {
         if (part.mediaType.startsWith('image/')) {
@@ -361,14 +375,26 @@ export class ChatMessageElement extends LitElement {
         }
         const href = part.url ?? '';
         return html`<div class="bubble">
-          <a class="part-file-link" href=${href} target="_blank" rel="noopener noreferrer"
+          <a
+            class="part-file-link"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            href=${this._linkHref(href)}
+            target="_blank"
+            rel="noopener noreferrer"
             >${part.name ?? href}</a
           >
         </div>`;
       }
       case 'source':
         return html`<div class="bubble">
-          <a class="part-source" href=${part.url} target="_blank" rel="noopener noreferrer"
+          <a
+            class="part-source"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            href=${this._linkHref(part.url)}
+            target="_blank"
+            rel="noopener noreferrer"
             >${part.title ?? part.url}</a
           >
           ${part.snippet ? html`<div class="part-source-snippet">${part.snippet}</div>` : nothing}
@@ -378,7 +404,12 @@ export class ChatMessageElement extends LitElement {
         // typewriter for the streaming part). The container starts empty.
         const animatingHere = part.id === this._streamingTextId && this._contentCtrl.isAnimating;
         return html`<div class="bubble">
-          <div class="content ${animatingHere ? 'typing-cursor' : ''}" ${ref(this._textRef(part.id))}></div>
+          <div
+            class="content ${animatingHere ? 'typing-cursor' : ''}"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            ${ref(this._textRef(part.id))}
+          ></div>
         </div>`;
       }
       default: {
@@ -388,14 +419,24 @@ export class ChatMessageElement extends LitElement {
         if (renderer?.element) {
           const tag = unsafeStatic(renderer.element);
           return staticHtml`<div class="bubble">
-            <${tag} .data=${(part as CustomPart).data} .part=${part}></${tag}>
+            <${tag}
+              data-part-id=${part.id}
+              data-part-type=${part.type}
+              .data=${(part as CustomPart).data}
+              .part=${part}
+            ></${tag}>
           </div>`;
         }
         // String mode renders an empty host; content is sanitised + morphed in
         // updated(), the same channel used for `text` parts (streaming-friendly).
         if (renderer?.render) {
           return html`<div class="bubble">
-            <div class="part-custom-host" ${ref(this._customRef(part.id))}></div>
+            <div
+              class="part-custom-host"
+              data-part-id=${part.id}
+              data-part-type=${part.type}
+              ${ref(this._customRef(part.id))}
+            ></div>
           </div>`;
         }
         // Unregistered custom part — readable JSON fallback.
@@ -419,6 +460,82 @@ export class ChatMessageElement extends LitElement {
         composed: true,
       })
     );
+  }
+
+  private _findAnchorFromPath(path: EventTarget[]): HTMLAnchorElement | null {
+    for (const node of path) {
+      if (node === this) break;
+      if (node instanceof HTMLAnchorElement && node.hasAttribute('href')) return node;
+      if (node instanceof Element) {
+        const anchor = node.closest('a[href]');
+        if (anchor instanceof HTMLAnchorElement) return anchor;
+      }
+    }
+    return null;
+  }
+
+  private _partInfoFromPath(
+    path: EventTarget[]
+  ): Pick<ChatLinkClickDetail, 'partId' | 'partType'> {
+    for (const node of path) {
+      if (node === this) break;
+      if (!(node instanceof HTMLElement)) continue;
+      const partId = node.dataset.partId;
+      const partType = node.dataset.partType as MessagePart['type'] | undefined;
+      if (partId || partType) return { partId, partType };
+    }
+    return {};
+  }
+
+  private _protocolForLink(anchor: HTMLAnchorElement, rawHref: string): string {
+    const explicit = /^([a-z][a-z0-9+.-]*):/i.exec(rawHref.trim());
+    if (explicit) return `${explicit[1].toLowerCase()}:`;
+    try {
+      return new URL(anchor.href, this.ownerDocument.baseURI).protocol;
+    } catch {
+      return anchor.protocol ?? '';
+    }
+  }
+
+  private _handleLinkClick(e: MouseEvent): void {
+    if (!this.message) return;
+    const path = e.composedPath();
+    const owningMessage = path.find((node) => node instanceof ChatMessageElement);
+    if (owningMessage && owningMessage !== this) return;
+    if (
+      path.some(
+        (node) => node instanceof HTMLElement && node.classList.contains('message-actions')
+      )
+    ) {
+      return;
+    }
+
+    const anchor = this._findAnchorFromPath(path);
+    if (!anchor) return;
+
+    const rawHref = anchor.getAttribute('href') ?? '';
+    const detail: ChatLinkClickDetail = {
+      href: anchor.href || rawHref,
+      rawHref,
+      protocol: this._protocolForLink(anchor, rawHref),
+      text: anchor.textContent?.trim() ?? '',
+      target: anchor,
+      messageId: this.message.id,
+      message: this.message,
+      ...this._partInfoFromPath(path),
+      originalEvent: e,
+    };
+
+    const linkEvent = new CustomEvent<ChatLinkClickDetail>('link-click', {
+      detail,
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(linkEvent);
+    if (linkEvent.defaultPrevented) {
+      e.preventDefault();
+    }
   }
 
   /**
@@ -535,7 +652,9 @@ export class ChatMessageElement extends LitElement {
       if (!el) continue;
       // The streaming part shows the typewriter buffer; others show full text.
       const source = p.id === this._streamingTextId ? this._contentCtrl.displayedContent : p.text;
-      const newHtml = renderMarkdown(source);
+      const newHtml = renderMarkdown(source, {
+        allowedLinkProtocols: this.allowedLinkProtocols,
+      });
       if (newHtml === this._textCache.get(p.id)) continue;
       this._morphInto(el, newHtml);
       this._textCache.set(p.id, newHtml);
@@ -561,7 +680,9 @@ export class ChatMessageElement extends LitElement {
       liveCustomIds.add(p.id);
       const el = this._customRefs.get(p.id)?.value;
       if (!el) continue;
-      const newHtml = sanitizeHtml(renderer.render(p as CustomPart));
+      const newHtml = sanitizeHtml(renderer.render(p as CustomPart), {
+        allowedLinkProtocols: this.allowedLinkProtocols,
+      });
       if (newHtml === this._customCache.get(p.id)) continue;
       this._morphInto(el, newHtml);
       this._customCache.set(p.id, newHtml);
@@ -641,6 +762,7 @@ export class ChatMessageElement extends LitElement {
         class="message message--${role} ${this.message.parentId ? 'message--reply' : ''} ${error
           ? 'message--error'
           : ''}"
+        @click=${this._handleLinkClick}
       >
         ${this._renderAvatar(resolvedAvatar, role)}
         <div class="bubble-wrapper">

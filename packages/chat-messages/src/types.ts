@@ -213,6 +213,23 @@ export interface ChatFormSubmitDetail {
   message: ChatMessage;
 }
 
+/**
+ * Fired when a rendered message link is clicked. The event is cancelable:
+ * call `preventDefault()` to stop the browser's normal link navigation.
+ */
+export interface ChatLinkClickDetail {
+  href: string;
+  rawHref: string;
+  protocol: string;
+  text: string;
+  target: HTMLAnchorElement;
+  messageId: string;
+  message: ChatMessage;
+  partId?: string;
+  partType?: MessagePart['type'];
+  originalEvent: MouseEvent;
+}
+
 /** Strings for message list date separators (between day buckets). */
 export interface DateSeparatorLabels {
   today: string;
@@ -231,6 +248,12 @@ export interface ChatConfig {
   peerAvatar?: string;
   /** Default avatar for assistant/system messages (text, emoji, or image URL) */
   assistantAvatar?: string;
+  /**
+   * Non-empty list of URI protocols to keep in rendered links.
+   * Values may include or omit the trailing colon (`myapp` and `myapp:` both work).
+   * When omitted or empty, all protocol schemes are preserved.
+   */
+  allowedLinkProtocols?: readonly string[];
   /**
    * BCP 47 locale for built-in UI: all text strings (see {@link ChatLabels}),
    * per-message timestamps, and assistant **duration**
@@ -251,7 +274,9 @@ export interface ChatConfig {
   dateSeparatorLabels?: Partial<DateSeparatorLabels>;
 }
 
-export const DEFAULT_CONFIG: Required<Omit<ChatConfig, 'labels' | 'dateSeparatorLabels'>> = {
+export const DEFAULT_CONFIG: Required<
+  Omit<ChatConfig, 'labels' | 'dateSeparatorLabels' | 'allowedLinkProtocols'>
+> = {
   streamingSpeed: 3,
   selfAvatar: '',
   peerAvatar: '',

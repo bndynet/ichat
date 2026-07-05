@@ -4,6 +4,16 @@ import DOMPurify from 'dompurify';
 import { rendererRegistry } from './registry.js';
 import { timelinePlugin } from './timeline-plugin.js';
 import { collapsiblePlugin } from './collapsible-plugin.js';
+import { normalizeAllowedLinkProtocols, uriRegexpForAllowedLinkProtocols } from '../link-protocols.js';
+
+export interface MarkdownRenderOptions {
+  /**
+   * Non-empty list of link protocols to keep in URI attributes (`href`, `src`, ...).
+   * Values may be provided with or without the trailing colon (`myapp` / `myapp:`).
+   * When omitted or empty, every protocol scheme is preserved.
+   */
+  allowedLinkProtocols?: readonly string[];
+}
 
 const md = new MarkdownIt({
   html: false,
@@ -17,12 +27,18 @@ const md = new MarkdownIt({
   },
 });
 
+// Keep protocol filtering in DOMPurify so per-render `allowedLinkProtocols`
+// can either preserve every scheme or enforce a host-provided allow list.
+md.validateLink = () => true;
+
 md.use(timelinePlugin);
 md.use(collapsiblePlugin);
 
 // ── DOMPurify configuration ──────────────────────────────────────────────────
 // Shared between the outer render pass and the inner details-body sanitisation.
-const DOMPURIFY_CONFIG: Parameters<typeof DOMPurify.sanitize>[1] = {
+type DOMPurifyConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>;
+
+const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
   ADD_TAGS: [
     // SVG elements used by chart / custom renderers
     'svg', 'path', 'rect', 'circle', 'line', 'text',
@@ -37,6 +53,27 @@ const DOMPURIFY_CONFIG: Parameters<typeof DOMPurify.sanitize>[1] = {
     'text-anchor', 'dominant-baseline', 'font-size', 'opacity', 'points',
   ],
 };
+
+const domPurifyConfigCache = new Map<string, DOMPurifyConfig>();
+let activeRenderOptions: MarkdownRenderOptions | undefined;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
+  const protocols = normalizeAllowedLinkProtocols(options?.allowedLinkProtocols);
+  const key = protocols.length === 0 ? '*' : protocols.join('|');
+  const cached = domPurifyConfigCache.get(key);
+  if (cached) return cached;
+
+  const config: DOMPurifyConfig = {
+    ...DOMPURIFY_BASE_CONFIG,
+    ALLOWED_URI_REGEXP: uriRegexpForAllowedLinkProtocols(protocols),
+  };
+  domPurifyConfigCache.set(key, config);
+  return config;
+}
 
 // ── Fence block renderer ──────────────────────────────────────────────────────
 // Block renderer outputs are trusted (registered code, not user content).
@@ -63,7 +100,7 @@ rendererRegistry.register({
     // Render the body through the full markdown pipeline (supports timeline,
     // tables, code highlighting, etc.) then sanitise the result.
     const bodyRaw = md.render(content);
-    const bodyHtml = DOMPurify.sanitize(bodyRaw, DOMPURIFY_CONFIG);
+    const bodyHtml = sanitizeHtml(bodyRaw, activeRenderOptions);
 
     return (
       `<details class="chat-details">\n` +
@@ -109,27 +146,30 @@ export { md };
  * Sanitise a trusted-but-not-guaranteed HTML string with the same DOMPurify
  * config used for markdown output. Used by string-mode custom part renderers.
  */
-export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
+export function sanitizeHtml(html: string, options?: MarkdownRenderOptions): string {
+  return DOMPurify.sanitize(html, domPurifyConfig(options));
 }
 
-export function renderMarkdown(content: string): string {
+export function renderMarkdown(content: string, options?: MarkdownRenderOptions): string {
   pendingBlockHTML.clear();
-  const raw = md.render(content);
+  const previousOptions = activeRenderOptions;
+  activeRenderOptions = options;
 
-  let sanitized = DOMPurify.sanitize(raw, DOMPURIFY_CONFIG);
+  try {
+    const raw = md.render(content);
 
-  // Splice trusted block-renderer HTML back in, bypassing DOMPurify.
-  for (const [id, html] of pendingBlockHTML) {
-    sanitized = sanitized.replace(`<div id="${id}"></div>`, html);
+    let sanitized = sanitizeHtml(raw, options);
+
+    // Splice trusted block-renderer HTML back in, bypassing DOMPurify.
+    for (const [id, html] of pendingBlockHTML) {
+      sanitized = sanitized.replace(`<div id="${id}"></div>`, html);
+    }
+
+    return sanitized;
+  } finally {
+    activeRenderOptions = previousOptions;
+    pendingBlockHTML.clear();
   }
-  pendingBlockHTML.clear();
-
-  return sanitized;
-}
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /** Allow optional whitespace before `>` and case-insensitive tag names so model output still matches. */

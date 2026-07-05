@@ -41,6 +41,8 @@ export type {
   ConfirmationLabels,
   DeepPartial,
   PluralForms,
+  ChatLinkClickDetail,
+  MarkdownRenderOptions,
 } from '@bndynet/ichat-messages';
 export {
   DEFAULT_CONFIG,

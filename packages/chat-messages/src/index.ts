@@ -14,6 +14,7 @@ export {
   extractReasoning,
   hasUnclosedReasoning,
 } from './renderers/markdown-renderer.js';
+export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
 export { updateTimelineStatus } from './renderers/timeline-plugin.js';
 export type { TimelineStatus } from './renderers/timeline-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';
@@ -28,6 +29,7 @@ export type {
   ChatFormFieldValues,
   ChatFormDateRangeValue,
   ChatFormSubmitDetail,
+  ChatLinkClickDetail,
   MessagePart,
   PartBase,
   PartStatus,

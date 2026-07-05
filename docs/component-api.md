@@ -33,10 +33,30 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
 | `tool-action` | `{ action: 'approve' \| 'reject', toolCallId: string, part: ToolCallPart }` | From a `tool-call` part’s human-in-the-loop buttons (when `approval === 'required'`) |
 | `form-submit` | `{ formId, title, values, messageId, message }` | From an embedded `form` fenced block inside a `text` part |
+| `link-click` | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself |
 | `confirmation-change` | `{ active, queue, queueLength }` | Active composer confirmation or FIFO queue changed |
 | `confirmation-decision` | `ChatConfirmationResult` | User confirmed or cancelled the active composer confirmation |
 
 Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message>`) use `bubbles` + `composed` so you can listen on `<i-chat>` or `document`.
+
+### Link clicks and protocols
+
+Rendered message links emit a cancelable `link-click` event. By default, built-in rendered links preserve every URI protocol scheme, including custom app protocols such as `myapp:`. Set `config.allowedLinkProtocols` to a non-empty list when you want to restrict which protocols are kept. Values may include or omit the trailing colon.
+
+```javascript
+chat.config = {
+  ...chat.config,
+  allowedLinkProtocols: ['https', 'mailto', 'myapp'],
+};
+
+chat.addEventListener('link-click', (e) => {
+  const { rawHref, protocol } = e.detail;
+  if (protocol === 'myapp:') {
+    e.preventDefault();
+    routeInsideApp(rawHref);
+  }
+});
+```
 
 ## Composer confirmations
 

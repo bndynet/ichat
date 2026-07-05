@@ -2,6 +2,7 @@ import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import type {
   ChatFormSubmitDetail,
+  ChatLinkClickDetail,
   ChatMessage,
   ChatConfig,
   BlockRenderer,
@@ -16,7 +17,7 @@ import styles from '../styles/chat.scss';
 void ChatMessages;
 void ChatInput;
 
-export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail };
+export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail, ChatLinkClickDetail };
 
 export type ChatConfirmationVariant = 'default' | 'danger';
 
@@ -81,6 +82,7 @@ type PendingConfirmation = {
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires form-submit - `{ detail: ChatFormSubmitDetail }` when an embedded chat form is submitted (`formId`, `title`, `values`, `messageId`, `message`)
+ * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
  * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
  * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
  *

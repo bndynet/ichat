@@ -16,6 +16,7 @@ export class ChatReasoning extends LitElement {
   @property({ type: Boolean }) streaming = false;
   @property({ type: Number }) speed = 2;
   @property() headerHtml = '';
+  @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
   /** Localized header strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ReasoningLabels;
   @state() private _expanded = false;
@@ -103,7 +104,11 @@ export class ChatReasoning extends LitElement {
         </div>
         <div class="reasoning-content ${bodyOpen ? 'open' : ''}">
           <div class="reasoning-body">
-            ${hasContent ? unsafeHTML(renderMarkdown(displayed)) : ''}
+            ${hasContent
+              ? unsafeHTML(renderMarkdown(displayed, {
+                  allowedLinkProtocols: this.allowedLinkProtocols,
+                }))
+              : ''}
           </div>
         </div>
       </div>

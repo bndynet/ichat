@@ -168,6 +168,16 @@ onMounted(async () => {
       role: 'assistant',
       parts: [
         textPart(
+          '**Custom protocol link** — [Open app example](myapp://example) emits `link-click`; this page intercepts `myapp:` and keeps navigation inside the app.',
+        ),
+      ],
+      timestamp: Date.now(),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'assistant',
+      parts: [
+        textPart(
           '**Embedded form** — submit the fields below. The page listens for **`form-submit`** on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
         ),
       ],
@@ -256,6 +266,24 @@ function handleFormSubmit(e) {
     timestamp: Date.now(),
   });
 }
+
+function handleLinkClick(e) {
+  console.log('link click:', e.detail);
+  const { protocol, rawHref, messageId, partId } = e.detail;
+  if (protocol !== 'myapp:') return;
+
+  e.preventDefault();
+  chatRef.value.addMessage({
+    id: nextId(),
+    role: 'assistant',
+    parts: [
+      textPart(
+        `**link-click** — intercepted \`${rawHref}\`\n\n**messageId:** \`${messageId}\`${partId ? `\n\n**partId:** \`${partId}\`` : ''}`,
+      ),
+    ],
+    timestamp: Date.now(),
+  });
+}
 </script>
 
 <template>
@@ -283,6 +311,7 @@ function handleFormSubmit(e) {
     @send="handleSend"
     @cancel="handleCancel"
     @form-submit="handleFormSubmit"
+    @link-click="handleLinkClick"
     @voice-input="handleVoiceInput"
     @message-action="handleMessageAction"
   >

@@ -5,6 +5,7 @@ import type { MessagePart, ToolCallPart, ToolCallState } from '../types.js';
 import type { ToolCallLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
+import { isAllowedLinkHref } from '../link-protocols.js';
 import styles from '../styles/chat-tool-call.scss';
 
 /** Map the tool-call state to a coarse visual status used for theming. */
@@ -73,6 +74,11 @@ export class ChatToolCall extends LitElement {
 
   /** Localized tool-call strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ToolCallLabels;
+  @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+
+  private _linkHref(rawHref: string): string | typeof nothing {
+    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
+  }
 
   private _emit(action: 'approve' | 'reject'): void {
     this.dispatchEvent(
@@ -111,14 +117,19 @@ export class ChatToolCall extends LitElement {
 
   private _renderResultPart(part: MessagePart) {
     if (part.type === 'text') {
-      return html`<div>${unsafeHTML(renderMarkdown(part.text))}</div>`;
+      return html`<div>${unsafeHTML(renderMarkdown(part.text, {
+        allowedLinkProtocols: this.allowedLinkProtocols,
+      }))}</div>`;
     }
     if (part.type === 'file' && part.mediaType.startsWith('image/')) {
       const src = part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
       return src ? html`<img src=${src} alt=${part.name ?? 'result image'} />` : nothing;
     }
     if (part.type === 'source') {
-      return html`<a href=${part.url} target="_blank" rel="noopener noreferrer"
+      return html`<a
+        href=${this._linkHref(part.url)}
+        target="_blank"
+        rel="noopener noreferrer"
         >${part.title ?? part.url}</a
       >`;
     }
