@@ -58,9 +58,6 @@ export default defineConfig({
   env: {
     customElements: ['i-renderers', 'i-chat-input', 'i-chat', 'chat-renderers'],
     watchPackages: [{
-      name: '@bndynet/renderers',
-      entryPath: '../../packages/renderers/src/index.ts',
-    }, {
       name: '@bndynet/ichat-input',
       entryPath: '../../packages/chat-input/src/index.ts',
     }, {

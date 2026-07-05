@@ -4,11 +4,117 @@
  * not define Mermaid-specific variables unless they want diagram-only tweaks.
  */
 
+function clampByte(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(255, Math.max(0, Math.round(value)));
+}
+
+function clampAlpha(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(1, Math.max(0, value));
+}
+
+function formatAlpha(value: number): string {
+  return String(Number(clampAlpha(value).toFixed(3)));
+}
+
+function parseCssChannel(value: string, scaleUnit = 255): number {
+  const trimmed = value.trim();
+  if (trimmed.endsWith('%')) {
+    return clampByte((Number.parseFloat(trimmed) / 100) * 255);
+  }
+  const n = Number.parseFloat(trimmed);
+  return clampByte(scaleUnit === 1 ? n * 255 : n);
+}
+
+function parseCssAlpha(value: string): number {
+  const trimmed = value.trim();
+  if (trimmed.endsWith('%')) {
+    return clampAlpha(Number.parseFloat(trimmed) / 100);
+  }
+  return clampAlpha(Number.parseFloat(trimmed));
+}
+
+function formatRgbForMermaid(r: number, g: number, b: number, alpha = 1): string {
+  const a = clampAlpha(alpha);
+  if (a >= 1) return `rgb(${clampByte(r)}, ${clampByte(g)}, ${clampByte(b)})`;
+  return `rgba(${clampByte(r)}, ${clampByte(g)}, ${clampByte(b)}, ${formatAlpha(a)})`;
+}
+
+function normalizeRgbColor(value: string): string {
+  const match = /^rgba?\((.*)\)$/i.exec(value.trim());
+  if (!match) return '';
+
+  const body = match[1].trim();
+  if (body.includes(',')) {
+    const parts = body.split(',').map((part) => part.trim());
+    if (parts.length < 3) return '';
+    return formatRgbForMermaid(
+      parseCssChannel(parts[0]),
+      parseCssChannel(parts[1]),
+      parseCssChannel(parts[2]),
+      parts[3] == null ? 1 : parseCssAlpha(parts[3])
+    );
+  }
+
+  const [channelsPart, alphaPart] = body.split('/').map((part) => part.trim());
+  const channels = channelsPart.split(/\s+/).filter(Boolean);
+  if (channels.length < 3) return '';
+  return formatRgbForMermaid(
+    parseCssChannel(channels[0]),
+    parseCssChannel(channels[1]),
+    parseCssChannel(channels[2]),
+    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart)
+  );
+}
+
+function normalizeSrgbColor(value: string): string {
+  const match = /^color\(\s*srgb\s+(.+)\)$/i.exec(value.trim());
+  if (!match) return '';
+
+  const [channelsPart, alphaPart] = match[1].split('/').map((part) => part.trim());
+  const channels = channelsPart.split(/\s+/).filter(Boolean);
+  if (channels.length < 3) return '';
+  return formatRgbForMermaid(
+    parseCssChannel(channels[0], 1),
+    parseCssChannel(channels[1], 1),
+    parseCssChannel(channels[2], 1),
+    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart)
+  );
+}
+
+function normalizeMermaidColor(host: Element, value: string): string {
+  const raw = value.trim();
+  if (!raw) return '';
+
+  if (typeof document === 'undefined' || typeof getComputedStyle === 'undefined') {
+    return raw;
+  }
+
+  const doc = host.ownerDocument ?? document;
+  const probe = doc.createElement('span');
+  probe.style.color = raw;
+  probe.style.display = 'none';
+  if (!probe.style.color && !raw.toLowerCase().includes('var(')) return '';
+
+  const root =
+    typeof HTMLElement !== 'undefined' && host instanceof HTMLElement && host.shadowRoot
+      ? host.shadowRoot
+      : host;
+  root.appendChild(probe);
+  const computed = getComputedStyle(probe).color.trim();
+  probe.remove();
+
+  return normalizeRgbColor(computed) || normalizeSrgbColor(computed) || '';
+}
+
 function firstResolvedColor(host: Element, cssVars: readonly string[]): string {
   const cs = getComputedStyle(host);
   for (const name of cssVars) {
     const v = cs.getPropertyValue(name).trim();
-    if (v) return v;
+    if (!v) continue;
+    const normalized = normalizeMermaidColor(host, v);
+    if (normalized) return normalized;
   }
   return '';
 }
