@@ -21,7 +21,7 @@
   --_input-placeholder: var(--chat-input-placeholder, var(--chat-text-muted, #{$color-text-muted}));
 
   --_input-primary: var(--chat-input-primary, var(--chat-primary, #{$color-primary}));
-  --_input-primary-hover: var(--chat-input-primary-hover, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black));
+  --_input-primary-hover: var(--chat-input-primary-hover, var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black)));
   --_input-primary-text: var(--chat-input-primary-text, #{$color-primary-text});
 
   --_input-radius: var(--chat-input-radius, #{$radius-lg});

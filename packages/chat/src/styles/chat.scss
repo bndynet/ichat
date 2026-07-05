@@ -171,7 +171,7 @@ i-chat-messages {
     inset 0 1px 0 color-mix(in srgb, var(--chat-primary-text, #ffffff) 18%, transparent);
 
   &:hover {
-    background: var(--chat-primary-hover, #1d4ed8);
+    background: var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #2563eb) 85%, black));
   }
 
   .chat-confirmation--danger & {
