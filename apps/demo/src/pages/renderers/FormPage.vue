@@ -16,8 +16,9 @@ onMounted(async () => {
   })
 })
 
-function onFormSubmit(e) {
-  const md = `Form submitted: \n\`\`\`json\n${JSON.stringify(e.detail, null, 2)}\n\`\`\``;
+function onPartAction(e) {
+  if (e.detail?.kind !== 'form') return
+  const md = `Form submitted via part-action: \n\`\`\`json\n${JSON.stringify(e.detail.detail, null, 2)}\n\`\`\``;
   console.log(md);
   chatRef.value.addMessage({
     id: nextId(),
@@ -29,5 +30,5 @@ function onFormSubmit(e) {
 </script>
 
 <template>
-  <i-chat-messages ref="chatRef" @form-submit="onFormSubmit"></i-chat-messages>
+  <i-chat-messages ref="chatRef" @part-action="onPartAction"></i-chat-messages>
 </template>

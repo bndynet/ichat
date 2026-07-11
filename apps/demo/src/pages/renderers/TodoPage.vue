@@ -8,6 +8,13 @@ const chatRef = ref(null)
 const timers = []
 const after = (ms, callback) => timers.push(setTimeout(callback, ms))
 
+function applyTodoUpdate(chat, messageId, partId, itemId, patch, revision) {
+  const result = chat.tryUpdateTodoItem(messageId, partId, itemId, patch, revision)
+  if (!result.ok) {
+    console.warn('[TodoPage] Todo update ignored:', result.reason)
+  }
+}
+
 async function waitForChatHost(maxTicks = 30) {
   for (let i = 0; i < maxTicks; i++) {
     if (chatRef.value) return chatRef.value
@@ -41,19 +48,22 @@ onMounted(async () => {
   })
 
   // Simulate two ordered backend/SSE updates with monotonic revisions.
-  after(1200, () => chat.updateTodoItem(messageId, 'todo-plan', 'panel', { status: 'done' }, 1))
-  after(1600, () => chat.updateTodoItem(messageId, 'todo-plan', 'events', { status: 'active' }, 2))
+  after(1200, () => applyTodoUpdate(chat, messageId, 'todo-plan', 'panel', { status: 'done' }, 1))
+  after(1600, () => applyTodoUpdate(chat, messageId, 'todo-plan', 'events', { status: 'active' }, 2))
 })
 
 onUnmounted(() => timers.forEach(clearTimeout))
 
 /** Status-button requests are authoritative only after the host applies them. */
-function handleTodoAction(event) {
-  const { messageId, part, itemId, status } = event.detail
-  chatRef.value?.updateTodoItem(messageId, part.id, itemId, { status })
+function handlePartAction(event) {
+  if (event.detail?.kind !== 'todo') return
+  const { messageId, part, itemId, status } = event.detail.detail
+  const chat = chatRef.value
+  if (!chat) return
+  applyTodoUpdate(chat, messageId, part.id, itemId, { status })
 }
 </script>
 
 <template>
-  <i-chat ref="chatRef" @todo-action="handleTodoAction"></i-chat>
+  <i-chat ref="chatRef" @part-action="handlePartAction"></i-chat>
 </template>

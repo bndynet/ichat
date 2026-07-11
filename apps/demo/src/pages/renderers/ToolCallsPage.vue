@@ -19,6 +19,13 @@ async function waitForChatHost(maxTicks = 30) {
 const timers = []
 const after = (ms, fn) => timers.push(setTimeout(fn, ms))
 
+function applyToolUpdate(chat, messageId, partId, patch) {
+  const result = chat.tryUpdateToolCall(messageId, partId, patch)
+  if (!result.ok) {
+    console.warn('[ToolCallsPage] Tool update ignored:', result.reason)
+  }
+}
+
 onMounted(async () => {
   const chat = await waitForChatHost()
   if (!chat) return
@@ -47,9 +54,9 @@ onMounted(async () => {
       state: 'input-available',
     })
   })
-  after(1100, () => chat.updateToolCall(msgId, 'tc-a', { state: 'executing' }))
+  after(1100, () => applyToolUpdate(chat, msgId, 'tc-a', { state: 'executing' }))
   after(2200, () =>
-    chat.updateToolCall(msgId, 'tc-a', {
+    applyToolUpdate(chat, msgId, 'tc-a', {
       state: 'output-available',
       durationMs: 1100,
       resultParts: [
@@ -69,9 +76,9 @@ onMounted(async () => {
       state: 'input-streaming',
     })
   })
-  after(3200, () => chat.updateToolCall(msgId, 'tc-b', { state: 'executing' }))
+  after(3200, () => applyToolUpdate(chat, msgId, 'tc-b', { state: 'executing' }))
   after(4400, () =>
-    chat.updateToolCall(msgId, 'tc-b', {
+    applyToolUpdate(chat, msgId, 'tc-b', {
       state: 'output-error',
       durationMs: 1200,
       error: '1 of 24 tests failed: streaming-controller.test.ts',
@@ -115,18 +122,19 @@ onMounted(async () => {
 
 onUnmounted(() => timers.forEach(clearTimeout))
 
-/** `tool-action` from the approval buttons bubbles up to <i-chat>. */
-function handleToolAction(e) {
-  const { action, part } = e.detail
-  console.log('[ToolCallsPage tool-action]', e.detail)
+/** `part-action` from the approval buttons bubbles up to <i-chat>. */
+function handlePartAction(e) {
+  if (e.detail?.kind !== 'tool-call') return
+  const { action, part, messageId } = e.detail.detail
+  console.log('[ToolCallsPage part-action]', e.detail)
   const chat = chatRef.value
-  const msgId = approvalMsgId.value
+  const msgId = messageId || approvalMsgId.value
   if (!chat || !msgId || !part) return
   if (action === 'approve') {
-    chat.updateToolCall(msgId, part.id, { approval: 'approved', state: 'executing' })
+    applyToolUpdate(chat, msgId, part.id, { approval: 'approved', state: 'executing' })
     setTimeout(
       () =>
-        chat.updateToolCall(msgId, part.id, {
+        applyToolUpdate(chat, msgId, part.id, {
           state: 'output-available',
           durationMs: 800,
           result: { removed: true, freedBytes: 1048576 },
@@ -134,11 +142,11 @@ function handleToolAction(e) {
       900,
     )
   } else {
-    chat.updateToolCall(msgId, part.id, { approval: 'rejected', state: 'output-error', error: 'Cancelled by user.' })
+    applyToolUpdate(chat, msgId, part.id, { approval: 'rejected', state: 'output-error', error: 'Cancelled by user.' })
   }
 }
 </script>
 
 <template>
-  <i-chat ref="chatRef" @tool-action="handleToolAction"></i-chat>
+  <i-chat ref="chatRef" @part-action="handlePartAction"></i-chat>
 </template>

@@ -178,7 +178,7 @@ onMounted(async () => {
       role: 'assistant',
       parts: [
         textPart(
-          '**Embedded form** — submit the fields below. The page listens for **`form-submit`** on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
+          '**Embedded form** — submit the fields below. The page listens for **`part-action`** with `kind: "form"` on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
         ),
       ],
       timestamp: Date.now(),
@@ -245,10 +245,11 @@ function handleVoiceInput(e) {
   }
 }
 
-/** `form-submit` — `detail` has `formId`, `title`, `values`, `messageId`, `message` (full row). */
-function handleFormSubmit(e) {
-  console.log('form submit:', e.detail);
-  const { formId, title, values, messageId, message } = e.detail;
+/** `part-action` — unified events from rendered message parts. */
+function handlePartAction(e) {
+  if (e.detail?.kind !== 'form') return;
+  console.log('part action:', e.detail);
+  const { formId, title, values, messageId, message } = e.detail.detail;
   const chat = chatRef.value;
   const preview = JSON.stringify(values, null, 2);
   const msgMeta =
@@ -260,7 +261,7 @@ function handleFormSubmit(e) {
     role: 'assistant',
     parts: [
       textPart(
-        `**form-submit** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
+        `**part-action / form** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
       ),
     ],
     timestamp: Date.now(),
@@ -310,7 +311,7 @@ function handleLinkClick(e) {
     :voice-diagnostics="true"
     @send="handleSend"
     @cancel="handleCancel"
-    @form-submit="handleFormSubmit"
+    @part-action="handlePartAction"
     @link-click="handleLinkClick"
     @voice-input="handleVoiceInput"
     @message-action="handleMessageAction"
