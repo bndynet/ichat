@@ -6,6 +6,7 @@ In-depth design and reference docs. For installation and a runnable quick start,
 
 - [Message model](./message-model.md) — message roles (`ChatMessageRole`), common `ChatMessage` fields, and the structured `parts[]` body (factories, streaming/updating).
 - [`<i-chat>` API](./component-api.md) — properties, methods, events, slots, and per-message avatars.
+- [SSE response format](./sse-response-format.md) — recommended backend event stream contract for live assistant responses.
 - [Project roadmap](./roadmap.md) — completed work, backlog, and deprecated compatibility surfaces across the project.
 
 ## Content & parts

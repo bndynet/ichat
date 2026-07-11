@@ -115,9 +115,15 @@ For backend/SSE updates that target a whole part, use `message.part.updated` wit
   "type": "message.part.updated",
   "messageId": "a2",
   "partId": "body",
-  "patch": { "text": "Streaming text", "status": "streaming" }
+  "patch": { "text": "Streaming text", "status": "streaming" },
+  "sequence_number": 12
 }
 ```
+
+When using SSE, keep `data.type` aligned with the `event:` name. Payloads
+without `data.type` remain supported for compatibility, but the documented
+format mirrors OpenAI Responses streaming events so logs and replay data stay
+self-describing.
 
 ```javascript
 source.addEventListener('message.part.updated', (event) => {

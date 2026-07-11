@@ -1,5 +1,11 @@
 import type { TodoItem, TodoItemPatch, TodoPart } from './types.js';
 import { isTodoItemStatus } from './part-guards.js';
+import {
+  getEventSequenceNumber,
+  isNonEmptyString,
+  isRecord,
+  parseTypedEventPayload,
+} from './typed-event-payload.js';
 
 export type TodoPatchFailureReason =
   | 'stale-revision'
@@ -17,6 +23,7 @@ export interface TodoItemUpdate {
   itemId: string;
   patch: TodoItemPatch;
   revision?: number;
+  sequenceNumber?: number;
 }
 
 export type TodoItemUpdateNormalizeFailureReason =
@@ -26,48 +33,12 @@ export type TodoItemUpdateNormalizeFailureReason =
   | 'invalid-item-id'
   | 'invalid-status'
   | 'invalid-revision'
+  | 'invalid-sequence-number'
   | 'empty-patch';
 
 export type TodoItemUpdateNormalizeResult =
   | { ok: true; update: TodoItemUpdate }
   | { ok: false; reason: TodoItemUpdateNormalizeFailureReason };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.trim() !== '';
-}
-
-function parseTodoItemUpdatePayload(input: unknown): unknown {
-  if (typeof input === 'string') {
-    try {
-      return JSON.parse(input) as unknown;
-    } catch {
-      return undefined;
-    }
-  }
-
-  if (isRecord(input) && typeof input.data === 'string') {
-    const eventType = typeof input.type === 'string' ? input.type : undefined;
-    try {
-      const payload = JSON.parse(input.data) as unknown;
-      if (
-        eventType === 'todo.item.updated' &&
-        isRecord(payload) &&
-        payload.type === undefined
-      ) {
-        return { ...payload, type: eventType };
-      }
-      return payload;
-    } catch {
-      return undefined;
-    }
-  }
-
-  return input;
-}
 
 /** Work items that no longer need agent activity. */
 export function isTerminalTodoItem(item: Pick<TodoItem, 'status'>): boolean {
@@ -133,7 +104,7 @@ export function patchTodoItem(
 export function normalizeTodoItemUpdateEvent(
   input: unknown
 ): TodoItemUpdateNormalizeResult {
-  const payload = parseTodoItemUpdatePayload(input);
+  const payload = parseTypedEventPayload(input, 'todo.item.updated');
   if (!isRecord(payload)) {
     return { ok: false, reason: 'invalid-event' };
   }
@@ -153,6 +124,11 @@ export function normalizeTodoItemUpdateEvent(
   }
   if (!isNonEmptyString(payload.itemId)) {
     return { ok: false, reason: 'invalid-item-id' };
+  }
+
+  const sequenceNumber = getEventSequenceNumber(payload);
+  if (sequenceNumber === 'invalid') {
+    return { ok: false, reason: 'invalid-sequence-number' };
   }
 
   const patch: TodoItemPatch = {};
@@ -180,16 +156,20 @@ export function normalizeTodoItemUpdateEvent(
     }
   }
 
-  return {
-    ok: true,
-    update: {
-      messageId: payload.messageId,
-      partId: payload.partId,
-      itemId: payload.itemId,
-      patch,
-      revision,
-    },
+  const update: TodoItemUpdate = {
+    messageId: payload.messageId,
+    partId: payload.partId,
+    itemId: payload.itemId,
+    patch,
   };
+  if (revision !== undefined) {
+    update.revision = revision;
+  }
+  if (sequenceNumber !== undefined) {
+    update.sequenceNumber = sequenceNumber;
+  }
+
+  return { ok: true, update };
 }
 
 /**

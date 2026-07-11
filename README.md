@@ -146,6 +146,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 | Doc | Covers |
 |-----|--------|
 | [Message model](docs/message-model.md) | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating |
+| [SSE response format](docs/sse-response-format.md) | Recommended backend event stream contract for live assistant responses |
 | [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, per-message avatar |
 | [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
 | [Custom renderers](docs/renderers.md) | `registerRenderer` + built-in chart / KPI / form / Mermaid renderers |

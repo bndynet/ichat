@@ -1,15 +1,23 @@
 import type { MessagePart } from './types.js';
+import {
+  getEventSequenceNumber,
+  isNonEmptyString,
+  isRecord,
+  parseTypedEventPayload,
+} from './typed-event-payload.js';
 
 export interface MessagePartUpdate {
   messageId: string;
   partId: string;
   patch: Partial<MessagePart>;
+  sequenceNumber?: number;
 }
 
 export type MessagePartUpdateNormalizeFailureReason =
   | 'invalid-event'
   | 'invalid-message-id'
   | 'invalid-part-id'
+  | 'invalid-sequence-number'
   | 'invalid-patch'
   | 'empty-patch'
   | 'part-id-change-not-allowed'
@@ -18,43 +26,6 @@ export type MessagePartUpdateNormalizeFailureReason =
 export type MessagePartUpdateNormalizeResult =
   | { ok: true; update: MessagePartUpdate }
   | { ok: false; reason: MessagePartUpdateNormalizeFailureReason };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.trim() !== '';
-}
-
-function parseMessagePartUpdatePayload(input: unknown): unknown {
-  if (typeof input === 'string') {
-    try {
-      return JSON.parse(input) as unknown;
-    } catch {
-      return undefined;
-    }
-  }
-
-  if (isRecord(input) && typeof input.data === 'string') {
-    const eventType = typeof input.type === 'string' ? input.type : undefined;
-    try {
-      const payload = JSON.parse(input.data) as unknown;
-      if (
-        eventType === 'message.part.updated' &&
-        isRecord(payload) &&
-        payload.type === undefined
-      ) {
-        return { ...payload, type: eventType };
-      }
-      return payload;
-    } catch {
-      return undefined;
-    }
-  }
-
-  return input;
-}
 
 function patchFromPayload(payload: Record<string, unknown>): unknown {
   if (payload.patch !== undefined) {
@@ -65,6 +36,8 @@ function patchFromPayload(payload: Record<string, unknown>): unknown {
     type: _type,
     messageId: _messageId,
     partId: _partId,
+    sequence_number: _sequenceNumber,
+    sequenceNumber: _sequenceNumberCamel,
     ...patch
   } = payload;
   return patch;
@@ -77,7 +50,7 @@ function patchFromPayload(payload: Record<string, unknown>): unknown {
 export function normalizeMessagePartUpdateEvent(
   input: unknown
 ): MessagePartUpdateNormalizeResult {
-  const payload = parseMessagePartUpdatePayload(input);
+  const payload = parseTypedEventPayload(input, 'message.part.updated');
   if (!isRecord(payload)) {
     return { ok: false, reason: 'invalid-event' };
   }
@@ -96,6 +69,11 @@ export function normalizeMessagePartUpdateEvent(
     return { ok: false, reason: 'invalid-part-id' };
   }
 
+  const sequenceNumber = getEventSequenceNumber(payload);
+  if (sequenceNumber === 'invalid') {
+    return { ok: false, reason: 'invalid-sequence-number' };
+  }
+
   const patch = patchFromPayload(payload);
   if (!isRecord(patch)) {
     return { ok: false, reason: 'invalid-patch' };
@@ -110,12 +88,17 @@ export function normalizeMessagePartUpdateEvent(
     return { ok: false, reason: 'part-type-change-not-allowed' };
   }
 
+  const update: MessagePartUpdate = {
+    messageId: payload.messageId,
+    partId: payload.partId,
+    patch: patch as Partial<MessagePart>,
+  };
+  if (sequenceNumber !== undefined) {
+    update.sequenceNumber = sequenceNumber;
+  }
+
   return {
     ok: true,
-    update: {
-      messageId: payload.messageId,
-      partId: payload.partId,
-      patch: patch as Partial<MessagePart>,
-    },
+    update,
   };
 }

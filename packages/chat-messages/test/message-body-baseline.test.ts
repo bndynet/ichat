@@ -211,17 +211,52 @@ test('message part update event normalization supports generic backend patches',
   const eventUpdate = normalizeMessagePartUpdateEvent({
     type: 'message.part.updated',
     data: JSON.stringify({
+      type: 'message.part.updated',
       messageId: 'assistant-42',
       partId: 'tool-1',
       patch: { state: 'executing' },
+      sequence_number: 7,
     }),
   });
   assert.equal(eventUpdate.ok, true);
   assert.deepEqual(eventUpdate.update.patch, { state: 'executing' });
+  assert.equal(eventUpdate.update.sequenceNumber, 7);
+
+  const defaultMessageEventUpdate = normalizeMessagePartUpdateEvent({
+    type: 'message',
+    data: JSON.stringify({
+      type: 'message.part.updated',
+      messageId: 'assistant-42',
+      partId: 'body',
+      patch: { text: 'Default SSE event' },
+    }),
+  });
+  assert.equal(defaultMessageEventUpdate.ok, true);
 
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({ type: 'todo.item.updated' }),
     { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      type: 'message.part.updated',
+      data: JSON.stringify({
+        type: 'todo.item.updated',
+        messageId: 'assistant-42',
+        partId: 'body',
+        patch: { text: 'Wrong envelope' },
+      }),
+    }),
+    { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'body',
+      sequence_number: '7',
+      patch: { text: 'Hello' },
+    }),
+    { ok: false, reason: 'invalid-sequence-number' }
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -453,18 +488,56 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
   const eventUpdate = normalizeTodoItemUpdateEvent({
     type: 'todo.item.updated',
     data: JSON.stringify({
+      type: 'todo.item.updated',
       messageId: 'assistant-42',
       partId: 'plan',
       itemId: 'panel',
       description: 'Ready for QA',
+      sequence_number: 9,
     }),
   });
   assert.equal(eventUpdate.ok, true);
   assert.deepEqual(eventUpdate.update.patch, { description: 'Ready for QA' });
+  assert.equal(eventUpdate.update.sequenceNumber, 9);
+
+  const defaultMessageEventUpdate = normalizeTodoItemUpdateEvent({
+    type: 'message',
+    data: JSON.stringify({
+      type: 'todo.item.updated',
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      status: 'active',
+    }),
+  });
+  assert.equal(defaultMessageEventUpdate.ok, true);
 
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({ type: 'tool.updated' }),
     { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({
+      type: 'todo.item.updated',
+      data: JSON.stringify({
+        type: 'message.part.updated',
+        messageId: 'assistant-42',
+        partId: 'plan',
+        itemId: 'panel',
+        status: 'done',
+      }),
+    }),
+    { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      status: 'done',
+      sequence_number: '9',
+    }),
+    { ok: false, reason: 'invalid-sequence-number' }
   );
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
