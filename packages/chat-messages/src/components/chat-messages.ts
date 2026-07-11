@@ -1,7 +1,14 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { ChatMessage, ChatConfig, MessagePart, ToolCallPart } from '../types.js';
+import type {
+  ChatMessage,
+  ChatConfig,
+  MessagePart,
+  TodoItemPatch,
+  TodoPart,
+  ToolCallPart,
+} from '../types.js';
 import { DEFAULT_CONFIG, textPart } from '../types.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
@@ -12,8 +19,9 @@ import type { ChatMessageElement } from './chat-message.js';
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
- * and **`form-submit`** from embedded `i-chat-form` blocks (detail includes `messageId` / `message`
- * after `i-chat-message` handles the event).
+ * **`form-submit`** from embedded `i-chat-form` blocks, and **`todo-action`**
+ * from interactive todo parts. Embedded event details include `messageId` /
+ * `message` after `i-chat-message` enriches them.
  */
 @customElement('i-chat-messages')
 export class ChatMessages extends LitElement {
@@ -301,6 +309,50 @@ export class ChatMessages extends LitElement {
    */
   updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): void {
     this.updatePart(messageId, partId, patch as Partial<MessagePart>);
+  }
+
+  /**
+   * Immutably patch one todo item and advance the todo revision. When an
+   * explicit revision is supplied, stale or duplicate updates are ignored.
+   * @returns `true` when the item was found and updated.
+   */
+  updateTodoItem(
+    messageId: string,
+    partId: string,
+    itemId: string,
+    patch: TodoItemPatch,
+    revision?: number,
+  ): boolean {
+    const message = this.messages.find((candidate) => candidate.id === messageId);
+    const part = message?.parts.find(
+      (candidate): candidate is TodoPart => candidate.id === partId && candidate.type === 'todo'
+    );
+    if (!part) return false;
+
+    const currentRevision = Number.isFinite(part.revision) ? part.revision : 0;
+    if (revision != null && revision <= currentRevision) return false;
+
+    const itemIndex = part.items.findIndex((item) => item.id === itemId);
+    if (itemIndex < 0) return false;
+
+    const items = part.items.map((item, index) =>
+      index === itemIndex ? { ...item, ...patch, id: item.id } : item
+    );
+    const allTerminal =
+      items.length > 0 &&
+      items.every((item) => item.status === 'done' || item.status === 'skipped');
+    const status = allTerminal
+      ? 'complete'
+      : part.status === 'complete'
+        ? 'streaming'
+        : part.status;
+
+    this.updatePart(messageId, partId, {
+      items,
+      revision: revision ?? currentRevision + 1,
+      status,
+    } as Partial<TodoPart>);
+    return true;
   }
 
   removeMessage(id: string): void {

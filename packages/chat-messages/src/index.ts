@@ -2,6 +2,7 @@ export { ChatMessages } from './components/chat-messages.js';
 export { ChatMessageElement } from './components/chat-message.js';
 export { ChatReasoning } from './components/chat-reasoning.js';
 export { ChatToolCall } from './components/chat-tool-call.js';
+export { ChatTodo } from './components/chat-todo.js';
 
 export { StreamingController } from './controllers/streaming-controller.js';
 
@@ -33,12 +34,19 @@ export type {
   MessagePart,
   PartBase,
   PartStatus,
+  TaskStatus,
   TextPart,
   ReasoningPart,
   ToolCallPart,
   ToolCallState,
   FilePart,
   SourcePart,
+  TodoItemStatus,
+  TodoItem,
+  TodoItemPatch,
+  TodoPart,
+  TodoPartOptions,
+  TodoActionDetail,
   CustomPart,
   PartFactoryOptions,
 } from './types.js';
@@ -47,6 +55,7 @@ export {
   getMessageText,
   textPart,
   reasoningPart,
+  todoPart,
   nextPartId,
 } from './types.js';
 
@@ -66,6 +75,7 @@ export type {
   ComposerLabels,
   ReasoningLabels,
   ToolCallLabels,
+  TodoLabels,
   MessagesLabels,
   ConfirmationLabels,
   DeepPartial,

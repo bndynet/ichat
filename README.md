@@ -84,7 +84,7 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 </script>
 ```
 
-A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateTimeline`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
+A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`updateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateTimeline`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
 
 ## Script tag (IIFE bundles)
 
@@ -112,13 +112,14 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
 - **Extensible fenced blocks** — **`registerRenderer`** from **`@bndynet/ichat`**, or **`rendererRegistry`** + **`BlockRenderer`** for lower-level control ([Custom renderers](docs/renderers.md))
 - **Extensible `x-*` parts** — **`registerPartRenderer`** maps custom part types to a Web Component or HTML string ([Parts](docs/parts.md#x--custom-extension-parts))
-- **Structured `parts[]` body** — every message body is an ordered list of typed parts (`text`, `reasoning`, `tool-call`, `file`, `source`, custom `x-*`); parts stream and update independently ([Message model](docs/message-model.md#message-body--parts))
+- **Structured `parts[]` body** — every message body is an ordered list of typed parts (`text`, `reasoning`, `tool-call`, `todo`, `file`, `source`, custom `x-*`); parts stream and update independently ([Message model](docs/message-model.md#message-body--parts))
 - **Reasoning parts** — collapsible “thinking” UI + streaming ([Parts](docs/parts.md#reasoning))
 - **Tool calls** — first-class `tool-call` parts with a state machine, rich nested results, and human-in-the-loop approval ([Parts](docs/parts.md#tool-calls))
 - **Streaming typewriter** — progressive reveal and cursor state on streaming `text` parts ([Composer & interaction](docs/composer.md#streaming))
 - **Reply blocks** — quote previews under a message via **`replyMessage`** / **`clearReplyMessage`** ([Composer & interaction](docs/composer.md#reply-blocks))
 - **Slots** — avatars, actions, empty state ([`<i-chat>` API](docs/component-api.md#slots-on-i-chat))
 - **Timeline** — `[status]` markdown lists rendered as vertical timelines ([Timeline](docs/timeline.md))
+- **Todo panel** — structured, collapsible plans with item IDs, live status updates, and user actions ([Todo panel](docs/todo.md))
 - **Theming** — 12 base CSS custom properties; all components derive from them automatically ([Theming](docs/theming.md))
 - **Localization & RTL** — single `config.labels` dictionary, plurals, and automatic RTL mirroring ([Localization](docs/localization.md))
 - **TypeScript** — declaration files for public API
@@ -134,6 +135,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 | [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
 | [Custom renderers](docs/renderers.md) | `registerRenderer` + built-in chart / KPI / form / Mermaid renderers |
 | [Timeline](docs/timeline.md) | `[status]` lists, block IDs, programmatic updates, SSE integration |
+| [Todo panel](docs/todo.md) | Structured items, collapse behavior, status events, updates, SSE revisions |
 | [Theming](docs/theming.md) | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference |
 | [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL |
 | [Composer & interaction](docs/composer.md) | Streaming, reply blocks, voice input |

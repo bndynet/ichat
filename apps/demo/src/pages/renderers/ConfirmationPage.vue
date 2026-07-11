@@ -38,7 +38,7 @@ onMounted(async () => {
   await waitForChatHost();
   addMessage(
     'assistant',
-    'Composer confirmation demo. Use the switch above the chat to compare the default composer with a custom `slot="input"` composer. In both modes, the confirmation panel replaces the input area while active.',
+    'Confirmation demo. Use the switch above the chat to compare the default composer with a custom `slot="input"` composer. In both modes, the confirmation panel replaces the input area while active.',
   );
 });
 

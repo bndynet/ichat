@@ -1,10 +1,12 @@
 import type MarkdownIt from 'markdown-it';
 import type { RenderRule } from 'markdown-it/lib/renderer.mjs';
 import type Token from 'markdown-it/lib/token.mjs';
+import type { TaskStatus } from '../types.js';
 
 // ── Status types & constants ────────────────────────────────────────
 
-export type TimelineStatus = 'done' | 'active' | 'error' | 'pending' | 'skipped';
+/** Backward-compatible name for the shared ordered-work status vocabulary. */
+export type TimelineStatus = TaskStatus;
 
 const STATUS_RE = /^\[(done|complete|active|current|error|fail|pending|wait|skip|skipped)\]\s*/i;
 

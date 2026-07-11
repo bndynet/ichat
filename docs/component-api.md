@@ -21,7 +21,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
 | `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
 
-**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `updatePart`, `updateToolCall`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
+**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `updatePart`, `updateToolCall`, `updateTodoItem`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
 
 **Events on `<i-chat>`:**
 
@@ -32,6 +32,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
 | `tool-action` | `{ action: 'approve' \| 'reject', toolCallId: string, part: ToolCallPart }` | From a `tool-call` part’s human-in-the-loop buttons (when `approval === 'required'`) |
+| `todo-action` | `{ action, itemId, previousStatus, status, part, messageId, message }` | From an interactive `todo` part status icon; apply with `updateTodoItem()` |
 | `form-submit` | `{ formId, title, values, messageId, message }` | From an embedded `form` fenced block inside a `text` part |
 | `link-click` | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself |
 | `confirmation-change` | `{ active, queue, queueLength }` | Active composer confirmation or FIFO queue changed |

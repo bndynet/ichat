@@ -7,6 +7,7 @@ import type {
   ChatConfig,
   BlockRenderer,
   ConfirmationLabels,
+  TodoActionDetail,
 } from '@bndynet/ichat-messages';
 import { ChatMessages, StreamingController, resolveLabels } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
@@ -17,7 +18,14 @@ import styles from '../styles/chat.scss';
 void ChatMessages;
 void ChatInput;
 
-export type { ChatMessage, ChatConfig, BlockRenderer, ChatFormSubmitDetail, ChatLinkClickDetail };
+export type {
+  ChatMessage,
+  ChatConfig,
+  BlockRenderer,
+  ChatFormSubmitDetail,
+  ChatLinkClickDetail,
+  TodoActionDetail,
+};
 
 export type ChatConfirmationVariant = 'default' | 'danger';
 
@@ -82,6 +90,7 @@ type PendingConfirmation = {
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires form-submit - `{ detail: ChatFormSubmitDetail }` when an embedded chat form is submitted (`formId`, `title`, `values`, `messageId`, `message`)
+ * @fires todo-action - `{ detail: TodoActionDetail }` when a todo status icon requests a change
  * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
  * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
  * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
@@ -187,6 +196,17 @@ export class Chat extends LitElement {
     patch: Parameters<ChatMessages['updateToolCall']>[2]
   ): void {
     this._messages.updateToolCall(messageId, partId, patch);
+  }
+
+  /** Immutably patch one todo item. Stale explicit revisions are ignored. */
+  updateTodoItem(
+    messageId: string,
+    partId: string,
+    itemId: string,
+    patch: Parameters<ChatMessages['updateTodoItem']>[3],
+    revision?: number,
+  ): boolean {
+    return this._messages.updateTodoItem(messageId, partId, itemId, patch, revision);
   }
 
   removeMessage(id: string): void {

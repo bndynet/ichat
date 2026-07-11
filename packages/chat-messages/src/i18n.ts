@@ -61,6 +61,22 @@ export interface ToolCallLabels {
   rejected: string;
 }
 
+/** Strings for the collapsible todo panel (`<i-chat-todo>`). */
+export interface TodoLabels {
+  /** Default panel title when the part does not provide one. */
+  title: string;
+  /** Compact completed/total progress shown in the header. */
+  progress: (completed: number, total: number) => string;
+  expand: string;
+  collapse: string;
+  changeStatus: string;
+  pending: string;
+  active: string;
+  done: string;
+  error: string;
+  skipped: string;
+}
+
 /** Strings for the message list shell (`<i-chat-messages>`). */
 export interface MessagesLabels {
   /** Placeholder shown when there are no messages. */
@@ -93,6 +109,7 @@ export interface ChatLabels {
   composer: ComposerLabels;
   reasoning: ReasoningLabels;
   toolCall: ToolCallLabels;
+  todo: TodoLabels;
   messages: MessagesLabels;
   confirmation: ConfirmationLabels;
   dateSeparator: DateSeparatorLabels;
@@ -134,6 +151,18 @@ export const CHAT_LABELS_EN: ChatLabels = {
     reject: 'Reject',
     approved: 'Approved',
     rejected: 'Rejected',
+  },
+  todo: {
+    title: 'To-dos',
+    progress: (completed, total) => `${completed}/${total} completed`,
+    expand: 'Expand to-dos',
+    collapse: 'Collapse to-dos',
+    changeStatus: 'Change status',
+    pending: 'Pending',
+    active: 'In progress',
+    done: 'Completed',
+    error: 'Failed',
+    skipped: 'Skipped',
   },
   messages: {
     empty: 'No messages yet. Start a conversation!',
@@ -180,6 +209,18 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
     reject: '拒绝',
     approved: '已允许',
     rejected: '已拒绝',
+  },
+  todo: {
+    title: '待办事项',
+    progress: (completed, total) => `已完成 ${completed}/${total}`,
+    expand: '展开待办事项',
+    collapse: '收起待办事项',
+    changeStatus: '更改状态',
+    pending: '未开始',
+    active: '进行中',
+    done: '已完成',
+    error: '失败',
+    skipped: '已跳过',
   },
   messages: {
     empty: '还没有消息，开始对话吧！',
@@ -239,6 +280,7 @@ export function resolveLabels(options: {
     composer: mergeSection(base.composer, o?.composer),
     reasoning: mergeSection(base.reasoning, o?.reasoning),
     toolCall: mergeSection(base.toolCall, o?.toolCall),
+    todo: mergeSection(base.todo, o?.todo),
     messages: mergeSection(base.messages, o?.messages),
     confirmation: mergeSection(base.confirmation, o?.confirmation),
     dateSeparator: mergeSection(base.dateSeparator, dateSeparatorOverride),

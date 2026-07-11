@@ -1,0 +1,203 @@
+@use 'variables' as *;
+@use 'chat-host-tokens';
+
+:host {
+  display: block;
+  font-family: var(--chat-font-family, inherit);
+  container-type: inline-size;
+  --_todo-bg: var(--chat-todo-bg, var(--chat-surface-alt, #{$color-surface-alt}));
+  --_todo-border: var(--chat-todo-border, var(--chat-border, #{$color-border}));
+  --_todo-text: var(--chat-todo-text, var(--chat-text, #{$color-text}));
+  --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
+  --_todo-primary: var(--chat-todo-active, var(--chat-primary, #{$color-primary}));
+  --_todo-success: var(--chat-todo-done, var(--chat-success, #{$color-success}));
+  --_todo-error: var(--chat-todo-error, var(--chat-error, #{$color-error}));
+}
+
+.todo {
+  overflow: hidden;
+  margin: 6px 0;
+  border: 1px solid var(--_todo-border);
+  border-radius: var(--chat-todo-radius, var(--chat-radius-sm, #{$radius-sm}));
+  background: var(--_todo-bg);
+  color: var(--_todo-text);
+  font-size: var(--chat-font-size-sm, #{$font-size-sm});
+}
+
+.todo__header {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
+  min-height: 40px;
+  padding: 0 var(--chat-spacing-xs, #{$spacing-xs}) 0 var(--chat-spacing-sm, #{$spacing-sm});
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.todo__header::-webkit-details-marker {
+  display: none;
+}
+
+.todo__heading-icon,
+.todo__status,
+.todo__toggle {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.todo__heading-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--_todo-secondary);
+}
+
+.todo__heading-icon svg,
+.todo__status svg,
+.todo__toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.todo__heading-icon circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.todo__title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo__progress {
+  margin-inline-start: auto;
+  color: var(--_todo-secondary);
+  white-space: nowrap;
+}
+
+.todo__status {
+  border: 0;
+  background: transparent;
+  color: var(--_todo-secondary);
+  cursor: pointer;
+}
+
+.todo__toggle {
+  width: 32px;
+  height: 32px;
+  color: var(--_todo-secondary);
+}
+
+.todo__header:hover .todo__toggle,
+.todo__status:not(:disabled):hover {
+  color: var(--_todo-text);
+}
+
+.todo__status:not(:disabled):hover {
+  background: color-mix(in srgb, var(--_todo-text) 7%, transparent);
+}
+
+.todo__header:focus-visible,
+.todo__status:focus-visible {
+  outline: 2px solid var(--_todo-primary);
+  outline-offset: -2px;
+}
+
+.todo__chevron {
+  transition: transform var(--chat-transition-fast, #{$transition-fast});
+}
+
+.todo[open] .todo__chevron {
+  transform: rotate(90deg);
+}
+
+.todo__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--_todo-border);
+}
+
+.todo__item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  min-height: 38px;
+  border-bottom: 1px solid var(--_todo-border);
+}
+
+.todo__item:last-child {
+  border-bottom: 0;
+}
+
+.todo__status {
+  width: 30px;
+  height: 30px;
+  margin-inline-start: 3px;
+  border-radius: 50%;
+}
+
+.todo__status:disabled {
+  cursor: default;
+}
+
+.todo__pending-circle {
+  stroke-dasharray: 2.5 2.5;
+}
+
+.todo__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 7px var(--chat-spacing-sm, #{$spacing-sm}) 7px 0;
+}
+
+.todo__item-title,
+.todo__description {
+  overflow-wrap: anywhere;
+}
+
+.todo__description {
+  color: var(--_todo-secondary);
+  font-size: 0.9em;
+}
+
+.todo__item--active .todo__status {
+  color: var(--_todo-primary);
+}
+
+.todo__item--active .todo__item-title {
+  font-weight: 600;
+}
+
+.todo__item--done .todo__status {
+  color: var(--_todo-success);
+}
+
+.todo__item--done .todo__item-title {
+  color: var(--_todo-secondary);
+  text-decoration: line-through;
+}
+
+.todo__item--error .todo__status {
+  color: var(--_todo-error);
+}
+
+.todo__item--skipped {
+  color: var(--_todo-secondary);
+}
+
+@container (max-width: 480px) {
+  .todo__progress {
+    display: none;
+  }
+}

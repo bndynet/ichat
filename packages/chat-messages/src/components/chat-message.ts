@@ -14,6 +14,7 @@ import type {
   CustomPart,
   MessagePart,
   TextPart,
+  TodoActionDetail,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
 import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
@@ -27,6 +28,7 @@ import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-reasoning.js';
 import './chat-tool-call.js';
+import './chat-todo.js';
 
 @customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
@@ -101,12 +103,7 @@ export class ChatMessageElement extends LitElement {
     // Our own re-dispatch — let it bubble (already has message / messageId).
     if (ev.detail?.messageId != null) return;
 
-    const path = e.composedPath();
-    if (!path.includes(this)) return;
-    const fromEmbeddedForm = path.some(
-      (n) => n instanceof HTMLElement && n.tagName === 'I-CHAT-FORM'
-    );
-    if (!fromEmbeddedForm) return;
+    if (!this._isEmbeddedEvent(e, 'I-CHAT-FORM')) return;
 
     e.stopPropagation();
     const detail: ChatFormSubmitDetail = {
@@ -125,13 +122,53 @@ export class ChatMessageElement extends LitElement {
     );
   };
 
+  /** Enrich `todo-action` from `i-chat-todo` with its owning message. */
+  private _onTodoAction = (e: Event): void => {
+    if (!this.message) return;
+    type RequestDetail = Omit<TodoActionDetail, 'messageId' | 'message'> & {
+      messageId?: string;
+      message?: ChatMessage;
+    };
+    const ev = e as CustomEvent<RequestDetail>;
+    if (ev.detail?.messageId != null) return;
+    if (!this._isEmbeddedEvent(e, 'I-CHAT-TODO')) return;
+
+    e.stopPropagation();
+    const detail: TodoActionDetail = {
+      action: ev.detail.action,
+      itemId: ev.detail.itemId,
+      previousStatus: ev.detail.previousStatus,
+      status: ev.detail.status,
+      part: ev.detail.part,
+      messageId: this.message.id,
+      message: this.message,
+    };
+    this.dispatchEvent(
+      new CustomEvent<TodoActionDetail>('todo-action', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  };
+
+  private _isEmbeddedEvent(e: Event, tagName: string): boolean {
+    const path = e.composedPath();
+    return (
+      path.includes(this) &&
+      path.some((node) => node instanceof HTMLElement && node.tagName === tagName)
+    );
+  }
+
   override connectedCallback(): void {
     super.connectedCallback();
     this.addEventListener('form-submit', this._onFormSubmit);
+    this.addEventListener('todo-action', this._onTodoAction);
   }
 
   override disconnectedCallback(): void {
     this.removeEventListener('form-submit', this._onFormSubmit);
+    this.removeEventListener('todo-action', this._onTodoAction);
     super.disconnectedCallback();
   }
 
@@ -363,6 +400,13 @@ export class ChatMessageElement extends LitElement {
           .labels=${this.labels?.toolCall}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
         ></i-chat-tool-call>`;
+      case 'todo':
+        return html`<i-chat-todo
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+          .data=${part}
+          .labels=${this.labels?.todo}
+        ></i-chat-todo>`;
       case 'file': {
         if (part.mediaType.startsWith('image/')) {
           const src =

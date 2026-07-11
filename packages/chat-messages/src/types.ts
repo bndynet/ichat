@@ -49,12 +49,15 @@ export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
 // A message body is an ordered list of typed `parts` — the single source of truth
 // for rendering. This is the model used by modern AI chat protocols (Anthropic
 // content blocks, Vercel AI SDK message parts): text, reasoning, tool calls,
-// files, sources, and host-defined `x-*` parts all live side by side and
+// todos, files, sources, and host-defined `x-*` parts all live side by side and
 // stream/update independently. Plain text is just a `text` part; use the
 // `textPart` / `reasoningPart` factories for the common cases.
 
 /** Per-part lifecycle. Optional; defaults to `complete`. */
 export type PartStatus = 'pending' | 'streaming' | 'complete' | 'error' | 'cancelled';
+
+/** Shared status vocabulary for ordered work items such as timelines and todos. */
+export type TaskStatus = 'done' | 'active' | 'error' | 'pending' | 'skipped';
 
 /** Fields shared by every part. `id` must be stable for keyed render + targeted updates. */
 export interface PartBase {
@@ -128,6 +131,37 @@ export interface SourcePart extends PartBase {
   snippet?: string;
 }
 
+/** Status of one item in a {@link TodoPart}. */
+export type TodoItemStatus = TaskStatus;
+
+/** One stable, independently updateable item in a todo panel. */
+export interface TodoItem {
+  id: string;
+  title: string;
+  status: TodoItemStatus;
+  description?: string;
+}
+
+/** Mutable fields accepted by `updateTodoItem()`. */
+export type TodoItemPatch = Partial<Omit<TodoItem, 'id'>>;
+
+/**
+ * Structured, collapsible todo panel rendered inline with the surrounding
+ * message parts. Progress is derived from `items`; expanded state stays local
+ * to the element so data updates do not override the user's current view.
+ */
+export interface TodoPart extends PartBase {
+  type: 'todo';
+  title?: string;
+  items: TodoItem[];
+  /** Monotonic version used to ignore stale async updates. */
+  revision: number;
+  /** Applied only when the element is first created. */
+  defaultCollapsed?: boolean;
+  /** Set to false to render status indicators without click interaction. */
+  interactive?: boolean;
+}
+
 /**
  * Host-defined extension part. `type` must start with `x-` and is routed to a
  * {@link PartRenderer} registered via `registerPartRenderer` (matched by
@@ -145,6 +179,7 @@ export type MessagePart =
   | ToolCallPart
   | FilePart
   | SourcePart
+  | TodoPart
   | CustomPart;
 
 export interface ChatMessage {
@@ -152,8 +187,8 @@ export interface ChatMessage {
   role: ChatMessageRole;
   /**
    * Ordered, typed body parts — the single source of truth for rendering. Use
-   * the {@link textPart} / {@link reasoningPart} factories for the common cases,
-   * or push `tool-call` / `file` / `source` / `x-*` parts directly. An empty
+   * the {@link textPart} / {@link reasoningPart} / {@link todoPart} factories for
+   * common cases, or push `tool-call` / `file` / `source` / `x-*` parts directly. An empty
    * array is valid (e.g. an error-only or streaming-placeholder message).
    */
   parts: MessagePart[];
@@ -209,6 +244,17 @@ export interface ChatFormSubmitDetail {
   formId: string;
   title: string;
   values: ChatFormFieldValues;
+  messageId: string;
+  message: ChatMessage;
+}
+
+/** `todo-action` event detail after `i-chat-message` adds message context. */
+export interface TodoActionDetail {
+  action: 'change-status';
+  itemId: string;
+  previousStatus: TodoItemStatus;
+  status: TodoItemStatus;
+  part: TodoPart;
   messageId: string;
   message: ChatMessage;
 }
@@ -304,6 +350,10 @@ export function nextPartId(prefix = 'part'): string {
 /** Options shared by the part factories. */
 export type PartFactoryOptions = Pick<PartBase, 'id' | 'status' | 'metadata'>;
 
+/** Optional display and lifecycle fields accepted by {@link todoPart}. */
+export type TodoPartOptions = Partial<PartFactoryOptions> &
+  Partial<Pick<TodoPart, 'title' | 'revision' | 'defaultCollapsed' | 'interactive'>>;
+
 /** Build a {@link TextPart}. Generates an `id` when one is not supplied. */
 export function textPart(text: string, opts: Partial<PartFactoryOptions> = {}): TextPart {
   return { type: 'text', id: opts.id ?? nextPartId('text'), text, ...stripId(opts) };
@@ -315,6 +365,30 @@ export function reasoningPart(
   opts: Partial<PartFactoryOptions> = {},
 ): ReasoningPart {
   return { type: 'reasoning', id: opts.id ?? nextPartId('reasoning'), text, ...stripId(opts) };
+}
+
+/** Build a {@link TodoPart}. Generates an `id` and starts at revision `0`. */
+export function todoPart(items: TodoItem[], opts: TodoPartOptions = {}): TodoPart {
+  const {
+    id,
+    title,
+    revision = 0,
+    defaultCollapsed,
+    interactive,
+    status,
+    metadata,
+  } = opts;
+  return {
+    type: 'todo',
+    id: id ?? nextPartId('todo'),
+    items,
+    revision,
+    title,
+    defaultCollapsed,
+    interactive,
+    status,
+    metadata,
+  };
 }
 
 function stripId(opts: Partial<PartFactoryOptions>): Omit<Partial<PartFactoryOptions>, 'id'> {

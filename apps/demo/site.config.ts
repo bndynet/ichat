@@ -7,6 +7,7 @@ export default defineConfig({
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
     { label: 'Renderers', icon: 'layout-list',  children: [
       { label: 'Tool calls', icon: 'wrench', page: () => import('./src/pages/renderers/ToolCallsPage.vue') },
+      { label: 'To-dos', icon: 'list-checks', page: () => import('./src/pages/renderers/TodoPage.vue') },
       { label: 'File & source', icon: 'paperclip', page: () => import('./src/pages/renderers/FileSourcePage.vue') },
       { label: 'Custom part (x-*)', icon: 'puzzle', page: () => import('./src/pages/renderers/CustomPartPage.vue') },
       { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
@@ -15,6 +16,7 @@ export default defineConfig({
       { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
       { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/renderers/KpiGroupPage.vue') },
       { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },
+      { label: 'Confirmation', icon: 'badge-check', page: () => import('./src/pages/renderers/ConfirmationPage.vue') },
       { label: 'Details', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsPage.vue') },
     ]},
     {
@@ -45,11 +47,6 @@ export default defineConfig({
           label: 'Input actions',
           icon: 'banknote',
           page: () => import('./src/pages/slots/SlotsInputActions.vue'),
-        },
-        {
-          label: 'Confirmation',
-          icon: 'badge-check',
-          page: () => import('./src/pages/slots/Confirmation.vue'),
         },
       ],
     },

@@ -31,7 +31,7 @@ Each `ChatMessage` has `role: 'self' | 'peer' | 'assistant' | 'system'`.
 
 ## Message body — `parts[]`
 
-A message body is **always** an ordered array of typed parts. This mirrors modern AI chat protocols (Anthropic content blocks, Vercel AI SDK message parts): text, reasoning, tool calls, files, sources, and host‑defined `x-*` parts all sit side by side and stream/update independently. There is no plain `content` / `reasoning` string on `ChatMessage`.
+A message body is **always** an ordered array of typed parts. This mirrors modern AI chat protocols (Anthropic content blocks, Vercel AI SDK message parts): text, reasoning, tool calls, todos, files, sources, and host‑defined `x-*` parts all sit side by side and stream/update independently. There is no plain `content` / `reasoning` string on `ChatMessage`.
 
 ### Part types (`MessagePart`)
 
@@ -42,6 +42,7 @@ Every part has a stable **`id`** (used for keyed rendering + targeted updates) a
 | `text` | `text: string` | Markdown bubble (typewriter while `status: 'streaming'`; charts/Mermaid/forms fences still render) |
 | `reasoning` | `text: string` | Collapsible “thinking” block (`<i-chat-reasoning>`) |
 | `tool-call` | `toolCallId`, `toolName`, `title?`, `args?`, `state`, `result?`, `resultParts?`, `error?`, `approval?`, `durationMs?` | Tool-call card (`<i-chat-tool-call>`) — see [Tool calls](./parts.md#tool-calls) |
+| `todo` | `title?`, `items`, `revision`, `defaultCollapsed?`, `interactive?` | Collapsible todo panel (`<i-chat-todo>`) — see [Todo panel](./todo.md) |
 | `file` | `mediaType`, `url?` \| `data?` (base64), `name?`, `size?` | Inline image or download link — see [File, source, and custom parts](./parts.md#file-source-and-custom-parts) |
 | `source` | `url`, `title?`, `snippet?` | Citation link with optional snippet — see [File, source, and custom parts](./parts.md#file-source-and-custom-parts) |
 | `x-*` (custom) | `data: unknown` | Readable JSON dump — see [File, source, and custom parts](./parts.md#file-source-and-custom-parts) |
@@ -51,7 +52,7 @@ Every part has a stable **`id`** (used for keyed rendering + targeted updates) a
 Import helpers so you don’t have to hand-write `id`s:
 
 ```javascript
-import { textPart, reasoningPart, nextPartId, getMessageText } from '@bndynet/ichat';
+import { textPart, reasoningPart, todoPart, nextPartId, getMessageText } from '@bndynet/ichat';
 
 chat.addMessage({
   id: 'a1',
@@ -68,6 +69,7 @@ const plain = getMessageText(chat.messages.find((m) => m.id === 'a1'));
 ```
 
 - `textPart(text, opts?)` / `reasoningPart(text, opts?)` — `opts` accepts `{ id?, status?, metadata? }`; an `id` is generated when omitted.
+- `todoPart(items, opts?)` — creates a typed, updateable todo panel; see [Todo panel](./todo.md).
 - `nextPartId(prefix?)` — collision-resistant id generator (`part-<n>`).
 - `getMessageText(message)` — concatenates all `text` parts.
 
@@ -80,6 +82,7 @@ Append and patch parts by id instead of rewriting the whole message:
 | `appendPart(messageId, part)` | Push a new part (e.g. start a streaming `text` part, add a `tool-call`). |
 | `updatePart(messageId, partId, patch)` | Shallow-merge `patch` into the matching part (e.g. grow `text`, flip `status`). Keyed by `id`, so stateful elements survive. |
 | `updateToolCall(messageId, partId, patch)` | Convenience wrapper around `updatePart` for `tool-call` parts. |
+| `updateTodoItem(messageId, partId, itemId, patch, revision?)` | Immutably patches one todo item and ignores stale explicit revisions. |
 
 ```javascript
 const id = 'a2';

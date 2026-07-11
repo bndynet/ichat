@@ -1,9 +1,10 @@
-# Parts: reasoning, tool calls, files, sources, custom
+# Parts: reasoning, tool calls, todos, files, sources, custom
 
-Beyond plain `text`, a message body can carry reasoning blocks, tool-call cards, attachments, citations, and host-defined `x-*` widgets — all as top-level entries in [`message.parts`](./message-model.md#message-body--parts).
+Beyond plain `text`, a message body can carry reasoning blocks, tool-call cards, todo panels, attachments, citations, and host-defined `x-*` widgets — all as top-level entries in [`message.parts`](./message-model.md#message-body--parts).
 
 - [Reasoning](#reasoning)
 - [Tool calls](#tool-calls)
+- [Todos](#todos)
 - [File, source, and custom parts](#file-source-and-custom-parts)
 - [vs. `registerRenderer` (markdown fences)](#vs-registerrenderer-markdown-fences)
 
@@ -70,6 +71,10 @@ chat.addEventListener('tool-action', (e) => {
   }
 });
 ```
+
+## Todos
+
+Use the built-in `todo` part for a compact, collapsible plan whose items update independently while the assistant works. Create it with `todoPart()`, patch items with `updateTodoItem()`, and handle optional user changes through `todo-action`. See the complete [Todo panel guide](./todo.md).
 
 ## File, source, and custom parts
 
