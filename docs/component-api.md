@@ -21,7 +21,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
 | `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
 
-**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `updatePart`, `updateToolCall`, `updateTodoItem`, `applyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
+**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `updatePart`, `tryUpdateToolCall`, `updateToolCall`, `tryUpdateTodoItem`, `updateTodoItem`, `tryApplyTodoItemUpdateEvent`, `applyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
 
 **Events on `<i-chat>`:**
 
@@ -49,13 +49,24 @@ Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message
 chat.addEventListener('part-action', (event) => {
   const { kind, action, detail } = event.detail;
   if (kind === 'todo-action') {
-    chat.updateTodoItem(detail.messageId, detail.part.id, detail.itemId, { status: detail.status });
+    const result = chat.tryUpdateTodoItem(
+      detail.messageId,
+      detail.part.id,
+      detail.itemId,
+      { status: detail.status },
+    );
+    if (!result.ok) console.warn('Todo update ignored:', result.reason);
   }
   if (kind === 'tool-action' && action === 'approve') {
-    chat.updateToolCall(detail.messageId, detail.part.id, { approval: 'approved' });
+    const result = chat.tryUpdateToolCall(detail.messageId, detail.part.id, {
+      approval: 'approved',
+    });
+    if (!result.ok) console.warn('Tool update ignored:', result.reason);
   }
 });
 ```
+
+The older `updateTodoItem()`, `updateToolCall()`, and `applyTodoItemUpdateEvent()` methods still return `boolean` for compatibility. Use the `try*` variants when the host needs a failure reason such as `message-not-found`, `part-not-found`, `part-type-mismatch`, `stale-revision`, `invalid-status`, or `invalid-state`.
 
 ### Link clicks and protocols
 

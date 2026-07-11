@@ -99,6 +99,15 @@ export type {
   ToolCallPatchFailureReason,
   ToolCallPatchResult,
 } from './tool-call-state.js';
+export type {
+  PartLookupFailureReason,
+  TodoItemUpdateEventFailureReason,
+  TodoItemUpdateEventResult,
+  TodoItemUpdateFailureReason,
+  TodoItemUpdateResult,
+  ToolCallUpdateFailureReason,
+  ToolCallUpdateResult,
+} from './update-results.js';
 export {
   getTodoInitialExpanded,
   shouldInitializeTodoExpansion,

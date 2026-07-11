@@ -11,12 +11,12 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Add runtime guards for structured parts. `isTodoPart()`, `isTodoItemStatus()`, `isToolCallPart()`, and `isToolCallState()` protect update paths that receive external data.
 - [x] Normalize todo backend/SSE updates. `normalizeTodoItemUpdateEvent()` accepts parsed objects, JSON strings, and MessageEvent-like payloads before applying `updateTodoItem()`.
 - [x] Document deprecated compatibility surfaces. Legacy event/API surfaces are kept for existing integrations and should only be removed in a future major version.
+- [x] Add diagnostic update results. `tryUpdateTodoItem()`, `tryUpdateToolCall()`, and `tryApplyTodoItemUpdateEvent()` return structured failure reasons while the older boolean methods remain compatible.
 
 ## Backlog
 
 ### Message Body & Parts
 
-- [ ] Add diagnostic update results. Keep `updateTodoItem()` / `updateToolCall()` as boolean convenience methods, and add result-returning variants such as `tryUpdateTodoItem()` / `tryUpdateToolCall()` so hosts can distinguish stale revisions, missing parts, invalid states, and invalid payloads.
 - [ ] Extract message part collection updates into pure helpers. Move find/replace/reducer orchestration out of `<i-chat-messages>` so `appendPart`, `updatePart`, todo updates, and tool-call updates can share independently testable state code.
 - [ ] Generalize backend event normalization. Extend the todo event pattern into a broader part-update event adapter for tool calls, files, sources, text streaming, and custom `x-*` parts.
 - [ ] Add component-level event tests. Cover `part-action`, deprecated compatibility events, event enrichment with `messageId` / `message`, and invalid backend events that must not mutate state.

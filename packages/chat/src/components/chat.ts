@@ -195,7 +195,16 @@ export class Chat extends LitElement {
     this._messages.updatePart(messageId, partId, patch);
   }
 
-  /** Convenience wrapper around {@link updatePart} for `tool-call` parts. */
+  /** Patch a `tool-call` part and return a diagnostic result. */
+  tryUpdateToolCall(
+    messageId: string,
+    partId: string,
+    patch: Parameters<ChatMessages['tryUpdateToolCall']>[2]
+  ): ReturnType<ChatMessages['tryUpdateToolCall']> {
+    return this._messages.tryUpdateToolCall(messageId, partId, patch);
+  }
+
+  /** Boolean compatibility wrapper around {@link tryUpdateToolCall}. */
   updateToolCall(
     messageId: string,
     partId: string,
@@ -204,7 +213,18 @@ export class Chat extends LitElement {
     return this._messages.updateToolCall(messageId, partId, patch);
   }
 
-  /** Immutably patch one todo item. Stale explicit revisions are ignored. */
+  /** Immutably patch one todo item and return a diagnostic result. */
+  tryUpdateTodoItem(
+    messageId: string,
+    partId: string,
+    itemId: string,
+    patch: Parameters<ChatMessages['tryUpdateTodoItem']>[3],
+    revision?: number,
+  ): ReturnType<ChatMessages['tryUpdateTodoItem']> {
+    return this._messages.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+  }
+
+  /** Boolean compatibility wrapper around {@link tryUpdateTodoItem}. */
   updateTodoItem(
     messageId: string,
     partId: string,
@@ -215,7 +235,14 @@ export class Chat extends LitElement {
     return this._messages.updateTodoItem(messageId, partId, itemId, patch, revision);
   }
 
-  /** Apply a backend/SSE todo item update through the same reducer as UI changes. */
+  /** Apply a backend/SSE todo item update and return a diagnostic result. */
+  tryApplyTodoItemUpdateEvent(
+    event: Parameters<ChatMessages['tryApplyTodoItemUpdateEvent']>[0]
+  ): ReturnType<ChatMessages['tryApplyTodoItemUpdateEvent']> {
+    return this._messages.tryApplyTodoItemUpdateEvent(event);
+  }
+
+  /** Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}. */
   applyTodoItemUpdateEvent(event: Parameters<ChatMessages['applyTodoItemUpdateEvent']>[0]): boolean {
     return this._messages.applyTodoItemUpdateEvent(event);
   }

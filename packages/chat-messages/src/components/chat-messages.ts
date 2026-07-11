@@ -15,6 +15,11 @@ import { patchToolCallPart } from '../tool-call-state.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
+import type {
+  TodoItemUpdateEventResult,
+  TodoItemUpdateResult,
+  ToolCallUpdateResult,
+} from '../update-results.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
@@ -289,10 +294,12 @@ export class ChatMessages extends LitElement {
     );
   }
 
+  private _findMessage(messageId: string): ChatMessage | undefined {
+    return this.messages.find((candidate) => candidate.id === messageId);
+  }
+
   private _findPart(messageId: string, partId: string): MessagePart | undefined {
-    return this.messages
-      .find((candidate) => candidate.id === messageId)
-      ?.parts.find((candidate) => candidate.id === partId);
+    return this._findMessage(messageId)?.parts.find((candidate) => candidate.id === partId);
   }
 
   private _replacePart(messageId: string, partId: string, nextPart: MessagePart): boolean {
@@ -323,23 +330,70 @@ export class ChatMessages extends LitElement {
   }
 
   /**
-   * Convenience wrapper around {@link updatePart} for `tool-call` parts (advance
-   * the state machine, attach `result`, set `durationMs`, etc.).
+   * Patch a `tool-call` part and return a diagnostic result when the update is
+   * ignored (missing message/part, wrong part type, invalid state, etc.).
    */
-  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): boolean {
-    const part = this._findPart(messageId, partId);
-    if (!isToolCallPart(part)) return false;
+  tryUpdateToolCall(
+    messageId: string,
+    partId: string,
+    patch: Partial<ToolCallPart>
+  ): ToolCallUpdateResult {
+    const message = this._findMessage(messageId);
+    if (!message) return { ok: false, reason: 'message-not-found' };
+
+    const part = message.parts.find((candidate) => candidate.id === partId);
+    if (!part) return { ok: false, reason: 'part-not-found' };
+    if (!isToolCallPart(part)) {
+      return { ok: false, reason: 'part-type-mismatch', part };
+    }
 
     const result = patchToolCallPart(part, patch);
-    if (!result.ok) return false;
+    if (!result.ok) {
+      return { ok: false, reason: result.reason, part: result.part };
+    }
 
-    return this._replacePart(messageId, partId, result.part);
+    this._replacePart(messageId, partId, result.part);
+    return { ok: true, part: result.part };
   }
 
   /**
-   * Immutably patch one todo item and advance the todo revision. When an
-   * explicit revision is supplied, stale or duplicate updates are ignored.
-   * @returns `true` when the item was found and updated.
+   * Boolean compatibility wrapper around {@link tryUpdateToolCall}.
+   */
+  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): boolean {
+    return this.tryUpdateToolCall(messageId, partId, patch).ok;
+  }
+
+  /**
+   * Immutably patch one todo item and return a diagnostic result when the
+   * update is ignored. Explicit revisions remain monotonic.
+   */
+  tryUpdateTodoItem(
+    messageId: string,
+    partId: string,
+    itemId: string,
+    patch: TodoItemPatch,
+    revision?: number,
+  ): TodoItemUpdateResult {
+    const message = this._findMessage(messageId);
+    if (!message) return { ok: false, reason: 'message-not-found' };
+
+    const part = message.parts.find((candidate) => candidate.id === partId);
+    if (!part) return { ok: false, reason: 'part-not-found' };
+    if (!isTodoPart(part)) {
+      return { ok: false, reason: 'part-type-mismatch', part };
+    }
+
+    const result = patchTodoItem(part, itemId, patch, revision);
+    if (!result.ok) {
+      return { ok: false, reason: result.reason, part: result.part };
+    }
+
+    this._replacePart(messageId, partId, result.part);
+    return { ok: true, part: result.part };
+  }
+
+  /**
+   * Boolean compatibility wrapper around {@link tryUpdateTodoItem}.
    */
   updateTodoItem(
     messageId: string,
@@ -348,26 +402,37 @@ export class ChatMessages extends LitElement {
     patch: TodoItemPatch,
     revision?: number,
   ): boolean {
-    const part = this._findPart(messageId, partId);
-    if (!isTodoPart(part)) return false;
-
-    const result = patchTodoItem(part, itemId, patch, revision);
-    if (!result.ok) return false;
-
-    return this._replacePart(messageId, partId, result.part);
+    return this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision).ok;
   }
 
   /**
-   * Apply a backend/SSE todo item update. The event is normalized, then routed
-   * through {@link updateTodoItem} so remote updates and UI actions share the
-   * same validation and reducer.
+   * Apply a backend/SSE todo item update and return a diagnostic result when it
+   * is ignored. The event is normalized, then routed through
+   * {@link tryUpdateTodoItem} so remote updates and UI actions share the same
+   * validation and reducer.
    */
-  applyTodoItemUpdateEvent(event: unknown): boolean {
+  tryApplyTodoItemUpdateEvent(event: unknown): TodoItemUpdateEventResult {
     const result = normalizeTodoItemUpdateEvent(event);
-    if (!result.ok) return false;
+    if (!result.ok) return { ok: false, reason: result.reason };
 
     const { messageId, partId, itemId, patch, revision } = result.update;
-    return this.updateTodoItem(messageId, partId, itemId, patch, revision);
+    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+    if (!update.ok) {
+      return {
+        ok: false,
+        reason: update.reason,
+        update: result.update,
+        part: update.part,
+      };
+    }
+    return { ok: true, update: result.update, part: update.part };
+  }
+
+  /**
+   * Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}.
+   */
+  applyTodoItemUpdateEvent(event: unknown): boolean {
+    return this.tryApplyTodoItemUpdateEvent(event).ok;
   }
 
   removeMessage(id: string): void {

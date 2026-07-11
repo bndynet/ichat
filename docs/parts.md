@@ -58,6 +58,15 @@ chat.updateToolCall(msgId, 'tc-1', {
 });
 ```
 
+Use `tryUpdateToolCall()` when the host needs a diagnostic failure reason instead of a boolean:
+
+```javascript
+const result = chat.tryUpdateToolCall(msgId, 'tc-1', { state: 'executing' });
+if (!result.ok) {
+  console.warn('Tool update ignored:', result.reason);
+}
+```
+
 **Human-in-the-loop approval:** set `approval: 'required'` on a `tool-call` part to render Approve / Reject buttons. The card emits the unified `part-action` event and a deprecated bubbling `tool-action` compatibility event (`{ action, toolCallId, part, messageId, message }`); respond by patching the part:
 
 ```javascript

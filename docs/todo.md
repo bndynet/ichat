@@ -54,11 +54,16 @@ Set `interactive: false` when the panel is display-only. `defaultCollapsed` affe
 
 ## Update an item
 
-`updateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale.
+`updateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale. Use `tryUpdateTodoItem()` when you need the exact failure reason.
 
 ```javascript
 chat.updateTodoItem('assistant-42', 'plan', 'panel', { status: 'done' }, 3);
 chat.updateTodoItem('assistant-42', 'plan', 'verify', { status: 'active' }, 4);
+
+const result = chat.tryUpdateTodoItem('assistant-42', 'plan', 'verify', { status: 'done' }, 5);
+if (!result.ok) {
+  console.warn('Todo update ignored:', result.reason);
+}
 ```
 
 When every item is `done` or `skipped`, the part lifecycle status becomes `complete`. Updating a completed todo back to a non-terminal state changes the lifecycle to `streaming`.
@@ -80,7 +85,10 @@ Then route the event through the same reducer as UI changes:
 
 ```javascript
 source.addEventListener('todo.item.updated', (event) => {
-  chat.applyTodoItemUpdateEvent(event);
+  const result = chat.tryApplyTodoItemUpdateEvent(event);
+  if (!result.ok) {
+    console.warn('Todo event ignored:', result.reason);
+  }
 });
 ```
 
