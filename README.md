@@ -67,6 +67,19 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 
   const chat = document.getElementById('chat');
 
+  // Optional: load historical messages as completed content so they do not
+  // replay the streaming typewriter effect on first render.
+  const history = await fetchHistory();
+  chat.messages = history.map((message) => ({
+    ...message,
+    streaming: false,
+    parts: message.parts.map((part) =>
+      part.status === 'streaming'
+        ? { ...part, status: 'complete' }
+        : part,
+    ),
+  }));
+
   chat.addEventListener('send', (e) => {
     const text = e.detail.content;
     chat.addMessage({
@@ -85,6 +98,8 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 ```
 
 A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`updateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateTimeline`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
+
+When the user first opens a chat, load historical messages as completed content. Setting `message.streaming` to `false` is enough to prevent the text typewriter effect, because animation only runs when both the message and the target text part are streaming. It is also best to avoid carrying historical part statuses such as `status: 'streaming'`, especially for `reasoning` parts that have their own thinking/expanded state. For live assistant responses, keep using `streaming: true` and a streaming text/reasoning part while the backend is still producing content, then clear the flags when the response is done.
 
 ## Script tag (IIFE bundles)
 
