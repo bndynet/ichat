@@ -110,7 +110,7 @@ export class ChatPartHost extends LitElement {
     });
     this._dispatchPartAction(
       createPartActionDetail({
-        kind: 'form-submit',
+        kind: 'form',
         action: 'submit',
         message: this.message,
         detail,
@@ -142,7 +142,7 @@ export class ChatPartHost extends LitElement {
     const detail = createTodoActionDetail(this.message, ev.detail);
     this._dispatchPartAction(
       createPartActionDetail({
-        kind: 'todo-action',
+        kind: 'todo',
         action: detail.action,
         message: this.message,
         detail,
@@ -175,7 +175,7 @@ export class ChatPartHost extends LitElement {
     const detail = createToolActionDetail(this.message, ev.detail);
     this._dispatchPartAction(
       createPartActionDetail({
-        kind: 'tool-action',
+        kind: 'tool-call',
         action: detail.action,
         message: this.message,
         detail,

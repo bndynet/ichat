@@ -85,7 +85,7 @@ For new integrations, prefer the unified event:
 
 ```javascript
 chat.addEventListener('part-action', (e) => {
-  if (e.detail.kind !== 'tool-action') return;
+  if (e.detail.kind !== 'tool-call') return;
   const { messageId, part, action } = e.detail.detail;
   chat.updateToolCall(messageId, part.id, {
     approval: action === 'approve' ? 'approved' : 'rejected',

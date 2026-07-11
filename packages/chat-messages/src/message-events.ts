@@ -11,7 +11,7 @@ import type {
 
 /**
  * @deprecated Internal compatibility payload for `form-submit`. Prefer
- * `part-action` (`kind: 'form-submit'`) for host integrations.
+ * `part-action` (`kind: 'form'`, `action: 'submit'`) for host integrations.
  */
 export interface ChatFormSubmitRequestDetail {
   formId: string;
@@ -21,13 +21,13 @@ export interface ChatFormSubmitRequestDetail {
 
 /**
  * @deprecated Internal compatibility payload for `todo-action`. Prefer
- * `part-action` (`kind: 'todo-action'`) for host integrations.
+ * `part-action` (`kind: 'todo'`) for host integrations.
  */
 export type TodoActionRequestDetail = Omit<TodoActionDetail, 'messageId' | 'message'>;
 
 /**
  * @deprecated Internal compatibility payload for `tool-action`. Prefer
- * `part-action` (`kind: 'tool-action'`) for host integrations.
+ * `part-action` (`kind: 'tool-call'`) for host integrations.
  */
 export type ToolActionRequestDetail = Omit<ToolActionDetail, 'messageId' | 'message'>;
 
@@ -75,7 +75,7 @@ export function createToolActionDetail(
   };
 }
 
-/** Build the unified `part-action` event detail around a legacy action detail. */
+/** Build the unified `part-action` event detail around a compatibility action detail. */
 export function createPartActionDetail<TDetail>(params: {
   kind: ChatPartActionKind;
   action: string;

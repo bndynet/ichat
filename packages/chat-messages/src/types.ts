@@ -262,7 +262,7 @@ export type ChatFormFieldValues = Record<
  * `form-submit` event detail after `i-chat-part-host` adds the owning message.
  * Bubbles through `i-chat-messages` and `i-chat`.
  *
- * @deprecated Prefer the unified `part-action` event (`kind: 'form-submit'`).
+ * @deprecated Prefer the unified `part-action` event (`kind: 'form'`, `action: 'submit'`).
  * This compatibility event is kept for existing integrations and should only
  * be removed in a future major version.
  */
@@ -277,7 +277,7 @@ export interface ChatFormSubmitDetail {
 /**
  * `tool-action` event detail after `i-chat-part-host` adds message context.
  *
- * @deprecated Prefer the unified `part-action` event (`kind: 'tool-action'`).
+ * @deprecated Prefer the unified `part-action` event (`kind: 'tool-call'`).
  * This compatibility event is kept for existing integrations and should only
  * be removed in a future major version.
  */
@@ -292,7 +292,7 @@ export interface ToolActionDetail {
 /**
  * `todo-action` event detail after `i-chat-part-host` adds message context.
  *
- * @deprecated Prefer the unified `part-action` event (`kind: 'todo-action'`).
+ * @deprecated Prefer the unified `part-action` event (`kind: 'todo'`).
  * This compatibility event is kept for existing integrations and should only
  * be removed in a future major version.
  */
@@ -306,12 +306,13 @@ export interface TodoActionDetail {
   message: ChatMessage;
 }
 
-export type ChatPartActionKind = 'form-submit' | 'todo-action' | 'tool-action';
+export type ChatPartActionKind = 'form' | 'todo' | 'tool-call';
 
 /**
  * Unified action event detail for interactions that originate from a rendered
- * message part. `detail` contains the legacy event payload so hosts can migrate
- * from `form-submit` / `todo-action` / `tool-action` incrementally.
+ * message part. `kind` names the part domain; `action` names the specific user
+ * intent. `detail` contains the compatibility event payload so hosts can
+ * migrate from `form-submit` / `todo-action` / `tool-action` incrementally.
  */
 export interface ChatPartActionDetail<TDetail = unknown> {
   kind: ChatPartActionKind;

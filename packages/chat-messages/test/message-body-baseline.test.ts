@@ -555,13 +555,13 @@ test('event helpers attach message context without changing source payloads', ()
   assert.equal(todoDetail.status, 'active');
 
   const todoPartAction = createPartActionDetail({
-    kind: 'todo-action',
+    kind: 'todo',
     action: todoDetail.action,
     message,
     detail: todoDetail,
     part: todoDetail.part,
   });
-  assert.equal(todoPartAction.kind, 'todo-action');
+  assert.equal(todoPartAction.kind, 'todo');
   assert.equal(todoPartAction.action, 'change-status');
   assert.equal(todoPartAction.messageId, 'msg-1');
   assert.equal(todoPartAction.partId, 'todo-1');
@@ -580,13 +580,13 @@ test('event helpers attach message context without changing source payloads', ()
   assert.equal(formDetail.values, values);
 
   const formPartAction = createPartActionDetail({
-    kind: 'form-submit',
+    kind: 'form',
     action: 'submit',
     message,
     detail: formDetail,
     part: text,
   });
-  assert.equal(formPartAction.kind, 'form-submit');
+  assert.equal(formPartAction.kind, 'form');
   assert.equal(formPartAction.partId, 'text-1');
   assert.equal(formPartAction.partType, 'text');
 
@@ -601,13 +601,13 @@ test('event helpers attach message context without changing source payloads', ()
   assert.equal(toolDetail.action, 'approve');
 
   const toolPartAction = createPartActionDetail({
-    kind: 'tool-action',
+    kind: 'tool-call',
     action: toolDetail.action,
     message,
     detail: toolDetail,
     part: toolDetail.part,
   });
-  assert.equal(toolPartAction.kind, 'tool-action');
+  assert.equal(toolPartAction.kind, 'tool-call');
   assert.equal(toolPartAction.partId, 'tool-1');
   assert.equal(toolPartAction.partType, 'tool-call');
   assert.equal(toolPartAction.detail, toolDetail);

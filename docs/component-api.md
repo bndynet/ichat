@@ -31,7 +31,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `cancel` | — | User cancelled during streaming (default input) |
 | `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
-| `part-action` | `{ kind, action, messageId, message, partId?, partType?, part?, detail }` | Unified event for rendered part interactions. `detail` is the legacy payload |
+| `part-action` | `{ kind, action, messageId, message, partId?, partType?, part?, detail }` | Unified event for rendered part interactions. `kind` is `'form'`, `'todo'`, or `'tool-call'`; `detail` is the compatibility payload |
 | `tool-action` | `{ action: 'approve' \| 'reject', toolCallId, part, messageId, message }` | Deprecated compatibility event from a `tool-call` part’s human-in-the-loop buttons |
 | `todo-action` | `{ action, itemId, previousStatus, status, part, messageId, message }` | Deprecated compatibility event from an interactive `todo` part status icon |
 | `form-submit` | `{ formId, title, values, messageId, message }` | Deprecated compatibility event from an embedded `form` fenced block inside a `text` part |
@@ -43,12 +43,12 @@ Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message
 
 ### Part actions
 
-`part-action` is the unified event for interactions that originate inside a rendered message part. It currently wraps `form-submit`, `todo-action`, and `tool-action`; the original events still fire as deprecated compatibility events and should only be removed in a future major version.
+`part-action` is the unified event for interactions that originate inside a rendered message part. `kind` names the part domain (`'form'`, `'todo'`, or `'tool-call'`), while `action` names the specific intent (`'submit'`, `'change-status'`, `'approve'`, `'reject'`). The original `form-submit`, `todo-action`, and `tool-action` events still fire as deprecated compatibility events and should only be removed in a future major version.
 
 ```javascript
 chat.addEventListener('part-action', (event) => {
   const { kind, action, detail } = event.detail;
-  if (kind === 'todo-action') {
+  if (kind === 'todo') {
     const result = chat.tryUpdateTodoItem(
       detail.messageId,
       detail.part.id,
@@ -57,7 +57,7 @@ chat.addEventListener('part-action', (event) => {
     );
     if (!result.ok) console.warn('Todo update ignored:', result.reason);
   }
-  if (kind === 'tool-action' && action === 'approve') {
+  if (kind === 'tool-call' && action === 'approve') {
     const result = chat.tryUpdateToolCall(detail.messageId, detail.part.id, {
       approval: 'approved',
     });

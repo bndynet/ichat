@@ -142,7 +142,7 @@ test('part host enriches embedded todo actions and still emits compatibility eve
   assert.equal(event.stopped, true);
   assert.equal(partActions.length, 1);
   assert.equal(compatibilityActions.length, 1);
-  assert.equal(partActions[0].kind, 'todo-action');
+  assert.equal(partActions[0].kind, 'todo');
   assert.equal(partActions[0].action, 'change-status');
   assert.equal(partActions[0].messageId, message.id);
   assert.equal(partActions[0].message, message);
@@ -193,7 +193,7 @@ test('part host enriches form and tool events through the unified part-action ev
   host._onFormSubmit(formEvent);
 
   assert.equal(formEvent.stopped, true);
-  assert.equal(partActions[0].kind, 'form-submit');
+  assert.equal(partActions[0].kind, 'form');
   assert.equal(partActions[0].partId, text.id);
   assert.equal(partActions[0].partType, 'text');
   assert.equal((partActions[0].detail as ChatFormSubmitDetail).messageId, message.id);
@@ -207,7 +207,7 @@ test('part host enriches form and tool events through the unified part-action ev
   host._onToolAction(toolEvent);
 
   assert.equal(toolEvent.stopped, true);
-  assert.equal(partActions[1].kind, 'tool-action');
+  assert.equal(partActions[1].kind, 'tool-call');
   assert.equal(partActions[1].action, 'approve');
   assert.equal(partActions[1].partId, tool.id);
   assert.equal(partActions[1].partType, 'tool-call');

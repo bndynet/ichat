@@ -62,7 +62,7 @@ function formatDuration(ms: number): string {
  * `.data` property (an object, not an attribute) so it updates in place without
  * re-serialisation and preserves its expanded state across streaming updates.
  *
- * @fires part-action - Preferred unified action event (`kind: 'tool-action'`).
+ * @fires part-action - Preferred unified action event (`kind: 'tool-call'`).
  * @fires tool-action - Deprecated compatibility event from the human-in-the-loop
  *        buttons. The owning `i-chat-part-host` enriches it with `messageId` /
  *        `message` and also emits `part-action`. Keep until a future major

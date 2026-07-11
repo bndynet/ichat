@@ -18,7 +18,7 @@ const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
 /**
  * Compact, collapsible todo panel for a structured {@link TodoPart}.
  *
- * @fires part-action - Preferred unified action event (`kind: 'todo-action'`).
+ * @fires part-action - Preferred unified action event (`kind: 'todo'`).
  * @fires todo-action - Deprecated compatibility event for a requested item
  * status change. The owning `i-chat-part-host` enriches it with `messageId` /
  * `message` and also emits `part-action`. Keep until a future major version so
