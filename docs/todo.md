@@ -78,7 +78,17 @@ For SSE, send stable IDs and a monotonic revision:
 
 ## Handle user changes
 
-Clicking a status icon requests the next status but does not mutate the component's input. Handle the bubbling `todo-action` event and apply the update locally, persist it remotely, or reject it.
+Clicking a status icon requests the next status but does not mutate the component's input. Handle the bubbling `part-action` event and apply the update locally, persist it remotely, or reject it.
+
+```javascript
+chat.addEventListener('part-action', (event) => {
+  if (event.detail.kind !== 'todo-action') return;
+  const { messageId, part, itemId, status } = event.detail.detail;
+  chat.updateTodoItem(messageId, part.id, itemId, { status });
+});
+```
+
+The legacy `todo-action` event is still emitted as a deprecated compatibility event and should only be removed in a future major version:
 
 ```javascript
 chat.addEventListener('todo-action', (event) => {

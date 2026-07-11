@@ -2,12 +2,14 @@ import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import type {
   ChatFormSubmitDetail,
+  ChatPartActionDetail,
   ChatLinkClickDetail,
   ChatMessage,
   ChatConfig,
   BlockRenderer,
   ConfirmationLabels,
   TodoActionDetail,
+  ToolActionDetail,
 } from '@bndynet/ichat-messages';
 import { ChatMessages, StreamingController, resolveLabels } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
@@ -23,8 +25,10 @@ export type {
   ChatConfig,
   BlockRenderer,
   ChatFormSubmitDetail,
+  ChatPartActionDetail,
   ChatLinkClickDetail,
   TodoActionDetail,
+  ToolActionDetail,
 };
 
 export type ChatConfirmationVariant = 'default' | 'danger';
@@ -89,8 +93,10 @@ type PendingConfirmation = {
  * @fires cancel - Fired when user clicks cancel during streaming
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
- * @fires form-submit - `{ detail: ChatFormSubmitDetail }` when an embedded chat form is submitted (`formId`, `title`, `values`, `messageId`, `message`)
- * @fires todo-action - `{ detail: TodoActionDetail }` when a todo status icon requests a change
+ * @fires part-action - `{ detail: ChatPartActionDetail }` unified action from rendered message parts
+ * @fires form-submit - Deprecated compatibility event for embedded form submissions; prefer `part-action`
+ * @fires todo-action - Deprecated compatibility event for todo status requests; prefer `part-action`
+ * @fires tool-action - Deprecated compatibility event for tool-call approval requests; prefer `part-action`
  * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
  * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
  * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
@@ -424,6 +430,17 @@ export class Chat extends LitElement {
     );
   }
 
+  private _handlePartAction(e: CustomEvent<ChatPartActionDetail>): void {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent<ChatPartActionDetail>('part-action', {
+        detail: e.detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   private _handleInputSlotChange(e: Event): void {
     const slot = e.target as HTMLSlotElement;
     this._hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
@@ -584,6 +601,7 @@ export class Chat extends LitElement {
         <i-chat-messages
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
+          @part-action=${this._handlePartAction}
           @form-submit=${this._handleFormSubmit}
         >
           <slot name="empty" slot="empty"></slot>

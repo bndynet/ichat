@@ -35,6 +35,8 @@ export type {
   ChatFormFieldValues,
   ChatFormDateRangeValue,
   ChatFormSubmitDetail,
+  ChatPartActionDetail,
+  ChatPartActionKind,
   ChatLinkClickDetail,
   MessagePart,
   PartBase,
@@ -53,6 +55,7 @@ export type {
   TodoPart,
   TodoPartOptions,
   TodoActionDetail,
+  ToolActionDetail,
   CustomPart,
   PartFactoryOptions,
 } from './types.js';
@@ -79,11 +82,14 @@ export {
 } from './todo-collapse.js';
 export {
   createFormSubmitDetail,
+  createPartActionDetail,
   createTodoActionDetail,
+  createToolActionDetail,
 } from './message-events.js';
 export type {
   ChatFormSubmitRequestDetail,
   TodoActionRequestDetail,
+  ToolActionRequestDetail,
 } from './message-events.js';
 
 export {

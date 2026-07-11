@@ -259,8 +259,12 @@ export type ChatFormFieldValues = Record<
 >;
 
 /**
- * `form-submit` event detail after `i-chat-message` adds the owning message.
+ * `form-submit` event detail after `i-chat-part-host` adds the owning message.
  * Bubbles through `i-chat-messages` and `i-chat`.
+ *
+ * @deprecated Prefer the unified `part-action` event (`kind: 'form-submit'`).
+ * This compatibility event is kept for existing integrations and should only
+ * be removed in a future major version.
  */
 export interface ChatFormSubmitDetail {
   formId: string;
@@ -270,7 +274,28 @@ export interface ChatFormSubmitDetail {
   message: ChatMessage;
 }
 
-/** `todo-action` event detail after `i-chat-message` adds message context. */
+/**
+ * `tool-action` event detail after `i-chat-part-host` adds message context.
+ *
+ * @deprecated Prefer the unified `part-action` event (`kind: 'tool-action'`).
+ * This compatibility event is kept for existing integrations and should only
+ * be removed in a future major version.
+ */
+export interface ToolActionDetail {
+  action: 'approve' | 'reject';
+  toolCallId: string;
+  part: ToolCallPart;
+  messageId: string;
+  message: ChatMessage;
+}
+
+/**
+ * `todo-action` event detail after `i-chat-part-host` adds message context.
+ *
+ * @deprecated Prefer the unified `part-action` event (`kind: 'todo-action'`).
+ * This compatibility event is kept for existing integrations and should only
+ * be removed in a future major version.
+ */
 export interface TodoActionDetail {
   action: 'change-status';
   itemId: string;
@@ -279,6 +304,24 @@ export interface TodoActionDetail {
   part: TodoPart;
   messageId: string;
   message: ChatMessage;
+}
+
+export type ChatPartActionKind = 'form-submit' | 'todo-action' | 'tool-action';
+
+/**
+ * Unified action event detail for interactions that originate from a rendered
+ * message part. `detail` contains the legacy event payload so hosts can migrate
+ * from `form-submit` / `todo-action` / `tool-action` incrementally.
+ */
+export interface ChatPartActionDetail<TDetail = unknown> {
+  kind: ChatPartActionKind;
+  action: string;
+  messageId: string;
+  message: ChatMessage;
+  partId?: string;
+  partType?: MessagePart['type'];
+  part?: MessagePart;
+  detail: TDetail;
 }
 
 /**

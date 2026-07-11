@@ -14,7 +14,9 @@ import {
 import { resolveLabels } from '../src/i18n.js';
 import {
   createFormSubmitDetail,
+  createPartActionDetail,
   createTodoActionDetail,
+  createToolActionDetail,
 } from '../src/message-events.js';
 import {
   getTodoInitialExpanded,
@@ -149,7 +151,15 @@ test('event helpers attach message context without changing source payloads', ()
   const todo = todoPart([{ id: 'task-1', title: 'Capture', status: 'pending' }], {
     id: 'todo-1',
   });
-  const message: ChatMessage = { id: 'msg-1', role: 'assistant', parts: [todo] };
+  const tool = {
+    type: 'tool-call',
+    id: 'tool-1',
+    toolCallId: 'call-1',
+    toolName: 'search',
+    state: 'input-available',
+  } as const;
+  const text = textPart('Form lives here', { id: 'text-1' });
+  const message: ChatMessage = { id: 'msg-1', role: 'assistant', parts: [text, todo, tool] };
 
   const todoDetail = createTodoActionDetail(message, {
     action: 'change-status',
@@ -164,6 +174,20 @@ test('event helpers attach message context without changing source payloads', ()
   assert.equal(todoDetail.part, todo);
   assert.equal(todoDetail.status, 'active');
 
+  const todoPartAction = createPartActionDetail({
+    kind: 'todo-action',
+    action: todoDetail.action,
+    message,
+    detail: todoDetail,
+    part: todoDetail.part,
+  });
+  assert.equal(todoPartAction.kind, 'todo-action');
+  assert.equal(todoPartAction.action, 'change-status');
+  assert.equal(todoPartAction.messageId, 'msg-1');
+  assert.equal(todoPartAction.partId, 'todo-1');
+  assert.equal(todoPartAction.partType, 'todo');
+  assert.equal(todoPartAction.detail, todoDetail);
+
   const values = { query: 'task', confirmed: true };
   const formDetail = createFormSubmitDetail(message, {
     formId: 'search-form',
@@ -174,6 +198,39 @@ test('event helpers attach message context without changing source payloads', ()
   assert.equal(formDetail.message, message);
   assert.equal(formDetail.title, '');
   assert.equal(formDetail.values, values);
+
+  const formPartAction = createPartActionDetail({
+    kind: 'form-submit',
+    action: 'submit',
+    message,
+    detail: formDetail,
+    part: text,
+  });
+  assert.equal(formPartAction.kind, 'form-submit');
+  assert.equal(formPartAction.partId, 'text-1');
+  assert.equal(formPartAction.partType, 'text');
+
+  const toolDetail = createToolActionDetail(message, {
+    action: 'approve',
+    toolCallId: tool.toolCallId,
+    part: tool,
+  });
+  assert.equal(toolDetail.messageId, 'msg-1');
+  assert.equal(toolDetail.message, message);
+  assert.equal(toolDetail.part, tool);
+  assert.equal(toolDetail.action, 'approve');
+
+  const toolPartAction = createPartActionDetail({
+    kind: 'tool-action',
+    action: toolDetail.action,
+    message,
+    detail: toolDetail,
+    part: toolDetail.part,
+  });
+  assert.equal(toolPartAction.kind, 'tool-action');
+  assert.equal(toolPartAction.partId, 'tool-1');
+  assert.equal(toolPartAction.partType, 'tool-call');
+  assert.equal(toolPartAction.detail, toolDetail);
 });
 
 test('todo expansion defaults only apply when a stable part id first appears', () => {

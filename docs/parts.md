@@ -58,11 +58,11 @@ chat.updateToolCall(msgId, 'tc-1', {
 });
 ```
 
-**Human-in-the-loop approval:** set `approval: 'required'` on a `tool-call` part to render Approve / Reject buttons. The card emits a bubbling `tool-action` event (`{ action, toolCallId, part }`); respond by patching the part:
+**Human-in-the-loop approval:** set `approval: 'required'` on a `tool-call` part to render Approve / Reject buttons. The card emits the unified `part-action` event and a deprecated bubbling `tool-action` compatibility event (`{ action, toolCallId, part, messageId, message }`); respond by patching the part:
 
 ```javascript
 chat.addEventListener('tool-action', (e) => {
-  const { action, part } = e.detail;
+  const { action, messageId, part } = e.detail;
   if (action === 'approve') {
     chat.updateToolCall(messageId, part.id, { approval: 'approved', state: 'executing' });
     // …run the tool, then attach the result via updateToolCall(… { state: 'output-available', result })
@@ -72,9 +72,21 @@ chat.addEventListener('tool-action', (e) => {
 });
 ```
 
+For new integrations, prefer the unified event:
+
+```javascript
+chat.addEventListener('part-action', (e) => {
+  if (e.detail.kind !== 'tool-action') return;
+  const { messageId, part, action } = e.detail.detail;
+  chat.updateToolCall(messageId, part.id, {
+    approval: action === 'approve' ? 'approved' : 'rejected',
+  });
+});
+```
+
 ## Todos
 
-Use the built-in `todo` part for a compact, collapsible plan whose items update independently while the assistant works. Create it with `todoPart()`, patch items with `updateTodoItem()`, and handle optional user changes through `todo-action`. See the complete [Todo panel guide](./todo.md).
+Use the built-in `todo` part for a compact, collapsible plan whose items update independently while the assistant works. Create it with `todoPart()`, patch items with `updateTodoItem()`, and handle optional user changes through `part-action` or the deprecated compatibility `todo-action`. See the complete [Todo panel guide](./todo.md).
 
 ## File, source, and custom parts
 

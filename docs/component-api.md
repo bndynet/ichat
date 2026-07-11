@@ -31,14 +31,31 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `cancel` | — | User cancelled during streaming (default input) |
 | `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
-| `tool-action` | `{ action: 'approve' \| 'reject', toolCallId: string, part: ToolCallPart }` | From a `tool-call` part’s human-in-the-loop buttons (when `approval === 'required'`) |
-| `todo-action` | `{ action, itemId, previousStatus, status, part, messageId, message }` | From an interactive `todo` part status icon; apply with `updateTodoItem()` |
-| `form-submit` | `{ formId, title, values, messageId, message }` | From an embedded `form` fenced block inside a `text` part |
+| `part-action` | `{ kind, action, messageId, message, partId?, partType?, part?, detail }` | Unified event for rendered part interactions. `detail` is the legacy payload |
+| `tool-action` | `{ action: 'approve' \| 'reject', toolCallId, part, messageId, message }` | Deprecated compatibility event from a `tool-call` part’s human-in-the-loop buttons |
+| `todo-action` | `{ action, itemId, previousStatus, status, part, messageId, message }` | Deprecated compatibility event from an interactive `todo` part status icon |
+| `form-submit` | `{ formId, title, values, messageId, message }` | Deprecated compatibility event from an embedded `form` fenced block inside a `text` part |
 | `link-click` | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself |
 | `confirmation-change` | `{ active, queue, queueLength }` | Active composer confirmation or FIFO queue changed |
 | `confirmation-decision` | `ChatConfirmationResult` | User confirmed or cancelled the active composer confirmation |
 
 Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message>`) use `bubbles` + `composed` so you can listen on `<i-chat>` or `document`.
+
+### Part actions
+
+`part-action` is the unified event for interactions that originate inside a rendered message part. It currently wraps `form-submit`, `todo-action`, and `tool-action`; the original events still fire as deprecated compatibility events and should only be removed in a future major version.
+
+```javascript
+chat.addEventListener('part-action', (event) => {
+  const { kind, action, detail } = event.detail;
+  if (kind === 'todo-action') {
+    chat.updateTodoItem(detail.messageId, detail.part.id, detail.itemId, { status: detail.status });
+  }
+  if (kind === 'tool-action' && action === 'approve') {
+    chat.updateToolCall(detail.messageId, detail.part.id, { approval: 'approved' });
+  }
+});
+```
 
 ### Link clicks and protocols
 

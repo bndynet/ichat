@@ -22,6 +22,8 @@ export type {
   ChatFormSubmitDetail,
   ChatFormFieldValues,
   ChatFormDateRangeValue,
+  ChatPartActionDetail,
+  ChatPartActionKind,
   MessagePart,
   PartBase,
   PartStatus,
@@ -39,6 +41,7 @@ export type {
   TodoPart,
   TodoPartOptions,
   TodoActionDetail,
+  ToolActionDetail,
   CustomPart,
   PartFactoryOptions,
   ChatLabels,
@@ -69,7 +72,9 @@ export {
   getTodoInitialExpanded,
   shouldInitializeTodoExpansion,
   createFormSubmitDetail,
+  createPartActionDetail,
   createTodoActionDetail,
+  createToolActionDetail,
   rendererRegistry,
   partRendererRegistry,
   StreamingController,
@@ -88,6 +93,7 @@ export type {
   TodoPatchResult,
   ChatFormSubmitRequestDetail,
   TodoActionRequestDetail,
+  ToolActionRequestDetail,
 } from '@bndynet/ichat-messages';
 export { ChatInput } from '@bndynet/ichat-input';
 export { ChatMessages, ChatPartHost, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';

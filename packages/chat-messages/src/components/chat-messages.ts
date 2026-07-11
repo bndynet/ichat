@@ -20,9 +20,10 @@ import type { ChatMessageElement } from './chat-message.js';
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
- * **`form-submit`** from embedded `i-chat-form` blocks, and **`todo-action`**
- * from interactive todo parts. Embedded event details include `messageId` /
- * `message` after `i-chat-message` enriches them.
+ * **`part-action`** plus deprecated compatibility **`form-submit`**,
+ * **`todo-action`**, and **`tool-action`** events from rendered message parts.
+ * Embedded event details include `messageId` / `message` after
+ * `i-chat-part-host` enriches them.
  */
 @customElement('i-chat-messages')
 export class ChatMessages extends LitElement {

@@ -7,12 +7,19 @@ import morphdom from 'morphdom';
 import type {
   ChatFormSubmitDetail,
   ChatMessage,
+  ChatPartActionDetail,
   CustomPart,
   MessagePart,
   TodoActionDetail,
+  ToolActionDetail,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
-import { createFormSubmitDetail, createTodoActionDetail } from '../message-events.js';
+import {
+  createFormSubmitDetail,
+  createPartActionDetail,
+  createTodoActionDetail,
+  createToolActionDetail,
+} from '../message-events.js';
 import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
 import { partRendererRegistry } from '../renderers/part-registry.js';
 import { isAllowedLinkHref } from '../link-protocols.js';
@@ -64,11 +71,13 @@ export class ChatPartHost extends LitElement {
     super.connectedCallback();
     this.addEventListener('form-submit', this._onFormSubmit);
     this.addEventListener('todo-action', this._onTodoAction);
+    this.addEventListener('tool-action', this._onToolAction);
   }
 
   override disconnectedCallback(): void {
     this.removeEventListener('form-submit', this._onFormSubmit);
     this.removeEventListener('todo-action', this._onTodoAction);
+    this.removeEventListener('tool-action', this._onToolAction);
     super.disconnectedCallback();
   }
 
@@ -99,6 +108,15 @@ export class ChatPartHost extends LitElement {
       title: ev.detail.title,
       values: ev.detail.values,
     });
+    this._dispatchPartAction(
+      createPartActionDetail({
+        kind: 'form-submit',
+        action: 'submit',
+        message: this.message,
+        detail,
+        part: this._partFromEvent(e),
+      })
+    );
     this.dispatchEvent(
       new CustomEvent<ChatFormSubmitDetail>('form-submit', {
         detail,
@@ -120,8 +138,48 @@ export class ChatPartHost extends LitElement {
 
     e.stopPropagation();
     const detail = createTodoActionDetail(this.message, ev.detail);
+    this._dispatchPartAction(
+      createPartActionDetail({
+        kind: 'todo-action',
+        action: detail.action,
+        message: this.message,
+        detail,
+        part: detail.part,
+      })
+    );
     this.dispatchEvent(
       new CustomEvent<TodoActionDetail>('todo-action', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  };
+
+  private _onToolAction = (e: Event): void => {
+    if (!this.message) return;
+    type RequestDetail = Omit<ToolActionDetail, 'messageId' | 'message'> & {
+      messageId?: string;
+      message?: ChatMessage;
+    };
+    const ev = e as CustomEvent<RequestDetail>;
+    if (ev.detail?.messageId != null) return;
+    if (!this._isEmbeddedEvent(e, 'I-CHAT-TOOL-CALL')) return;
+
+    e.stopPropagation();
+    if (!ev.detail?.part || !ev.detail.toolCallId) return;
+    const detail = createToolActionDetail(this.message, ev.detail);
+    this._dispatchPartAction(
+      createPartActionDetail({
+        kind: 'tool-action',
+        action: detail.action,
+        message: this.message,
+        detail,
+        part: detail.part,
+      })
+    );
+    this.dispatchEvent(
+      new CustomEvent<ToolActionDetail>('tool-action', {
         detail,
         bubbles: true,
         composed: true,
@@ -134,6 +192,27 @@ export class ChatPartHost extends LitElement {
     return (
       path.includes(this) &&
       path.some((node) => node instanceof HTMLElement && node.tagName === tagName)
+    );
+  }
+
+  private _partFromEvent(e: Event): MessagePart | undefined {
+    for (const node of e.composedPath()) {
+      if (node === this) break;
+      if (!(node instanceof HTMLElement)) continue;
+      const partId = node.dataset.partId;
+      if (!partId) continue;
+      return (this.parts ?? []).find((part) => part.id === partId);
+    }
+    return undefined;
+  }
+
+  private _dispatchPartAction<TDetail>(detail: ChatPartActionDetail<TDetail>): void {
+    this.dispatchEvent(
+      new CustomEvent<ChatPartActionDetail<TDetail>>('part-action', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
     );
   }
 
