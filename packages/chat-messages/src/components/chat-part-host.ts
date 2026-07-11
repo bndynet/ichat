@@ -117,6 +117,8 @@ export class ChatPartHost extends LitElement {
         part: this._partFromEvent(e),
       })
     );
+    // Deprecated compatibility event. Keep until a future major version so
+    // existing hosts can migrate to `part-action` incrementally.
     this.dispatchEvent(
       new CustomEvent<ChatFormSubmitDetail>('form-submit', {
         detail,
@@ -147,6 +149,8 @@ export class ChatPartHost extends LitElement {
         part: detail.part,
       })
     );
+    // Deprecated compatibility event. Keep until a future major version so
+    // existing hosts can migrate to `part-action` incrementally.
     this.dispatchEvent(
       new CustomEvent<TodoActionDetail>('todo-action', {
         detail,
@@ -178,6 +182,8 @@ export class ChatPartHost extends LitElement {
         part: detail.part,
       })
     );
+    // Deprecated compatibility event. Keep until a future major version so
+    // existing hosts can migrate to `part-action` incrementally.
     this.dispatchEvent(
       new CustomEvent<ToolActionDetail>('tool-action', {
         detail,

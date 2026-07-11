@@ -81,8 +81,9 @@ Append and patch parts by id instead of rewriting the whole message:
 |----------------------------------------------|-------------|
 | `appendPart(messageId, part)` | Push a new part (e.g. start a streaming `text` part, add a `tool-call`). |
 | `updatePart(messageId, partId, patch)` | Shallow-merge `patch` into the matching part (e.g. grow `text`, flip `status`). Keyed by `id`, so stateful elements survive. |
-| `updateToolCall(messageId, partId, patch)` | Convenience wrapper around `updatePart` for `tool-call` parts. |
+| `updateToolCall(messageId, partId, patch)` | Validated convenience wrapper for `tool-call` parts. |
 | `updateTodoItem(messageId, partId, itemId, patch, revision?)` | Immutably patches one todo item and ignores stale explicit revisions. |
+| `applyTodoItemUpdateEvent(event)` | Normalizes a backend/SSE todo item update, then applies it through `updateTodoItem`. |
 
 ```javascript
 const id = 'a2';

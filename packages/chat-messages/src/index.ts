@@ -73,9 +73,32 @@ export {
 export {
   areTodoItemsTerminal,
   isTerminalTodoItem,
+  normalizeTodoItemUpdateEvent,
+  patchTodoItem,
   patchTodoItemInPart,
 } from './todo-state.js';
-export type { TodoPatchFailureReason, TodoPatchResult } from './todo-state.js';
+export type {
+  TodoItemUpdate,
+  TodoItemUpdateNormalizeFailureReason,
+  TodoItemUpdateNormalizeResult,
+  TodoPatchFailureReason,
+  TodoPatchResult,
+} from './todo-state.js';
+export {
+  TODO_ITEM_STATUSES,
+  TOOL_CALL_STATES,
+  isMessagePart,
+  isTodoItem,
+  isTodoItemStatus,
+  isTodoPart,
+  isToolCallPart,
+  isToolCallState,
+} from './part-guards.js';
+export { patchToolCallPart } from './tool-call-state.js';
+export type {
+  ToolCallPatchFailureReason,
+  ToolCallPatchResult,
+} from './tool-call-state.js';
 export {
   getTodoInitialExpanded,
   shouldInitializeTodoExpansion,

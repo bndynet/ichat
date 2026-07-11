@@ -18,8 +18,11 @@ const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
 /**
  * Compact, collapsible todo panel for a structured {@link TodoPart}.
  *
- * @fires todo-action - A requested item status change. The owning
- * `i-chat-message` enriches the event with `messageId` and `message`.
+ * @fires part-action - Preferred unified action event (`kind: 'todo-action'`).
+ * @fires todo-action - Deprecated compatibility event for a requested item
+ * status change. The owning `i-chat-part-host` enriches it with `messageId` /
+ * `message` and also emits `part-action`. Keep until a future major version so
+ * hosts can migrate incrementally.
  */
 @customElement('i-chat-todo')
 export class ChatTodo extends LitElement {

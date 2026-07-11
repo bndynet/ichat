@@ -10,6 +10,7 @@ import {
   type ChatMessage,
   type MessagePart,
   type TodoPart,
+  type ToolCallPart,
 } from '../src/types.js';
 import { resolveLabels } from '../src/i18n.js';
 import {
@@ -22,7 +23,19 @@ import {
   getTodoInitialExpanded,
   shouldInitializeTodoExpansion,
 } from '../src/todo-collapse.js';
-import { patchTodoItemInPart } from '../src/todo-state.js';
+import {
+  areTodoItemsTerminal,
+  normalizeTodoItemUpdateEvent,
+  patchTodoItem,
+  patchTodoItemInPart,
+} from '../src/todo-state.js';
+import {
+  isTodoItemStatus,
+  isTodoPart,
+  isToolCallPart,
+  isToolCallState,
+} from '../src/part-guards.js';
+import { patchToolCallPart } from '../src/tool-call-state.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -111,11 +124,11 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
     { id: 'todo-1', revision: 1, status: 'streaming' }
   );
 
-  const updated = patchTodoItemInPart(
+  const updated = patchTodoItem(
     base,
     'verify',
     { id: 'ignored-at-runtime', title: 'Verify UI', status: 'active' } as Parameters<
-      typeof patchTodoItemInPart
+      typeof patchTodoItem
     >[2],
     2
   );
@@ -129,22 +142,172 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
   assert.notEqual(updated.part, base);
   assert.notEqual(updated.part.items, base.items);
 
-  const stale = patchTodoItemInPart(updated.part, 'verify', { status: 'done' }, 2);
+  const stale = patchTodoItem(updated.part, 'verify', { status: 'done' }, 2);
   assert.equal(stale.ok, false);
   assert.equal(stale.reason, 'stale-revision');
   assert.equal(stale.part, updated.part);
 
-  const missing = patchTodoItemInPart(updated.part, 'missing', { status: 'done' }, 3);
+  const missing = patchTodoItem(updated.part, 'missing', { status: 'done' }, 3);
   assert.equal(missing.ok, false);
   assert.equal(missing.reason, 'item-not-found');
 
-  const completed = patchTodoItemInPart(updated.part, 'verify', { status: 'skipped' }, 3);
+  const invalidStatus = patchTodoItem(
+    updated.part,
+    'verify',
+    { status: 'blocked' } as Parameters<typeof patchTodoItem>[2],
+    3
+  );
+  assert.equal(invalidStatus.ok, false);
+  assert.equal(invalidStatus.reason, 'invalid-status');
+
+  const invalidRevision = patchTodoItem(updated.part, 'verify', { status: 'done' }, NaN);
+  assert.equal(invalidRevision.ok, false);
+  assert.equal(invalidRevision.reason, 'invalid-revision');
+
+  const completed = patchTodoItem(updated.part, 'verify', { status: 'skipped' }, 3);
   assert.equal(completed.ok, true);
   assert.equal(completed.part.status, 'complete');
 
-  const reopened = patchTodoItemInPart(completed.part, 'verify', { status: 'active' }, 4);
+  const reopened = patchTodoItem(completed.part, 'verify', { status: 'active' }, 4);
   assert.equal(reopened.ok, true);
   assert.equal(reopened.part.status, 'streaming');
+
+  const alias = patchTodoItemInPart(reopened.part, 'verify', { status: 'done' }, 5);
+  assert.equal(alias.ok, true);
+
+  const empty = todoPart([], { id: 'empty', revision: 1 });
+  assert.equal(areTodoItemsTerminal(empty.items), false);
+  const missingInEmpty = patchTodoItem(empty, 'missing', { status: 'done' }, 2);
+  assert.equal(missingInEmpty.ok, false);
+  assert.equal(missingInEmpty.reason, 'item-not-found');
+});
+
+test('part guards validate todo and tool-call shapes at runtime', () => {
+  const todo = todoPart([{ id: 'task-1', title: 'Capture', status: 'pending' }], {
+    id: 'todo-1',
+  });
+  const tool: ToolCallPart = {
+    type: 'tool-call',
+    id: 'tool-1',
+    toolCallId: 'call-1',
+    toolName: 'search',
+    state: 'executing',
+  };
+
+  assert.equal(isTodoItemStatus('done'), true);
+  assert.equal(isTodoItemStatus('blocked'), false);
+  assert.equal(isTodoPart(todo), true);
+  assert.equal(isTodoPart({ ...todo, revision: Number.NaN }), false);
+  assert.equal(isToolCallState('output-error'), true);
+  assert.equal(isToolCallState('waiting'), false);
+  assert.equal(isToolCallPart(tool), true);
+  assert.equal(isToolCallPart({ ...tool, state: 'waiting' }), false);
+});
+
+test('todo SSE update normalization accepts supported shapes and rejects invalid data', () => {
+  const objectUpdate = normalizeTodoItemUpdateEvent({
+    type: 'todo.item.updated',
+    messageId: 'assistant-42',
+    partId: 'plan',
+    itemId: 'panel',
+    status: 'done',
+    revision: 3,
+  });
+  assert.equal(objectUpdate.ok, true);
+  assert.deepEqual(objectUpdate.update, {
+    messageId: 'assistant-42',
+    partId: 'plan',
+    itemId: 'panel',
+    patch: { status: 'done' },
+    revision: 3,
+  });
+
+  const stringUpdate = normalizeTodoItemUpdateEvent(
+    JSON.stringify({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      title: 'Build panel',
+    })
+  );
+  assert.equal(stringUpdate.ok, true);
+  assert.deepEqual(stringUpdate.update.patch, { title: 'Build panel' });
+
+  const eventUpdate = normalizeTodoItemUpdateEvent({
+    type: 'todo.item.updated',
+    data: JSON.stringify({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      description: 'Ready for QA',
+    }),
+  });
+  assert.equal(eventUpdate.ok, true);
+  assert.deepEqual(eventUpdate.update.patch, { description: 'Ready for QA' });
+
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({ type: 'tool.updated' }),
+    { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      status: 'blocked',
+    }),
+    { ok: false, reason: 'invalid-status' }
+  );
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+      status: 'done',
+      revision: '3',
+    }),
+    { ok: false, reason: 'invalid-revision' }
+  );
+  assert.deepEqual(
+    normalizeTodoItemUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'plan',
+      itemId: 'panel',
+    }),
+    { ok: false, reason: 'empty-patch' }
+  );
+});
+
+test('tool-call patching validates state and preserves stable ids', () => {
+  const base: ToolCallPart = {
+    type: 'tool-call',
+    id: 'tool-1',
+    toolCallId: 'call-1',
+    toolName: 'search',
+    state: 'input-available',
+  };
+
+  const updated = patchToolCallPart(base, {
+    id: 'ignored',
+    toolCallId: 'ignored-call',
+    state: 'executing',
+    args: { q: 'todo' },
+  } as Partial<ToolCallPart>);
+
+  assert.equal(updated.ok, true);
+  assert.equal(updated.part.id, 'tool-1');
+  assert.equal(updated.part.toolCallId, 'call-1');
+  assert.equal(updated.part.state, 'executing');
+  assert.deepEqual(updated.part.args, { q: 'todo' });
+  assert.equal(base.state, 'input-available');
+  assert.notEqual(updated.part, base);
+
+  const invalid = patchToolCallPart(base, {
+    state: 'waiting',
+  } as Partial<ToolCallPart>);
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.reason, 'invalid-state');
+  assert.equal(invalid.part, base);
 });
 
 test('event helpers attach message context without changing source payloads', () => {

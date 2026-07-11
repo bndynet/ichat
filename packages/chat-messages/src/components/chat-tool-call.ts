@@ -65,7 +65,8 @@ function formatDuration(ms: number): string {
  * @fires part-action - Preferred unified action event (`kind: 'tool-action'`).
  * @fires tool-action - Deprecated compatibility event from the human-in-the-loop
  *        buttons. The owning `i-chat-part-host` enriches it with `messageId` /
- *        `message` and also emits `part-action`.
+ *        `message` and also emits `part-action`. Keep until a future major
+ *        version so hosts can migrate incrementally.
  */
 @customElement('i-chat-tool-call')
 export class ChatToolCall extends LitElement {

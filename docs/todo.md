@@ -54,7 +54,7 @@ Set `interactive: false` when the panel is display-only. `defaultCollapsed` affe
 
 ## Update an item
 
-`updateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `false` when the message, part, or item is missing, or when an explicit revision is stale.
+`updateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale.
 
 ```javascript
 chat.updateTodoItem('assistant-42', 'plan', 'panel', { status: 'done' }, 3);
@@ -75,6 +75,16 @@ For SSE, send stable IDs and a monotonic revision:
   "revision": 3
 }
 ```
+
+Then route the event through the same reducer as UI changes:
+
+```javascript
+source.addEventListener('todo.item.updated', (event) => {
+  chat.applyTodoItemUpdateEvent(event);
+});
+```
+
+For custom adapters, `normalizeTodoItemUpdateEvent(event)` is exported separately. The older `patchTodoItemInPart()` helper remains as a deprecated compatibility alias for `patchTodoItem()`.
 
 ## Handle user changes
 

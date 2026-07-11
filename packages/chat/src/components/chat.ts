@@ -200,8 +200,8 @@ export class Chat extends LitElement {
     messageId: string,
     partId: string,
     patch: Parameters<ChatMessages['updateToolCall']>[2]
-  ): void {
-    this._messages.updateToolCall(messageId, partId, patch);
+  ): boolean {
+    return this._messages.updateToolCall(messageId, partId, patch);
   }
 
   /** Immutably patch one todo item. Stale explicit revisions are ignored. */
@@ -213,6 +213,11 @@ export class Chat extends LitElement {
     revision?: number,
   ): boolean {
     return this._messages.updateTodoItem(messageId, partId, itemId, patch, revision);
+  }
+
+  /** Apply a backend/SSE todo item update through the same reducer as UI changes. */
+  applyTodoItemUpdateEvent(event: Parameters<ChatMessages['applyTodoItemUpdateEvent']>[0]): boolean {
+    return this._messages.applyTodoItemUpdateEvent(event);
   }
 
   removeMessage(id: string): void {

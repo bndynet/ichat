@@ -9,6 +9,10 @@ import type {
   ToolActionDetail,
 } from './types.js';
 
+/**
+ * @deprecated Internal compatibility payload for `form-submit`. Prefer
+ * `part-action` (`kind: 'form-submit'`) for host integrations.
+ */
 export interface ChatFormSubmitRequestDetail {
   formId: string;
   title?: string;

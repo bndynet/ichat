@@ -6,11 +6,12 @@ import type {
   ChatConfig,
   MessagePart,
   TodoItemPatch,
-  TodoPart,
   ToolCallPart,
 } from '../types.js';
 import { DEFAULT_CONFIG, textPart } from '../types.js';
-import { patchTodoItemInPart } from '../todo-state.js';
+import { isTodoPart, isToolCallPart } from '../part-guards.js';
+import { patchTodoItem, normalizeTodoItemUpdateEvent } from '../todo-state.js';
+import { patchToolCallPart } from '../tool-call-state.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
@@ -288,29 +289,51 @@ export class ChatMessages extends LitElement {
     );
   }
 
+  private _findPart(messageId: string, partId: string): MessagePart | undefined {
+    return this.messages
+      .find((candidate) => candidate.id === messageId)
+      ?.parts.find((candidate) => candidate.id === partId);
+  }
+
+  private _replacePart(messageId: string, partId: string, nextPart: MessagePart): boolean {
+    let didReplace = false;
+    this.messages = this.messages.map((m) => {
+      if (m.id !== messageId || !m.parts) return m;
+      let changed = false;
+      const parts = m.parts.map((part) => {
+        if (part.id !== partId) return part;
+        changed = true;
+        didReplace = true;
+        return nextPart;
+      });
+      return changed ? { ...m, parts } : m;
+    });
+    return didReplace;
+  }
+
   /**
    * Patch a single part by its `id`. Shallow-merges `patch` into the matching
    * part; stateful elements (e.g. `<i-chat-tool-call>`) are preserved because
    * parts are rendered keyed by `id`.
    */
   updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
-    this.messages = this.messages.map((m) => {
-      if (m.id !== messageId || !m.parts) return m;
-      return {
-        ...m,
-        parts: m.parts.map((p) =>
-          p.id === partId ? ({ ...p, ...patch } as MessagePart) : p
-        ),
-      };
-    });
+    const part = this._findPart(messageId, partId);
+    if (!part) return;
+    this._replacePart(messageId, partId, { ...part, ...patch } as MessagePart);
   }
 
   /**
    * Convenience wrapper around {@link updatePart} for `tool-call` parts (advance
    * the state machine, attach `result`, set `durationMs`, etc.).
    */
-  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): void {
-    this.updatePart(messageId, partId, patch as Partial<MessagePart>);
+  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): boolean {
+    const part = this._findPart(messageId, partId);
+    if (!isToolCallPart(part)) return false;
+
+    const result = patchToolCallPart(part, patch);
+    if (!result.ok) return false;
+
+    return this._replacePart(messageId, partId, result.part);
   }
 
   /**
@@ -325,17 +348,26 @@ export class ChatMessages extends LitElement {
     patch: TodoItemPatch,
     revision?: number,
   ): boolean {
-    const message = this.messages.find((candidate) => candidate.id === messageId);
-    const part = message?.parts.find(
-      (candidate): candidate is TodoPart => candidate.id === partId && candidate.type === 'todo'
-    );
-    if (!part) return false;
+    const part = this._findPart(messageId, partId);
+    if (!isTodoPart(part)) return false;
 
-    const result = patchTodoItemInPart(part, itemId, patch, revision);
+    const result = patchTodoItem(part, itemId, patch, revision);
     if (!result.ok) return false;
 
-    this.updatePart(messageId, partId, result.part as Partial<TodoPart>);
-    return true;
+    return this._replacePart(messageId, partId, result.part);
+  }
+
+  /**
+   * Apply a backend/SSE todo item update. The event is normalized, then routed
+   * through {@link updateTodoItem} so remote updates and UI actions share the
+   * same validation and reducer.
+   */
+  applyTodoItemUpdateEvent(event: unknown): boolean {
+    const result = normalizeTodoItemUpdateEvent(event);
+    if (!result.ok) return false;
+
+    const { messageId, partId, itemId, patch, revision } = result.update;
+    return this.updateTodoItem(messageId, partId, itemId, patch, revision);
   }
 
   removeMessage(id: string): void {
