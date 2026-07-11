@@ -147,6 +147,10 @@
   }
 }
 
+i-chat-part-host {
+  display: contents;
+}
+
 .bubble {
   border-radius: var(--chat-radius-lg, #{$radius-lg});
   padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});

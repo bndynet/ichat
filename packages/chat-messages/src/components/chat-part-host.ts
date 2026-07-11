@@ -1,0 +1,374 @@
+import { LitElement, html, nothing } from 'lit';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+import { customElement, property } from 'lit/decorators.js';
+import { ref, createRef } from 'lit/directives/ref.js';
+import { repeat } from 'lit/directives/repeat.js';
+import morphdom from 'morphdom';
+import type {
+  ChatFormSubmitDetail,
+  ChatMessage,
+  CustomPart,
+  MessagePart,
+  TodoActionDetail,
+} from '../types.js';
+import type { ChatLabels } from '../i18n.js';
+import { createFormSubmitDetail, createTodoActionDetail } from '../message-events.js';
+import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
+import { partRendererRegistry } from '../renderers/part-registry.js';
+import { isAllowedLinkHref } from '../link-protocols.js';
+import './chat-reasoning.js';
+import './chat-tool-call.js';
+import './chat-todo.js';
+
+export interface ChatPartRenderContext {
+  message?: ChatMessage;
+  parts: MessagePart[];
+  streamingTextId?: string | null;
+  streamingText: string;
+  streamingTextAnimating: boolean;
+  speed: number;
+  reasoningHeaderHtml: string;
+  labels?: ChatLabels;
+  allowedLinkProtocols?: readonly string[];
+}
+
+/**
+ * Owns rendering and morphing of ordered message body parts.
+ *
+ * This component renders into light DOM so the parent `i-chat-message` styles
+ * keep applying to `.bubble`, `.content`, markdown renderers, and fallback
+ * custom-part markup.
+ */
+@customElement('i-chat-part-host')
+export class ChatPartHost extends LitElement {
+  @property({ attribute: false }) message?: ChatMessage;
+  @property({ attribute: false }) parts: MessagePart[] = [];
+  @property({ attribute: false }) streamingTextId: string | null = null;
+  @property() streamingText = '';
+  @property({ type: Boolean }) streamingTextAnimating = false;
+  @property({ type: Number }) speed = 3;
+  @property() reasoningHeaderHtml = '';
+  @property({ attribute: false }) labels?: ChatLabels;
+  @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+
+  private _textRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
+  private _textCache = new Map<string, string>();
+  private _customRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
+  private _customCache = new Map<string, string>();
+
+  protected createRenderRoot(): HTMLElement | DocumentFragment {
+    return this;
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('form-submit', this._onFormSubmit);
+    this.addEventListener('todo-action', this._onTodoAction);
+  }
+
+  override disconnectedCallback(): void {
+    this.removeEventListener('form-submit', this._onFormSubmit);
+    this.removeEventListener('todo-action', this._onTodoAction);
+    super.disconnectedCallback();
+  }
+
+  getRenderContext(): ChatPartRenderContext {
+    return {
+      message: this.message,
+      parts: this.parts,
+      streamingTextId: this.streamingTextId,
+      streamingText: this.streamingText,
+      streamingTextAnimating: this.streamingTextAnimating,
+      speed: this.speed,
+      reasoningHeaderHtml: this.reasoningHeaderHtml,
+      labels: this.labels,
+      allowedLinkProtocols: this.allowedLinkProtocols,
+    };
+  }
+
+  private _onFormSubmit = (e: Event): void => {
+    if (!this.message) return;
+    const ev = e as CustomEvent<Partial<ChatFormSubmitDetail>>;
+    if (ev.detail?.messageId != null) return;
+    if (!this._isEmbeddedEvent(e, 'I-CHAT-FORM')) return;
+
+    e.stopPropagation();
+    if (!ev.detail?.formId || !ev.detail.values) return;
+    const detail = createFormSubmitDetail(this.message, {
+      formId: ev.detail.formId,
+      title: ev.detail.title,
+      values: ev.detail.values,
+    });
+    this.dispatchEvent(
+      new CustomEvent<ChatFormSubmitDetail>('form-submit', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  };
+
+  private _onTodoAction = (e: Event): void => {
+    if (!this.message) return;
+    type RequestDetail = Omit<TodoActionDetail, 'messageId' | 'message'> & {
+      messageId?: string;
+      message?: ChatMessage;
+    };
+    const ev = e as CustomEvent<RequestDetail>;
+    if (ev.detail?.messageId != null) return;
+    if (!this._isEmbeddedEvent(e, 'I-CHAT-TODO')) return;
+
+    e.stopPropagation();
+    const detail = createTodoActionDetail(this.message, ev.detail);
+    this.dispatchEvent(
+      new CustomEvent<TodoActionDetail>('todo-action', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  };
+
+  private _isEmbeddedEvent(e: Event, tagName: string): boolean {
+    const path = e.composedPath();
+    return (
+      path.includes(this) &&
+      path.some((node) => node instanceof HTMLElement && node.tagName === tagName)
+    );
+  }
+
+  private _linkHref(rawHref: string): string | typeof nothing {
+    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
+  }
+
+  private _textRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
+    let r = this._textRefs.get(id);
+    if (!r) {
+      r = createRef<HTMLDivElement>();
+      this._textRefs.set(id, r);
+    }
+    return r;
+  }
+
+  private _customRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
+    let r = this._customRefs.get(id);
+    if (!r) {
+      r = createRef<HTMLDivElement>();
+      this._customRefs.set(id, r);
+    }
+    return r;
+  }
+
+  private _renderPart(part: MessagePart) {
+    switch (part.type) {
+      case 'reasoning':
+        return html`<i-chat-reasoning
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+          .content=${part.text}
+          .streaming=${part.status === 'streaming'}
+          .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
+          .headerHtml=${this.reasoningHeaderHtml}
+          .labels=${this.labels?.reasoning}
+          .allowedLinkProtocols=${this.allowedLinkProtocols}
+        ></i-chat-reasoning>`;
+      case 'tool-call':
+        return html`<i-chat-tool-call
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+          data-tool-call-id=${part.toolCallId}
+          .data=${part}
+          .labels=${this.labels?.toolCall}
+          .allowedLinkProtocols=${this.allowedLinkProtocols}
+        ></i-chat-tool-call>`;
+      case 'todo':
+        return html`<i-chat-todo
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+          .data=${part}
+          .labels=${this.labels?.todo}
+        ></i-chat-todo>`;
+      case 'file': {
+        if (part.mediaType.startsWith('image/')) {
+          const src =
+            part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
+          return src
+            ? html`<div class="bubble">
+                <img class="part-file-image" src=${src} alt=${part.name ?? 'image'} />
+              </div>`
+            : nothing;
+        }
+        const href = part.url ?? '';
+        return html`<div class="bubble">
+          <a
+            class="part-file-link"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            href=${this._linkHref(href)}
+            target="_blank"
+            rel="noopener noreferrer"
+            >${part.name ?? href}</a
+          >
+        </div>`;
+      }
+      case 'source':
+        return html`<div class="bubble">
+          <a
+            class="part-source"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            href=${this._linkHref(part.url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            >${part.title ?? part.url}</a
+          >
+          ${part.snippet ? html`<div class="part-source-snippet">${part.snippet}</div>` : nothing}
+        </div>`;
+      case 'text': {
+        const animatingHere =
+          part.id === this.streamingTextId && this.streamingTextAnimating;
+        return html`<div class="bubble">
+          <div
+            class="content ${animatingHere ? 'typing-cursor' : ''}"
+            data-part-id=${part.id}
+            data-part-type=${part.type}
+            ${ref(this._textRef(part.id))}
+          ></div>
+        </div>`;
+      }
+      default: {
+        const renderer = partRendererRegistry.getRenderer(part.type);
+        if (renderer?.element) {
+          const tag = unsafeStatic(renderer.element);
+          return staticHtml`<div class="bubble">
+            <${tag}
+              data-part-id=${part.id}
+              data-part-type=${part.type}
+              .data=${(part as CustomPart).data}
+              .part=${part}
+            ></${tag}>
+          </div>`;
+        }
+        if (renderer?.render) {
+          return html`<div class="bubble">
+            <div
+              class="part-custom-host"
+              data-part-id=${part.id}
+              data-part-type=${part.type}
+              ${ref(this._customRef(part.id))}
+            ></div>
+          </div>`;
+        }
+        return html`<div class="bubble">
+          <pre class="part-custom">${JSON.stringify(part, null, 2)}</pre>
+        </div>`;
+      }
+    }
+  }
+
+  private _morphInto(el: HTMLElement, html: string): void {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    morphdom(el, temp, {
+      childrenOnly: true,
+      onBeforeElUpdated(fromEl, toEl) {
+        if (fromEl.tagName === 'I-CHAT-MERMAID' && toEl.tagName === 'I-CHAT-MERMAID') {
+          return true;
+        }
+        if (fromEl.tagName === 'I-CHAT-CODE-TOGGLE' && toEl.tagName === 'I-CHAT-CODE-TOGGLE') {
+          return true;
+        }
+        if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {
+          const fa = fromEl.attributes;
+          const ta = toEl.attributes;
+          if (fa.length === ta.length) {
+            let same = true;
+            for (let i = 0; i < ta.length; i++) {
+              if (fromEl.getAttribute(ta[i].name) !== ta[i].value) {
+                same = false;
+                break;
+              }
+            }
+            if (same) return false;
+          }
+        }
+        return true;
+      },
+    });
+  }
+
+  override updated(): void {
+    const liveTextIds = new Set<string>();
+    let didMorph = false;
+
+    for (const p of this.parts ?? []) {
+      if (p.type !== 'text') continue;
+      liveTextIds.add(p.id);
+      const el = this._textRefs.get(p.id)?.value;
+      if (!el) continue;
+      const source = p.id === this.streamingTextId ? this.streamingText : p.text;
+      const newHtml = renderMarkdown(source, {
+        allowedLinkProtocols: this.allowedLinkProtocols,
+      });
+      if (newHtml === this._textCache.get(p.id)) continue;
+      this._morphInto(el, newHtml);
+      this._textCache.set(p.id, newHtml);
+      didMorph = true;
+    }
+
+    for (const id of [...this._textCache.keys()]) {
+      if (!liveTextIds.has(id)) {
+        this._textCache.delete(id);
+        this._textRefs.delete(id);
+      }
+    }
+
+    const liveCustomIds = new Set<string>();
+    for (const p of this.parts ?? []) {
+      if (!p.type.startsWith('x-')) continue;
+      const renderer = partRendererRegistry.getRenderer(p.type);
+      if (!renderer || renderer.element || !renderer.render) continue;
+      liveCustomIds.add(p.id);
+      const el = this._customRefs.get(p.id)?.value;
+      if (!el) continue;
+      const newHtml = sanitizeHtml(renderer.render(p as CustomPart), {
+        allowedLinkProtocols: this.allowedLinkProtocols,
+      });
+      if (newHtml === this._customCache.get(p.id)) continue;
+      this._morphInto(el, newHtml);
+      this._customCache.set(p.id, newHtml);
+      didMorph = true;
+    }
+
+    for (const id of [...this._customCache.keys()]) {
+      if (!liveCustomIds.has(id)) {
+        this._customCache.delete(id);
+        this._customRefs.delete(id);
+      }
+    }
+
+    this.dispatchEvent(
+      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true })
+    );
+
+    if (didMorph && !this.message?.parentId) {
+      this.dispatchEvent(
+        new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
+      );
+    }
+  }
+
+  render() {
+    return html`${repeat(
+      this.parts ?? [],
+      (p) => p.id,
+      (p) => this._renderPart(p)
+    )}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'i-chat-part-host': ChatPartHost;
+  }
+}

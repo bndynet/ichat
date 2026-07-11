@@ -83,10 +83,11 @@ export {
   formatAssistantDurationMs,
 } from '@bndynet/ichat-messages';
 export type {
+  ChatPartRenderContext,
   TodoPatchFailureReason,
   TodoPatchResult,
   ChatFormSubmitRequestDetail,
   TodoActionRequestDetail,
 } from '@bndynet/ichat-messages';
 export { ChatInput } from '@bndynet/ichat-input';
-export { ChatMessages, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';
+export { ChatMessages, ChatPartHost, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';

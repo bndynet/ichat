@@ -1,5 +1,6 @@
 export { ChatMessages } from './components/chat-messages.js';
 export { ChatMessageElement } from './components/chat-message.js';
+export { ChatPartHost } from './components/chat-part-host.js';
 export { ChatReasoning } from './components/chat-reasoning.js';
 export { ChatToolCall } from './components/chat-tool-call.js';
 export { ChatTodo } from './components/chat-todo.js';
@@ -19,6 +20,10 @@ export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
 export { updateTimelineStatus } from './renderers/timeline-plugin.js';
 export type { TimelineStatus } from './renderers/timeline-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';
+
+export type {
+  ChatPartRenderContext,
+} from './components/chat-part-host.js';
 
 export type {
   ChatMessage,
