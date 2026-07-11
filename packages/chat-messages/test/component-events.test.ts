@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { ChatMessages } from '../src/components/chat-messages.js';
 import { ChatPartHost } from '../src/components/chat-part-host.js';
+import { ChatTextPart } from '../src/components/chat-text-part.js';
 import { ChatTodo } from '../src/components/chat-todo.js';
 import { ChatToolCall } from '../src/components/chat-tool-call.js';
 import {
@@ -46,6 +47,7 @@ type HostInternals = ChatPartHost & {
   _onFormSubmit(event: Event): void;
   _onTodoAction(event: Event): void;
   _onToolAction(event: Event): void;
+  _handleTextPartUpdated(event: CustomEvent<{ changed?: boolean }>): void;
 };
 
 type TodoInternals = ChatTodo & {
@@ -108,6 +110,21 @@ function sampleMessage(): {
   };
 }
 
+function textPartUpdateEvent(changed: boolean): CustomEvent<{ changed: boolean }> & {
+  stopped: boolean;
+} {
+  let stopped = false;
+  return {
+    detail: { changed },
+    get stopped() {
+      return stopped;
+    },
+    stopPropagation() {
+      stopped = true;
+    },
+  } as CustomEvent<{ changed: boolean }> & { stopped: boolean };
+}
+
 test('part host enriches embedded todo actions and still emits compatibility events', () => {
   installHTMLElementShim();
   const { message, todo } = sampleMessage();
@@ -161,6 +178,39 @@ test('part host enriches embedded todo actions and still emits compatibility eve
   assert.equal(alreadyEnriched.stopped, false);
   assert.equal(partActions.length, 1);
   assert.equal(compatibilityActions.length, 1);
+});
+
+test('part host forwards extracted text part updates as resize notifications', () => {
+  const { message } = sampleMessage();
+  const host = new ChatPartHost() as HostInternals;
+  host.message = message;
+  const textPartElement = new ChatTextPart();
+  assert.ok(textPartElement);
+
+  let hostUpdates = 0;
+  let resizeUpdates = 0;
+  host.addEventListener('chat-part-host-updated', () => {
+    hostUpdates += 1;
+  });
+  host.addEventListener('chat-content-resize', () => {
+    resizeUpdates += 1;
+  });
+
+  const event = textPartUpdateEvent(true);
+  host._handleTextPartUpdated(event);
+
+  assert.equal(event.stopped, true);
+  assert.equal(hostUpdates, 1);
+  assert.equal(resizeUpdates, 1);
+
+  const replyHost = new ChatPartHost() as HostInternals;
+  replyHost.message = { ...message, parentId: 'parent-1' };
+  let replyResizeUpdates = 0;
+  replyHost.addEventListener('chat-content-resize', () => {
+    replyResizeUpdates += 1;
+  });
+  replyHost._handleTextPartUpdated(textPartUpdateEvent(true));
+  assert.equal(replyResizeUpdates, 0);
 });
 
 test('part host enriches form and tool events through the unified part-action event', () => {

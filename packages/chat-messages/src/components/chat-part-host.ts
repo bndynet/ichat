@@ -3,7 +3,6 @@ import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { customElement, property } from 'lit/decorators.js';
 import { ref, createRef } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import morphdom from 'morphdom';
 import type {
   ChatFormSubmitDetail,
   ChatMessage,
@@ -20,10 +19,12 @@ import {
   createTodoActionDetail,
   createToolActionDetail,
 } from '../message-events.js';
-import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
+import { sanitizeHtml } from '../renderers/markdown-renderer.js';
 import { partRendererRegistry } from '../renderers/part-registry.js';
+import { morphHtmlInto } from '../renderers/dom-morph.js';
 import { isAllowedLinkHref } from '../link-protocols.js';
 import './chat-reasoning.js';
+import './chat-text-part.js';
 import './chat-tool-call.js';
 import './chat-todo.js';
 
@@ -40,11 +41,12 @@ export interface ChatPartRenderContext {
 }
 
 /**
- * Owns rendering and morphing of ordered message body parts.
+ * Routes ordered message body parts to their dedicated renderers.
  *
  * This component renders into light DOM so the parent `i-chat-message` styles
  * keep applying to `.bubble`, `.content`, markdown renderers, and fallback
- * custom-part markup.
+ * custom-part markup. Built-in text parts own their markdown morphing in
+ * `<i-chat-text-part>`; string-mode custom renderers are still morphed here.
  */
 @customElement('i-chat-part-host')
 export class ChatPartHost extends LitElement {
@@ -58,8 +60,6 @@ export class ChatPartHost extends LitElement {
   @property({ attribute: false }) labels?: ChatLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
 
-  private _textRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
-  private _textCache = new Map<string, string>();
   private _customRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
   private _customCache = new Map<string, string>();
 
@@ -222,17 +222,20 @@ export class ChatPartHost extends LitElement {
     );
   }
 
+  private _handleTextPartUpdated = (e: CustomEvent<{ changed?: boolean }>): void => {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true })
+    );
+    if (e.detail?.changed && !this.message?.parentId) {
+      this.dispatchEvent(
+        new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
+      );
+    }
+  };
+
   private _linkHref(rawHref: string): string | typeof nothing {
     return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
-  }
-
-  private _textRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
-    let r = this._textRefs.get(id);
-    if (!r) {
-      r = createRef<HTMLDivElement>();
-      this._textRefs.set(id, r);
-    }
-    return r;
   }
 
   private _customRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
@@ -312,14 +315,16 @@ export class ChatPartHost extends LitElement {
       case 'text': {
         const animatingHere =
           part.id === this.streamingTextId && this.streamingTextAnimating;
-        return html`<div class="bubble">
-          <div
-            class="content ${animatingHere ? 'typing-cursor' : ''}"
-            data-part-id=${part.id}
-            data-part-type=${part.type}
-            ${ref(this._textRef(part.id))}
-          ></div>
-        </div>`;
+        const content = part.id === this.streamingTextId ? this.streamingText : part.text;
+        return html`<i-chat-text-part
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+          .data=${part}
+          .content=${content}
+          .animating=${animatingHere}
+          .allowedLinkProtocols=${this.allowedLinkProtocols}
+          @chat-text-part-updated=${this._handleTextPartUpdated}
+        ></i-chat-text-part>`;
       }
       default: {
         const renderer = partRendererRegistry.getRenderer(part.type);
@@ -351,62 +356,8 @@ export class ChatPartHost extends LitElement {
     }
   }
 
-  private _morphInto(el: HTMLElement, html: string): void {
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    morphdom(el, temp, {
-      childrenOnly: true,
-      onBeforeElUpdated(fromEl, toEl) {
-        if (fromEl.tagName === 'I-CHAT-MERMAID' && toEl.tagName === 'I-CHAT-MERMAID') {
-          return true;
-        }
-        if (fromEl.tagName === 'I-CHAT-CODE-TOGGLE' && toEl.tagName === 'I-CHAT-CODE-TOGGLE') {
-          return true;
-        }
-        if (fromEl.tagName.includes('-') && fromEl.tagName === toEl.tagName) {
-          const fa = fromEl.attributes;
-          const ta = toEl.attributes;
-          if (fa.length === ta.length) {
-            let same = true;
-            for (let i = 0; i < ta.length; i++) {
-              if (fromEl.getAttribute(ta[i].name) !== ta[i].value) {
-                same = false;
-                break;
-              }
-            }
-            if (same) return false;
-          }
-        }
-        return true;
-      },
-    });
-  }
-
   override updated(): void {
-    const liveTextIds = new Set<string>();
     let didMorph = false;
-
-    for (const p of this.parts ?? []) {
-      if (p.type !== 'text') continue;
-      liveTextIds.add(p.id);
-      const el = this._textRefs.get(p.id)?.value;
-      if (!el) continue;
-      const source = p.id === this.streamingTextId ? this.streamingText : p.text;
-      const newHtml = renderMarkdown(source, {
-        allowedLinkProtocols: this.allowedLinkProtocols,
-      });
-      if (newHtml === this._textCache.get(p.id)) continue;
-      this._morphInto(el, newHtml);
-      this._textCache.set(p.id, newHtml);
-      didMorph = true;
-    }
-
-    for (const id of [...this._textCache.keys()]) {
-      if (!liveTextIds.has(id)) {
-        this._textCache.delete(id);
-        this._textRefs.delete(id);
-      }
-    }
 
     const liveCustomIds = new Set<string>();
     for (const p of this.parts ?? []) {
@@ -420,7 +371,7 @@ export class ChatPartHost extends LitElement {
         allowedLinkProtocols: this.allowedLinkProtocols,
       });
       if (newHtml === this._customCache.get(p.id)) continue;
-      this._morphInto(el, newHtml);
+      morphHtmlInto(el, newHtml);
       this._customCache.set(p.id, newHtml);
       didMorph = true;
     }

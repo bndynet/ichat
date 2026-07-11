@@ -77,8 +77,8 @@ export class ChatMessageElement extends LitElement {
       this._contentCtrl.setSpeed(this.speed);
     }
     if (changed.has('message') && this.message) {
-      // Bind the typewriter to the streaming text part (if any). The part host
-      // renders non-streaming text directly via morphdom.
+      // Bind the typewriter to the streaming text part (if any). The text part
+      // renderer consumes the displayed content and morphs markdown in place.
       const streamingText = (this.message.parts ?? []).find(
         (p): p is TextPart => p.type === 'text' && p.status === 'streaming'
       );

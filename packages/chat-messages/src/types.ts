@@ -35,7 +35,7 @@ export interface PartRenderer {
   element?: string;
   /**
    * String mode. Return an HTML string for the part. Output is sanitised with
-   * DOMPurify and patched in place via morphdom (same channel as `text` parts),
+   * DOMPurify and patched in place via morphdom (same helper as `text` parts),
    * so it updates smoothly while streaming.
    */
   render?: (part: CustomPart) => string;

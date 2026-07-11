@@ -17,12 +17,14 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Add component-level event tests. The suite now covers child todo/tool events, `i-chat-part-host` event enrichment, unified `part-action`, deprecated compatibility events, and invalid backend events that must not mutate state.
 - [x] Clean up `part-action` kind names before adoption. Unified events now use semantic domains (`'form'`, `'todo'`, `'tool-call'`) while deprecated compatibility events keep their original event names.
 - [x] Modernize demo action examples. Demo pages now listen to `part-action` and use `tryUpdateTodoItem()` / `tryUpdateToolCall()` for interactive todo and tool-call updates.
+- [x] Extract text part rendering. `i-chat-text-part` now owns markdown rendering, morphdom caching, and typing cursor state while `i-chat-part-host` stays focused on part routing and event enrichment.
 
 ## Backlog
 
 ### Message Body & Parts
 
 - [ ] Run an accessibility pass over interactive parts. Recheck todo status controls, collapsible headers, tool approval buttons, keyboard behavior, and aria labels.
+- [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls such as remove, collapse, or richer quote styling land.
 
 ## Compatibility & Deprecation
 
