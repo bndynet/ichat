@@ -36,6 +36,12 @@ import {
   isToolCallState,
 } from '../src/part-guards.js';
 import { patchToolCallPart } from '../src/tool-call-state.js';
+import {
+  appendMessagePart,
+  findMessagePart,
+  patchMessagePart,
+  replaceMessagePart,
+} from '../src/message-part-state.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -113,6 +119,67 @@ test('part factories preserve explicit stable ids and getMessageText stays text-
   ];
 
   assert.equal(getMessageText({ id: 'm-1', role: 'assistant', parts }), 'Hello\n\nWorld');
+});
+
+test('message part collection helpers update parts immutably without the DOM', () => {
+  const base: ChatMessage[] = [
+    {
+      id: 'm-1',
+      role: 'assistant',
+      parts: [textPart('Hello', { id: 'text-1', status: 'streaming' })],
+    },
+    {
+      id: 'm-2',
+      role: 'assistant',
+      parts: [],
+    },
+  ];
+  const tool: ToolCallPart = {
+    type: 'tool-call',
+    id: 'tool-1',
+    toolCallId: 'call-1',
+    toolName: 'search',
+    state: 'input-available',
+  };
+
+  const appended = appendMessagePart(base, 'm-1', tool);
+  assert.notEqual(appended, base);
+  assert.notEqual(appended[0], base[0]);
+  assert.equal(appended[1], base[1]);
+  assert.equal(appended[0].parts.length, 2);
+  assert.equal(base[0].parts.length, 1);
+
+  const found = findMessagePart(appended, 'm-1', 'tool-1');
+  assert.ok(found.ok);
+  assert.equal(found.message.id, 'm-1');
+  assert.equal(found.part, tool);
+
+  const patched = patchMessagePart(appended, 'm-1', 'text-1', {
+    status: 'complete',
+  });
+  assert.ok(patched.ok);
+  assert.equal(patched.part.status, 'complete');
+  assert.equal(appended[0].parts[0].status, 'streaming');
+  assert.notEqual(patched.messages[0], appended[0]);
+  assert.equal(patched.messages[1], appended[1]);
+
+  const replacement = textPart('Updated', { id: 'text-1' });
+  const replaced = replaceMessagePart(patched.messages, 'm-1', 'text-1', replacement);
+  assert.ok(replaced.ok);
+  assert.equal(replaced.part, replacement);
+  assert.equal(replaced.messages[0].parts[0], replacement);
+
+  const missingMessage = findMessagePart(base, 'missing', 'text-1');
+  assert.equal(missingMessage.ok, false);
+  if (!missingMessage.ok) {
+    assert.equal(missingMessage.reason, 'message-not-found');
+  }
+
+  const missingPart = patchMessagePart(base, 'm-1', 'missing', { status: 'complete' });
+  assert.equal(missingPart.ok, false);
+  if (!missingPart.ok) {
+    assert.equal(missingPart.reason, 'part-not-found');
+  }
 });
 
 test('todo item patching is immutable, revision-aware, and updates lifecycle status', () => {

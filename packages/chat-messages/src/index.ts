@@ -99,6 +99,18 @@ export type {
   ToolCallPatchFailureReason,
   ToolCallPatchResult,
 } from './tool-call-state.js';
+export {
+  appendMessagePart,
+  findMessagePart,
+  patchMessagePart,
+  replaceMessagePart,
+} from './message-part-state.js';
+export type {
+  MessagePartLookupFailureReason,
+  MessagePartLookupResult,
+  MessagePartPatchResult,
+  MessagePartReplaceResult,
+} from './message-part-state.js';
 export type {
   PartLookupFailureReason,
   TodoItemUpdateEventFailureReason,

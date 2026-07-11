@@ -88,6 +88,8 @@ Append and patch parts by id instead of rewriting the whole message:
 | `tryApplyTodoItemUpdateEvent(event)` | Normalizes a backend/SSE todo item update, then applies it with diagnostic failure reasons. |
 | `applyTodoItemUpdateEvent(event)` | Normalizes a backend/SSE todo item update, then applies it through `updateTodoItem`. |
 
+The same part collection logic is exported as pure helpers for adapters and tests that manage `messages[]` outside the Web Component: `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, and `replaceMessagePart()`.
+
 ```javascript
 const id = 'a2';
 chat.addMessage({ id, role: 'assistant', parts: [], streaming: true, timestamp: Date.now() });

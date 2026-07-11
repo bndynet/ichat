@@ -12,6 +12,12 @@ import { DEFAULT_CONFIG, textPart } from '../types.js';
 import { isTodoPart, isToolCallPart } from '../part-guards.js';
 import { patchTodoItem, normalizeTodoItemUpdateEvent } from '../todo-state.js';
 import { patchToolCallPart } from '../tool-call-state.js';
+import {
+  appendMessagePart,
+  findMessagePart,
+  patchMessagePart,
+  replaceMessagePart,
+} from '../message-part-state.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
@@ -289,33 +295,7 @@ export class ChatMessages extends LitElement {
    * a reasoning block, or a tool call). Creates the `parts` array if absent.
    */
   appendPart(messageId: string, part: MessagePart): void {
-    this.messages = this.messages.map((m) =>
-      m.id === messageId ? { ...m, parts: [...(m.parts ?? []), part] } : m
-    );
-  }
-
-  private _findMessage(messageId: string): ChatMessage | undefined {
-    return this.messages.find((candidate) => candidate.id === messageId);
-  }
-
-  private _findPart(messageId: string, partId: string): MessagePart | undefined {
-    return this._findMessage(messageId)?.parts.find((candidate) => candidate.id === partId);
-  }
-
-  private _replacePart(messageId: string, partId: string, nextPart: MessagePart): boolean {
-    let didReplace = false;
-    this.messages = this.messages.map((m) => {
-      if (m.id !== messageId || !m.parts) return m;
-      let changed = false;
-      const parts = m.parts.map((part) => {
-        if (part.id !== partId) return part;
-        changed = true;
-        didReplace = true;
-        return nextPart;
-      });
-      return changed ? { ...m, parts } : m;
-    });
-    return didReplace;
+    this.messages = appendMessagePart(this.messages, messageId, part);
   }
 
   /**
@@ -324,9 +304,10 @@ export class ChatMessages extends LitElement {
    * parts are rendered keyed by `id`.
    */
   updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
-    const part = this._findPart(messageId, partId);
-    if (!part) return;
-    this._replacePart(messageId, partId, { ...part, ...patch } as MessagePart);
+    const result = patchMessagePart(this.messages, messageId, partId, patch);
+    if (result.ok) {
+      this.messages = result.messages;
+    }
   }
 
   /**
@@ -338,11 +319,10 @@ export class ChatMessages extends LitElement {
     partId: string,
     patch: Partial<ToolCallPart>
   ): ToolCallUpdateResult {
-    const message = this._findMessage(messageId);
-    if (!message) return { ok: false, reason: 'message-not-found' };
+    const lookup = findMessagePart(this.messages, messageId, partId);
+    if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
-    const part = message.parts.find((candidate) => candidate.id === partId);
-    if (!part) return { ok: false, reason: 'part-not-found' };
+    const { part } = lookup;
     if (!isToolCallPart(part)) {
       return { ok: false, reason: 'part-type-mismatch', part };
     }
@@ -352,7 +332,10 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    this._replacePart(messageId, partId, result.part);
+    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    if (!replacement.ok) return { ok: false, reason: replacement.reason };
+
+    this.messages = replacement.messages;
     return { ok: true, part: result.part };
   }
 
@@ -374,11 +357,10 @@ export class ChatMessages extends LitElement {
     patch: TodoItemPatch,
     revision?: number,
   ): TodoItemUpdateResult {
-    const message = this._findMessage(messageId);
-    if (!message) return { ok: false, reason: 'message-not-found' };
+    const lookup = findMessagePart(this.messages, messageId, partId);
+    if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
-    const part = message.parts.find((candidate) => candidate.id === partId);
-    if (!part) return { ok: false, reason: 'part-not-found' };
+    const { part } = lookup;
     if (!isTodoPart(part)) {
       return { ok: false, reason: 'part-type-mismatch', part };
     }
@@ -388,7 +370,10 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    this._replacePart(messageId, partId, result.part);
+    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    if (!replacement.ok) return { ok: false, reason: replacement.reason };
+
+    this.messages = replacement.messages;
     return { ok: true, part: result.part };
   }
 

@@ -80,6 +80,10 @@ export {
   isToolCallPart,
   isToolCallState,
   patchToolCallPart,
+  appendMessagePart,
+  findMessagePart,
+  patchMessagePart,
+  replaceMessagePart,
   getTodoInitialExpanded,
   shouldInitializeTodoExpansion,
   createFormSubmitDetail,
@@ -100,6 +104,10 @@ export {
 } from '@bndynet/ichat-messages';
 export type {
   ChatPartRenderContext,
+  MessagePartLookupFailureReason,
+  MessagePartLookupResult,
+  MessagePartPatchResult,
+  MessagePartReplaceResult,
   TodoItemUpdate,
   TodoItemUpdateNormalizeFailureReason,
   TodoItemUpdateNormalizeResult,
