@@ -1,9 +1,9 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { ReasoningLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
-import { renderMarkdown } from '../renderers/markdown-renderer.js';
+import { renderMarkdownInto } from '../renderers/markdown-morph.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
 import styles from '../styles/chat-reasoning.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
@@ -20,6 +20,8 @@ export class ChatReasoning extends LitElement {
   /** Localized header strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ReasoningLabels;
   @state() private _expanded = false;
+  @query('.reasoning-body') private _bodyEl?: HTMLDivElement;
+  private _bodyHtmlCache = '';
   /** Tracks last render’s streaming flag so we can detect true→false without relying on changed.get quirks. */
   private _prevStreaming = false;
 
@@ -42,6 +44,26 @@ export class ChatReasoning extends LitElement {
     }
 
     this._prevStreaming = !!this.streaming;
+  }
+
+  override updated(): void {
+    const el = this._bodyEl;
+    if (!el) return;
+
+    const result = renderMarkdownInto(el, this._streamCtrl.displayedContent, {
+      previousHtml: this._bodyHtmlCache,
+      allowedLinkProtocols: this.allowedLinkProtocols,
+    });
+    this._bodyHtmlCache = result.html;
+    if (!result.changed) return;
+
+    this.dispatchEvent(
+      new CustomEvent('chat-reasoning-updated', {
+        detail: { changed: true },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private _toggle(): void {
@@ -69,7 +91,6 @@ export class ChatReasoning extends LitElement {
     const isThinking =
       this.streaming &&
       (this._streamCtrl.isAnimating || displayed.trim().length === 0);
-    const hasContent = displayed.trim().length > 0;
     // While streaming: always show the thinking body. After reply completes: collapsed until user expands.
     const bodyOpen = this.streaming || this._expanded;
 
@@ -103,13 +124,7 @@ export class ChatReasoning extends LitElement {
           </span>
         </div>
         <div class="reasoning-content ${bodyOpen ? 'open' : ''}">
-          <div class="reasoning-body">
-            ${hasContent
-              ? unsafeHTML(renderMarkdown(displayed, {
-                  allowedLinkProtocols: this.allowedLinkProtocols,
-                }))
-              : ''}
-          </div>
+          <div class="reasoning-body"></div>
         </div>
       </div>
     `;

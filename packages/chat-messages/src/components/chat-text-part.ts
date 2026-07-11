@@ -1,8 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import type { TextPart } from '../types.js';
-import { renderMarkdown } from '../renderers/markdown-renderer.js';
-import { morphHtmlInto } from '../renderers/dom-morph.js';
+import { renderMarkdownInto } from '../renderers/markdown-morph.js';
 
 @customElement('i-chat-text-part')
 export class ChatTextPart extends LitElement {
@@ -22,13 +21,13 @@ export class ChatTextPart extends LitElement {
     const el = this._contentEl;
     if (!el || !this.data) return;
 
-    const newHtml = renderMarkdown(this.content, {
+    const result = renderMarkdownInto(el, this.content, {
+      previousHtml: this._htmlCache,
       allowedLinkProtocols: this.allowedLinkProtocols,
     });
-    if (newHtml === this._htmlCache) return;
+    this._htmlCache = result.html;
+    if (!result.changed) return;
 
-    morphHtmlInto(el, newHtml);
-    this._htmlCache = newHtml;
     this.dispatchEvent(
       new CustomEvent('chat-text-part-updated', {
         detail: { changed: true },

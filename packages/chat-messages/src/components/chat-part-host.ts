@@ -222,7 +222,7 @@ export class ChatPartHost extends LitElement {
     );
   }
 
-  private _handleTextPartUpdated = (e: CustomEvent<{ changed?: boolean }>): void => {
+  private _handleRenderedPartUpdated = (e: CustomEvent<{ changed?: boolean }>): void => {
     e.stopPropagation();
     this.dispatchEvent(
       new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true })
@@ -259,6 +259,7 @@ export class ChatPartHost extends LitElement {
           .headerHtml=${this.reasoningHeaderHtml}
           .labels=${this.labels?.reasoning}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
+          @chat-reasoning-updated=${this._handleRenderedPartUpdated}
         ></i-chat-reasoning>`;
       case 'tool-call':
         return html`<i-chat-tool-call
@@ -323,7 +324,7 @@ export class ChatPartHost extends LitElement {
           .content=${content}
           .animating=${animatingHere}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
-          @chat-text-part-updated=${this._handleTextPartUpdated}
+          @chat-text-part-updated=${this._handleRenderedPartUpdated}
         ></i-chat-text-part>`;
       }
       default: {

@@ -47,7 +47,7 @@ type HostInternals = ChatPartHost & {
   _onFormSubmit(event: Event): void;
   _onTodoAction(event: Event): void;
   _onToolAction(event: Event): void;
-  _handleTextPartUpdated(event: CustomEvent<{ changed?: boolean }>): void;
+  _handleRenderedPartUpdated(event: CustomEvent<{ changed?: boolean }>): void;
 };
 
 type TodoInternals = ChatTodo & {
@@ -180,7 +180,7 @@ test('part host enriches embedded todo actions and still emits compatibility eve
   assert.equal(compatibilityActions.length, 1);
 });
 
-test('part host forwards extracted text part updates as resize notifications', () => {
+test('part host forwards extracted rendered part updates as resize notifications', () => {
   const { message } = sampleMessage();
   const host = new ChatPartHost() as HostInternals;
   host.message = message;
@@ -197,7 +197,7 @@ test('part host forwards extracted text part updates as resize notifications', (
   });
 
   const event = textPartUpdateEvent(true);
-  host._handleTextPartUpdated(event);
+  host._handleRenderedPartUpdated(event);
 
   assert.equal(event.stopped, true);
   assert.equal(hostUpdates, 1);
@@ -209,7 +209,7 @@ test('part host forwards extracted text part updates as resize notifications', (
   replyHost.addEventListener('chat-content-resize', () => {
     replyResizeUpdates += 1;
   });
-  replyHost._handleTextPartUpdated(textPartUpdateEvent(true));
+  replyHost._handleRenderedPartUpdated(textPartUpdateEvent(true));
   assert.equal(replyResizeUpdates, 0);
 });
 
