@@ -14,12 +14,12 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Add diagnostic update results. `tryUpdateTodoItem()`, `tryUpdateToolCall()`, and `tryApplyTodoItemUpdateEvent()` return structured failure reasons while the older boolean methods remain compatible.
 - [x] Extract message part collection updates into pure helpers. `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, and `replaceMessagePart()` now cover collection updates outside the DOM.
 - [x] Generalize backend event normalization. `message.part.updated` now covers text, tool-call, file/source metadata, and custom `x-*` part patches while `todo.item.updated` remains item-specific.
+- [x] Add component-level event tests. The suite now covers child todo/tool events, `i-chat-part-host` event enrichment, unified `part-action`, deprecated compatibility events, and invalid backend events that must not mutate state.
 
 ## Backlog
 
 ### Message Body & Parts
 
-- [ ] Add component-level event tests. Cover `part-action`, deprecated compatibility events, event enrichment with `messageId` / `message`, and invalid backend events that must not mutate state.
 - [ ] Revisit action kind names for a future major version. Current kinds (`'form-submit'`, `'todo-action'`, `'tool-action'`) are migration-friendly; a future breaking release could move to cleaner domain names such as `'form'`, `'todo'`, and `'tool-call'`.
 - [ ] Run an accessibility pass over interactive parts. Recheck todo status controls, collapsible headers, tool approval buttons, keyboard behavior, and aria labels.
 
