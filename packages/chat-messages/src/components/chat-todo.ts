@@ -3,15 +3,9 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import type { TodoItem, TodoItemStatus, TodoPart } from '../types.js';
 import type { TodoLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
+import type { TodoActionRequestDetail } from '../message-events.js';
+import { getTodoInitialExpanded, shouldInitializeTodoExpansion } from '../todo-collapse.js';
 import styles from '../styles/chat-todo.scss';
-
-type TodoActionRequestDetail = {
-  action: 'change-status';
-  itemId: string;
-  previousStatus: TodoItemStatus;
-  status: TodoItemStatus;
-  part: TodoPart;
-};
 
 const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
   pending: 'active',
@@ -39,9 +33,9 @@ export class ChatTodo extends LitElement {
   private _initializedPartId?: string;
 
   protected updated(): void {
-    if (this.data?.id && this.data.id !== this._initializedPartId) {
+    if (shouldInitializeTodoExpansion(this._initializedPartId, this.data?.id)) {
       this._initializedPartId = this.data.id;
-      this._details.open = !this.data.defaultCollapsed;
+      this._details.open = getTodoInitialExpanded(this.data);
       this._expanded = this._details.open;
     }
   }

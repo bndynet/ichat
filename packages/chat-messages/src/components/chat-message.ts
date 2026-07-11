@@ -6,7 +6,6 @@ import { ref, createRef } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import morphdom from 'morphdom';
 import type {
-  ChatFormFieldValues,
   ChatFormSubmitDetail,
   ChatLinkClickDetail,
   ChatMessage,
@@ -17,6 +16,7 @@ import type {
   TodoActionDetail,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
+import { createFormSubmitDetail, createTodoActionDetail } from '../message-events.js';
 import { renderMarkdown, sanitizeHtml } from '../renderers/markdown-renderer.js';
 import { partRendererRegistry } from '../renderers/part-registry.js';
 import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
@@ -93,26 +93,19 @@ export class ChatMessageElement extends LitElement {
    */
   private _onFormSubmit = (e: Event): void => {
     if (!this.message) return;
-    const ev = e as CustomEvent<
-      Partial<ChatFormSubmitDetail> & {
-        formId: string;
-        title: string;
-        values: ChatFormFieldValues;
-      }
-    >;
+    const ev = e as CustomEvent<Partial<ChatFormSubmitDetail>>;
     // Our own re-dispatch — let it bubble (already has message / messageId).
     if (ev.detail?.messageId != null) return;
 
     if (!this._isEmbeddedEvent(e, 'I-CHAT-FORM')) return;
 
     e.stopPropagation();
-    const detail: ChatFormSubmitDetail = {
+    if (!ev.detail?.formId || !ev.detail.values) return;
+    const detail = createFormSubmitDetail(this.message, {
       formId: ev.detail.formId,
-      title: ev.detail.title ?? '',
+      title: ev.detail.title,
       values: ev.detail.values,
-      messageId: this.message.id,
-      message: this.message,
-    };
+    });
     this.dispatchEvent(
       new CustomEvent<ChatFormSubmitDetail>('form-submit', {
         detail,
@@ -134,15 +127,7 @@ export class ChatMessageElement extends LitElement {
     if (!this._isEmbeddedEvent(e, 'I-CHAT-TODO')) return;
 
     e.stopPropagation();
-    const detail: TodoActionDetail = {
-      action: ev.detail.action,
-      itemId: ev.detail.itemId,
-      previousStatus: ev.detail.previousStatus,
-      status: ev.detail.status,
-      part: ev.detail.part,
-      messageId: this.message.id,
-      message: this.message,
-    };
+    const detail = createTodoActionDetail(this.message, ev.detail);
     this.dispatchEvent(
       new CustomEvent<TodoActionDetail>('todo-action', {
         detail,

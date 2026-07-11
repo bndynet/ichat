@@ -25,6 +25,7 @@ export type {
   MessagePart,
   PartBase,
   PartStatus,
+  BuiltInMessagePartType,
   TaskStatus,
   TextPart,
   ReasoningPart,
@@ -54,11 +55,21 @@ export type {
 } from '@bndynet/ichat-messages';
 export {
   DEFAULT_CONFIG,
+  BUILT_IN_MESSAGE_PART_TYPES,
   getMessageText,
+  isBuiltInMessagePartType,
+  isCustomMessagePartType,
   textPart,
   reasoningPart,
   todoPart,
   nextPartId,
+  areTodoItemsTerminal,
+  isTerminalTodoItem,
+  patchTodoItemInPart,
+  getTodoInitialExpanded,
+  shouldInitializeTodoExpansion,
+  createFormSubmitDetail,
+  createTodoActionDetail,
   rendererRegistry,
   partRendererRegistry,
   StreamingController,
@@ -70,6 +81,12 @@ export {
   CHAT_LABELS_EN,
   CHAT_LABELS_ZH_CN,
   formatAssistantDurationMs,
+} from '@bndynet/ichat-messages';
+export type {
+  TodoPatchFailureReason,
+  TodoPatchResult,
+  ChatFormSubmitRequestDetail,
+  TodoActionRequestDetail,
 } from '@bndynet/ichat-messages';
 export { ChatInput } from '@bndynet/ichat-input';
 export { ChatMessages, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';

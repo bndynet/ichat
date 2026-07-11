@@ -182,6 +182,28 @@ export type MessagePart =
   | TodoPart
   | CustomPart;
 
+/** Runtime list of first-class message part types rendered by the library. */
+export const BUILT_IN_MESSAGE_PART_TYPES = [
+  'text',
+  'reasoning',
+  'tool-call',
+  'todo',
+  'file',
+  'source',
+] as const;
+
+export type BuiltInMessagePartType = (typeof BUILT_IN_MESSAGE_PART_TYPES)[number];
+
+/** Return true for library-owned part types. Host extensions use `x-*`. */
+export function isBuiltInMessagePartType(type: string): type is BuiltInMessagePartType {
+  return (BUILT_IN_MESSAGE_PART_TYPES as readonly string[]).includes(type);
+}
+
+/** Return true for host-defined extension part types. */
+export function isCustomMessagePartType(type: string): type is `x-${string}` {
+  return type.startsWith('x-');
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatMessageRole;

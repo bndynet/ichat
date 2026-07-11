@@ -10,6 +10,7 @@ import type {
   ToolCallPart,
 } from '../types.js';
 import { DEFAULT_CONFIG, textPart } from '../types.js';
+import { patchTodoItemInPart } from '../todo-state.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
@@ -329,29 +330,10 @@ export class ChatMessages extends LitElement {
     );
     if (!part) return false;
 
-    const currentRevision = Number.isFinite(part.revision) ? part.revision : 0;
-    if (revision != null && revision <= currentRevision) return false;
+    const result = patchTodoItemInPart(part, itemId, patch, revision);
+    if (!result.ok) return false;
 
-    const itemIndex = part.items.findIndex((item) => item.id === itemId);
-    if (itemIndex < 0) return false;
-
-    const items = part.items.map((item, index) =>
-      index === itemIndex ? { ...item, ...patch, id: item.id } : item
-    );
-    const allTerminal =
-      items.length > 0 &&
-      items.every((item) => item.status === 'done' || item.status === 'skipped');
-    const status = allTerminal
-      ? 'complete'
-      : part.status === 'complete'
-        ? 'streaming'
-        : part.status;
-
-    this.updatePart(messageId, partId, {
-      items,
-      revision: revision ?? currentRevision + 1,
-      status,
-    } as Partial<TodoPart>);
+    this.updatePart(messageId, partId, result.part as Partial<TodoPart>);
     return true;
   }
 

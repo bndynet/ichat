@@ -34,6 +34,7 @@ export type {
   MessagePart,
   PartBase,
   PartStatus,
+  BuiltInMessagePartType,
   TaskStatus,
   TextPart,
   ReasoningPart,
@@ -51,13 +52,34 @@ export type {
   PartFactoryOptions,
 } from './types.js';
 export {
+  BUILT_IN_MESSAGE_PART_TYPES,
   DEFAULT_CONFIG,
   getMessageText,
+  isBuiltInMessagePartType,
+  isCustomMessagePartType,
   textPart,
   reasoningPart,
   todoPart,
   nextPartId,
 } from './types.js';
+export {
+  areTodoItemsTerminal,
+  isTerminalTodoItem,
+  patchTodoItemInPart,
+} from './todo-state.js';
+export type { TodoPatchFailureReason, TodoPatchResult } from './todo-state.js';
+export {
+  getTodoInitialExpanded,
+  shouldInitializeTodoExpansion,
+} from './todo-collapse.js';
+export {
+  createFormSubmitDetail,
+  createTodoActionDetail,
+} from './message-events.js';
+export type {
+  ChatFormSubmitRequestDetail,
+  TodoActionRequestDetail,
+} from './message-events.js';
 
 export {
   calendarDaysAgo,
