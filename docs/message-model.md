@@ -81,14 +81,17 @@ Append and patch parts by id instead of rewriting the whole message:
 |----------------------------------------------|-------------|
 | `appendPart(messageId, part)` | Push a new part (e.g. start a streaming `text` part, add a `tool-call`). |
 | `updatePart(messageId, partId, patch)` | Shallow-merge `patch` into the matching part (e.g. grow `text`, flip `status`). Keyed by `id`, so stateful elements survive. |
+| `tryUpdatePart(messageId, partId, patch)` | Validates and patches any message part, returning `{ ok, reason? }`. |
 | `tryUpdateToolCall(messageId, partId, patch)` | Validates and patches a `tool-call` part, returning `{ ok, reason? }`. |
 | `updateToolCall(messageId, partId, patch)` | Validated convenience wrapper for `tool-call` parts. |
 | `tryUpdateTodoItem(messageId, partId, itemId, patch, revision?)` | Immutably patches one todo item, returning `{ ok, reason? }`. |
 | `updateTodoItem(messageId, partId, itemId, patch, revision?)` | Immutably patches one todo item and ignores stale explicit revisions. |
+| `tryApplyMessagePartUpdateEvent(event)` | Normalizes a backend/SSE part update, then applies it with diagnostic failure reasons. |
+| `applyMessagePartUpdateEvent(event)` | Boolean wrapper around `tryApplyMessagePartUpdateEvent`. |
 | `tryApplyTodoItemUpdateEvent(event)` | Normalizes a backend/SSE todo item update, then applies it with diagnostic failure reasons. |
 | `applyTodoItemUpdateEvent(event)` | Normalizes a backend/SSE todo item update, then applies it through `updateTodoItem`. |
 
-The same part collection logic is exported as pure helpers for adapters and tests that manage `messages[]` outside the Web Component: `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, and `replaceMessagePart()`.
+The same part collection and backend-event logic is exported as pure helpers for adapters and tests that manage `messages[]` outside the Web Component: `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, `replaceMessagePart()`, `applyMessagePartUpdate()`, and `normalizeMessagePartUpdateEvent()`.
 
 ```javascript
 const id = 'a2';
@@ -104,3 +107,25 @@ for await (const chunk of stream) {
 chat.updatePart(id, 'body', { status: 'complete' });
 chat.updateMessage(id, { streaming: false });
 ```
+
+For backend/SSE updates that target a whole part, use `message.part.updated` with a stable message id, part id, and patch. This works for text streaming, tool-call state, file/source metadata, and custom `x-*` part data. The normalizer rejects `id` / `type` changes so remote events cannot break keyed rendering.
+
+```json
+{
+  "type": "message.part.updated",
+  "messageId": "a2",
+  "partId": "body",
+  "patch": { "text": "Streaming text", "status": "streaming" }
+}
+```
+
+```javascript
+source.addEventListener('message.part.updated', (event) => {
+  const result = chat.tryApplyMessagePartUpdateEvent(event);
+  if (!result.ok) {
+    console.warn('Part update ignored:', result.reason);
+  }
+});
+```
+
+Use the dedicated `todo.item.updated` event for todo item status/title/description changes because it also handles item ids and revision ordering.

@@ -13,15 +13,19 @@ import { isTodoPart, isToolCallPart } from '../part-guards.js';
 import { patchTodoItem, normalizeTodoItemUpdateEvent } from '../todo-state.js';
 import { patchToolCallPart } from '../tool-call-state.js';
 import {
+  applyMessagePartUpdate,
   appendMessagePart,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
 } from '../message-part-state.js';
+import { normalizeMessagePartUpdateEvent } from '../message-part-events.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { TimelineStatus } from '../renderers/timeline-plugin.js';
 import type {
+  MessagePartUpdateEventResult,
+  MessagePartUpdateResult,
   TodoItemUpdateEventResult,
   TodoItemUpdateResult,
   ToolCallUpdateResult,
@@ -311,6 +315,24 @@ export class ChatMessages extends LitElement {
   }
 
   /**
+   * Patch any message part and return a diagnostic result when the update is
+   * ignored. Tool-call parts keep their stricter state validation.
+   */
+  tryUpdatePart(
+    messageId: string,
+    partId: string,
+    patch: Partial<MessagePart>
+  ): MessagePartUpdateResult {
+    const result = applyMessagePartUpdate(this.messages, { messageId, partId, patch });
+    if (!result.ok) {
+      return { ok: false, reason: result.reason, part: result.part };
+    }
+
+    this.messages = result.messages;
+    return { ok: true, part: result.part };
+  }
+
+  /**
    * Patch a `tool-call` part and return a diagnostic result when the update is
    * ignored (missing message/part, wrong part type, invalid state, etc.).
    */
@@ -418,6 +440,38 @@ export class ChatMessages extends LitElement {
    */
   applyTodoItemUpdateEvent(event: unknown): boolean {
     return this.tryApplyTodoItemUpdateEvent(event).ok;
+  }
+
+  /**
+   * Apply a backend/SSE message part update and return a diagnostic result when
+   * it is ignored. Use this for text streaming, tool-call state, file/source
+   * metadata, and custom `x-*` part patches.
+   */
+  tryApplyMessagePartUpdateEvent(event: unknown): MessagePartUpdateEventResult {
+    const result = normalizeMessagePartUpdateEvent(event);
+    if (!result.ok) return { ok: false, reason: result.reason };
+
+    const update = this.tryUpdatePart(
+      result.update.messageId,
+      result.update.partId,
+      result.update.patch
+    );
+    if (!update.ok) {
+      return {
+        ok: false,
+        reason: update.reason,
+        update: result.update,
+        part: update.part,
+      };
+    }
+    return { ok: true, update: result.update, part: update.part };
+  }
+
+  /**
+   * Boolean compatibility wrapper around {@link tryApplyMessagePartUpdateEvent}.
+   */
+  applyMessagePartUpdateEvent(event: unknown): boolean {
+    return this.tryApplyMessagePartUpdateEvent(event).ok;
   }
 
   removeMessage(id: string): void {

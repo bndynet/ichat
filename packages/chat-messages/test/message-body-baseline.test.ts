@@ -38,10 +38,12 @@ import {
 import { patchToolCallPart } from '../src/tool-call-state.js';
 import {
   appendMessagePart,
+  applyMessagePartUpdate,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
 } from '../src/message-part-state.js';
+import { normalizeMessagePartUpdateEvent } from '../src/message-part-events.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -179,6 +181,154 @@ test('message part collection helpers update parts immutably without the DOM', (
   assert.equal(missingPart.ok, false);
   if (!missingPart.ok) {
     assert.equal(missingPart.reason, 'part-not-found');
+  }
+});
+
+test('message part update event normalization supports generic backend patches', () => {
+  const objectUpdate = normalizeMessagePartUpdateEvent({
+    type: 'message.part.updated',
+    messageId: 'assistant-42',
+    partId: 'body',
+    patch: { text: 'Hello world', status: 'complete' },
+  });
+  assert.equal(objectUpdate.ok, true);
+  assert.deepEqual(objectUpdate.update, {
+    messageId: 'assistant-42',
+    partId: 'body',
+    patch: { text: 'Hello world', status: 'complete' },
+  });
+
+  const stringUpdate = normalizeMessagePartUpdateEvent(
+    JSON.stringify({
+      messageId: 'assistant-42',
+      partId: 'body',
+      text: 'Streaming text',
+    })
+  );
+  assert.equal(stringUpdate.ok, true);
+  assert.deepEqual(stringUpdate.update.patch, { text: 'Streaming text' });
+
+  const eventUpdate = normalizeMessagePartUpdateEvent({
+    type: 'message.part.updated',
+    data: JSON.stringify({
+      messageId: 'assistant-42',
+      partId: 'tool-1',
+      patch: { state: 'executing' },
+    }),
+  });
+  assert.equal(eventUpdate.ok, true);
+  assert.deepEqual(eventUpdate.update.patch, { state: 'executing' });
+
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({ type: 'todo.item.updated' }),
+    { ok: false, reason: 'invalid-event' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'body',
+      patch: [],
+    }),
+    { ok: false, reason: 'invalid-patch' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'body',
+      patch: {},
+    }),
+    { ok: false, reason: 'empty-patch' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'body',
+      patch: { id: 'new-id' },
+    }),
+    { ok: false, reason: 'part-id-change-not-allowed' }
+  );
+  assert.deepEqual(
+    normalizeMessagePartUpdateEvent({
+      messageId: 'assistant-42',
+      partId: 'body',
+      patch: { type: 'file' },
+    }),
+    { ok: false, reason: 'part-type-change-not-allowed' }
+  );
+});
+
+test('generic message part updates apply validated patches immutably', () => {
+  const messages: ChatMessage[] = [
+    {
+      id: 'm-1',
+      role: 'assistant',
+      parts: [
+        textPart('Hello', { id: 'body', status: 'streaming' }),
+        {
+          type: 'tool-call',
+          id: 'tool-1',
+          toolCallId: 'call-1',
+          toolName: 'search',
+          state: 'input-available',
+        },
+        {
+          type: 'x-weather',
+          id: 'custom-1',
+          data: { temp: 21 },
+        },
+      ],
+    },
+  ];
+
+  const textUpdate = applyMessagePartUpdate(messages, {
+    messageId: 'm-1',
+    partId: 'body',
+    patch: { text: 'Updated', status: 'complete' },
+  });
+  assert.equal(textUpdate.ok, true);
+  assert.equal(textUpdate.part.type, 'text');
+  if (textUpdate.part.type === 'text') {
+    assert.equal(textUpdate.part.text, 'Updated');
+    assert.equal(textUpdate.part.status, 'complete');
+  }
+  assert.equal(messages[0].parts[0].status, 'streaming');
+  assert.notEqual(textUpdate.messages, messages);
+
+  const toolUpdate = applyMessagePartUpdate(textUpdate.messages, {
+    messageId: 'm-1',
+    partId: 'tool-1',
+    patch: { state: 'executing', id: 'ignored-at-runtime' } as Partial<MessagePart>,
+  });
+  assert.equal(toolUpdate.ok, true);
+  assert.equal(toolUpdate.part.id, 'tool-1');
+  assert.equal((toolUpdate.part as ToolCallPart).state, 'executing');
+
+  const customUpdate = applyMessagePartUpdate(toolUpdate.messages, {
+    messageId: 'm-1',
+    partId: 'custom-1',
+    patch: { data: { temp: 23 } } as Partial<MessagePart>,
+  });
+  assert.equal(customUpdate.ok, true);
+  assert.deepEqual((customUpdate.part as { data: unknown }).data, { temp: 23 });
+
+  const invalidToolState = applyMessagePartUpdate(messages, {
+    messageId: 'm-1',
+    partId: 'tool-1',
+    patch: { state: 'waiting' } as Partial<MessagePart>,
+  });
+  assert.equal(invalidToolState.ok, false);
+  if (!invalidToolState.ok) {
+    assert.equal(invalidToolState.reason, 'invalid-state');
+  }
+
+  const invalidText = applyMessagePartUpdate(messages, {
+    messageId: 'm-1',
+    partId: 'body',
+    patch: { text: 42 } as Partial<MessagePart>,
+  });
+  assert.equal(invalidText.ok, false);
+  if (!invalidText.ok) {
+    assert.equal(invalidText.reason, 'invalid-part');
   }
 });
 

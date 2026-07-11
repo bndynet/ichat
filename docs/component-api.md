@@ -21,7 +21,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
 | `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
 
-**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `updatePart`, `tryUpdateToolCall`, `updateToolCall`, `tryUpdateTodoItem`, `updateTodoItem`, `tryApplyTodoItemUpdateEvent`, `applyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
+**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `tryUpdatePart`, `updatePart`, `tryUpdateToolCall`, `updateToolCall`, `tryUpdateTodoItem`, `updateTodoItem`, `tryApplyMessagePartUpdateEvent`, `applyMessagePartUpdateEvent`, `tryApplyTodoItemUpdateEvent`, `applyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateTimeline`, `addErrorMessage`, `registerRenderer`, `createStreamingController`, `focusInput`
 
 **Events on `<i-chat>`:**
 
@@ -66,7 +66,7 @@ chat.addEventListener('part-action', (event) => {
 });
 ```
 
-The older `updateTodoItem()`, `updateToolCall()`, and `applyTodoItemUpdateEvent()` methods still return `boolean` for compatibility. Use the `try*` variants when the host needs a failure reason such as `message-not-found`, `part-not-found`, `part-type-mismatch`, `stale-revision`, `invalid-status`, or `invalid-state`.
+The older `updateTodoItem()`, `updateToolCall()`, `applyMessagePartUpdateEvent()`, and `applyTodoItemUpdateEvent()` methods return `boolean` for compatibility. Use the `try*` variants when the host needs a failure reason such as `message-not-found`, `part-not-found`, `part-type-mismatch`, `stale-revision`, `invalid-status`, or `invalid-state`.
 
 ### Link clicks and protocols
 

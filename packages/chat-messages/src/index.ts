@@ -101,17 +101,29 @@ export type {
 } from './tool-call-state.js';
 export {
   appendMessagePart,
+  applyMessagePartUpdate,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
 } from './message-part-state.js';
 export type {
+  MessagePartUpdateApplyResult,
   MessagePartLookupFailureReason,
   MessagePartLookupResult,
   MessagePartPatchResult,
   MessagePartReplaceResult,
 } from './message-part-state.js';
+export { normalizeMessagePartUpdateEvent } from './message-part-events.js';
 export type {
+  MessagePartUpdate,
+  MessagePartUpdateNormalizeFailureReason,
+  MessagePartUpdateNormalizeResult,
+} from './message-part-events.js';
+export type {
+  MessagePartUpdateEventFailureReason,
+  MessagePartUpdateEventResult,
+  MessagePartUpdateFailureReason,
+  MessagePartUpdateResult,
   PartLookupFailureReason,
   TodoItemUpdateEventFailureReason,
   TodoItemUpdateEventResult,

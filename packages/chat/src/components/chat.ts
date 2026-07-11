@@ -195,6 +195,15 @@ export class Chat extends LitElement {
     this._messages.updatePart(messageId, partId, patch);
   }
 
+  /** Patch any message part and return a diagnostic result. */
+  tryUpdatePart(
+    messageId: string,
+    partId: string,
+    patch: Parameters<ChatMessages['tryUpdatePart']>[2]
+  ): ReturnType<ChatMessages['tryUpdatePart']> {
+    return this._messages.tryUpdatePart(messageId, partId, patch);
+  }
+
   /** Patch a `tool-call` part and return a diagnostic result. */
   tryUpdateToolCall(
     messageId: string,
@@ -245,6 +254,20 @@ export class Chat extends LitElement {
   /** Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}. */
   applyTodoItemUpdateEvent(event: Parameters<ChatMessages['applyTodoItemUpdateEvent']>[0]): boolean {
     return this._messages.applyTodoItemUpdateEvent(event);
+  }
+
+  /** Apply a backend/SSE message part update and return a diagnostic result. */
+  tryApplyMessagePartUpdateEvent(
+    event: Parameters<ChatMessages['tryApplyMessagePartUpdateEvent']>[0]
+  ): ReturnType<ChatMessages['tryApplyMessagePartUpdateEvent']> {
+    return this._messages.tryApplyMessagePartUpdateEvent(event);
+  }
+
+  /** Boolean compatibility wrapper around {@link tryApplyMessagePartUpdateEvent}. */
+  applyMessagePartUpdateEvent(
+    event: Parameters<ChatMessages['applyMessagePartUpdateEvent']>[0]
+  ): boolean {
+    return this._messages.applyMessagePartUpdateEvent(event);
   }
 
   removeMessage(id: string): void {
