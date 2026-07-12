@@ -175,10 +175,12 @@ export class Chat extends LitElement {
 
   addMessage(message: ChatMessage): void {
     this._messages.addMessage(message);
+    this._syncStreamingFromMessage(message);
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
     this._messages.updateMessage(id, partial);
+    this._syncStreamingFromMessage(partial);
   }
 
   /** Append a structured body part to a message. */
@@ -429,6 +431,7 @@ export class Chat extends LitElement {
 
   private _handleSend(e: CustomEvent<{ content: string }>): void {
     e.stopPropagation();
+    if (this.disabled || this._streaming || this._activeConfirmation) return;
     this.dispatchEvent(
       new CustomEvent('send', {
         detail: e.detail,
@@ -448,12 +451,22 @@ export class Chat extends LitElement {
     );
   }
 
+  private _setStreamingState(streaming: boolean): void {
+    this._streaming = streaming;
+    if (this._input) {
+      this._input.streaming = streaming;
+    }
+  }
+
+  private _syncStreamingFromMessage(message: Partial<ChatMessage>): void {
+    if (message.streaming === true && !message.error) {
+      this._setStreamingState(true);
+    }
+  }
+
   private _handleStreamingChange(e: CustomEvent<{ streaming: boolean }>): void {
     e.stopPropagation();
-    this._streaming = e.detail.streaming;
-    if (this._input) {
-      this._input.streaming = this._streaming;
-    }
+    this._setStreamingState(e.detail.streaming);
     this.dispatchEvent(
       new CustomEvent('streaming-change', {
         detail: e.detail,
@@ -671,7 +684,12 @@ export class Chat extends LitElement {
         ${confirmation
           ? this._renderConfirmation(confirmation)
           : html`
-              <slot name="input" @slotchange=${this._handleInputSlotChange}></slot>
+              <slot
+                name="input"
+                @slotchange=${this._handleInputSlotChange}
+                @send=${this._handleSend}
+                @cancel=${this._handleCancel}
+              ></slot>
               ${this._hasCustomInput
                 ? nothing
                 : html`

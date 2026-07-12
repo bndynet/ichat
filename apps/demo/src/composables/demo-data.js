@@ -294,17 +294,26 @@ function playEvents(chatRef, messageId, events) {
 
 function responseThinking(chatRef) {
   const chat = chatRef.value;
-  setTimeout(() => {
-    const aiId = nextId();
-    chat.addMessage({
-      id: aiId,
-      role: 'assistant',
-      parts: [reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' })],
-      streaming: true,
-      timestamp: Date.now(),
-    });
+  const aiId = nextId();
+  chat.addMessage({
+    id: aiId,
+    role: 'assistant',
+    parts: [reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' })],
+    streaming: true,
+    timestamp: Date.now(),
+  });
+
+  const startTimer = setTimeout(() => {
+    if (cancelStream !== cancelBeforeStart) return;
+    cancelStream = null;
     playEvents(chatRef, aiId, thinkingDemoEvents);
   }, 400);
+
+  const cancelBeforeStart = () => {
+    clearTimeout(startTimer);
+    if (cancelStream === cancelBeforeStart) cancelStream = null;
+  };
+  cancelStream = cancelBeforeStart;
 }
 
 /** Add any message (self / peer / assistant / reasoning / streaming flags). */
@@ -352,8 +361,9 @@ export function reply(chatRef, question) {
       timestamp: Date.now(),
       streaming: false,
     });
-    return;
+    return false;
   }
 
   responseThinking(chatRef);
+  return true;
 }

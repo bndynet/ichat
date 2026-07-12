@@ -1,25 +1,30 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue';
+import { computed, ref, nextTick, onMounted } from 'vue';
 import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
 import '@bndynet/ichat';
-import { reply } from '../../composables/demo-data.js';
+import { cancelPendingStreamPlayback, reply } from '../../composables/demo-data.js';
 
 const draft = ref('');
 const model = ref('');
+const inputRootRef = ref(null);
 const textareaRef = ref(null);
 const streamingUi = ref(false);
+const requestPending = ref(false);
 const chatRef = ref(null);
+const composerBusy = computed(() => streamingUi.value || requestPending.value);
 
 function onStreamingChange(e) {
   streamingUi.value = e.detail.streaming;
+  requestPending.value = false;
 }
 
 function emitSendToHost() {
   const content = draft.value.trim();
-  if (!content) return;
-  const host = chatRef.value;
-  if (!host) return;
-  host.dispatchEvent(
+  if (!content || composerBusy.value) return;
+  const inputRoot = inputRootRef.value;
+  if (!inputRoot) return;
+  requestPending.value = true;
+  inputRoot.dispatchEvent(
     new CustomEvent('send', {
       bubbles: true,
       composed: true,
@@ -30,6 +35,7 @@ function emitSendToHost() {
 }
 
 function handleCancel() {
+  cancelPendingStreamPlayback();
   chatRef.value.cancel('*— Response stopped —*');
 }
 
@@ -41,7 +47,8 @@ function onAttachDemo() {
 
 function handleSend(e) {
   const content = e.detail.content;
-  reply(chatRef, content);
+  const willStream = reply(chatRef, content);
+  if (!willStream) requestPending.value = false;
 }
 
 function onModelChange(e) {
@@ -60,13 +67,14 @@ onMounted(async () => {
     @send="handleSend"
   >
     <!-- Replace default i-chat-input: bottom-left actions = any Vue components -->
-    <div slot="input" class="slots-input">
+    <div ref="inputRootRef" slot="input" class="slots-input">
       <textarea
         ref="textareaRef"
         v-model="draft"
         class="slots-input-textarea"
         placeholder="Say hi…"
         rows="1"
+        :disabled="composerBusy"
         @keydown.enter.exact.prevent="emitSendToHost"
       />
       <div class="slots-input-toolbar">
@@ -101,7 +109,7 @@ onMounted(async () => {
         </div>
         <div class="slots-input-end">
           <el-button
-            v-if="streamingUi"
+            v-if="composerBusy"
             size="small"
             type="warning"
             @click="handleCancel"
@@ -109,6 +117,7 @@ onMounted(async () => {
             Stop
           </el-button>
           <el-button
+            v-else
             size="small"
             type="primary"
             :icon="Promotion"

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue';
-import { reply, nextId } from '../composables/demo-data.js';
+import { cancelPendingStreamPlayback, reply, nextId } from '../composables/demo-data.js';
 import '@bndynet/ichat';
 import { textPart, reasoningPart, getMessageText, makeDaysAgo } from '@bndynet/ichat';
 import ChatToolbar from '../components/ChatToolbar.vue';
@@ -210,6 +210,7 @@ function handleSend(e) {
 }
 
 function handleCancel() {
+  cancelPendingStreamPlayback();
   chatRef.value.cancel('*— Response stopped —*');
 }
 
