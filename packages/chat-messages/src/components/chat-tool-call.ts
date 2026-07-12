@@ -6,6 +6,7 @@ import type { ToolCallLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { isAllowedLinkHref } from '../link-protocols.js';
+import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-tool-call.scss';
 
 /** Map the tool-call state to a coarse visual status used for theming. */
@@ -95,27 +96,15 @@ export class ChatToolCall extends LitElement {
 
   private _renderIcon(status: 'pending' | 'running' | 'success' | 'error') {
     if (status === 'running') {
-      return html`<span class="tc__icon tc__icon--running"
-        ><svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-          <path d="M12 3a9 9 0 1 0 9 9" /></svg
-      ></span>`;
+      return html`<span class="tc__icon tc__icon--running">${chatIcons.spinner({ className: 'spin' })}</span>`;
     }
     if (status === 'success') {
-      return html`<span class="tc__icon tc__icon--success"
-        ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12" /></svg
-      ></span>`;
+      return html`<span class="tc__icon tc__icon--success">${chatIcons.check()}</span>`;
     }
     if (status === 'error') {
-      return html`<span class="tc__icon tc__icon--error"
-        ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-          <path d="M6 6l12 12M18 6L6 18" /></svg
-      ></span>`;
+      return html`<span class="tc__icon tc__icon--error">${chatIcons.x()}</span>`;
     }
-    return html`<span class="tc__icon tc__icon--pending"
-      ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-        <circle cx="12" cy="12" r="8" /></svg
-    ></span>`;
+    return html`<span class="tc__icon tc__icon--pending">${chatIcons.circle()}</span>`;
   }
 
   private _renderResultPart(part: MessagePart) {
@@ -161,7 +150,7 @@ export class ChatToolCall extends LitElement {
             ${stateLabel(tc.state, labels)}${tc.durationMs != null ? ` · ${formatDuration(tc.durationMs)}` : ''}
           </span>
           <span class="tc__chevron">
-            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor" /></svg>
+            ${chatIcons.chevronDown({ size: 14, strokeWidth: 2.4 })}
           </span>
         </summary>
         <div class="tc__body">
@@ -190,10 +179,10 @@ export class ChatToolCall extends LitElement {
               </div>`
             : nothing}
           ${tc.approval === 'approved'
-            ? html`<div class="tc__approval-state">✓ ${labels.approved}</div>`
+            ? html`<div class="tc__approval-state">${chatIcons.check({ className: 'tc__approval-icon', size: 14 })} ${labels.approved}</div>`
             : nothing}
           ${tc.approval === 'rejected'
-            ? html`<div class="tc__approval-state">✗ ${labels.rejected}</div>`
+            ? html`<div class="tc__approval-state">${chatIcons.x({ className: 'tc__approval-icon', size: 14 })} ${labels.rejected}</div>`
             : nothing}
         </div>
       </details>

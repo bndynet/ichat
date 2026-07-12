@@ -13,6 +13,7 @@ import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline
 import { StreamingController } from '../controllers/streaming-controller.js';
 import { calendarDaysAgo } from '../date-separator.js';
 import { formatAssistantDurationMs } from '../duration-format.js';
+import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-part-host.js';
@@ -449,9 +450,7 @@ export class ChatMessageElement extends LitElement {
           ${error
             ? html`<div class="bubble bubble--error">
                 <div class="error-indicator">
-                  <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
-                  </svg>
+                  ${chatIcons.errorCircleFilled({ className: 'error-icon' })}
                   <span class="error-text">${error}</span>
                 </div>
               </div>`

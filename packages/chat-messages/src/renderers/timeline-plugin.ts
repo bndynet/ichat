@@ -2,6 +2,7 @@ import type MarkdownIt from 'markdown-it';
 import type { RenderRule } from 'markdown-it/lib/renderer.mjs';
 import type Token from 'markdown-it/lib/token.mjs';
 import type { TaskStatus } from '../types.js';
+import { chatIconStrings } from '../icons.js';
 
 // ── Status types & constants ────────────────────────────────────────
 
@@ -24,11 +25,11 @@ const STATUS_ALIAS: Record<string, TimelineStatus> = {
 };
 
 const ICONS: Record<TimelineStatus, string> = {
-  done: '<svg viewBox="0 0 16 16" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5L6.5 11.5L12.5 4.5"/></svg>',
+  done: chatIconStrings.timelineDone,
   active: '',
-  error: '<svg viewBox="0 0 16 16" width="8" height="8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 4L12 12M12 4L4 12"/></svg>',
+  error: chatIconStrings.timelineError,
   pending: '',
-  skipped: '<svg viewBox="0 0 16 16" width="8" height="8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 8H12"/></svg>',
+  skipped: chatIconStrings.timelineSkipped,
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────

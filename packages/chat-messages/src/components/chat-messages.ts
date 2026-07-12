@@ -30,6 +30,7 @@ import type {
   TodoItemUpdateResult,
   ToolCallUpdateResult,
 } from '../update-results.js';
+import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
@@ -666,18 +667,14 @@ export class ChatMessages extends LitElement {
       <div class="chat-messages-wrapper">
         ${this._errorBanner
           ? html`<div class="error-banner" role="alert">
-              <svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-              </svg>
+              ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}
               <span class="error-banner-text">${this._errorBanner}</span>
               <button
                 class="error-banner-dismiss"
                 @click=${() => this.dismissError()}
                 aria-label=${labels.messages.dismissError}
               >
-                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
-                </svg>
+                ${chatIcons.x({ size: 14, strokeWidth: 2.4 })}
               </button>
             </div>`
           : ''}
@@ -737,9 +734,7 @@ export class ChatMessages extends LitElement {
                 @click=${this._handleScrollToBottom}
                 aria-label=${labels.messages.scrollToLatest}
               >
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path d="M7 10l5 5 5-5z" fill="currentColor"/>
-                </svg>
+                ${chatIcons.chevronDown({ size: 20, strokeWidth: 2.4 })}
               </button>
             `
           : ''}

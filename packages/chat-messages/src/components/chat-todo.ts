@@ -5,6 +5,7 @@ import type { TodoLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import type { TodoActionRequestDetail } from '../message-events.js';
 import { getTodoInitialExpanded, shouldInitializeTodoExpansion } from '../todo-collapse.js';
+import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-todo.scss';
 
 const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
@@ -75,30 +76,16 @@ export class ChatTodo extends LitElement {
   private _renderStatusIcon(status: TodoItemStatus) {
     switch (status) {
       case 'active':
-        return html`<svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="10" cy="10" r="7.5"></circle>
-          <path d="M7 10h6m-2.5-2.5L13 10l-2.5 2.5"></path>
-        </svg>`;
+        return chatIcons.todoActive();
       case 'done':
-        return html`<svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="10" cy="10" r="7.5"></circle>
-          <path d="m6.5 10 2.2 2.2 4.8-4.8"></path>
-        </svg>`;
+        return chatIcons.todoDone();
       case 'error':
-        return html`<svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="10" cy="10" r="7.5"></circle>
-          <path d="m7.5 7.5 5 5m0-5-5 5"></path>
-        </svg>`;
+        return chatIcons.todoError();
       case 'skipped':
-        return html`<svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="10" cy="10" r="7.5"></circle>
-          <path d="M7 10h6"></path>
-        </svg>`;
+        return chatIcons.todoSkipped();
       case 'pending':
       default:
-        return html`<svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle class="todo__pending-circle" cx="10" cy="10" r="7.5"></circle>
-        </svg>`;
+        return chatIcons.todoPending();
     }
   }
 
@@ -117,12 +104,7 @@ export class ChatTodo extends LitElement {
           aria-label=${this._expanded ? labels.collapse : labels.expand}
         >
           <span class="todo__heading-icon" aria-hidden="true">
-            <svg viewBox="0 0 20 20">
-              <circle cx="4" cy="5" r="1.25"></circle>
-              <circle cx="4" cy="10" r="1.25"></circle>
-              <circle cx="4" cy="15" r="1.25"></circle>
-              <path d="M8 5h8M8 10h8M8 15h8"></path>
-            </svg>
+            ${chatIcons.todoList()}
           </span>
           <span class="todo__title">${part.title ?? labels.title} ${part.items.length}</span>
           <span class="todo__progress">${labels.progress(completed, part.items.length)}</span>
@@ -130,9 +112,7 @@ export class ChatTodo extends LitElement {
             class="todo__toggle"
             title=${this._expanded ? labels.collapse : labels.expand}
           >
-            <svg class="todo__chevron" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="m8 5 5 5-5 5"></path>
-            </svg>
+            ${chatIcons.chevronRight({ className: 'todo__chevron', size: 18, strokeWidth: 2.2 })}
           </span>
         </summary>
 

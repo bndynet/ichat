@@ -193,7 +193,14 @@ pre.tc__code {
 }
 
 .tc__approval-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-top: 10px;
   font-size: 0.78rem;
   color: var(--_tc-secondary);
+}
+
+.tc__approval-icon {
+  flex-shrink: 0;
 }

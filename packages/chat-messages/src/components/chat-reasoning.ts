@@ -5,6 +5,7 @@ import type { ReasoningLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdownInto } from '../renderers/markdown-morph.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
+import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-reasoning.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 
@@ -106,7 +107,7 @@ export class ChatReasoning extends LitElement {
         >
           ${this.headerHtml
             ? html`<span class="reasoning-header-custom ${isThinking ? 'is-thinking' : ''}">${unsafeHTML(this.headerHtml)}</span>`
-            : html`<span class="reasoning-icon">💭</span>
+            : html`<span class="reasoning-icon">${chatIcons.lightbulb({ size: 16, strokeWidth: 2 })}</span>
               <span class="reasoning-title">
                 ${isThinking
                   ? (this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking)
@@ -120,7 +121,7 @@ export class ChatReasoning extends LitElement {
                   : nothing}
               </span>`}
           <span class="reasoning-chevron ${bodyOpen ? 'expanded' : ''}">
-            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            ${chatIcons.chevronDown({ size: 16, strokeWidth: 2.4 })}
           </span>
         </div>
         <div class="reasoning-content ${bodyOpen ? 'open' : ''}">

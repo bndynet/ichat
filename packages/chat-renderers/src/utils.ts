@@ -2,6 +2,8 @@
  * Escapes HTML special characters to prevent XSS when inserting raw strings
  * into HTML attributes or text nodes.
  */
+import { rendererIcons } from './icons.js';
+
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -25,11 +27,6 @@ export interface RendererOptions {
    */
   codeToggle?: boolean;
 }
-
-// ── SVG icons for the toggle button ──────────────────────────────────────────
-
-const CODE_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
-const EYE_ICON  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
 // ── <i-chat-code-toggle> custom element ─────────────────────────────────────────
 
@@ -148,7 +145,7 @@ class ChatCodeToggle extends HTMLElement {
     btn.type = 'button';
     btn.title = 'View source';
     btn.setAttribute('aria-label', 'View source');
-    btn.innerHTML = CODE_ICON;
+    btn.innerHTML = rendererIcons.code;
 
     btn.addEventListener('click', () => {
       const isCode = this.getAttribute('data-view') === 'code';
@@ -157,7 +154,7 @@ class ChatCodeToggle extends HTMLElement {
         this.removeAttribute('data-view');
         btn.title = 'View source';
         btn.setAttribute('aria-label', 'View source');
-        btn.innerHTML = CODE_ICON;
+        btn.innerHTML = rendererIcons.code;
       } else {
         // Snapshot the rendered height before hiding it, so the code panel
         // occupies exactly the same space — no layout jump on toggle.
@@ -165,7 +162,7 @@ class ChatCodeToggle extends HTMLElement {
         this.setAttribute('data-view', 'code');
         btn.title = 'View rendered';
         btn.setAttribute('aria-label', 'View rendered');
-        btn.innerHTML = EYE_ICON;
+        btn.innerHTML = rendererIcons.eye;
       }
     });
 

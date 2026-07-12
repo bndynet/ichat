@@ -1,5 +1,6 @@
 import type { BlockRenderer } from '@bndynet/ichat-messages';
 import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
+import { rendererIcons } from './icons.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -560,9 +561,7 @@ class ChatFormElement extends HTMLElement {
       <div class="chat-form chat-form--submitted">
         ${title ? `<h3 class="chat-form__title">${escapeHtml(title)}</h3>` : ''}
         <span class="chat-form__submitted-badge" role="status" aria-live="polite">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
+          ${rendererIcons.check}
         </span>
         <div class="chat-form__summary">${summaryRows}</div>
       </div>`;
