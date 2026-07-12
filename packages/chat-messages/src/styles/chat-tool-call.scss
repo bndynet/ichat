@@ -1,6 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
-@use 'chat-panel' as panel;
+@use 'chat-disclosure-panel' as disclosure;
 
 :host {
   display: block;
@@ -12,6 +12,11 @@
   --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
   --_tc-text: var(--chat-tool-text, var(--chat-text));
   --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary));
+  --_tc-header-bg: var(--chat-tool-header-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt})));
+  --_tc-header-hover-bg: var(
+    --chat-tool-header-hover-bg,
+    var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+  );
   --_tc-primary: var(--chat-tool-primary, var(--chat-primary));
   --_tc-success: var(--chat-tool-success, var(--chat-success));
   --_tc-error: var(--chat-tool-error, var(--chat-error));
@@ -21,10 +26,9 @@
 }
 
 .tc {
-  @include panel.surface(var(--_tc-bg), var(--_tc-border), var(--_tc-radius), var(--_tc-shadow));
+  @include disclosure.surface(var(--_tc-bg), var(--_tc-border), var(--_tc-radius), var(--_tc-shadow));
 
   margin: 0;
-  overflow: hidden;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});
 }
 
@@ -41,22 +45,15 @@
 }
 
 summary {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--chat-disclosure-header-height, 32px);
-  padding: 0 8px 0 10px;
-  cursor: pointer;
-  list-style: none;
+  @include disclosure.header(
+    $background: var(--_tc-header-bg),
+    $hover-background: var(--_tc-header-hover-bg),
+    $color: var(--_tc-text),
+    $focus-color: var(--_tc-primary)
+  );
+
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   font-weight: 600;
-  color: var(--_tc-text);
-  user-select: none;
-}
-
-summary::-webkit-details-marker {
-  display: none;
 }
 
 .tc__icon {
@@ -116,11 +113,9 @@ summary::-webkit-details-marker {
 }
 
 .tc__chevron {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  color: var(--_tc-secondary);
-  transition: transform 0.2s;
+  @include disclosure.chevron($color: var(--_tc-secondary), $svg-size: 14px);
+
+  margin-inline-start: 0;
 }
 
 details[open] .tc__chevron {
@@ -128,17 +123,25 @@ details[open] .tc__chevron {
 }
 
 .tc__body {
-  padding: 0 var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-md, #{$spacing-md});
-  font-size: var(--chat-font-size-sm, #{$font-size-sm});
-  color: var(--_tc-text);
+  @include disclosure.body(
+    $border: var(--_tc-border),
+    $background: var(--chat-tool-body-bg, var(--chat-disclosure-body-bg, transparent)),
+    $color: var(--_tc-text)
+  );
 }
 
 .tc__section {
-  margin: 10px 0 4px;
+  margin: 0 0 4px;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--_tc-secondary);
+}
+
+.tc__section + pre.tc__code,
+.tc__section + .tc__error,
+.tc__section + .tc__result-parts {
+  margin-bottom: 10px;
 }
 
 pre.tc__code {

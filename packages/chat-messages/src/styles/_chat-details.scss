@@ -1,18 +1,18 @@
 @use 'variables' as *;
-@use 'chat-panel' as panel;
+@use 'chat-disclosure-panel' as disclosure;
 
 // ── CSS custom property defaults (overridable on :host / ancestor) ────────────
 // --chat-details-bg            outer background    (default: --chat-panel-bg)
 // --chat-details-border        border color        (default: --chat-panel-border)
 // --chat-details-radius        border radius       (default: --chat-disclosure-radius)
 // --chat-details-shadow        box shadow          (default: --chat-panel-shadow)
-// --chat-details-summary-bg    summary background  (default: transparent)
-// --chat-details-body-bg       body background     (default: transparent)
+// --chat-details-summary-bg    summary background  (default: --chat-disclosure-header-bg)
+// --chat-details-body-bg       body background     (default: --chat-disclosure-body-bg)
 // --chat-details-chevron-color chevron icon color  (default: --chat-text-muted)
 
 @mixin styles {
   .chat-details {
-    @include panel.surface(
+    @include disclosure.surface(
       $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface))),
       $border: var(--chat-details-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))),
       $radius: var(--chat-details-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))),
@@ -22,41 +22,24 @@
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
     color: var(--chat-details-text, var(--chat-text, #{$color-text}));
     font-size: var(--chat-font-size-sm, #{$font-size-sm});
-    overflow: hidden;
   }
 
   // ── Summary (header / trigger) ──────────────────────────────────────────────
   .chat-details__summary {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    list-style: none;
-    min-height: var(--chat-disclosure-header-height, 32px);
+    @include disclosure.header(
+      $background: var(--chat-details-summary-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))),
+      $hover-background: var(--chat-details-summary-hover-bg, var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})),
+      $color: var(--chat-details-summary-text, var(--chat-details-text, var(--chat-text, #{$color-text}))),
+      $focus-color: var(--chat-primary, #{$color-primary})
+    );
 
-    padding: 0 8px 0 10px;
-    background: var(--chat-details-summary-bg, transparent);
     font-size: var(--chat-font-size-sm, #{$font-size-sm});
     font-weight: 600;
-    color: var(--chat-details-summary-text, var(--chat-details-text, var(--chat-text, #{$color-text})));
-    cursor: pointer;
-    user-select: none;
-    transition: background var(--chat-transition-fast, #{$transition-fast});
-
-    // Hide the browser's native disclosure triangle in all engines
-    &::-webkit-details-marker { display: none; }
-    &::marker { content: ''; display: none; }
 
     &:hover {
-      background: var(--chat-details-summary-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 4%, transparent));
-
       .chat-details__chevron {
         color: var(--chat-details-summary-text, var(--chat-details-text, var(--chat-text, #{$color-text})));
       }
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--chat-primary, #{$color-primary});
-      outline-offset: -2px;
     }
   }
 
@@ -68,22 +51,7 @@
   }
 
   .chat-details__chevron {
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    margin-inline-start: auto;
-    color: var(--chat-details-chevron-color, var(--chat-text-muted, #{$color-text-muted}));
-    transition:
-      color var(--chat-transition-fast, #{$transition-fast}),
-      transform var(--chat-transition-fast, #{$transition-fast});
-
-    svg {
-      display: block;
-      width: 18px;
-      height: 18px;
-    }
+    @include disclosure.chevron($color: var(--chat-details-chevron-color, var(--chat-text-muted, #{$color-text-muted})));
   }
 
   // Rotate chevron when the panel is open.
@@ -95,16 +63,15 @@
 
   // ── Body (collapsible content area) ──────────────────────────────────────────
   .chat-details__body {
-    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-md, #{$spacing-md});
-    background: var(--chat-details-body-bg, transparent);
-    border-top: 1px solid var(--chat-details-border, var(--chat-border, #{$color-border}));
-    color: var(--chat-details-text, var(--chat-text, #{$color-text}));
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
+    @include disclosure.body(
+      $border: var(--chat-details-border, var(--chat-border, #{$color-border})),
+      $background: var(--chat-details-body-bg, var(--chat-disclosure-body-bg, transparent)),
+      $color: var(--chat-details-text, var(--chat-text, #{$color-text}))
+    );
 
     animation: chat-details-open var(--chat-transition-fast, #{$transition-fast}) ease both;
 
-    > :first-child { margin-top: 0; }
-    > :last-child  { margin-bottom: 0; }
+    @include disclosure.trim-body-edges;
   }
 
   // ── Nested details ────────────────────────────────────────────────────────────

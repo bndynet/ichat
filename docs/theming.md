@@ -263,6 +263,9 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-primary-hover` | derived | Primary action hover color |
 | `--chat-panel-bg` | `= --chat-surface` | Shared embedded panel background |
 | `--chat-panel-border` | derived | Shared embedded panel border (mix of `--chat-border` and `--chat-surface`) |
+| `--chat-disclosure-header-bg` | `= --chat-surface-alt` | Shared header background for collapsible panels |
+| `--chat-disclosure-header-hover-bg` | subtly derived | Shared hover background for collapsible panel headers |
+| `--chat-disclosure-body-bg` | `transparent` | Shared body background for collapsible panels |
 | `--chat-blockquote-bg` | `rgba(0,0,0,0.02)` | Blockquote background |
 | `--chat-chart-bar-track-bg` | `rgba(0,0,0,0.04)` | Chart bar track background |
 
@@ -284,7 +287,7 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-radius` | `12px` | Medium radius (containers and larger panels) |
 | `--chat-radius-lg` | `18px` | Large radius (message bubbles) |
 | `--chat-panel-radius` | `= --chat-radius` | Shared embedded panel radius |
-| `--chat-disclosure-radius` | `6px` | Shared compact radius for reasoning, tool-call, and todo panels |
+| `--chat-disclosure-radius` | `6px` | Shared compact radius for collapsible panels |
 
 ### Shadows
 
@@ -308,7 +311,8 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-avatar-size` | `32px` | Avatar width & height |
 | `--chat-message-max-width` | `85%` | Max width of a single message row |
 | `--chat-messages-max-width` | `100%` | Max width of the message list inner area (fills host; override e.g. `800px` or `min(100%, 48rem)` for a centered reading column) |
-| `--chat-disclosure-header-height` | `32px` | Shared compact header height for collapsible reasoning, tool-call, and todo parts |
+| `--chat-bubble-block-end-gap` | `= --chat-spacing-sm` | Extra space below a message bubble before following parts or footer metadata |
+| `--chat-disclosure-header-height` | `32px` | Shared compact header height for collapsible panels |
 | `--chat-todo-item-min-height` | `32px` | Compact minimum row height for each todo item |
 | `--chat-scrollbar-width` | `6px` | Scrollbar width (WebKit) |
 

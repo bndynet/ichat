@@ -154,6 +154,7 @@ i-chat-text-part {
 
 .bubble {
   border-radius: var(--chat-radius-lg, #{$radius-lg});
+  margin-block-end: var(--chat-bubble-block-end-gap, var(--chat-spacing-sm, #{$spacing-sm}));
   padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
   line-height: var(--chat-line-height, #{$line-height-base});
   word-break: break-word;
@@ -544,7 +545,10 @@ i-chat-text-part {
   display: flex;
   align-items: center;
   gap: var(--chat-spacing-sm, #{$spacing-sm});
-  // margin-top: var(--chat-spacing-xs, #{$spacing-xs});
+
+  &:empty {
+    display: none;
+  }
 
   .message--self & {
     flex-direction: row-reverse;

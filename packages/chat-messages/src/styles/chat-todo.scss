@@ -1,6 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
-@use 'chat-panel' as panel;
+@use 'chat-disclosure-panel' as disclosure;
 
 :host {
   display: block;
@@ -13,34 +13,31 @@
   --_todo-shadow: var(--chat-todo-shadow, var(--chat-panel-shadow, none));
   --_todo-text: var(--chat-todo-text, var(--chat-text));
   --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary));
+  --_todo-header-bg: var(--chat-todo-header-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt})));
+  --_todo-header-hover-bg: var(
+    --chat-todo-header-hover-bg,
+    var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+  );
   --_todo-primary: var(--chat-todo-active, var(--chat-primary));
   --_todo-success: var(--chat-todo-done, var(--chat-success));
   --_todo-error: var(--chat-todo-error, var(--chat-error));
 }
 
 .todo {
-  @include panel.surface(var(--_todo-bg), var(--_todo-border), var(--_todo-radius), var(--_todo-shadow));
+  @include disclosure.surface(var(--_todo-bg), var(--_todo-border), var(--_todo-radius), var(--_todo-shadow));
 
-  overflow: hidden;
   margin: 0;
   color: var(--_todo-text);
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
 }
 
 .todo__header {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--chat-disclosure-header-height, 32px);
-  padding: 0 8px 0 10px;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-}
-
-.todo__header::-webkit-details-marker {
-  display: none;
+  @include disclosure.header(
+    $background: var(--_todo-header-bg),
+    $hover-background: var(--_todo-header-hover-bg),
+    $color: var(--_todo-text),
+    $focus-color: var(--_todo-primary)
+  );
 }
 
 .todo__heading-icon,
@@ -110,7 +107,6 @@
   background: var(--chat-surface);
 }
 
-.todo__header:focus-visible,
 .todo__status:focus-visible {
   outline: 2px solid var(--_todo-primary);
   outline-offset: -2px;
@@ -128,7 +124,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--_todo-border);
+
+  @include disclosure.separator(var(--_todo-border));
 }
 
 .todo__item {

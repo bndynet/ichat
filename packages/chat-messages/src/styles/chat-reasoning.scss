@@ -1,6 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
-@use 'chat-panel' as panel;
+@use 'chat-disclosure-panel' as disclosure;
 @use 'chat-timeline' as tl;
 
 :host {
@@ -9,7 +9,7 @@
 }
 
 .reasoning {
-  @include panel.surface(
+  @include disclosure.surface(
     $background: var(--chat-reasoning-bg, color-mix(in srgb, var(--chat-surface, #{$color-surface}) 94%, var(--chat-primary, #{$color-primary}) 6%)),
     $border: var(--chat-reasoning-border, color-mix(in srgb, var(--chat-border, #{$color-border}) 82%, var(--chat-primary, #{$color-primary}) 18%)),
     $radius: var(--chat-reasoning-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))),
@@ -38,27 +38,16 @@
 }
 
 .reasoning-header {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--chat-disclosure-header-height, 32px);
-  padding: 0 8px 0 10px;
-  cursor: pointer;
-  user-select: none;
+  @include disclosure.header(
+    $background: var(--chat-reasoning-header-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))),
+    $hover-background: var(--chat-reasoning-header-hover-bg, var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})),
+    $color: var(--chat-reasoning-text, var(--chat-text-secondary, #{$color-text-secondary})),
+    $focus-color: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})),
+    $focus-outline-offset: 2px
+  );
+
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   font-weight: 600;
-  color: var(--chat-reasoning-text, var(--chat-text-secondary, #{$color-text-secondary}));
-  transition: background var(--chat-transition-fast, #{$transition-fast});
-
-  &:hover {
-    background: var(--chat-reasoning-header-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 4%, transparent));
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
-    outline-offset: 2px;
-  }
 }
 
 .reasoning-title {
