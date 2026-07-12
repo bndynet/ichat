@@ -83,7 +83,7 @@ const TOGGLE_STYLES = `
     padding: var(--chat-spacing-xs) var(--chat-spacing-sm);
     border-radius: var(--chat-code-panel-radius, var(--chat-panel-radius, var(--chat-radius-sm)));
     background: var(--chat-code-bg);
-    border: 1px solid var(--chat-code-panel-border, var(--chat-panel-border, var(--chat-border)));
+    border: 1px solid var(--chat-code-panel-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)));
     font-family: var(--chat-font-mono);
     font-size: var(--chat-font-size-sm);
     line-height: 1.6;
@@ -239,7 +239,7 @@ export function renderCodeFallback(_lang: string, code: string): string {
     'padding:var(--chat-spacing-xs) var(--chat-spacing-sm)',
     'border-radius:var(--chat-code-panel-radius,var(--chat-panel-radius,var(--chat-radius-sm)))',
     'background:var(--chat-code-bg)',
-    'border:1px solid var(--chat-code-panel-border,var(--chat-panel-border,var(--chat-border)))',
+    'border:1px solid var(--chat-code-panel-border,var(--chat-panel-border,color-mix(in srgb,var(--chat-border) 70%,var(--chat-surface) 30%)))',
     'font-family:var(--chat-font-mono)',
     'font-size:var(--chat-font-size-sm)',
     'line-height:1.6',

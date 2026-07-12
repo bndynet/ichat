@@ -3,7 +3,7 @@
 
 // ── CSS custom property defaults (overridable on :host / ancestor) ────────────
 // --chat-details-bg            outer background    (default: --chat-panel-bg)
-// --chat-details-border        border color        (default: --chat-border)
+// --chat-details-border        border color        (default: --chat-panel-border)
 // --chat-details-radius        border radius       (default: --chat-radius)
 // --chat-details-shadow        box shadow          (default: --chat-panel-shadow)
 // --chat-details-summary-bg    summary background  (default: --chat-surface-alt)
@@ -13,8 +13,8 @@
 @mixin styles {
   .chat-details {
     @include panel.surface(
-      $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt}))),
-      $border: var(--chat-details-border, var(--chat-panel-border, var(--chat-border, #{$color-border}))),
+      $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface))),
+      $border: var(--chat-details-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))),
       $radius: var(--chat-details-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
       $shadow: var(--chat-details-shadow, var(--chat-panel-shadow, none))
     );

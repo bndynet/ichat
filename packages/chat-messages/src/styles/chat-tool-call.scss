@@ -6,8 +6,8 @@
   display: block;
   font-family: var(--chat-font-family, inherit);
   margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
-  --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface-alt)));
-  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, var(--chat-border)));
+  --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface)));
+  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)));
   --_tc-radius: var(--chat-tool-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
   --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
   --_tc-text: var(--chat-tool-text, var(--chat-text));

@@ -90,8 +90,8 @@ const FORM_STYLES = `
     font-family: inherit;
     /* Derive from --chat-* base tokens; dark/light mode is handled by the ancestor
        setting those tokens — no media query or :host-context needed. */
-    --_form-bg:           var(--chat-form-bg,            var(--chat-panel-bg,     var(--chat-surface-alt, #f8f9fa)));
-    --_form-border:       var(--chat-form-border,        var(--chat-panel-border, var(--chat-border,      #e2e8f0)));
+    --_form-bg:           var(--chat-form-bg,            var(--chat-panel-bg,     var(--chat-surface)));
+    --_form-border:       var(--chat-form-border,        var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)));
     --_form-radius:       var(--chat-form-radius,        var(--chat-panel-radius, var(--chat-radius,      10px)));
     --_form-shadow:       var(--chat-form-shadow,        var(--chat-panel-shadow, none));
     --_form-title:        var(--chat-form-title-color,   var(--chat-text,        #1a202c));

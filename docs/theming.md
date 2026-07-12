@@ -70,7 +70,7 @@ The library uses a **12 base token** system. Every component-specific token (use
 | `--chat-bg` | ![#f7f7f8](https://placehold.co/14x14/f7f7f8/f7f7f8.png) `#f7f7f8` | Container background |
 | `--chat-surface` | ![#ffffff](https://placehold.co/14x14/ffffff/e5e7eb.png) `#ffffff` | Card / bubble surface |
 | `--chat-surface-alt` | ![#f0f2f5](https://placehold.co/14x14/f0f2f5/f0f2f5.png) `#f0f2f5` | Alternate surface (table headers, summaries) |
-| `--chat-border` | ![#e5e7eb](https://placehold.co/14x14/e5e7eb/e5e7eb.png) `#e5e7eb` | Borders and dividers |
+| `--chat-border` | ![#e8e8e8](https://placehold.co/14x14/e8e8e8/e8e8e8.png) `#e8e8e8` | Borders and dividers |
 | `--chat-text` | ![#1a1a2e](https://placehold.co/14x14/1a1a2e/1a1a2e.png) `#1a1a2e` | Primary text |
 | `--chat-text-secondary` | ![#6b7280](https://placehold.co/14x14/6b7280/6b7280.png) `#6b7280` | Secondary text (labels) |
 | `--chat-text-muted` | ![#9ca3af](https://placehold.co/14x14/9ca3af/9ca3af.png) `#9ca3af` | Muted text (timestamps, placeholders) |
@@ -93,8 +93,8 @@ Component-specific tokens chain to base tokens. You can override any component t
 | `--chat-reasoning-bg` | `--chat-primary-light` |
 | `--chat-reasoning-text` | `--chat-primary` |
 | `--chat-reasoning-border` | `color-mix(--chat-primary, --chat-border)` |
-| `--chat-panel-bg` | `--chat-surface-alt` |
-| `--chat-panel-border` | `--chat-border` |
+| `--chat-panel-bg` | `--chat-surface` |
+| `--chat-panel-border` | `color-mix(--chat-border, --chat-surface)` |
 | `--chat-panel-radius` | `--chat-radius` |
 | `--chat-panel-shadow` | component default |
 | `--chat-error-color` | `--chat-error` |
@@ -177,7 +177,7 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-bg` | `#f7f7f8` | Container background |
 | `--chat-surface` | `#ffffff` | Elevated surface (bubbles, scroll button, cards) |
 | `--chat-surface-alt` | `#f0f2f5` | Alternative surface (table headers, charts, action hover) |
-| `--chat-border` | `#e5e7eb` | Borders, dividers, scrollbar thumb |
+| `--chat-border` | `#e8e8e8` | Borders, dividers, scrollbar thumb |
 | `--chat-text` | `#1a1a2e` | Primary text color |
 | `--chat-text-secondary` | `#6b7280` | Secondary text (labels, blockquote) |
 | `--chat-text-muted` | `#9ca3af` | Muted text (timestamps, placeholders) |
@@ -261,8 +261,8 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | Property | Default | Description |
 |----------|---------|-------------|
 | `--chat-primary-hover` | derived | Primary action hover color |
-| `--chat-panel-bg` | `= --chat-surface-alt` | Shared embedded panel background |
-| `--chat-panel-border` | `= --chat-border` | Shared embedded panel border |
+| `--chat-panel-bg` | `= --chat-surface` | Shared embedded panel background |
+| `--chat-panel-border` | derived | Shared embedded panel border (mix of `--chat-border` and `--chat-surface`) |
 | `--chat-blockquote-bg` | `rgba(0,0,0,0.02)` | Blockquote background |
 | `--chat-chart-bar-track-bg` | `rgba(0,0,0,0.04)` | Chart bar track background |
 

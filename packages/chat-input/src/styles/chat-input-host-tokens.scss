@@ -16,7 +16,7 @@
   --_input-font-size: var(--chat-input-font-size, #{$font-size-base});
 
   --_input-bg: var(--chat-input-bg, var(--chat-panel-bg, var(--chat-surface, #{$color-bg})));
-  --_input-border: var(--chat-input-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
+  --_input-border: var(--chat-input-border, var(--chat-border, #{$color-border}));
   --_input-text: var(--chat-input-text, var(--chat-text, #{$color-text}));
   --_input-placeholder: var(--chat-input-placeholder, var(--chat-text-muted, #{$color-text-muted}));
 
