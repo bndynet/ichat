@@ -14,7 +14,7 @@
   padding: var(--_input-padding-block) var(--_input-spacing);
   background: var(--_input-bg);
   border: 1px solid color-mix(in srgb, var(--_input-border) 72%, transparent);
-  border-radius: 0.5rem;
+  border-radius: var(--_input-radius);
   overflow: hidden;
   box-shadow:
     var(--_input-shadow),

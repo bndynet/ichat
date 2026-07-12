@@ -93,6 +93,10 @@ Component-specific tokens chain to base tokens. You can override any component t
 | `--chat-reasoning-bg` | `--chat-primary-light` |
 | `--chat-reasoning-text` | `--chat-primary` |
 | `--chat-reasoning-border` | `color-mix(--chat-primary, --chat-border)` |
+| `--chat-panel-bg` | `--chat-surface-alt` |
+| `--chat-panel-border` | `--chat-border` |
+| `--chat-panel-radius` | `--chat-radius` |
+| `--chat-panel-shadow` | component default |
 | `--chat-error-color` | `--chat-error` |
 | `--chat-error-bg` | `color-mix(--chat-error, --chat-surface)` |
 | `--chat-timeline-done` | `--chat-success` |
@@ -255,6 +259,8 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | Property | Default | Description |
 |----------|---------|-------------|
 | `--chat-primary-hover` | derived | Primary action hover color |
+| `--chat-panel-bg` | `= --chat-surface-alt` | Shared embedded panel background |
+| `--chat-panel-border` | `= --chat-border` | Shared embedded panel border |
 | `--chat-blockquote-bg` | `rgba(0,0,0,0.02)` | Blockquote background |
 | `--chat-chart-bar-track-bg` | `rgba(0,0,0,0.04)` | Chart bar track background |
 
@@ -275,6 +281,7 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-radius-sm` | `6px` | Small radius (bubble tail, code, images) |
 | `--chat-radius` | `12px` | Medium radius (container, code blocks, reasoning) |
 | `--chat-radius-lg` | `18px` | Large radius (message bubbles) |
+| `--chat-panel-radius` | `= --chat-radius` | Shared embedded panel radius |
 
 ### Shadows
 
@@ -282,6 +289,7 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 |----------|---------|-------------|
 | `--chat-shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Assistant bubble shadow |
 | `--chat-shadow-md` | `0 4px 12px rgba(0,0,0,0.08)` | Scroll-to-bottom button shadow |
+| `--chat-panel-shadow` | component default | Shared embedded panel shadow |
 
 ### Transitions
 

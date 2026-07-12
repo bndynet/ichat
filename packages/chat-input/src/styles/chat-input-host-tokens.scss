@@ -15,8 +15,8 @@
   --_input-font-family: var(--chat-input-font-family, #{$font-family});
   --_input-font-size: var(--chat-input-font-size, #{$font-size-base});
 
-  --_input-bg: var(--chat-input-bg, var(--chat-surface, #{$color-bg}));
-  --_input-border: var(--chat-input-border, var(--chat-border, #{$color-border}));
+  --_input-bg: var(--chat-input-bg, var(--chat-panel-bg, var(--chat-surface, #{$color-bg})));
+  --_input-border: var(--chat-input-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
   --_input-text: var(--chat-input-text, var(--chat-text, #{$color-text}));
   --_input-placeholder: var(--chat-input-placeholder, var(--chat-text-muted, #{$color-text-muted}));
 
@@ -24,7 +24,7 @@
   --_input-primary-hover: var(--chat-input-primary-hover, var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black)));
   --_input-primary-text: var(--chat-input-primary-text, #{$color-primary-text});
 
-  --_input-radius: var(--chat-input-radius, #{$radius-lg});
+  --_input-radius: var(--chat-input-radius, var(--chat-panel-radius, 0.5rem));
   --_input-spacing: var(--chat-input-spacing, #{$spacing-input-wrapper});
   --_input-padding-block: var(--chat-input-padding-block, #{$spacing-input-y});
   --_input-textarea-padding-inline: var(--chat-input-textarea-padding-inline, #{$spacing-input-inline});

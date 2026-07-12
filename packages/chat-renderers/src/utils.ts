@@ -81,16 +81,16 @@ const TOGGLE_STYLES = `
     overflow-y: auto;
     margin: 0;
     padding: var(--chat-spacing-xs) var(--chat-spacing-sm);
-    border-radius: var(--chat-radius-sm);
+    border-radius: var(--chat-code-panel-radius, var(--chat-panel-radius, var(--chat-radius-sm)));
     background: var(--chat-code-bg);
-    border: 1px solid var(--chat-border);
+    border: 1px solid var(--chat-code-panel-border, var(--chat-panel-border, var(--chat-border)));
     font-family: var(--chat-font-mono);
     font-size: var(--chat-font-size-sm);
     line-height: 1.6;
     tab-size: 2;
     white-space: pre;
     word-break: break-all;
-    box-shadow: var(--chat-shadow-sm);
+    box-shadow: var(--chat-code-panel-shadow, var(--chat-panel-shadow, var(--chat-shadow-sm)));
   }
   .code-view code {
     color: var(--chat-code-text);
@@ -237,16 +237,16 @@ export function renderCodeFallback(_lang: string, code: string): string {
     'overflow-y:auto',
     'margin:0',
     'padding:var(--chat-spacing-xs) var(--chat-spacing-sm)',
-    'border-radius:var(--chat-radius-sm)',
+    'border-radius:var(--chat-code-panel-radius,var(--chat-panel-radius,var(--chat-radius-sm)))',
     'background:var(--chat-code-bg)',
-    'border:1px solid var(--chat-border)',
+    'border:1px solid var(--chat-code-panel-border,var(--chat-panel-border,var(--chat-border)))',
     'font-family:var(--chat-font-mono)',
     'font-size:var(--chat-font-size-sm)',
     'line-height:1.6',
     'tab-size:2',
     'white-space:pre',
     'word-break:break-all',
-    'box-shadow:var(--chat-shadow-sm)',
+    'box-shadow:var(--chat-code-panel-shadow,var(--chat-panel-shadow,var(--chat-shadow-sm)))',
   ].join(';');
 
   const codeStyle = [

@@ -1,12 +1,15 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'chat-panel' as panel;
 
 :host {
   display: block;
   font-family: var(--chat-font-family, inherit);
   container-type: inline-size;
-  --_todo-bg: var(--chat-todo-bg, var(--chat-surface-alt, #{$color-surface-alt}));
-  --_todo-border: var(--chat-todo-border, var(--chat-border, #{$color-border}));
+  --_todo-bg: var(--chat-todo-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
+  --_todo-border: var(--chat-todo-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
+  --_todo-radius: var(--chat-todo-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md})));
+  --_todo-shadow: var(--chat-todo-shadow, var(--chat-panel-shadow, none));
   --_todo-text: var(--chat-todo-text, var(--chat-text, #{$color-text}));
   --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
   --_todo-primary: var(--chat-todo-active, var(--chat-primary, #{$color-primary}));
@@ -15,11 +18,10 @@
 }
 
 .todo {
+  @include panel.surface(var(--_todo-bg), var(--_todo-border), var(--_todo-radius), var(--_todo-shadow));
+
   overflow: hidden;
   margin: 6px 0;
-  border: 1px solid var(--_todo-border);
-  border-radius: var(--chat-todo-radius, var(--chat-radius-sm, #{$radius-sm}));
-  background: var(--_todo-bg);
   color: var(--_todo-text);
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
 }

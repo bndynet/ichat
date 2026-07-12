@@ -1,16 +1,20 @@
 @use 'variables' as *;
+@use 'chat-panel' as panel;
 
 @mixin styles {
   // ── Single KPI card ────────────────────────────────────────────────────────
   .chat-kpi {
+    @include panel.surface(
+      $background: var(--chat-kpi-bg, var(--chat-panel-bg, var(--chat-surface, #{$color-surface}))),
+      $border: var(--chat-kpi-border, var(--chat-panel-border, var(--chat-border, #{$color-border}))),
+      $radius: var(--chat-kpi-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+      $shadow: var(--chat-kpi-shadow, var(--chat-panel-shadow, var(--chat-shadow-sm, #{$shadow-sm})))
+    );
+
     display: inline-flex;
     flex-direction: column;
     gap: var(--chat-spacing-xs, #{$spacing-xs});
     padding: var(--chat-spacing-md, #{$spacing-md});
-    background: var(--chat-surface, #{$color-surface});
-    border: 1px solid var(--chat-border, #{$color-border});
-    border-radius: var(--chat-radius-md, #{$radius-md});
-    box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
     min-width: 160px;
     margin-inline-end: var(--chat-spacing-sm, #{$spacing-sm});
     margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});

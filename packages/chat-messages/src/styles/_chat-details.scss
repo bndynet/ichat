@@ -1,16 +1,24 @@
 @use 'variables' as *;
+@use 'chat-panel' as panel;
 
 // ── CSS custom property defaults (overridable on :host / ancestor) ────────────
+// --chat-details-bg            outer background    (default: --chat-panel-bg)
 // --chat-details-border        border color        (default: --chat-border)
 // --chat-details-radius        border radius       (default: --chat-radius)
+// --chat-details-shadow        box shadow          (default: --chat-panel-shadow)
 // --chat-details-summary-bg    summary background  (default: --chat-surface-alt)
 // --chat-details-body-bg       body background     (default: --chat-surface)
 // --chat-details-chevron-color chevron icon color  (default: --chat-primary)
 
 @mixin styles {
   .chat-details {
-    border: 1px solid var(--chat-details-border, var(--chat-border, #{$color-border}));
-    border-radius: var(--chat-details-radius, var(--chat-radius, #{$radius-md}));
+    @include panel.surface(
+      $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt}))),
+      $border: var(--chat-details-border, var(--chat-panel-border, var(--chat-border, #{$color-border}))),
+      $radius: var(--chat-details-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+      $shadow: var(--chat-details-shadow, var(--chat-panel-shadow, none))
+    );
+
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
     overflow: hidden;
   }

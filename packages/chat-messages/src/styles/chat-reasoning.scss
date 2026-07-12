@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'chat-panel' as panel;
 @use 'chat-timeline' as tl;
 
 :host {
@@ -8,9 +9,13 @@
 }
 
 .reasoning {
-  border: 1px solid var(--chat-reasoning-border, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 30%, var(--chat-border, #{$color-border})));
-  border-radius: var(--chat-radius, #{$radius-md});
-  background: var(--chat-reasoning-bg, var(--chat-primary-light, #{$color-primary-light}));
+  @include panel.surface(
+    $background: var(--chat-reasoning-bg, var(--chat-panel-bg, var(--chat-primary-light, #{$color-primary-light}))),
+    $border: var(--chat-reasoning-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 30%, var(--chat-border, #{$color-border})))),
+    $radius: var(--chat-reasoning-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+    $shadow: var(--chat-reasoning-shadow, var(--chat-panel-shadow, none))
+  );
+
   overflow: hidden;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});
 }

@@ -47,19 +47,19 @@ i-chat-messages {
   box-sizing: border-box;
   width: 100%;
   padding: var(--chat-spacing-md, 16px);
-  border: 1px solid color-mix(in srgb, var(--chat-border, #e1e4e8) 72%, transparent);
-  border-radius: 0.5rem;
-  background: var(--chat-input-bg, var(--chat-surface, #ffffff));
+  border: 1px solid color-mix(in srgb, var(--chat-confirmation-border, var(--chat-panel-border, var(--chat-border, #e1e4e8))) 72%, transparent);
+  border-radius: var(--chat-confirmation-radius, var(--chat-panel-radius, var(--chat-radius, 0.5rem)));
+  background: var(--chat-confirmation-bg, var(--chat-panel-bg, var(--chat-input-bg, var(--chat-surface, #ffffff))));
   color: var(--chat-text, #1a1a2e);
   box-shadow:
-    var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08)),
+    var(--chat-confirmation-shadow, var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))),
     inset 0 1px 0 color-mix(in srgb, var(--chat-text, #1a1a2e) 8%, transparent);
 }
 
 .chat-confirmation--danger {
   border-color: color-mix(in srgb, var(--chat-error, #e53e3e) 35%, var(--chat-border, #e1e4e8));
   box-shadow:
-    var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08)),
+    var(--chat-confirmation-shadow, var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))),
     inset 0 1px 0 color-mix(in srgb, var(--chat-error, #e53e3e) 12%, transparent);
 }
 

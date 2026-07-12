@@ -1,11 +1,14 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'chat-panel' as panel;
 
 :host {
   display: block;
   font-family: var(--chat-font-family, inherit);
-  --_tc-bg: var(--chat-tool-bg, var(--chat-surface-alt, #{$color-surface-alt}));
-  --_tc-border: var(--chat-tool-border, var(--chat-border, #{$color-border}));
+  --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
+  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
+  --_tc-radius: var(--chat-tool-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md})));
+  --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
   --_tc-text: var(--chat-tool-text, var(--chat-text, #{$color-text}));
   --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
   --_tc-primary: var(--chat-tool-primary, var(--chat-primary, #{$color-primary}));
@@ -16,9 +19,8 @@
 }
 
 .tc {
-  border: 1px solid var(--_tc-border);
-  border-radius: var(--chat-radius, #{$radius-md});
-  background: var(--_tc-bg);
+  @include panel.surface(var(--_tc-bg), var(--_tc-border), var(--_tc-radius), var(--_tc-shadow));
+
   margin: 6px 0;
   overflow: hidden;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});

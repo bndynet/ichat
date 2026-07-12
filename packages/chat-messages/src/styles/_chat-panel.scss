@@ -1,0 +1,13 @@
+@use 'variables' as *;
+
+@mixin surface(
+  $background: var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})),
+  $border: var(--chat-panel-border, var(--chat-border, #{$color-border})),
+  $radius: var(--chat-panel-radius, var(--chat-radius, #{$radius-md})),
+  $shadow: var(--chat-panel-shadow, none)
+) {
+  background: $background;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+}

@@ -90,8 +90,10 @@ const FORM_STYLES = `
     font-family: inherit;
     /* Derive from --chat-* base tokens; dark/light mode is handled by the ancestor
        setting those tokens — no media query or :host-context needed. */
-    --_form-bg:           var(--chat-form-bg,            var(--chat-surface-alt, #f8f9fa));
-    --_form-border:       var(--chat-form-border,        var(--chat-border,      #e2e8f0));
+    --_form-bg:           var(--chat-form-bg,            var(--chat-panel-bg,     var(--chat-surface-alt, #f8f9fa)));
+    --_form-border:       var(--chat-form-border,        var(--chat-panel-border, var(--chat-border,      #e2e8f0)));
+    --_form-radius:       var(--chat-form-radius,        var(--chat-panel-radius, var(--chat-radius,      10px)));
+    --_form-shadow:       var(--chat-form-shadow,        var(--chat-panel-shadow, none));
     --_form-title:        var(--chat-form-title-color,   var(--chat-text,        #1a202c));
     --_form-label:        var(--chat-form-label-color,   var(--chat-text-secondary, #4a5568));
     --_form-required:     var(--chat-form-required-color,var(--chat-error,       #e53e3e));
@@ -110,10 +112,11 @@ const FORM_STYLES = `
   .chat-form {
     background: var(--_form-bg);
     border: 1px solid var(--_form-border);
-    border-radius: 10px;
+    border-radius: var(--_form-radius);
+    box-shadow: var(--_form-shadow);
     padding: 20px 24px 16px;
     max-width: 480px;
-    transition: background 0.3s, border-color 0.3s;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
   }
   .chat-form__title {
     font-size: 1rem;
