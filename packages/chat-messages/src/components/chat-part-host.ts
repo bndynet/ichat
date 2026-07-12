@@ -282,13 +282,21 @@ export class ChatPartHost extends LitElement {
           const src =
             part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
           return src
-            ? html`<div class="bubble">
+            ? html`<div
+                class="part-attachment part-file part-file--image"
+                data-part-id=${part.id}
+                data-part-type=${part.type}
+              >
                 <img class="part-file-image" src=${src} alt=${part.name ?? 'image'} />
               </div>`
             : nothing;
         }
         const href = part.url ?? '';
-        return html`<div class="bubble">
+        return html`<div
+          class="part-attachment part-file part-file--link"
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+        >
           <a
             class="part-file-link"
             data-part-id=${part.id}
@@ -301,7 +309,11 @@ export class ChatPartHost extends LitElement {
         </div>`;
       }
       case 'source':
-        return html`<div class="bubble">
+        return html`<div
+          class="part-attachment part-source-card"
+          data-part-id=${part.id}
+          data-part-type=${part.type}
+        >
           <a
             class="part-source"
             data-part-id=${part.id}

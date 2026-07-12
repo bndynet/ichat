@@ -20,7 +20,7 @@ onMounted(async () => {
     timestamp: Date.now(),
     parts: [
       textPart(
-        '**`file` parts** — images render inline; other MIME types become download links. Three variants below: URL, raw base64 (`data` field), and non-image attachment.',
+        '**`file` parts** — images render inline outside the text bubble; other MIME types become lightweight download links. Three variants below: URL, raw base64 (`data` field), and non-image attachment.',
       ),
       {
         id: 'file-img-url',
@@ -53,7 +53,7 @@ onMounted(async () => {
     timestamp: Date.now(),
     parts: [
       textPart(
-        '**`source` parts** — citation links for RAG / web search. Each part renders a title (or URL) plus an optional snippet.',
+        '**`source` parts** — lightweight citation rows for RAG / web search. Each part renders a title (or URL) plus an optional snippet outside the text bubble.',
       ),
       {
         id: 'src-lit',
