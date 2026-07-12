@@ -125,7 +125,7 @@
   opacity: 0;
 
   &.open {
-    max-height: var(--chat-reasoning-content-max-height, 480px);
+    max-height: var(--chat-reasoning-content-max-height, 260px);
     opacity: 1;
     overflow-y: auto;
     border-block-start-color: color-mix(in srgb, var(--chat-border, #{$color-border}) 72%, transparent);

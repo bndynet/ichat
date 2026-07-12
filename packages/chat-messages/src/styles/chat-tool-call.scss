@@ -6,17 +6,18 @@
   display: block;
   font-family: var(--chat-font-family, inherit);
   margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
-  --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
-  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
+  --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface-alt)));
+  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, var(--chat-border)));
   --_tc-radius: var(--chat-tool-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
   --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
-  --_tc-text: var(--chat-tool-text, var(--chat-text, #{$color-text}));
-  --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
-  --_tc-primary: var(--chat-tool-primary, var(--chat-primary, #{$color-primary}));
-  --_tc-success: var(--chat-tool-success, var(--chat-success, #{$color-success}));
-  --_tc-error: var(--chat-tool-error, var(--chat-error, #{$color-error}));
-  --_tc-code-bg: var(--chat-code-bg, #{$color-code-bg});
-  --_tc-code-text: var(--chat-code-text, #{$color-code-text});
+  --_tc-text: var(--chat-tool-text, var(--chat-text));
+  --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary));
+  --_tc-primary: var(--chat-tool-primary, var(--chat-primary));
+  --_tc-success: var(--chat-tool-success, var(--chat-success));
+  --_tc-error: var(--chat-tool-error, var(--chat-error));
+  --_tc-code-bg: var(--chat-code-bg);
+  --_tc-code-text: var(--chat-code-text);
+  --_tc-on-primary: var(--chat-self-text, var(--chat-user-text, var(--chat-surface)));
 }
 
 .tc {
@@ -65,7 +66,7 @@ summary::-webkit-details-marker {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--_tc-on-primary);
   font-size: 11px;
 }
 
@@ -182,7 +183,7 @@ pre.tc__code {
   padding: 6px 14px;
   cursor: pointer;
   border: 1px solid var(--_tc-border);
-  background: var(--chat-surface, #{$color-surface});
+  background: var(--chat-surface);
   color: var(--_tc-text);
   transition: opacity 0.15s, background 0.15s;
 }
@@ -194,7 +195,7 @@ pre.tc__code {
 .tc__btn--approve {
   background: var(--_tc-primary);
   border-color: var(--_tc-primary);
-  color: #fff;
+  color: var(--_tc-on-primary);
 }
 
 .tc__approval-state {

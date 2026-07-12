@@ -233,7 +233,7 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-reasoning-text` | `= --chat-text-secondary` | Thought summary header text |
 | `--chat-reasoning-accent` | `= --chat-primary` | Left rail, icon, and thinking dots |
 | `--chat-reasoning-header-hover-bg` | derived | Reasoning header hover overlay |
-| `--chat-reasoning-content-max-height` | `480px` | Expanded reasoning body max height before internal scroll |
+| `--chat-reasoning-content-max-height` | `260px` | Expanded reasoning body max height before internal scroll |
 
 ### Colors — Code (design constant)
 

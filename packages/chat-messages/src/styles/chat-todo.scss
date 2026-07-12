@@ -7,15 +7,15 @@
   font-family: var(--chat-font-family, inherit);
   container-type: inline-size;
   margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
-  --_todo-bg: var(--chat-todo-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
-  --_todo-border: var(--chat-todo-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
+  --_todo-bg: var(--chat-todo-bg, var(--chat-panel-bg, var(--chat-surface-alt)));
+  --_todo-border: var(--chat-todo-border, var(--chat-panel-border, var(--chat-border)));
   --_todo-radius: var(--chat-todo-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
   --_todo-shadow: var(--chat-todo-shadow, var(--chat-panel-shadow, none));
-  --_todo-text: var(--chat-todo-text, var(--chat-text, #{$color-text}));
-  --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
-  --_todo-primary: var(--chat-todo-active, var(--chat-primary, #{$color-primary}));
-  --_todo-success: var(--chat-todo-done, var(--chat-success, #{$color-success}));
-  --_todo-error: var(--chat-todo-error, var(--chat-error, #{$color-error}));
+  --_todo-text: var(--chat-todo-text, var(--chat-text));
+  --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary));
+  --_todo-primary: var(--chat-todo-active, var(--chat-primary));
+  --_todo-success: var(--chat-todo-done, var(--chat-success));
+  --_todo-error: var(--chat-todo-error, var(--chat-error));
 }
 
 .todo {
@@ -90,7 +90,7 @@
 
 .todo__status {
   border: 0;
-  background: transparent;
+  background: none;
   color: var(--_todo-secondary);
   cursor: pointer;
 }
@@ -107,7 +107,7 @@
 }
 
 .todo__status:not(:disabled):hover {
-  background: color-mix(in srgb, var(--_todo-text) 7%, transparent);
+  background: var(--chat-surface);
 }
 
 .todo__header:focus-visible,
