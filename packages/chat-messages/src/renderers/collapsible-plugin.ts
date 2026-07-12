@@ -1,5 +1,6 @@
 import type MarkdownIt from 'markdown-it';
 import type StateBlock from 'markdown-it/lib/rules_block/state_block.mjs';
+import { chatIconStrings } from '../icons.js';
 
 /**
  * Matches the opening marker: `:::details` optionally followed by a title.
@@ -94,7 +95,10 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     const title = md.utils.escapeHtml(tokens[idx].meta?.title ?? 'Details');
     return (
       `<details class="chat-details">` +
-      `<summary class="chat-details__summary">${title}</summary>` +
+      `<summary class="chat-details__summary">` +
+      `<span class="chat-details__title">${title}</span>` +
+      `<span class="chat-details__chevron" aria-hidden="true">${chatIconStrings.chevronRight}</span>` +
+      `</summary>` +
       `<div class="chat-details__body">\n`
     );
   };

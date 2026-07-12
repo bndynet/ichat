@@ -216,6 +216,10 @@ export const chatIcons = {
 } as const;
 
 export const chatIconStrings = {
+  chevronRight: strokeIconString('<path d="m9 18 6-6-6-6" />', {
+    size: 18,
+    strokeWidth: 2.2,
+  }),
   timelineDone: strokeIconString('<path d="M3.5 8.5 6.5 11.5 12.5 4.5" />', {
     size: 9,
     strokeWidth: 3,

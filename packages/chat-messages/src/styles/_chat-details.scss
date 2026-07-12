@@ -4,22 +4,24 @@
 // ── CSS custom property defaults (overridable on :host / ancestor) ────────────
 // --chat-details-bg            outer background    (default: --chat-panel-bg)
 // --chat-details-border        border color        (default: --chat-panel-border)
-// --chat-details-radius        border radius       (default: --chat-radius)
+// --chat-details-radius        border radius       (default: --chat-disclosure-radius)
 // --chat-details-shadow        box shadow          (default: --chat-panel-shadow)
-// --chat-details-summary-bg    summary background  (default: --chat-surface-alt)
-// --chat-details-body-bg       body background     (default: --chat-surface)
-// --chat-details-chevron-color chevron icon color  (default: --chat-primary)
+// --chat-details-summary-bg    summary background  (default: transparent)
+// --chat-details-body-bg       body background     (default: transparent)
+// --chat-details-chevron-color chevron icon color  (default: --chat-text-muted)
 
 @mixin styles {
   .chat-details {
     @include panel.surface(
       $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface))),
       $border: var(--chat-details-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))),
-      $radius: var(--chat-details-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+      $radius: var(--chat-details-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))),
       $shadow: var(--chat-details-shadow, var(--chat-panel-shadow, none))
     );
 
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
+    color: var(--chat-details-text, var(--chat-text, #{$color-text}));
+    font-size: var(--chat-font-size-sm, #{$font-size-sm});
     overflow: hidden;
   }
 
@@ -27,14 +29,15 @@
   .chat-details__summary {
     display: flex;
     align-items: center;
-    gap: var(--chat-spacing-sm, #{$spacing-sm});
+    gap: 6px;
     list-style: none;
+    min-height: var(--chat-disclosure-header-height, 32px);
 
-    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    background: var(--chat-details-summary-bg, var(--chat-surface-alt, #{$color-surface-alt}));
-    font-size: var(--chat-font-size, #{$font-size-base});
-    font-weight: 500;
-    color: var(--chat-text, #{$color-text});
+    padding: 0 8px 0 10px;
+    background: var(--chat-details-summary-bg, transparent);
+    font-size: var(--chat-font-size-sm, #{$font-size-sm});
+    font-weight: 600;
+    color: var(--chat-details-summary-text, var(--chat-details-text, var(--chat-text, #{$color-text})));
     cursor: pointer;
     user-select: none;
     transition: background var(--chat-transition-fast, #{$transition-fast});
@@ -43,33 +46,12 @@
     &::-webkit-details-marker { display: none; }
     &::marker { content: ''; display: none; }
 
-    // ── Chevron — Unicode character, pure CSS, no DOM element needed ──────────
-    // Using ::before with content: '▶' avoids:
-    //   • SVG-in-summary DOMPurify stripping issues
-    //   • mask-image data-URI quirks inside Lit Shadow DOM
-    //   • Extra DOM elements that DOMPurify might mishandle
-    &::before {
-      content: '▶';
-      font-size: 0.55em;
-      line-height: 1;
-      color: var(--chat-details-chevron-color, var(--chat-primary, #{$color-primary}));
-      display: inline-block;
-      flex-shrink: 0;
-      transform: rotate(0deg);
-      transition: transform var(--chat-transition-fast, #{$transition-fast});
-    }
-
-    // RTL: closed triangle points toward the inline-start (▶ → ◀).
-    &:dir(rtl)::before {
-      transform: rotate(180deg);
-    }
-
     &:hover {
-      background: color-mix(
-        in srgb,
-        var(--chat-details-summary-bg, var(--chat-surface-alt, #{$color-surface-alt})) 85%,
-        var(--chat-border, #{$color-border}) 15%
-      );
+      background: var(--chat-details-summary-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 4%, transparent));
+
+      .chat-details__chevron {
+        color: var(--chat-details-summary-text, var(--chat-details-text, var(--chat-text, #{$color-text})));
+      }
     }
 
     &:focus-visible {
@@ -78,18 +60,46 @@
     }
   }
 
+  .chat-details__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chat-details__chevron {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-inline-start: auto;
+    color: var(--chat-details-chevron-color, var(--chat-text-muted, #{$color-text-muted}));
+    transition:
+      color var(--chat-transition-fast, #{$transition-fast}),
+      transform var(--chat-transition-fast, #{$transition-fast});
+
+    svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   // Rotate chevron when the panel is open.
   // This selector is kept flat (no .content ancestor) so it applies to both
   // container-syntax and fence-syntax <details> blocks equally.
-  details.chat-details[open] > .chat-details__summary::before {
+  details.chat-details[open] > .chat-details__summary .chat-details__chevron {
     transform: rotate(90deg);
   }
 
   // ── Body (collapsible content area) ──────────────────────────────────────────
   .chat-details__body {
-    padding: var(--chat-spacing-md, #{$spacing-md});
-    background: var(--chat-details-body-bg, var(--chat-surface, #{$color-surface}));
+    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-md, #{$spacing-md});
+    background: var(--chat-details-body-bg, transparent);
     border-top: 1px solid var(--chat-details-border, var(--chat-border, #{$color-border}));
+    color: var(--chat-details-text, var(--chat-text, #{$color-text}));
+    font-size: var(--chat-font-size-sm, #{$font-size-sm});
 
     animation: chat-details-open var(--chat-transition-fast, #{$transition-fast}) ease both;
 
@@ -102,8 +112,7 @@
     border-color: var(--chat-details-border, var(--chat-border, #{$color-border}));
 
     .chat-details__summary {
-      font-size: var(--chat-font-size-sm, #{$font-size-sm});
-      padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-md, #{$spacing-md});
+      min-height: 30px;
     }
   }
 }

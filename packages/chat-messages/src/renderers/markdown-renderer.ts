@@ -5,6 +5,7 @@ import { rendererRegistry } from './registry.js';
 import { timelinePlugin } from './timeline-plugin.js';
 import { collapsiblePlugin } from './collapsible-plugin.js';
 import { normalizeAllowedLinkProtocols, uriRegexpForAllowedLinkProtocols } from '../link-protocols.js';
+import { chatIconStrings } from '../icons.js';
 
 export interface MarkdownRenderOptions {
   /**
@@ -51,6 +52,7 @@ const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
     'viewBox', 'd', 'fill', 'stroke', 'stroke-width', 'cx', 'cy', 'r',
     'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'transform',
     'text-anchor', 'dominant-baseline', 'font-size', 'opacity', 'points',
+    'stroke-linecap', 'stroke-linejoin',
   ],
 };
 
@@ -104,7 +106,10 @@ rendererRegistry.register({
 
     return (
       `<details class="chat-details">\n` +
-      `<summary class="chat-details__summary">${safeTitle}</summary>\n` +
+      `<summary class="chat-details__summary">` +
+      `<span class="chat-details__title">${safeTitle}</span>` +
+      `<span class="chat-details__chevron" aria-hidden="true">${chatIconStrings.chevronRight}</span>` +
+      `</summary>\n` +
       `<div class="chat-details__body">${bodyHtml}</div>\n` +
       `</details>\n`
     );
