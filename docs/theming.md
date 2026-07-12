@@ -228,10 +228,12 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `--chat-reasoning-bg` | `= --chat-primary-light` | Reasoning block background |
-| `--chat-reasoning-border` | derived | Reasoning block border (mix of `--chat-primary` and `--chat-border`) |
-| `--chat-reasoning-text` | `= --chat-primary` | Reasoning header text |
+| `--chat-reasoning-bg` | derived | Thought summary background (subtle mix of surface + primary) |
+| `--chat-reasoning-border` | derived | Thought summary border (mix of `--chat-border` and `--chat-primary`) |
+| `--chat-reasoning-text` | `= --chat-text-secondary` | Thought summary header text |
+| `--chat-reasoning-accent` | `= --chat-primary` | Left rail, icon, and thinking dots |
 | `--chat-reasoning-header-hover-bg` | derived | Reasoning header hover overlay |
+| `--chat-reasoning-content-max-height` | `480px` | Expanded reasoning body max height before internal scroll |
 
 ### Colors — Code (design constant)
 
@@ -279,9 +281,10 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | Property | Default | Description |
 |----------|---------|-------------|
 | `--chat-radius-sm` | `6px` | Small radius (bubble tail, code, images) |
-| `--chat-radius` | `12px` | Medium radius (container, code blocks, reasoning) |
+| `--chat-radius` | `12px` | Medium radius (containers and larger panels) |
 | `--chat-radius-lg` | `18px` | Large radius (message bubbles) |
 | `--chat-panel-radius` | `= --chat-radius` | Shared embedded panel radius |
+| `--chat-disclosure-radius` | `6px` | Shared compact radius for reasoning, tool-call, and todo panels |
 
 ### Shadows
 
@@ -305,6 +308,8 @@ For **avatar colors**, each role uses two CSS levels only: `--chat-avatar-<role>
 | `--chat-avatar-size` | `32px` | Avatar width & height |
 | `--chat-message-max-width` | `85%` | Max width of a single message row |
 | `--chat-messages-max-width` | `100%` | Max width of the message list inner area (fills host; override e.g. `800px` or `min(100%, 48rem)` for a centered reading column) |
+| `--chat-disclosure-header-height` | `32px` | Shared compact header height for collapsible reasoning, tool-call, and todo parts |
+| `--chat-todo-item-min-height` | `32px` | Compact minimum row height for each todo item |
 | `--chat-scrollbar-width` | `6px` | Scrollbar width (WebKit) |
 
 ## Minimal override set

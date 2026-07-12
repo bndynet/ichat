@@ -6,9 +6,10 @@
   display: block;
   font-family: var(--chat-font-family, inherit);
   container-type: inline-size;
+  margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
   --_todo-bg: var(--chat-todo-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
   --_todo-border: var(--chat-todo-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
-  --_todo-radius: var(--chat-todo-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md})));
+  --_todo-radius: var(--chat-todo-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
   --_todo-shadow: var(--chat-todo-shadow, var(--chat-panel-shadow, none));
   --_todo-text: var(--chat-todo-text, var(--chat-text, #{$color-text}));
   --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
@@ -21,17 +22,18 @@
   @include panel.surface(var(--_todo-bg), var(--_todo-border), var(--_todo-radius), var(--_todo-shadow));
 
   overflow: hidden;
-  margin: 6px 0;
+  margin: 0;
   color: var(--_todo-text);
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
 }
 
 .todo__header {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: var(--chat-spacing-sm, #{$spacing-sm});
-  min-height: 40px;
-  padding: 0 var(--chat-spacing-xs, #{$spacing-xs}) 0 var(--chat-spacing-sm, #{$spacing-sm});
+  gap: 6px;
+  min-height: var(--chat-disclosure-header-height, 32px);
+  padding: 0 8px 0 10px;
   cursor: pointer;
   list-style: none;
   user-select: none;
@@ -50,16 +52,16 @@
 }
 
 .todo__heading-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: var(--_todo-secondary);
 }
 
 .todo__heading-icon svg,
 .todo__status svg,
 .todo__toggle svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.6;
@@ -94,8 +96,8 @@
 }
 
 .todo__toggle {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   color: var(--_todo-secondary);
 }
 
@@ -131,9 +133,9 @@
 
 .todo__item {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 30px minmax(0, 1fr);
   align-items: center;
-  min-height: 38px;
+  min-height: var(--chat-todo-item-min-height, 32px);
   border-bottom: 1px solid var(--_todo-border);
 }
 
@@ -142,8 +144,8 @@
 }
 
 .todo__status {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   margin-inline-start: 3px;
   border-radius: 50%;
 }
@@ -160,7 +162,8 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding: 7px var(--chat-spacing-sm, #{$spacing-sm}) 7px 0;
+  padding: 3px var(--chat-spacing-sm, #{$spacing-sm}) 3px 0;
+  line-height: 1.35;
 }
 
 .todo__item-title,

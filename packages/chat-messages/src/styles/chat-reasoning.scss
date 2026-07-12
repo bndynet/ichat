@@ -10,34 +10,53 @@
 
 .reasoning {
   @include panel.surface(
-    $background: var(--chat-reasoning-bg, var(--chat-panel-bg, var(--chat-primary-light, #{$color-primary-light}))),
-    $border: var(--chat-reasoning-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 30%, var(--chat-border, #{$color-border})))),
-    $radius: var(--chat-reasoning-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+    $background: var(--chat-reasoning-bg, color-mix(in srgb, var(--chat-surface, #{$color-surface}) 94%, var(--chat-primary, #{$color-primary}) 6%)),
+    $border: var(--chat-reasoning-border, color-mix(in srgb, var(--chat-border, #{$color-border}) 82%, var(--chat-primary, #{$color-primary}) 18%)),
+    $radius: var(--chat-reasoning-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))),
     $shadow: var(--chat-reasoning-shadow, var(--chat-panel-shadow, none))
   );
 
+  position: relative;
   overflow: hidden;
-  transition: border-color var(--chat-transition-normal, #{$transition-normal});
+  transition:
+    background var(--chat-transition-normal, #{$transition-normal}),
+    border-color var(--chat-transition-normal, #{$transition-normal});
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 2px;
+    background: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
+    opacity: 0.72;
+  }
+
+  &.is-streaming::before {
+    opacity: 1;
+  }
 }
 
 .reasoning-header {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: var(--chat-spacing-sm, #{$spacing-sm});
-  padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+  gap: 6px;
+  min-height: var(--chat-disclosure-header-height, 32px);
+  padding: 0 8px 0 10px;
   cursor: pointer;
   user-select: none;
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
-  font-weight: 500;
-  color: var(--chat-reasoning-text, var(--chat-primary, #{$color-primary}));
+  font-weight: 600;
+  color: var(--chat-reasoning-text, var(--chat-text-secondary, #{$color-text-secondary}));
   transition: background var(--chat-transition-fast, #{$transition-fast});
 
   &:hover {
-    background: var(--chat-reasoning-header-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 3%, transparent));
+    background: var(--chat-reasoning-header-hover-bg, color-mix(in srgb, var(--chat-text, #{$color-text}) 4%, transparent));
   }
 
   &:focus-visible {
-    outline: 2px solid var(--chat-primary, #{$color-primary});
+    outline: 2px solid var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
     outline-offset: 2px;
   }
 }
@@ -51,9 +70,21 @@
 }
 
 .reasoning-icon {
-  font-size: 1rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
+  background: color-mix(in srgb, var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})) 10%, transparent);
+
+  svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .reasoning-header-custom {
@@ -69,7 +100,8 @@
   transition: transform var(--chat-transition-normal, #{$transition-normal});
   display: flex;
   align-items: center;
-  opacity: 0.6;
+  color: var(--chat-text-muted, #{$color-text-muted});
+  opacity: 0.8;
 
   &.expanded {
     transform: rotate(180deg);
@@ -84,18 +116,24 @@
 
 .reasoning-content {
   overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.25s ease;
+  border-block-start: 1px solid transparent;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.25s ease,
+    border-color var(--chat-transition-normal, #{$transition-normal});
   max-height: 0;
   opacity: 0;
 
   &.open {
-    max-height: 2000px;
+    max-height: var(--chat-reasoning-content-max-height, 480px);
     opacity: 1;
+    overflow-y: auto;
+    border-block-start-color: color-mix(in srgb, var(--chat-border, #{$color-border}) 72%, transparent);
   }
 }
 
 .reasoning-body {
-  padding: 0 var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-sm, #{$spacing-sm});
+  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-sm, #{$spacing-sm});
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   line-height: var(--chat-line-height, #{$line-height-base});
   color: var(--chat-text-secondary, #{$color-text-secondary});
@@ -157,10 +195,10 @@
   align-items: center;
 
   .dot {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
-    background: var(--chat-reasoning-text, var(--chat-primary, #{$color-primary}));
+    background: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
     opacity: 0.4;
     animation: thinkPulse 1.4s ease-in-out infinite;
 
@@ -182,5 +220,18 @@
   40% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reasoning,
+  .reasoning-header,
+  .reasoning-chevron,
+  .reasoning-content {
+    transition: none;
+  }
+
+  .reasoning-thinking .dot {
+    animation: none;
   }
 }

@@ -136,7 +136,7 @@ export const CHAT_LABELS_EN: ChatLabels = {
   },
   reasoning: {
     thinking: 'Thinking...',
-    reasoning: 'Reasoning',
+    reasoning: 'Thought summary',
   },
   toolCall: {
     preparing: 'Preparing…',
@@ -193,8 +193,8 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
     voiceStopTitle: '停止听写',
   },
   reasoning: {
-    thinking: '正在思考...',
-    reasoning: '推理过程',
+    thinking: '正在分析...',
+    reasoning: '思考摘要',
   },
   toolCall: {
     preparing: '准备中…',

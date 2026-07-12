@@ -2,7 +2,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue';
 import { reply, nextId } from '../composables/demo-data.js';
 import '@bndynet/ichat';
-import { textPart, getMessageText, makeDaysAgo } from '@bndynet/ichat';
+import { textPart, reasoningPart, getMessageText, makeDaysAgo } from '@bndynet/ichat';
 import ChatToolbar from '../components/ChatToolbar.vue';
 
 const loading = ref(true);
@@ -30,7 +30,7 @@ const AR_LABELS = {
     send: 'إرسال',
     sendTitle: 'إرسال الرسالة',
   },
-  reasoning: { thinking: 'يفكر...', reasoning: 'الاستدلال' },
+  reasoning: { thinking: 'يفكر...', reasoning: 'ملخص التفكير' },
   toolCall: {
     running: 'قيد التشغيل…',
     success: 'نجاح',
@@ -124,6 +124,22 @@ onMounted(async () => {
         textPart(
           'Hi there! This is the **complete `<i-chat>`** component. It bundles messages, input, and all renderers in one tag. Try typing a message below!\n\n' +
             'The next **three self rows** demo per-message `avatar`: HTTP URL, `data:image/png;base64,…`, and inline `<svg>`.',
+        ),
+      ],
+      timestamp: Date.now(),
+    });
+    chat.addMessage({
+      id: nextId(),
+      role: 'assistant',
+      parts: [
+        reasoningPart(
+          '**Summary:** Treat this as a compact planning trace, not the main answer. Keep it easy to scan, then let the final response carry the user-facing result.\n\n' +
+            '<!-- bid:summary-demo -->\n1. [done] **Intent** — Show a completed reasoning part without making it compete with the answer.\n2. [done] **Hierarchy** — Use a neutral row, a thin accent rail, and secondary text.\n3. [done] **Disclosure** — Collapse by default; expand only when the user asks for detail.\n\n' +
+            '> Some providers return summaries, empty thought blocks, or redacted thinking. The UI should stay calm in all three cases.\n',
+          { status: 'complete' },
+        ),
+        textPart(
+          '结论会放在正文里；上面的 **思考摘要** 默认收起，点开后可以看到简短步骤和备注。输入 `thinking` 还能看流式状态。',
         ),
       ],
       timestamp: Date.now(),

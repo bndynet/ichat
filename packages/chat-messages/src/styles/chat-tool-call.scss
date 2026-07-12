@@ -5,9 +5,10 @@
 :host {
   display: block;
   font-family: var(--chat-font-family, inherit);
+  margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
   --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface-alt, #{$color-surface-alt})));
   --_tc-border: var(--chat-tool-border, var(--chat-panel-border, var(--chat-border, #{$color-border})));
-  --_tc-radius: var(--chat-tool-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md})));
+  --_tc-radius: var(--chat-tool-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
   --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
   --_tc-text: var(--chat-tool-text, var(--chat-text, #{$color-text}));
   --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary, #{$color-text-secondary}));
@@ -21,7 +22,7 @@
 .tc {
   @include panel.surface(var(--_tc-bg), var(--_tc-border), var(--_tc-radius), var(--_tc-shadow));
 
-  margin: 6px 0;
+  margin: 0;
   overflow: hidden;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});
 }
@@ -39,10 +40,12 @@
 }
 
 summary {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: var(--chat-spacing-sm, #{$spacing-sm});
-  padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+  gap: 6px;
+  min-height: var(--chat-disclosure-header-height, 32px);
+  padding: 0 8px 0 10px;
   cursor: pointer;
   list-style: none;
   font-size: var(--chat-font-size-sm, #{$font-size-sm});

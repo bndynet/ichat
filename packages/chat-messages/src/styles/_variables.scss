@@ -62,9 +62,9 @@ $color-peer-bg: $color-surface;
 $color-peer-text: $color-text;
 
 // ── Derived: Reasoning ──────────────────────────────────────────────
-$color-reasoning-bg: $color-primary-light;
-$color-reasoning-border: #c7d2fe;
-$color-reasoning-text: $color-primary;
+$color-reasoning-bg: $color-surface;
+$color-reasoning-border: $color-border;
+$color-reasoning-text: $color-text-secondary;
 $color-reasoning-header-hover-bg: rgba(0, 0, 0, 0.03);
 
 // ── Code (design constant — intentionally NOT derived from the 12 base tokens) ─

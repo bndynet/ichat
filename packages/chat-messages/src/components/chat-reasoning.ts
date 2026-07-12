@@ -96,7 +96,7 @@ export class ChatReasoning extends LitElement {
     const bodyOpen = this.streaming || this._expanded;
 
     return html`
-      <div class="reasoning">
+      <div class="reasoning ${this.streaming ? 'is-streaming' : 'is-complete'} ${bodyOpen ? 'is-open' : 'is-collapsed'}">
         <div
           class="reasoning-header"
           role="button"

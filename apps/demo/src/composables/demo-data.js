@@ -175,23 +175,22 @@ export const demoData = {
 const thinkingDemoEvents = [
   {
     reasoning:
-      '**Parse intent:** User sent `thinking`. Demo **all-in-one** — same SSE shape as production (`reasoning` + `content`), but the reply body pulls in every preset from `demoData`: Charts → KPI cards → KPI group → Form → Details (fence + container) → Markdown notes → dev timeline.\n\n',
+      '**Summary:** The user asked for the `thinking` demo, so I will keep the thought stream compact and use the answer body for the heavy markdown/rendering examples.\n\n',
   },
   {
     reasoning:
-      '<!-- bid:plan -->\n1. [done] **Scope** — Reasoning stays in the collapsible block; body streams preset content by reference.\n2. [done] **Charts** — `charts.*` fences via `demoData.Charts`.\n3. [done] **KPI** — `kpi` / `kpis` blocks from `demoData["KPI Cards"]` and `demoData["KPI Group"]`.\n4. [done] **Form** — JSON form fence from `demoData.Form`.\n5. [done] **Details** — Fence + container from `demoData["Details (fence)"]` and `demoData["Details (container)"]`.\n6. [done] **Pace** — Chunked `content` events so streaming stays visible.\n7. [done] **UX** — Expand thinking (推理过程); answer emphasizes widgets + timeline.\n8. [done] **Contract** — Optional `reasoning` + `content` per event.\n\n',
+      '<!-- bid:plan -->\n1. [done] **Classify** — Treat `thinking` as a showcase request.\n2. [active] **Prepare** — Stream a short thought summary while the answer gathers charts, KPI, form, details, and timeline examples.\n3. [pending] **Answer** — Put the user-facing result in the main bubble.\n4. [pending] **Finish** — Collapse the summary when generation completes.\n\n',
   },
   {
     reasoning:
-      '**Sanity check:** Reasoning must not duplicate into the Markdown body; preset strings are appended only under `content`.\n\n' +
-      '> **Note:** This is a blockquote inside the reasoning body — handy for highlighting assumptions or caveats while thinking.\n>\n> It can span multiple lines too.\n\n' +
-      '> **Second quote (reasoning):** Another blockquote to check spacing between two consecutive quotes.\n\n',
+      '**Check:** Keep the summary useful but secondary; avoid duplicating the final answer.\n\n' +
+      '> Thought summaries may be brief, missing, or redacted depending on the model provider. The UI should still feel stable.\n\n',
     delay: 8000,
   },
   { content: '## All-in-one streaming demo\n\n' },
   {
     content:
-      'Plan steps above streamed as **reasoning**; below, the same markdown as the sidebar presets (single pass).\n\n',
+      'The compact **thought summary** above streams separately; below, the answer body renders the same markdown as the sidebar presets in one pass.\n\n',
   },
   { content: demoData.chart + '\n\n' },
   { content: demoData.kpiGroup + '\n\n' },
@@ -202,7 +201,7 @@ const thinkingDemoEvents = [
   { content: demoData.detailsContainer + '\n\n' },
   {
     content:
-      '## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Reasoning** — optional collapsible block above the fold.\n- **Markdown** — headings, lists, tables, and fences.\n\n',
+      '## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Thought summary** — optional collapsible context above the answer.\n- **Markdown** — headings, lists, tables, and fences.\n\n',
   },
   {
     content:
