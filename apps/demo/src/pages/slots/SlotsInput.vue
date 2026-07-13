@@ -3,6 +3,8 @@ import { computed, ref, nextTick, onMounted } from 'vue';
 import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
 import '@bndynet/ichat';
 import { cancelPendingStreamPlayback, reply } from '../../composables/demo-data.js';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import inputExample from '../../examples/slots/input.md?raw';
 
 const draft = ref('');
 const model = ref('');
@@ -130,6 +132,7 @@ onMounted(async () => {
       </div>
     </div>
   </i-chat>
+  <ExampleCodeDrawer title="Custom input code example" :content="inputExample" />
 </template>
 
 <style scoped>

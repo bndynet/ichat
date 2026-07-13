@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { nextTick, onMounted, ref } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { nextId } from '../../composables/demo-data.js';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import confirmationExample from '../../examples/renderers/confirmation.md?raw';
 
 const chatRef = ref(null);
 const draft = ref('');
@@ -192,6 +194,7 @@ function requestQueuedConfirmations() {
       </div>
     </div>
   </i-chat>
+  <ExampleCodeDrawer title="Confirmation code example" :content="confirmationExample" />
 </template>
 
 <style scoped>

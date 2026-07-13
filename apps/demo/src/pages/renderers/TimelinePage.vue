@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import timelineExample from '../../examples/renderers/timeline.md?raw'
 
 const chatRef = ref(null)
 
@@ -58,4 +60,5 @@ onUnmounted(() => {
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
+  <ExampleCodeDrawer title="Timeline code example" :content="timelineExample" />
 </template>

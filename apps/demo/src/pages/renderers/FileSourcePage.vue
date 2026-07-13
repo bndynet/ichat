@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { nextId } from '../../composables/demo-data.js';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import fileSourceExample from '../../examples/renderers/file-source.md?raw';
 
 const chatRef = ref(null);
 
@@ -84,4 +86,5 @@ onMounted(async () => {
 
 <template>
   <i-chat-messages ref="chatRef" />
+  <ExampleCodeDrawer title="File and source code example" :content="fileSourceExample" />
 </template>

@@ -17,9 +17,11 @@ chat.addMessage({
     textPart('I will work through this plan and keep it up to date.'),
     todoPart(
       [
-        { id: 'model', title: 'Define the to-do data model', status: 'done' },
+        { id: 'model', title: 'Define the todo data model', status: 'done' },
         { id: 'panel', title: 'Build the collapsible chat panel', status: 'active' },
         { id: 'events', title: 'Connect status update events', status: 'pending' },
+        { id: 'docs', title: 'Document the public API', status: 'pending' },
+        { id: 'verify', title: 'Verify the production build', status: 'pending' },
       ],
       { id: 'todo-plan', status: 'streaming' },
     ),

@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import chartsExample from '../../examples/renderers/charts.md?raw'
 
 const chatRef = ref(null)
 let cancelled = false
@@ -48,4 +50,5 @@ onUnmounted(() => {
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
+  <ExampleCodeDrawer title="Charts code example" :content="chartsExample" />
 </template>

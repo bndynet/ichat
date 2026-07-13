@@ -2,6 +2,8 @@
 import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
 import { reply } from '../../composables/demo-data';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import placeholderExample from '../../examples/slots/placeholder.md?raw';
 
 const chatRef = ref(null);
 
@@ -116,6 +118,7 @@ function handleSend(e) {
       <p class="placeholder__hint">Type a message below to begin.</p>
     </div>
   </i-chat>
+  <ExampleCodeDrawer title="Placeholder code example" :content="placeholderExample" />
 </template>
 
 <style scoped>

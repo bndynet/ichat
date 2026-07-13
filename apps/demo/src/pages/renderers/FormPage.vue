@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import formExample from '../../examples/renderers/form.md?raw'
 
 const chatRef = ref(null)
 
@@ -31,4 +33,5 @@ function onPartAction(e) {
 
 <template>
   <i-chat-messages ref="chatRef" @part-action="onPartAction"></i-chat-messages>
+  <ExampleCodeDrawer title="Form code example" :content="formExample" />
 </template>

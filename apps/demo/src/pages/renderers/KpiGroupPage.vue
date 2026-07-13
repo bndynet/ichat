@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import kpiGroupExample from '../../examples/renderers/kpi-group.md?raw'
 
 const chatRef = ref(null)
 
@@ -19,4 +21,5 @@ onMounted(async () => {
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
+  <ExampleCodeDrawer title="KPI group code example" :content="kpiGroupExample" />
 </template>

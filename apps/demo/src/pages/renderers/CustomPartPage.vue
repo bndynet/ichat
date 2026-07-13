@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { nextId } from '../../composables/demo-data.js';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import customPartExample from '../../examples/renderers/custom-part.md?raw';
 
 const chatRef = ref(null);
 
@@ -88,6 +90,7 @@ function updateWeather() {
     </button>
     <i-chat-messages ref="chatRef" />
   </div>
+  <ExampleCodeDrawer title="Custom part code example" :content="customPartExample" />
 </template>
 
 <style scoped>

@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { reply, nextId } from '../../composables/demo-data';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import actionsExample from '../../examples/slots/actions.md?raw';
 
 const chatRef = ref(null);
 
@@ -42,4 +44,5 @@ function handleSend(e) {
       <span data-action="like">Like</span> <span data-action="copy">Copy</span>
     </div>
   </i-chat>
+  <ExampleCodeDrawer title="Message actions code example" :content="actionsExample" />
 </template>

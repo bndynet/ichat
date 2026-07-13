@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { ref, nextTick, onMounted } from 'vue';
 import { textPart } from '@bndynet/ichat';
 import { nextId, reply } from '../../composables/demo-data.js';
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
+import avatarExample from '../../examples/slots/avatar.md?raw';
 
 const chatRef = ref(null);
 
@@ -30,6 +32,10 @@ onMounted(async () => {
 function handleSend(e) {
   const content = e.detail.content;
   reply(chatRef, content);
+}
+
+function handleMessageAction(e) {
+  console.log('[Avatar message-action]', e.detail);
 }
 
 </script>
@@ -86,4 +92,5 @@ function handleSend(e) {
       </p>
     </div>
   </i-chat>
+  <ExampleCodeDrawer title="Avatar code example" :content="avatarExample" />
 </template>

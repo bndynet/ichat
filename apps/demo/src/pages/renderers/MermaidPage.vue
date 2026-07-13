@@ -3,6 +3,8 @@ import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import mermaidExample from '../../examples/renderers/mermaid.md?raw'
 
 const chatRef = ref(null)
 
@@ -25,6 +27,7 @@ onMounted(async () => {
     Remove that block to fall back to normal <code>--chat-*</code> only.
   </p>
   <i-chat-messages ref="chatRef"></i-chat-messages>
+  <ExampleCodeDrawer title="Mermaid code example" :content="mermaidExample" />
 </template>
 
 <style scoped>
