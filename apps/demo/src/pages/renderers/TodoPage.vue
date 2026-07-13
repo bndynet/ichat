@@ -3,6 +3,8 @@ import '@bndynet/ichat'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { textPart, todoPart } from '@bndynet/ichat'
 import { nextId } from '../../composables/demo-data.js'
+import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
+import todoExample from '../../examples/renderers/todos.md?raw'
 
 const chatRef = ref(null)
 const timers = []
@@ -66,4 +68,5 @@ function handlePartAction(event) {
 
 <template>
   <i-chat ref="chatRef" @part-action="handlePartAction"></i-chat>
+  <ExampleCodeDrawer title="To-dos code example" :content="todoExample" />
 </template>
