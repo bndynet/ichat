@@ -4,7 +4,7 @@ import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'
 import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
-import timelineExample from '../../examples/renderers/timeline.md?raw'
+import progressExample from '../../examples/renderers/progress.md?raw'
 
 const chatRef = ref(null)
 
@@ -18,7 +18,7 @@ async function waitForChatHost(maxTicks = 30) {
   return chatRef.value
 }
 
-let timelineTimer
+let progressTimer
 
 onMounted(async () => {
   const host = await waitForChatHost()
@@ -28,37 +28,37 @@ onMounted(async () => {
   host.addMessage({
     id,
     role: 'assistant',
-    parts: [textPart(demoData.timeline)],
+    parts: [textPart(demoData.progress)],
     timestamp: Date.now(),
   })
 
   const steps = ['active', 'done', 'error'].flatMap((s) =>
-    ['build', 'deploy'].flatMap((bid) => [0, 1, 2].map((i) => ({ bid, i, s }))),
+    ['build', 'deploy'].flatMap((bid) => [1, 2, 3].map((step) => ({ bid, step, s }))),
   )
   let si = 0
-  timelineTimer = setInterval(() => {
+  progressTimer = setInterval(() => {
     if (si >= steps.length) {
-      clearInterval(timelineTimer)
-      timelineTimer = undefined
+      clearInterval(progressTimer)
+      progressTimer = undefined
       return
     }
     const current = chatRef.value
     if (!current) {
-      clearInterval(timelineTimer)
-      timelineTimer = undefined
+      clearInterval(progressTimer)
+      progressTimer = undefined
       return
     }
-    const { bid, i, s } = steps[si++]
-    current.updateTimeline(id, i, s, bid)
+    const { bid, step, s } = steps[si++]
+    current.updateProgressStep(id, step, s, bid)
   }, 500)
 })
 
 onUnmounted(() => {
-  if (timelineTimer != null) clearInterval(timelineTimer)
+  if (progressTimer != null) clearInterval(progressTimer)
 })
 </script>
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
-  <ExampleCodeDrawer title="Timeline code example" :content="timelineExample" />
+  <ExampleCodeDrawer title="Progress code example" :content="progressExample" />
 </template>

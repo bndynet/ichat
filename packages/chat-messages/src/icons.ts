@@ -220,17 +220,17 @@ export const chatIconStrings = {
     size: 18,
     strokeWidth: 2.2,
   }),
-  timelineDone: strokeIconString('<path d="M3.5 8.5 6.5 11.5 12.5 4.5" />', {
+  progressDone: strokeIconString('<path d="M3.5 8.5 6.5 11.5 12.5 4.5" />', {
     size: 9,
     strokeWidth: 3,
     viewBox: '0 0 16 16',
   }),
-  timelineError: strokeIconString('<path d="M4 4 12 12M12 4 4 12" />', {
+  progressError: strokeIconString('<path d="M4 4 12 12M12 4 4 12" />', {
     size: 8,
     strokeWidth: 3,
     viewBox: '0 0 16 16',
   }),
-  timelineSkipped: strokeIconString('<path d="M4 8h8" />', {
+  progressSkipped: strokeIconString('<path d="M4 8h8" />', {
     size: 8,
     strokeWidth: 3,
     viewBox: '0 0 16 16',

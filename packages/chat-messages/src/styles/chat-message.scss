@@ -1,6 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
-@use 'chat-timeline' as tl;
+@use 'chat-progress' as progress;
 @use 'chat-kpi' as kpi;
 @use 'chat-details' as dt;
 
@@ -473,9 +473,9 @@ i-chat-text-part {
   }
 }
 
-// Timeline styles
+// Progress styles
 .content {
-  @include tl.styles;
+  @include progress.styles;
 }
 
 // KPI card styles
@@ -486,7 +486,7 @@ i-chat-text-part {
 // Details / collapsible styles are injected via the shared chatDetailsStyles
 // CSSResult imported in chat-message.ts — no duplicate CSS here.
 
-@include tl.keyframes;
+@include progress.keyframes;
 
 // Error message
 .message--error {

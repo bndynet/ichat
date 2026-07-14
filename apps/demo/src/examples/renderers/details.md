@@ -14,7 +14,7 @@ A modern chat interface with rich Markdown support.
 **Features:**
 - Streaming messages with typewriter effect
 - Collapsible reasoning blocks
-- Charts, KPI cards, timelines, forms
+- Charts, KPI cards, progress, forms
 
 \`\`\`
 

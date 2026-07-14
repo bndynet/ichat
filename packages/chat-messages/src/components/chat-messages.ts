@@ -22,7 +22,7 @@ import {
 import { normalizeMessagePartUpdateEvent } from '../message-part-events.js';
 import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
-import type { TimelineStatus } from '../renderers/timeline-plugin.js';
+import type { ProgressStatus } from '../renderers/progress-plugin.js';
 import type {
   MessagePartUpdateEventResult,
   MessagePartUpdateResult,
@@ -609,20 +609,20 @@ export class ChatMessages extends LitElement {
   }
 
   /**
-   * Update a timeline step's status within a specific message.
-   * @param messageId - The message `id` that contains the timeline.
-   * @param step      - Zero-based step index.
+   * Update a progress step's status within a specific message.
+   * @param messageId - The message `id` that contains the progress block.
+   * @param step      - One-based step number.
    * @param status    - The new status to apply.
-   * @param bid       - Optional block id to target a specific timeline when
+   * @param bid       - Optional block id to target a specific progress block when
    *                    the message contains more than one.
    * @returns `true` if the step was found and updated.
    */
-  updateTimeline(messageId: string, step: number, status: TimelineStatus, bid?: string): boolean {
+  updateProgressStep(messageId: string, step: number, status: ProgressStatus, bid?: string): boolean {
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
       `i-chat-message[data-message-id="${CSS.escape(messageId)}"]`
     );
     if (!msgEl) return false;
-    return msgEl.updateTimeline(step, status, bid);
+    return msgEl.updateProgressStep(step, status, bid);
   }
 
   /** Dismiss the error banner. */

@@ -296,8 +296,8 @@ export class Chat extends LitElement {
     this._messages.dismissError();
   }
 
-  updateTimeline(messageId: string, step: number, status: string, bid?: string): boolean {
-    return this._messages.updateTimeline(messageId, step, status as Parameters<ChatMessages['updateTimeline']>[2], bid);
+  updateProgressStep(messageId: string, step: number, status: string, bid?: string): boolean {
+    return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
   }
 
   addErrorMessage(error: string, text = ''): void {

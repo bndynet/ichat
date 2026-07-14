@@ -168,7 +168,7 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 </script>
 ```
 
-A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`updateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateTimeline`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
+A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`updateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateProgressStep`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
 
 When the user first opens a chat, load historical messages as completed content. Normalize stored messages by setting `message.streaming` to `false` and converting any persisted `status: 'streaming'` parts to a terminal state such as `complete`, especially for `reasoning` parts that have their own thinking/expanded state.
 
@@ -204,7 +204,7 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 - **Streaming typewriter** — progressive reveal and cursor state on streaming `text` parts ([Composer & interaction](docs/composer.md#streaming))
 - **Reply blocks** — quote previews under a message via **`replyMessage`** / **`clearReplyMessage`** ([Composer & interaction](docs/composer.md#reply-blocks))
 - **Slots** — avatars, actions, empty state ([`<i-chat>` API](docs/component-api.md#slots-on-i-chat))
-- **Timeline** — `[status]` markdown lists rendered as vertical timelines ([Timeline](docs/timeline.md))
+- **Progress** — `[status]` markdown lists rendered as vertical progress blocks ([Progress](docs/progress.md))
 - **Todo panel** — structured, collapsible plans with item IDs, live status updates, and user actions ([Todo panel](docs/todo.md))
 - **Theming** — 12 base CSS custom properties; all components derive from them automatically ([Theming](docs/theming.md))
 - **Localization & RTL** — single `config.labels` dictionary, plurals, and automatic RTL mirroring ([Localization](docs/localization.md))
@@ -221,7 +221,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 | [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, per-message avatar |
 | [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
 | [Custom renderers](docs/renderers.md) | `registerRenderer` + built-in chart / KPI / form / Mermaid renderers |
-| [Timeline](docs/timeline.md) | `[status]` lists, block IDs, programmatic updates, SSE integration |
+| [Progress](docs/progress.md) | `[status]` lists, block IDs, programmatic updates, SSE integration |
 | [Todo panel](docs/todo.md) | Structured items, collapse behavior, status events, updates, SSE revisions |
 | [Theming](docs/theming.md) | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference |
 | [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL |

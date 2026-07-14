@@ -6,12 +6,12 @@ import { chatIconStrings } from '../icons.js';
 
 // ── Status types & constants ────────────────────────────────────────
 
-/** Backward-compatible name for the shared ordered-work status vocabulary. */
-export type TimelineStatus = TaskStatus;
+/** Status vocabulary for ordered progress steps. */
+export type ProgressStatus = TaskStatus;
 
 const STATUS_RE = /^\[(done|complete|active|current|error|fail|pending|wait|skip|skipped)\]\s*/i;
 
-const STATUS_ALIAS: Record<string, TimelineStatus> = {
+const STATUS_ALIAS: Record<string, ProgressStatus> = {
   done: 'done',
   complete: 'done',
   active: 'active',
@@ -24,12 +24,12 @@ const STATUS_ALIAS: Record<string, TimelineStatus> = {
   skipped: 'skipped',
 };
 
-const ICONS: Record<TimelineStatus, string> = {
-  done: chatIconStrings.timelineDone,
+const ICONS: Record<ProgressStatus, string> = {
+  done: chatIconStrings.progressDone,
   active: '',
-  error: chatIconStrings.timelineError,
+  error: chatIconStrings.progressError,
   pending: '',
-  skipped: chatIconStrings.timelineSkipped,
+  skipped: chatIconStrings.progressSkipped,
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -57,9 +57,9 @@ const BID_RE = /^<!--\s*bid:(\S+)\s*-->$/;
 
 // ── Plugin ──────────────────────────────────────────────────────────
 
-export function timelinePlugin(md: MarkdownIt): void {
+export function progressPlugin(md: MarkdownIt): void {
   // --- Pre-pass: extract <!-- bid:xxx --> paragraphs -----------------
-  md.core.ruler.push('timeline_bid', (state) => {
+  md.core.ruler.push('progress_bid', (state) => {
     const tokens = state.tokens;
     const removals = new Set<number>();
 
@@ -96,7 +96,7 @@ export function timelinePlugin(md: MarkdownIt): void {
   });
 
   // --- Core rule: detect [status] markers and annotate tokens --------
-  md.core.ruler.push('timeline', (state) => {
+  md.core.ruler.push('progress', (state) => {
     const tokens = state.tokens;
 
     for (let i = 0; i < tokens.length; i++) {
@@ -105,7 +105,7 @@ export function timelinePlugin(md: MarkdownIt): void {
       const closeIdx = findClose(tokens, i, 'ordered_list_open', 'ordered_list_close');
       if (closeIdx === -1) continue;
 
-      let hasTimeline = false;
+      let hasProgress = false;
       let stepIdx = 0;
 
       let j = i + 1;
@@ -118,12 +118,12 @@ export function timelinePlugin(md: MarkdownIt): void {
         const liClose = findClose(tokens, j, 'list_item_open', 'list_item_close');
         if (liClose === -1) break;
 
-        let status: TimelineStatus = 'pending';
+        let status: ProgressStatus = 'pending';
         for (let k = j + 1; k < liClose; k++) {
           if (tokens[k].type !== 'inline') continue;
           const match = STATUS_RE.exec(tokens[k].content);
           if (match) {
-            hasTimeline = true;
+            hasProgress = true;
             status = STATUS_ALIAS[match[1].toLowerCase()] ?? 'pending';
             tokens[k].content = tokens[k].content.slice(match[0].length);
             if (tokens[k].children?.length) {
@@ -137,14 +137,14 @@ export function timelinePlugin(md: MarkdownIt): void {
           break;
         }
 
-        tokens[j].meta = { ...tokens[j].meta, timeline: true, timelineStep: stepIdx, timelineStatus: status };
-        tokens[liClose].meta = { ...tokens[liClose].meta, timeline: true };
+        tokens[j].meta = { ...tokens[j].meta, progress: true, progressStep: stepIdx, progressStatus: status };
+        tokens[liClose].meta = { ...tokens[liClose].meta, progress: true };
         stepIdx++;
         j = liClose + 1;
       }
-      if (hasTimeline || tokens[i].meta?.bid) {
-        tokens[i].meta = { ...tokens[i].meta, timeline: true, stepCount: stepIdx };
-        tokens[closeIdx].meta = { ...tokens[closeIdx].meta, timeline: true };
+      if (hasProgress || tokens[i].meta?.bid) {
+        tokens[i].meta = { ...tokens[i].meta, progress: true, stepCount: stepIdx };
+        tokens[closeIdx].meta = { ...tokens[closeIdx].meta, progress: true };
       }
     }
   });
@@ -159,17 +159,17 @@ export function timelinePlugin(md: MarkdownIt): void {
   const origLiClose = md.renderer.rules.list_item_close;
 
   md.renderer.rules.ordered_list_open = (tokens, idx, options, env, self) => {
-    if (tokens[idx].meta?.timeline) {
+    if (tokens[idx].meta?.progress) {
       const count = tokens[idx].meta.stepCount ?? 0;
       const bid: string | undefined = tokens[idx].meta.bid;
       const bidAttr = bid ? ` data-bid="${md.utils.escapeHtml(bid)}"` : '';
-      return `<div class="chat-timeline"${bidAttr} data-timeline-steps="${count}">\n`;
+      return `<div class="chat-progress"${bidAttr} data-progress-steps="${count}">\n`;
     }
     return (origOlOpen ?? fallback)(tokens, idx, options, env, self);
   };
 
   md.renderer.rules.ordered_list_close = (tokens, idx, options, env, self) => {
-    if (tokens[idx].meta?.timeline) {
+    if (tokens[idx].meta?.progress) {
       return '</div>\n';
     }
     return (origOlClose ?? fallback)(tokens, idx, options, env, self);
@@ -177,21 +177,21 @@ export function timelinePlugin(md: MarkdownIt): void {
 
   md.renderer.rules.list_item_open = (tokens, idx, options, env, self) => {
     const meta = tokens[idx].meta;
-    if (meta?.timeline) {
-      const step: number = meta.timelineStep ?? 0;
-      const status: TimelineStatus = meta.timelineStatus ?? 'pending';
+    if (meta?.progress) {
+      const step: number = meta.progressStep ?? 0;
+      const status: ProgressStatus = meta.progressStatus ?? 'pending';
       const icon = ICONS[status] ?? '';
       return (
-        `<div class="chat-timeline-step chat-timeline-step--${status}" data-step="${step}" data-status="${status}">\n` +
-        `<div class="chat-timeline-indicator">${icon}</div>\n` +
-        `<div class="chat-timeline-content">\n`
+        `<div class="chat-progress-step chat-progress-step--${status}" data-step="${step}" data-status="${status}">\n` +
+        `<div class="chat-progress-indicator">${icon}</div>\n` +
+        `<div class="chat-progress-content">\n`
       );
     }
     return (origLiOpen ?? fallback)(tokens, idx, options, env, self);
   };
 
   md.renderer.rules.list_item_close = (tokens, idx, options, env, self) => {
-    if (tokens[idx].meta?.timeline) {
+    if (tokens[idx].meta?.progress) {
       return '</div>\n</div>\n';
     }
     return (origLiClose ?? fallback)(tokens, idx, options, env, self);
@@ -201,58 +201,60 @@ export function timelinePlugin(md: MarkdownIt): void {
 // ── Runtime status-update utility ───────────────────────────────────
 
 /**
- * Programmatically update a timeline step's status after render.
+ * Programmatically update a progress step's status after render.
  *
- * @param root   - The container that holds the `.chat-timeline` element
- *                 (e.g. a shadow root, or the timeline div itself).
- * @param step   - Zero-based step index.
+ * @param root   - The container that holds the `.chat-progress` element
+ *                 (e.g. a shadow root, or the progress div itself).
+ * @param step   - One-based step number.
  * @param status - The new status to apply.
  * @param bid    - Optional block id to scope the lookup when a message
- *                 contains multiple timelines.
+ *                 contains multiple progress blocks.
  * @returns `true` if the step was found and updated.
  *
  * @example
  * ```ts
- * // Single timeline per message
- * chatEl.updateTimeline('msg-1', 0, 'done');
+ * // Single progress block per message
+ * chatEl.updateProgressStep('msg-1', 1, 'done');
  *
- * // Multiple timelines — use bid to target the right one
- * chatEl.updateTimeline('msg-1', 0, 'done', 'build');
- * chatEl.updateTimeline('msg-1', 1, 'active', 'deploy');
+ * // Multiple progress blocks — use bid to target the right one
+ * chatEl.updateProgressStep('msg-1', 1, 'done', 'build');
+ * chatEl.updateProgressStep('msg-1', 2, 'active', 'deploy');
  * ```
  */
-export function updateTimelineStatus(
+export function updateProgressStepStatus(
   root: Element | ShadowRoot | Document,
   step: number,
-  status: TimelineStatus,
+  status: ProgressStatus,
   bid?: string,
 ): boolean {
-  console.debug(`updating timeline ${bid ? `[bid:${bid}]` : ''} step ${step} to ${status}`);
-  const timeline = bid
-    ? root.querySelector(`.chat-timeline[data-bid="${CSS.escape(bid)}"]`)
-    : root.querySelector('.chat-timeline');
-  if (!timeline) return false;
-  const scope: Element = timeline;
+  if (!Number.isInteger(step) || step < 1) return false;
+  const stepIndex = step - 1;
+  console.debug(`updating progress ${bid ? `[bid:${bid}]` : ''} step ${step} to ${status}`);
+  const progress = bid
+    ? root.querySelector(`.chat-progress[data-bid="${CSS.escape(bid)}"]`)
+    : root.querySelector('.chat-progress');
+  if (!progress) return false;
+  const scope: Element = progress;
 
   const item = scope.querySelector(
-    `[data-step="${step}"]`,
+    `[data-step="${stepIndex}"]`,
   ) as HTMLElement | null;
   if (!item) return false;
 
   for (const cls of Array.from(item.classList)) {
-    if (cls.startsWith('chat-timeline-step--')) {
+    if (cls.startsWith('chat-progress-step--')) {
       item.classList.remove(cls);
     }
   }
-  item.classList.add(`chat-timeline-step--${status}`);
+  item.classList.add(`chat-progress-step--${status}`);
   item.setAttribute('data-status', status);
 
-  const marker = item.querySelector('.chat-timeline-indicator');
+  const marker = item.querySelector('.chat-progress-indicator');
   if (marker) {
     marker.innerHTML = ICONS[status] ?? '';
   }
 
-  console.debug(`updated timeline ${bid ? `[bid:${bid}]` : ''} step ${step} to ${status}`);
+  console.debug(`updated progress ${bid ? `[bid:${bid}]` : ''} step ${step} to ${status}`);
 
   return true;
 }

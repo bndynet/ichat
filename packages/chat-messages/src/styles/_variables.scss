@@ -82,10 +82,10 @@ $color-chart-bar-track-bg: rgba(0, 0, 0, 0.04);
 // ── Derived: Error ───────────────────────────────────────────────────
 $color-error-bg: #fef2f2;
 
-// ── Derived: Timeline ───────────────────────────────────────────────
-$color-timeline-done: $color-success;
-$color-timeline-active-pulse: rgba(37, 99, 235, 0.25);
-$timeline-indicator-size: #{$font-size-base};
+// ── Derived: Progress ───────────────────────────────────────────────
+$color-progress-done: $color-success;
+$color-progress-active-pulse: rgba(37, 99, 235, 0.25);
+$progress-indicator-size: #{$font-size-base};
 
 // ── Derived: Shadows ────────────────────────────────────────────────
 $shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);

@@ -56,7 +56,7 @@ export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
 /** Per-part lifecycle. Optional; defaults to `complete`. */
 export type PartStatus = 'pending' | 'streaming' | 'complete' | 'error' | 'cancelled';
 
-/** Shared status vocabulary for ordered work items such as timelines and todos. */
+/** Shared status vocabulary for ordered work items such as progress blocks and todos. */
 export type TaskStatus = 'done' | 'active' | 'error' | 'pending' | 'skipped';
 
 /** Fields shared by every part. `id` must be stable for keyed render + targeted updates. */

@@ -2,7 +2,7 @@ import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import { rendererRegistry } from './registry.js';
-import { timelinePlugin } from './timeline-plugin.js';
+import { progressPlugin } from './progress-plugin.js';
 import { collapsiblePlugin } from './collapsible-plugin.js';
 import { normalizeAllowedLinkProtocols, uriRegexpForAllowedLinkProtocols } from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
@@ -32,7 +32,7 @@ const md = new MarkdownIt({
 // can either preserve every scheme or enforce a host-provided allow list.
 md.validateLink = () => true;
 
-md.use(timelinePlugin);
+md.use(progressPlugin);
 md.use(collapsiblePlugin);
 
 // ── DOMPurify configuration ──────────────────────────────────────────────────
@@ -86,11 +86,11 @@ const pendingBlockHTML = new Map<string, string>();
 // ── Built-in fence renderer: ```details Title … ``` ──────────────────────────
 // Supports an optional title extracted from the info string.
 // Inner content is rendered as full markdown and sanitised separately so that
-// any standard markdown elements (tables, lists, code blocks, timelines …)
+// any standard markdown elements (tables, lists, code blocks, progress blocks …)
 // work correctly inside the collapsible body.
 // NOTE: Nested *fence-based* custom renderers inside a details block are not
 // supported — they will fall back to a plain highlighted code block. Plugin-
-// based renderers (e.g. the timeline ordered-list syntax) work fine.
+// based renderers (e.g. the progress ordered-list syntax) work fine.
 rendererRegistry.register({
   name: 'chat-details',
   test: (lang: string) => /^details\b/i.test(lang),
@@ -99,7 +99,7 @@ rendererRegistry.register({
     const title = info.replace(/^details\s*/i, '').trim() || 'Details';
     const safeTitle = md.utils.escapeHtml(title);
 
-    // Render the body through the full markdown pipeline (supports timeline,
+    // Render the body through the full markdown pipeline (supports progress,
     // tables, code highlighting, etc.) then sanitise the result.
     const bodyRaw = md.render(content);
     const bodyHtml = sanitizeHtml(bodyRaw, activeRenderOptions);

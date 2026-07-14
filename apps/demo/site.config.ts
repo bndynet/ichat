@@ -10,7 +10,7 @@ export default defineConfig({
       { label: 'To-dos', icon: 'list-checks', page: () => import('./src/pages/renderers/TodoPage.vue') },
       { label: 'File & source', icon: 'paperclip', page: () => import('./src/pages/renderers/FileSourcePage.vue') },
       { label: 'Custom part (x-*)', icon: 'puzzle', page: () => import('./src/pages/renderers/CustomPartPage.vue') },
-      { label: 'Timeline', icon: 'git-branch', page: () => import('./src/pages/renderers/TimelinePage.vue') },
+      { label: 'Progress', icon: 'git-branch', page: () => import('./src/pages/renderers/ProgressPage.vue') },
       { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
       { label: 'Mermaid', icon: 'git-fork', page: () => import('./src/pages/renderers/MermaidPage.vue') },
       { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },

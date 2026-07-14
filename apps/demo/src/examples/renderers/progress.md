@@ -1,6 +1,6 @@
-## Render a timeline
+## Render progress
 
-The timeline renderer reads a Markdown list with status markers. Use a block id when you plan to update a specific timeline later.
+The progress renderer reads a Markdown list with status markers. Use a block id when you plan to update a specific progress block later.
 
 ```js
 import '@bndynet/ichat'
@@ -31,10 +31,10 @@ chat.addMessage({
 
 ## Update an item
 
-Use the message id, zero-based item index, next status, and block id to apply a live update.
+Use the message id, one-based step number, next status, and block id to apply a live update.
 
 ```js
-chat.updateTimeline(messageId, 1, 'active', 'build')
-chat.updateTimeline(messageId, 2, 'done', 'build')
-chat.updateTimeline(messageId, 1, 'active', 'deploy')
+chat.updateProgressStep(messageId, 1, 'active', 'build')
+chat.updateProgressStep(messageId, 2, 'done', 'build')
+chat.updateProgressStep(messageId, 1, 'active', 'deploy')
 ```

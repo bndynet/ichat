@@ -127,7 +127,7 @@ export const demoData = {
     'Here is the combined KPI overview:\n\n' +
       '```kpis\n[\n  {"label": "Revenue", "value": "$50,846.90", "trend": -12},\n  {"label": "New Users", "value": "1,284", "trend": 8},\n  {"label": "MRR", "value": "$128,400"}\n]\n```',
 
-  timeline:
+  progress:
     '## Deployment Pipeline\n\n' +
     '### BUILD\n<!-- bid:build -->\n1. [done] Build Docker image\n2. [error] Run test suite\n3. [active] Push to registry\n\n' +
     '### DEPLOY\n<!-- bid:deploy -->\n1. [done] Deploy to staging\n2. [error] Run smoke tests\n3. [pending] Promote to production\n',
@@ -154,7 +154,7 @@ export const demoData = {
     'The following use the **fence syntax** (` ```details Title `) to collapse content.\n\n' +
       '```details 📋 Project Overview\n' +
       'A modern chat interface with rich markdown support.\n\n' +
-      '**Features:**\n- Streaming messages with typewriter effect\n- Collapsible reasoning blocks\n- Charts, KPI cards, timelines, forms\n' +
+      '**Features:**\n- Streaming messages with typewriter effect\n- Collapsible reasoning blocks\n- Charts, KPI cards, progress, forms\n' +
       '```\n\n' +
       '```details 🔍 Tech Stack\n' +
       '| Layer | Technology |\n| --- | --- |\n| UI | Lit / Web Components |\n| Markdown | markdown-it |\n| Charts | ECharts via @bndynet/icharts |\n| Sanitisation | DOMPurify |\n' +
@@ -171,7 +171,7 @@ export const demoData = {
       ':::',
 };
 
-/** Streaming thinking demo — reuses `demoData` markdown so one stream shows charts, KPI, form, details, and timeline. */
+/** Streaming thinking demo — reuses `demoData` markdown so one stream shows charts, KPI, form, details, and progress. */
 const thinkingDemoEvents = [
   {
     reasoning:
@@ -179,7 +179,7 @@ const thinkingDemoEvents = [
   },
   {
     reasoning:
-      '<!-- bid:plan -->\n1. [done] **Classify** — Treat `thinking` as a showcase request.\n2. [active] **Prepare** — Stream a short thought summary while the answer gathers charts, KPI, form, details, and timeline examples.\n3. [pending] **Answer** — Put the user-facing result in the main bubble.\n4. [pending] **Finish** — Collapse the summary when generation completes.\n\n',
+      '<!-- bid:plan -->\n1. [done] **Classify** — Treat `thinking` as a showcase request.\n2. [active] **Prepare** — Stream a short thought summary while the answer gathers charts, KPI, form, details, and progress examples.\n3. [pending] **Answer** — Put the user-facing result in the main bubble.\n4. [pending] **Finish** — Collapse the summary when generation completes.\n\n',
   },
   {
     reasoning:
@@ -195,7 +195,7 @@ const thinkingDemoEvents = [
   { content: demoData.chart + '\n\n' },
   { content: demoData.kpiGroup + '\n\n' },
   { content: demoData.kpis + '\n\n' },
-  { content: demoData.timeline + '\n\n' },
+  { content: demoData.progress + '\n\n' },
   { content: demoData.form + '\n\n' },
   { content: demoData.detailsFence + '\n\n' },
   { content: demoData.detailsContainer + '\n\n' },
@@ -214,7 +214,7 @@ const thinkingDemoEvents = [
   },
   {
     content:
-      '## Timeline\n\nVertical timeline with status indicators:\n\n<!-- bid:dev -->\n1. [done] Collect requirements from stakeholders\n2. [done] Design system architecture\n3. [active] Implement core API endpoints\n4. [pending] Write integration tests\n5. [error] Deploy to staging (rollback triggered)\n6. [skipped] Performance benchmarking\n\n',
+      '## Progress\n\nVertical progress block with status indicators:\n\n<!-- bid:dev -->\n1. [done] Collect requirements from stakeholders\n2. [done] Design system architecture\n3. [active] Implement core API endpoints\n4. [pending] Write integration tests\n5. [error] Deploy to staging (rollback triggered)\n6. [skipped] Performance benchmarking\n\n',
   },
 ];
 

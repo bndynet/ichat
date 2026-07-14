@@ -1,13 +1,13 @@
 @use 'variables' as *;
 
 @mixin styles {
-  .chat-timeline {
+  .chat-progress {
     display: flex;
     flex-direction: column;
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
   }
 
-  .chat-timeline-step {
+  .chat-progress-step {
     display: flex;
     align-items: flex-start;
     gap: var(--chat-spacing-sm, #{$spacing-sm});
@@ -22,28 +22,28 @@
     &:not(:last-child)::after {
       content: '';
       position: absolute;
-      inset-inline-start: calc(var(--chat-timeline-indicator-size, #{$timeline-indicator-size}) / 2 - 0.5px);
+      inset-inline-start: calc(var(--chat-progress-indicator-size, #{$progress-indicator-size}) / 2 - 0.5px);
       top: calc(
         (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em
-        + var(--chat-timeline-indicator-size, #{$timeline-indicator-size})
+        + var(--chat-progress-indicator-size, #{$progress-indicator-size})
       );
       bottom: calc((var(--chat-line-height, #{$line-height-base}) - 1) / -2 * 1em);
       width: 1px;
-      background: var(--chat-timeline-line, #{$color-border});
+      background: var(--chat-progress-line, #{$color-border});
       border-radius: 1px;
     }
   }
 
-  .chat-timeline-indicator {
+  .chat-progress-indicator {
     flex-shrink: 0;
     box-sizing: border-box;
-    width: var(--chat-timeline-indicator-size, #{$timeline-indicator-size});
-    height: var(--chat-timeline-indicator-size, #{$timeline-indicator-size});
+    width: var(--chat-progress-indicator-size, #{$progress-indicator-size});
+    height: var(--chat-progress-indicator-size, #{$progress-indicator-size});
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--chat-timeline-pending-border, #{$color-border});
+    border: 1px solid var(--chat-progress-pending-border, #{$color-border});
     background: var(--chat-surface, #{$color-surface});
     color: var(--chat-text-muted, #{$color-text-muted});
     position: relative;
@@ -52,7 +52,7 @@
     margin-top: calc((var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em);
   }
 
-  .chat-timeline-content {
+  .chat-progress-content {
     flex: 1;
     min-width: 0;
     font-size: var(--chat-font-size, #{$font-size-base});
@@ -69,47 +69,47 @@
 
   // ── Status modifiers ──────────────────────────────────────────────
 
-  .chat-timeline-step--done {
-    .chat-timeline-indicator {
-      background: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
-      border-color: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
+  .chat-progress-step--done {
+    .chat-progress-indicator {
+      background: var(--chat-progress-done, var(--chat-success, #{$color-success}));
+      border-color: var(--chat-progress-done, var(--chat-success, #{$color-success}));
       color: var(--chat-surface, #{$color-surface});
     }
 
     &:not(:last-child)::after {
-      background: var(--chat-timeline-done, var(--chat-success, #{$color-success}));
+      background: var(--chat-progress-done, var(--chat-success, #{$color-success}));
     }
   }
 
-  .chat-timeline-step--active {
-    .chat-timeline-indicator {
+  .chat-progress-step--active {
+    .chat-progress-indicator {
       border: 2px solid color-mix(in srgb, var(--chat-primary, #{$color-primary}) 20%, transparent);
-      border-top-color: var(--chat-timeline-active, var(--chat-primary, #{$color-primary}));
+      border-top-color: var(--chat-progress-active, var(--chat-primary, #{$color-primary}));
       background: transparent;
-      animation: timeline-spin 0.7s linear infinite;
+      animation: progress-spin 0.7s linear infinite;
     }
 
-    .chat-timeline-content {
+    .chat-progress-content {
       font-weight: 600;
     }
   }
 
-  .chat-timeline-step--error {
-    .chat-timeline-indicator {
-      background: var(--chat-timeline-error, var(--chat-error, #{$color-error}));
-      border-color: var(--chat-timeline-error, var(--chat-error, #{$color-error}));
+  .chat-progress-step--error {
+    .chat-progress-indicator {
+      background: var(--chat-progress-error, var(--chat-error, #{$color-error}));
+      border-color: var(--chat-progress-error, var(--chat-error, #{$color-error}));
       color: var(--chat-surface, #{$color-surface});
     }
   }
 
-  .chat-timeline-step--skipped {
-    .chat-timeline-indicator {
+  .chat-progress-step--skipped {
+    .chat-progress-indicator {
       background: var(--chat-surface-alt, #{$color-surface-alt});
       border-color: var(--chat-border, #{$color-border});
       color: var(--chat-text-muted, #{$color-text-muted});
     }
 
-    .chat-timeline-content {
+    .chat-progress-content {
       color: var(--chat-text-muted, #{$color-text-muted});
       text-decoration: line-through;
     }
@@ -117,7 +117,7 @@
 }
 
 @mixin keyframes {
-  @keyframes timeline-spin {
+  @keyframes progress-spin {
     to {
       transform: rotate(360deg);
     }

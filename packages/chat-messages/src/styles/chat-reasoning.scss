@@ -1,7 +1,7 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
 @use 'chat-disclosure-panel' as disclosure;
-@use 'chat-timeline' as tl;
+@use 'chat-progress' as progress;
 
 :host {
   display: block;
@@ -168,13 +168,13 @@
     border-end-end-radius: var(--chat-radius-sm, #{$radius-sm});
   }
 
-  @include tl.styles;
+  @include progress.styles;
 }
 
 // Details / collapsible styles are injected via the shared chatDetailsStyles
 // CSSResult imported in chat-reasoning.ts — no duplicate CSS here.
 
-@include tl.keyframes;
+@include progress.keyframes;
 
 // Thinking animation dots
 .reasoning-thinking {

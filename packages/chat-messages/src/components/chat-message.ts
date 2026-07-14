@@ -9,7 +9,7 @@ import type {
   TextPart,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
-import { updateTimelineStatus, type TimelineStatus } from '../renderers/timeline-plugin.js';
+import { updateProgressStepStatus, type ProgressStatus } from '../renderers/progress-plugin.js';
 import { StreamingController } from '../controllers/streaming-controller.js';
 import { calendarDaysAgo } from '../date-separator.js';
 import { formatAssistantDurationMs } from '../duration-format.js';
@@ -112,8 +112,8 @@ export class ChatMessageElement extends LitElement {
 
   private _streamStartTime: number | null = null;
   private _duration: number | null = null;
-  private _timelineOverrides = new Map<string, { step: number; status: TimelineStatus; bid?: string }>();
-  private _pendingTimelineRetry = false;
+  private _progressOverrides = new Map<string, { step: number; status: ProgressStatus; bid?: string }>();
+  private _pendingProgressRetry = false;
 
   /** Id of the `text` part currently driven by the typewriter, or `null`. */
   private _streamingTextId: string | null = null;
@@ -346,55 +346,55 @@ export class ChatMessageElement extends LitElement {
   }
 
   /**
-   * Update a timeline step's status within this message (content or reasoning).
+   * Update a progress step's status within this message (content or reasoning).
    * The override is persisted so it survives re-renders (e.g. reasoning collapse).
-   * @param step   - Zero-based step index.
+   * @param step   - One-based step number.
    * @param status - The new status to apply.
-   * @param bid    - Optional block id to target a specific timeline when
+   * @param bid    - Optional block id to target a specific progress block when
    *                 the message contains more than one.
    * @returns `true` if the step was found and updated.
    */
-  updateTimeline(step: number, status: TimelineStatus, bid?: string): boolean {
+  updateProgressStep(step: number, status: ProgressStatus, bid?: string): boolean {
     const key = `${bid ?? ''}:${step}`;
-    this._timelineOverrides.set(key, { step, status, bid });
-    const applied = this._applyTimelineOverride(step, status, bid);
-    if (!applied && !this._pendingTimelineRetry) {
-      // Timeline element is not in the DOM yet (component hasn't rendered, or
-      // the streaming content hasn't reached the timeline block yet).
+    this._progressOverrides.set(key, { step, status, bid });
+    const applied = this._applyProgressOverride(step, status, bid);
+    if (!applied && !this._pendingProgressRetry) {
+      // Progress element is not in the DOM yet (component hasn't rendered, or
+      // the streaming content hasn't reached the progress block yet).
       // Enqueue a single Lit update so updated() will retry; the flag prevents
       // redundant requestUpdate() calls while a retry is already in flight.
-      this._pendingTimelineRetry = true;
+      this._pendingProgressRetry = true;
       this.requestUpdate();
     }
     return applied;
   }
 
-  private _applyTimelineOverride(step: number, status: TimelineStatus, bid?: string): boolean {
+  private _applyProgressOverride(step: number, status: ProgressStatus, bid?: string): boolean {
     if (!this.shadowRoot) return false;
-    if (updateTimelineStatus(this.shadowRoot, step, status, bid)) return true;
+    if (updateProgressStepStatus(this.shadowRoot, step, status, bid)) return true;
     const reasoning = this.shadowRoot.querySelector('i-chat-reasoning');
     if (reasoning?.shadowRoot) {
-      return updateTimelineStatus(reasoning.shadowRoot, step, status, bid);
+      return updateProgressStepStatus(reasoning.shadowRoot, step, status, bid);
     }
     return false;
   }
 
   private _handlePartHostUpdated = (): void => {
-    this._scheduleTimelineReapply();
+    this._scheduleProgressReapply();
   };
 
-  private _scheduleTimelineReapply(): void {
-    if (this._timelineOverrides.size === 0) return;
+  private _scheduleProgressReapply(): void {
+    if (this._progressOverrides.size === 0) return;
     Promise.resolve().then(() => {
-      for (const { step, status, bid } of this._timelineOverrides.values()) {
-        this._applyTimelineOverride(step, status, bid);
+      for (const { step, status, bid } of this._progressOverrides.values()) {
+        this._applyProgressOverride(step, status, bid);
       }
     });
   }
 
   override updated(_changed: Map<string, unknown>): void {
-    this._pendingTimelineRetry = false;
-    this._scheduleTimelineReapply();
+    this._pendingProgressRetry = false;
+    this._scheduleProgressReapply();
   }
 
   /** Locale tag for Intl; `undefined` uses the runtime default (browser / environment). */

@@ -18,8 +18,8 @@ export {
   hasUnclosedReasoning,
 } from './renderers/markdown-renderer.js';
 export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
-export { updateTimelineStatus } from './renderers/timeline-plugin.js';
-export type { TimelineStatus } from './renderers/timeline-plugin.js';
+export { updateProgressStepStatus } from './renderers/progress-plugin.js';
+export type { ProgressStatus } from './renderers/progress-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';
 
 export type {
