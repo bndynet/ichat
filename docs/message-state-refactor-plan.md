@@ -6,10 +6,10 @@
 
 | Item | Value |
 |------|-------|
-| Document status | **Planned, implementation not started** |
-| Implementation progress | **0 / 9** |
+| Document status | **Planned, implementation in progress** |
+| Implementation progress | **1 / 9** |
 | Current code baseline | monorepo `2.0.0` |
-| Last verified | 2026-07-20 |
+| Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
 | Compatibility policy | 2.x only adds APIs, migrates internals, and fixes defects; public API removal is reserved for the next major version |
 
@@ -178,7 +178,7 @@ Event requirements:
 
 | Change | Scope | Status | Dependency | Risk | Breaking |
 |--------|-------|--------|------------|------|----------|
-| CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `NOT STARTED` | None | Medium | No (bug fix) |
+| CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `DONE` | None | Medium | No (bug fix) |
 | CHG-02 | Extract shared pure message-collection reducers | `NOT STARTED` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `NOT STARTED` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `NOT STARTED` | CHG-03 | Medium | No (bug fix) |
@@ -998,4 +998,30 @@ Future AI agents must execute one Change at a time:
 
 ## 13. Implementation Records
 
-None yet. Every Change is currently `NOT STARTED`.
+### CHG-01 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-21
+- Release version: 2.0.x (target)
+- Main files:
+  - `packages/chat-messages/src/messages-change-types.ts` (new) — public event types
+  - `packages/chat-messages/src/components/chat-messages.ts` — `_commitMessages()` + mutation routing
+  - `packages/chat-messages/src/index.ts` — export new types
+  - `packages/chat/src/components/chat.ts` — `_handleMessagesChange()` listener + `_ensureChildSynced()` + bridge
+  - `packages/chat/src/index.ts` — re-export new types
+  - `packages/chat-messages/test/messages-change.test.ts` (new) — 18 test cases
+- Public API changes:
+  - New `messages-change` event (bubbles, composed) on both `<i-chat>` and `<i-chat-messages>`
+  - New types: `MessagesChangeDetail`, `MessagesChangeReason`, `MessagesChangeSource`
+  - `@fires messages-change` JSDoc on both components
+- Behavior changes:
+  - `chat.messages` is now synchronized after every delegated proxy call (was stale before — bug fix)
+  - Direct external `messages = […]` assignment does NOT emit `messages-change`
+  - Stale child mutations are rejected by the parent bridge guard
+- Breaking change: No (bug fix)
+- Automated tests: 18 new test cases in `messages-change.test.ts`, all passing; 3 existing tests continue to pass
+- Manual regression: Build verified for all 4 packages; no compilation errors
+- Known limitations:
+  - `cancelMessage()` still uses `'message:update'` reason (will be `'message:cancel'` in CHG-05)
+  - Bridge is temporary — CHG-03 through CHG-07 will progressively remove delegation
+- Follow-up work: CHG-02 (extract pure reducers)

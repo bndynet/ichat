@@ -7,6 +7,11 @@ export type {
   ChatConfirmationResult,
   ChatConfirmationVariant,
 } from './components/chat.js';
+export type {
+  MessagesChangeDetail,
+  MessagesChangeReason,
+  MessagesChangeSource,
+} from '@bndynet/ichat-messages';
 export { registerRenderer } from './register-renderer.js';
 export { registerPartRenderer } from './register-part-renderer.js';
 

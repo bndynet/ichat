@@ -31,6 +31,10 @@ import type {
   ToolCallUpdateResult,
 } from '../update-results.js';
 import { chatIcons } from '../icons.js';
+import type {
+  MessagesChangeDetail,
+  MessagesChangeReason,
+} from '../messages-change-types.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
@@ -41,6 +45,10 @@ import type { ChatMessageElement } from './chat-message.js';
  * **`todo-action`**, and **`tool-action`** events from rendered message parts.
  * Embedded event details include `messageId` / `message` after
  * `i-chat-part-host` enriches them.
+ *
+ * @fires messages-change - Dispatched after any internal message-collection mutation commits.
+ *   Detail: {@link MessagesChangeDetail}. Direct external `messages = […]` assignments do
+ *   **not** emit this event.
  */
 @customElement('i-chat-messages')
 export class ChatMessages extends LitElement {
@@ -285,13 +293,55 @@ export class ChatMessages extends LitElement {
     }
   }
 
+  /**
+   * Central commit point for every message-collection mutation.
+   *
+   * Captures the previous array, assigns the next one, and dispatches exactly
+   * one `messages-change` event.  If `next === this.messages` the call is a
+   * no-op (no event, no assignment).  Direct external property writes (e.g.
+   * `el.messages = […]`) do **not** flow through here, so they never emit.
+   */
+  private _commitMessages(
+    next: ChatMessage[],
+    context: {
+      reason: MessagesChangeReason;
+      messageId?: string;
+      partId?: string;
+      itemId?: string;
+    },
+  ): void {
+    if (next === this.messages) return;
+    const previousMessages = this.messages;
+    this.messages = next;
+    const detail: MessagesChangeDetail = {
+      messages: next,
+      previousMessages,
+      reason: context.reason,
+      source: 'i-chat-messages',
+      messageId: context.messageId,
+      partId: context.partId,
+      itemId: context.itemId,
+    };
+    this.dispatchEvent(
+      new CustomEvent<MessagesChangeDetail>('messages-change', {
+        detail,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   addMessage(message: ChatMessage): void {
-    this.messages = [...this.messages, message];
+    this._commitMessages([...this.messages, message], {
+      reason: 'message:add',
+      messageId: message.id,
+    });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this.messages = this.messages.map((m) =>
-      m.id === id ? { ...m, ...partial } : m
+    this._commitMessages(
+      this.messages.map((m) => (m.id === id ? { ...m, ...partial } : m)),
+      { reason: 'message:update', messageId: id }
     );
   }
 
@@ -300,7 +350,11 @@ export class ChatMessages extends LitElement {
    * a reasoning block, or a tool call). Creates the `parts` array if absent.
    */
   appendPart(messageId: string, part: MessagePart): void {
-    this.messages = appendMessagePart(this.messages, messageId, part);
+    this._commitMessages(appendMessagePart(this.messages, messageId, part), {
+      reason: 'part:append',
+      messageId,
+      partId: part.id,
+    });
   }
 
   /**
@@ -311,7 +365,11 @@ export class ChatMessages extends LitElement {
   updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
     const result = patchMessagePart(this.messages, messageId, partId, patch);
     if (result.ok) {
-      this.messages = result.messages;
+      this._commitMessages(result.messages, {
+        reason: 'part:update',
+        messageId,
+        partId,
+      });
     }
   }
 
@@ -329,7 +387,11 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    this.messages = result.messages;
+    this._commitMessages(result.messages, {
+      reason: 'part:update',
+      messageId,
+      partId,
+    });
     return { ok: true, part: result.part };
   }
 
@@ -358,7 +420,11 @@ export class ChatMessages extends LitElement {
     const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
-    this.messages = replacement.messages;
+    this._commitMessages(replacement.messages, {
+      reason: 'tool-call:update',
+      messageId,
+      partId,
+    });
     return { ok: true, part: result.part };
   }
 
@@ -396,7 +462,12 @@ export class ChatMessages extends LitElement {
     const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
-    this.messages = replacement.messages;
+    this._commitMessages(replacement.messages, {
+      reason: 'todo-item:update',
+      messageId,
+      partId,
+      itemId,
+    });
     return { ok: true, part: result.part };
   }
 
@@ -476,7 +547,10 @@ export class ChatMessages extends LitElement {
   }
 
   removeMessage(id: string): void {
-    this.messages = this.messages.filter((m) => m.id !== id);
+    this._commitMessages(this.messages.filter((m) => m.id !== id), {
+      reason: 'message:remove',
+      messageId: id,
+    });
     this.clearReplyMessage(id);
   }
 
@@ -580,7 +654,7 @@ export class ChatMessages extends LitElement {
   }
 
   clear(): void {
-    this.messages = [];
+    this._commitMessages([], { reason: 'message:clear' });
     this._autoScroll = true;
     this._hasNewContent = false;
     this._replies = [];

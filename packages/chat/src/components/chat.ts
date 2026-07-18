@@ -10,6 +10,7 @@ import type {
   ConfirmationLabels,
   TodoActionDetail,
   ToolActionDetail,
+  MessagesChangeDetail,
 } from '@bndynet/ichat-messages';
 import { ChatMessages, StreamingController, resolveLabels } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
@@ -91,6 +92,8 @@ type PendingConfirmation = {
  *
  * @fires send - `{ detail: { content: string } }` when user submits a message
  * @fires cancel - Fired when user clicks cancel during streaming
+ * @fires messages-change - `{ detail: MessagesChangeDetail }` after a message-collection mutation commits.
+ *   Direct external `messages = […]` assignments do **not** emit this event.
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires part-action - `{ detail: ChatPartActionDetail }` unified action from rendered message parts
@@ -174,17 +177,20 @@ export class Chat extends LitElement {
   // ── Proxy methods to <i-chat-messages> ──────────────────────────────
 
   addMessage(message: ChatMessage): void {
+    this._ensureChildSynced();
     this._messages.addMessage(message);
     this._syncStreamingFromMessage(message);
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
+    this._ensureChildSynced();
     this._messages.updateMessage(id, partial);
     this._syncStreamingFromMessage(partial);
   }
 
   /** Append a structured body part to a message. */
   appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
+    this._ensureChildSynced();
     this._messages.appendPart(messageId, part);
   }
 
@@ -194,6 +200,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['updatePart']>[2]
   ): void {
+    this._ensureChildSynced();
     this._messages.updatePart(messageId, partId, patch);
   }
 
@@ -203,6 +210,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['tryUpdatePart']>[2]
   ): ReturnType<ChatMessages['tryUpdatePart']> {
+    this._ensureChildSynced();
     return this._messages.tryUpdatePart(messageId, partId, patch);
   }
 
@@ -212,6 +220,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['tryUpdateToolCall']>[2]
   ): ReturnType<ChatMessages['tryUpdateToolCall']> {
+    this._ensureChildSynced();
     return this._messages.tryUpdateToolCall(messageId, partId, patch);
   }
 
@@ -232,6 +241,7 @@ export class Chat extends LitElement {
     patch: Parameters<ChatMessages['tryUpdateTodoItem']>[3],
     revision?: number,
   ): ReturnType<ChatMessages['tryUpdateTodoItem']> {
+    this._ensureChildSynced();
     return this._messages.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
   }
 
@@ -273,18 +283,22 @@ export class Chat extends LitElement {
   }
 
   removeMessage(id: string): void {
+    this._ensureChildSynced();
     this._messages.removeMessage(id);
   }
 
   cancel(hint?: string): void {
+    this._ensureChildSynced();
     this._messages.cancel(hint);
   }
 
   cancelMessage(id: string, hint?: string): void {
+    this._ensureChildSynced();
     this._messages.cancelMessage(id, hint);
   }
 
   clear(): void {
+    this._ensureChildSynced();
     this._messages.clear();
   }
 
@@ -301,6 +315,7 @@ export class Chat extends LitElement {
   }
 
   addErrorMessage(error: string, text = ''): void {
+    this._ensureChildSynced();
     this._messages.addErrorMessage(error, text);
   }
 
@@ -374,6 +389,61 @@ export class Chat extends LitElement {
    */
   clearReplyMessage(idOrKey?: string): void {
     this._messages.clearReplyMessage(idOrKey);
+  }
+
+  // ── Message-state bridge (CHG-01) ─────────────────────────────────
+  //
+  // While proxy methods still delegate to <i-chat-messages>, the parent
+  // synchronises the child's state back to `chat.messages` and re-emits
+  // the `messages-change` event.  This ensures `chat.messages` is never
+  // stale after any top-level mutation.
+
+  /**
+   * Ensure the child element is operating on the parent's current array before
+   * a delegated mutation.  Without this an external `chat.messages = […]`
+   * followed immediately by a proxy call could use a stale child base.
+   */
+  private _ensureChildSynced(): void {
+    if (this._messages && this._messages.messages !== this.messages) {
+      this._messages.messages = this.messages;
+    }
+  }
+
+  /**
+   * Adopt child-originated `messages-change`, synchronise the top-level
+   * property, and re-emit from `<i-chat>`.
+   *
+   * Stale child mutations (where `detail.previousMessages` does not match the
+   * current `this.messages`) are rejected and the parent's authoritative array
+   * is pushed back down.
+   */
+  private _handleMessagesChange(e: CustomEvent<MessagesChangeDetail>): void {
+    e.stopPropagation();
+    const detail = e.detail;
+
+    // Reject stale child mutations: if the child's base array doesn't match
+    // our current messages, it was operating on stale data.
+    if (detail.previousMessages !== this.messages) {
+      if (this._messages) {
+        this._messages.messages = this.messages;
+      }
+      return;
+    }
+
+    // Adopt the child's state as our own.
+    this.messages = detail.messages;
+
+    // Re-emit from <i-chat> as the authoritative source.
+    this.dispatchEvent(
+      new CustomEvent<MessagesChangeDetail>('messages-change', {
+        detail: {
+          ...detail,
+          source: 'i-chat',
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   // ── Slot forwarding ────────────────────────────────────────────────
@@ -667,6 +737,7 @@ export class Chat extends LitElement {
     return html`
       <div class="chat-body">
         <i-chat-messages
+          @messages-change=${this._handleMessagesChange}
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
           @part-action=${this._handlePartAction}

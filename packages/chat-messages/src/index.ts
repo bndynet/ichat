@@ -27,6 +27,12 @@ export type {
 } from './components/chat-part-host.js';
 
 export type {
+  MessagesChangeDetail,
+  MessagesChangeReason,
+  MessagesChangeSource,
+} from './messages-change-types.js';
+
+export type {
   ChatMessage,
   ChatMessageRole,
   BlockRenderer,
