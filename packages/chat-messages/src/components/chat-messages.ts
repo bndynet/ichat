@@ -661,6 +661,18 @@ export class ChatMessages extends LitElement {
 
   clear(): void {
     this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    this._clearPresentation();
+  }
+
+  /**
+   * Reset presentation-only state (scroll, new-content indicator, reply
+   * blocks, error banner) without touching the message array.  Called by
+   * `<i-chat>` after it has already committed a top-level clear so the
+   * child does not emit a duplicate `messages-change`.
+   *
+   * @internal — not part of the public standalone API.
+   */
+  _clearPresentation(): void {
     this._autoScroll = true;
     this._hasNewContent = false;
     this._replies = [];

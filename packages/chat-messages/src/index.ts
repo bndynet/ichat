@@ -113,7 +113,8 @@ export {
   patchMessagePart,
   replaceMessagePart,
 } from './message-part-state.js';
-export type {  addMessage,
+export {
+  addMessage,
   patchMessageById,
   removeMessageById,
   clearMessages,

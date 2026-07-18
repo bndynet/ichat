@@ -7,7 +7,7 @@
 | Item | Value |
 |------|-------|
 | Document status | **Planned, implementation in progress** |
-| Implementation progress | **2 / 9** |
+| Implementation progress | **3 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -180,7 +180,7 @@ Event requirements:
 |--------|-------|--------|------------|------|----------|
 | CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `DONE` | None | Medium | No (bug fix) |
 | CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
-| CHG-03 | Move regular message mutations to the top-level store | `NOT STARTED` | CHG-02 | Medium | No (bug fix) |
+| CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `NOT STARTED` | CHG-03 | Medium | No (bug fix) |
 | CHG-05 | Separate cancellation data semantics from animation side effects | `NOT STARTED` | CHG-04 | High | No (bug fix) |
 | CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
@@ -1046,3 +1046,27 @@ Future AI agents must execute one Change at a time:
 - Known limitations:
   - `cancelMessageData` is created and tested but not yet used by `ChatMessages.cancelMessage` — deferred to CHG-05
 - Follow-up work: CHG-03 (move regular mutations to top-level store)
+
+### CHG-03 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-21
+- Release version: 2.0.x (target)
+- Main files:
+  - `packages/chat/src/components/chat.ts` — `_commitMessages()` top-level commit; migrated `addMessage`/`updateMessage`/`appendPart`/`updatePart`/`removeMessage`/`clear`/`addErrorMessage` to direct top-level writes
+  - `packages/chat-messages/src/components/chat-messages.ts` — `_clearPresentation()` `@internal`
+  - `packages/chat-messages/src/index.ts` — fixed `export type` → `export` for pure reducers
+- Public API changes: None (all method signatures unchanged)
+- Behavior changes:
+  - `chat.messages` is now the sole authoritative store — updated synchronously
+  - Template uses `.messages=${this.messages}` one-way binding
+  - `firstUpdated()`/`updated()` no longer manually push properties
+  - Streaming state derived from message array during commits
+- Breaking change: No (bug fix)
+- Automated tests: All 8 test files pass
+- Manual regression: Full build (4 packages) — zero errors
+- Known limitations:
+  - `try*`/`cancel`/SSE methods still delegate to child (CHG-04 / CHG-05)
+  - CHG-01 bridge remains for unmigrated paths
+- Follow-up work: CHG-04
+

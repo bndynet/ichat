@@ -11,8 +11,19 @@ import type {
   TodoActionDetail,
   ToolActionDetail,
   MessagesChangeDetail,
+  MessagesChangeReason,
 } from '@bndynet/ichat-messages';
-import { ChatMessages, StreamingController, resolveLabels } from '@bndynet/ichat-messages';
+import {
+  ChatMessages,
+  StreamingController,
+  resolveLabels,
+  addMessage,
+  patchMessageById,
+  removeMessageById,
+  clearMessages,
+  appendMessagePart,
+  patchMessagePart,
+} from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 
@@ -174,24 +185,74 @@ export class Chat extends LitElement {
   private _confirmationQueue: PendingConfirmation[] = [];
   private _confirmationId = 0;
 
-  // ── Proxy methods to <i-chat-messages> ──────────────────────────────
+  // ── Top-level message-state owner (CHG-03) ────────────────────────
+  //
+  // Methods below write directly to `this.messages` using shared pure
+  // reducers and commit through `_commitMessages`.  The child receives
+  // the array via one-way `.messages` template binding.
+
+  /**
+   * Central commit point for every top-level message-collection mutation.
+   * Synchronously updates `this.messages`, derives streaming state, and
+   * emits exactly one `messages-change` from `<i-chat>`.
+   */
+  private _commitMessages(
+    next: ChatMessage[],
+    context: {
+      reason: MessagesChangeReason;
+      messageId?: string;
+      partId?: string;
+      itemId?: string;
+    },
+  ): void {
+    if (next === this.messages) return;
+    const previousMessages = this.messages;
+    this.messages = next;
+    this._syncStreamingFromMessages(next);
+    this.dispatchEvent(
+      new CustomEvent<MessagesChangeDetail>('messages-change', {
+        detail: {
+          messages: next,
+          previousMessages,
+          reason: context.reason,
+          source: 'i-chat',
+          messageId: context.messageId,
+          partId: context.partId,
+          itemId: context.itemId,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /** Derive aggregate streaming state from the current message array. */
+  private _syncStreamingFromMessages(msgs: ChatMessage[]): void {
+    const active = msgs.some((m) => m.streaming && !m.error);
+    this._setStreamingState(active);
+  }
 
   addMessage(message: ChatMessage): void {
-    this._ensureChildSynced();
-    this._messages.addMessage(message);
-    this._syncStreamingFromMessage(message);
+    this._commitMessages(addMessage(this.messages, message), {
+      reason: 'message:add',
+      messageId: message.id,
+    });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this._ensureChildSynced();
-    this._messages.updateMessage(id, partial);
-    this._syncStreamingFromMessage(partial);
+    this._commitMessages(patchMessageById(this.messages, id, partial), {
+      reason: 'message:update',
+      messageId: id,
+    });
   }
 
   /** Append a structured body part to a message. */
   appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
-    this._ensureChildSynced();
-    this._messages.appendPart(messageId, part);
+    this._commitMessages(appendMessagePart(this.messages, messageId, part), {
+      reason: 'part:append',
+      messageId,
+      partId: part.id,
+    });
   }
 
   /** Patch a single body part by its `id`. */
@@ -200,9 +261,43 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['updatePart']>[2]
   ): void {
-    this._ensureChildSynced();
-    this._messages.updatePart(messageId, partId, patch);
+    const result = patchMessagePart(this.messages, messageId, partId, patch);
+    if (result.ok) {
+      this._commitMessages(result.messages, {
+        reason: 'part:update',
+        messageId,
+        partId,
+      });
+    }
   }
+
+  removeMessage(id: string): void {
+    this._commitMessages(removeMessageById(this.messages, id), {
+      reason: 'message:remove',
+      messageId: id,
+    });
+    // Reply blocks live in the child — clear them there.
+    if (this._messages) this._messages.clearReplyMessage(id);
+  }
+
+  clear(): void {
+    this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    if (this._messages) {
+      this._messages._clearPresentation();
+    }
+  }
+
+  addErrorMessage(error: string, text = ''): void {
+    this.addMessage({
+      id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      role: 'assistant',
+      parts: text ? [{ type: 'text', id: `err-text-${Date.now()}`, text }] : [],
+      error,
+      timestamp: Date.now(),
+    });
+  }
+
+  // ── Proxy methods (not yet migrated — CHG-04 / CHG-05) ────────────
 
   /** Patch any message part and return a diagnostic result. */
   tryUpdatePart(
@@ -282,26 +377,6 @@ export class Chat extends LitElement {
     return this._messages.applyMessagePartUpdateEvent(event);
   }
 
-  removeMessage(id: string): void {
-    this._ensureChildSynced();
-    this._messages.removeMessage(id);
-  }
-
-  cancel(hint?: string): void {
-    this._ensureChildSynced();
-    this._messages.cancel(hint);
-  }
-
-  cancelMessage(id: string, hint?: string): void {
-    this._ensureChildSynced();
-    this._messages.cancelMessage(id, hint);
-  }
-
-  clear(): void {
-    this._ensureChildSynced();
-    this._messages.clear();
-  }
-
   showError(text: string, options?: { duration?: number }): void {
     this._messages.showError(text, options);
   }
@@ -312,11 +387,6 @@ export class Chat extends LitElement {
 
   updateProgressStep(messageId: string, step: number, status: string, bid?: string): boolean {
     return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
-  }
-
-  addErrorMessage(error: string, text = ''): void {
-    this._ensureChildSynced();
-    this._messages.addErrorMessage(error, text);
   }
 
   /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/ichat`). */
@@ -473,28 +543,16 @@ export class Chat extends LitElement {
     this._hasCustomInput = !!this.querySelector('[slot="input"]');
   }
 
-  override firstUpdated(changed: PropertyValues): void {
-    super.firstUpdated(changed);
-    // Push initial property values that may have been set before first render.
-    if (this._messages) {
-      if (this.messages.length) this._messages.messages = this.messages;
-      if (this.config && Object.keys(this.config).length) this._messages.config = this.config;
-      if (this.emptyText) this._messages.emptyText = this.emptyText;
-    }
+  override firstUpdated(_changed: PropertyValues): void {
+    super.firstUpdated(_changed);
+    // Properties are bound in the template — no manual push needed.
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────
 
-  override updated(changed: PropertyValues): void {
-    if (changed.has('messages') && this._messages) {
-      this._messages.messages = this.messages;
-    }
-    if (changed.has('config') && this._messages) {
-      this._messages.config = this.config;
-    }
-    if (changed.has('emptyText') && this._messages) {
-      this._messages.emptyText = this.emptyText;
-    }
+  override updated(_changed: PropertyValues): void {
+    // All bindings (.messages, .config, .emptyText) are in the template.
+    // Streaming state is derived from the message array during commits.
   }
 
   // ── Events ────────────────────────────────────────────────────────
@@ -525,12 +583,6 @@ export class Chat extends LitElement {
     this._streaming = streaming;
     if (this._input) {
       this._input.streaming = streaming;
-    }
-  }
-
-  private _syncStreamingFromMessage(message: Partial<ChatMessage>): void {
-    if (message.streaming === true && !message.error) {
-      this._setStreamingState(true);
     }
   }
 
@@ -725,11 +777,9 @@ export class Chat extends LitElement {
 
   // ── Render ────────────────────────────────────────────────────────
   //
-  // Property bindings (.messages, .config, .emptyText) are intentionally
-  // NOT in the template.  They are pushed in `updated()` only when the
-  // corresponding property on <i-chat> actually changes.  This avoids
-  // overwriting <i-chat-messages> internal state when proxy methods
-  // (addMessage, updateMessage, …) are used instead of the property.
+  // `.messages` is bound one-way; <i-chat> is the sole owner.
+  // `.config` and `.emptyText` are also bound here so `firstUpdated` /
+  // `updated` no longer need to push them manually.
 
   render() {
     const confirmation = this._activeConfirmation?.request;
@@ -737,6 +787,9 @@ export class Chat extends LitElement {
     return html`
       <div class="chat-body">
         <i-chat-messages
+          .messages=${this.messages}
+          .config=${this.config}
+          .emptyText=${this.emptyText}
           @messages-change=${this._handleMessagesChange}
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
