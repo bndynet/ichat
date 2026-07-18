@@ -70,7 +70,7 @@ The older `updateTodoItem()`, `updateToolCall()`, `applyMessagePartUpdateEvent()
 
 ### Link clicks and protocols
 
-Rendered message links emit a cancelable `link-click` event. By default, built-in rendered links preserve every URI protocol scheme, including custom app protocols such as `myapp:`. Set `config.allowedLinkProtocols` to a non-empty list when you want to restrict which protocols are kept. Values may include or omit the trailing colon.
+Rendered message links emit a cancelable `link-click` event. By default, built-in rendered links allow `http`, `https`, `mailto`, and `tel`, plus relative URLs and fragment links. Custom app protocols such as `myapp:` must be explicitly opted into with `config.allowedLinkProtocols`. A non-empty list replaces the default protocol list, and values may include or omit the trailing colon.
 
 ```javascript
 chat.config = {

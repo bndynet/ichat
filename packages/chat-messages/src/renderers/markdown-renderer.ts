@@ -9,9 +9,10 @@ import { chatIconStrings } from '../icons.js';
 
 export interface MarkdownRenderOptions {
   /**
-   * Non-empty list of link protocols to keep in URI attributes (`href`, `src`, ...).
+   * Non-empty allow list of link protocols to keep in URI attributes (`href`, `src`, ...).
    * Values may be provided with or without the trailing colon (`myapp` / `myapp:`).
-   * When omitted or empty, every protocol scheme is preserved.
+   * When omitted or empty, the safe defaults `http`, `https`, `mailto`, and `tel`
+   * are used. Relative URLs and fragment links are always kept.
    */
   allowedLinkProtocols?: readonly string[];
 }
@@ -29,7 +30,7 @@ const md = new MarkdownIt({
 });
 
 // Keep protocol filtering in DOMPurify so per-render `allowedLinkProtocols`
-// can either preserve every scheme or enforce a host-provided allow list.
+// can enforce either the safe defaults or a host-provided allow list.
 md.validateLink = () => true;
 
 md.use(progressPlugin);
@@ -65,7 +66,7 @@ function escapeRegExp(s: string): string {
 
 function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
   const protocols = normalizeAllowedLinkProtocols(options?.allowedLinkProtocols);
-  const key = protocols.length === 0 ? '*' : protocols.join('|');
+  const key = protocols.length === 0 ? '@default' : protocols.join('|');
   const cached = domPurifyConfigCache.get(key);
   if (cached) return cached;
 

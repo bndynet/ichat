@@ -363,7 +363,9 @@ export interface ChatConfig {
   /**
    * Non-empty list of URI protocols to keep in rendered links.
    * Values may include or omit the trailing colon (`myapp` and `myapp:` both work).
-   * When omitted or empty, all protocol schemes are preserved.
+   * When omitted or empty, `http`, `https`, `mailto`, and `tel` are allowed.
+   * Relative URLs and fragment links are always allowed. Add custom app
+   * protocols explicitly when needed.
    */
   allowedLinkProtocols?: readonly string[];
   /**

@@ -44,6 +44,10 @@ import {
   replaceMessagePart,
 } from '../src/message-part-state.js';
 import { normalizeMessagePartUpdateEvent } from '../src/message-part-events.js';
+import {
+  isAllowedLinkHref,
+  uriRegexpForAllowedLinkProtocols,
+} from '../src/link-protocols.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -53,6 +57,46 @@ function test(name: string, run: () => void): void {
     throw error;
   }
 }
+
+test('link protocols use safe defaults and require custom schemes to opt in', () => {
+  for (const href of [
+    'http://example.test',
+    'https://example.test',
+    'mailto:hello@example.test',
+    'tel:+123456789',
+    '/docs/getting-started',
+    './next',
+    '../previous',
+    '?q=chat',
+    '#streaming',
+  ]) {
+    assert.equal(isAllowedLinkHref(href), true, `${href} should be allowed by default`);
+    assert.equal(isAllowedLinkHref(href, []), true, `${href} should be allowed with an empty list`);
+  }
+
+  for (const href of [
+    'javascript:alert(1)',
+    'vbscript:msgbox(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'file:///tmp/private.txt',
+    'myapp://example',
+  ]) {
+    assert.equal(isAllowedLinkHref(href), false, `${href} should be blocked by default`);
+    assert.equal(isAllowedLinkHref(href, []), false, `${href} should be blocked with an empty list`);
+  }
+
+  assert.equal(isAllowedLinkHref('myapp://example', ['https:', 'myapp:']), true);
+  assert.equal(isAllowedLinkHref('https://example.test', ['https', 'myapp']), true);
+  assert.equal(isAllowedLinkHref('http://example.test', ['https', 'myapp']), false);
+  assert.equal(isAllowedLinkHref('javascript:alert(1)', ['https', 'myapp']), false);
+
+  const defaultUriPattern = uriRegexpForAllowedLinkProtocols();
+  assert.equal(defaultUriPattern.test('https://example.test'), true);
+  assert.equal(defaultUriPattern.test('/docs/getting-started'), true);
+  assert.equal(defaultUriPattern.test('#streaming'), true);
+  assert.equal(defaultUriPattern.test('javascript:alert(1)'), false);
+  assert.equal(defaultUriPattern.test('data:text/html,unsafe'), false);
+});
 
 test('message body exposes the expected first-class part types', () => {
   assert.deepEqual([...BUILT_IN_MESSAGE_PART_TYPES], [

@@ -1,5 +1,5 @@
-const ALLOW_ALL_URI_REGEXP =
-  /^(?:(?:[a-z][a-z0-9+.-]*:)|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+/** Safe defaults for untrusted/model-generated links. Custom schemes are opt-in. */
+const DEFAULT_ALLOWED_LINK_PROTOCOLS = ['http', 'https', 'mailto', 'tel'] as const;
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -18,8 +18,8 @@ export function normalizeAllowedLinkProtocols(protocols?: readonly string[]): st
 
 export function uriRegexpForAllowedLinkProtocols(protocols?: readonly string[]): RegExp {
   const normalized = normalizeAllowedLinkProtocols(protocols);
-  if (normalized.length === 0) return ALLOW_ALL_URI_REGEXP;
-  const source = normalized.map(escapeRegExp).join('|');
+  const effective = normalized.length > 0 ? normalized : [...DEFAULT_ALLOWED_LINK_PROTOCOLS];
+  const source = effective.map(escapeRegExp).join('|');
   return new RegExp(
     `^(?:(?:(?:${source}):)|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
     'i'
@@ -31,8 +31,8 @@ export function isAllowedLinkHref(
   allowedLinkProtocols?: readonly string[]
 ): boolean {
   const normalized = normalizeAllowedLinkProtocols(allowedLinkProtocols);
-  if (normalized.length === 0) return true;
+  const effective = normalized.length > 0 ? normalized : [...DEFAULT_ALLOWED_LINK_PROTOCOLS];
   const explicit = /^([a-z][a-z0-9+.-]*):/i.exec(rawHref.trim());
   if (!explicit) return true;
-  return normalized.includes(explicit[1].toLowerCase());
+  return effective.includes(explicit[1].toLowerCase());
 }
