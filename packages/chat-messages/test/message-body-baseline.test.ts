@@ -48,6 +48,7 @@ import {
   isAllowedLinkHref,
   uriRegexpForAllowedLinkProtocols,
 } from '../src/link-protocols.js';
+import { sanitizeInlineSvgAvatar } from '../src/avatar-sanitizer.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -57,6 +58,40 @@ function test(name: string, run: () => void): void {
     throw error;
   }
 }
+
+test('inline SVG avatars use the sanitized result and fail closed', () => {
+  const unsafeSvg = '<svg onload="alert(1)"><foreignObject>unsafe</foreignObject><circle r="8" /></svg>';
+  let receivedConfig: Record<string, unknown> | undefined;
+
+  const sanitized = sanitizeInlineSvgAvatar(unsafeSvg, {
+    isSupported: true,
+    sanitize(markup, config) {
+      assert.equal(markup, unsafeSvg);
+      receivedConfig = config as Record<string, unknown>;
+      return '<svg><circle r="8"></circle></svg>';
+    },
+  });
+
+  assert.equal(sanitized, '<svg><circle r="8"></circle></svg>');
+  assert.deepEqual(receivedConfig?.USE_PROFILES, { svg: true, svgFilters: true });
+  assert.deepEqual(receivedConfig?.FORBID_TAGS, ['script', 'foreignObject']);
+  assert.equal(receivedConfig?.ALLOW_DATA_ATTR, false);
+
+  assert.equal(
+    sanitizeInlineSvgAvatar(unsafeSvg, {
+      isSupported: true,
+      sanitize: () => '<span>not an svg</span>',
+    }),
+    ''
+  );
+  assert.equal(
+    sanitizeInlineSvgAvatar(unsafeSvg, {
+      isSupported: false,
+      sanitize: () => unsafeSvg,
+    }),
+    ''
+  );
+});
 
 test('link protocols use safe defaults and require custom schemes to opt in', () => {
   for (const href of [

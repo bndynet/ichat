@@ -228,7 +228,8 @@ export interface ChatMessage {
    * - Inline SVG (`<svg…>`…)
    * - Plain text or emoji (shown in the avatar circle)
    *
-   * Inline SVG is rendered like slot avatars; treat values as trusted app content.
+   * Inline SVG is sanitized before rendering. For fully trusted custom DOM,
+   * prefer the role-specific avatar slots.
    */
   avatar?: string;
   /** When set, the message is rendered as an error with this text as the description. */

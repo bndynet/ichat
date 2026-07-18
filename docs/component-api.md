@@ -174,7 +174,7 @@ When a composer confirmation is active, the confirmation panel temporarily repla
 
 Pass `avatar` on each `ChatMessage` when calling `addMessage` / assigning `messages`. If `avatar` is non-empty, it is used for that row instead of the matching `config` defaults (`selfAvatar`, `peerAvatar`, `assistantAvatar`) and instead of the `self-avatar` / `peer-avatar` / `assistant-avatar` slots.
 
-Supported values: image URL, `data:image/…;base64,…`, raw base64 (defaults to PNG in the component), inline `<svg>…</svg>`, or plain text / emoji.
+Supported values: image URL, `data:image/…;base64,…`, raw base64 (defaults to PNG in the component), inline `<svg>…</svg>`, or plain text / emoji. Per-message inline SVG is sanitized before rendering; use a role-specific avatar slot when the application needs fully trusted custom DOM.
 
 ```javascript
 import { textPart } from '@bndynet/ichat';

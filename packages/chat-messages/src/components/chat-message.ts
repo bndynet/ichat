@@ -14,6 +14,7 @@ import { StreamingController } from '../controllers/streaming-controller.js';
 import { calendarDaysAgo } from '../date-separator.js';
 import { formatAssistantDurationMs } from '../duration-format.js';
 import { chatIcons } from '../icons.js';
+import { sanitizeInlineSvgAvatar } from '../avatar-sanitizer.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-part-host.js';
@@ -128,7 +129,7 @@ export class ChatMessageElement extends LitElement {
     return a != null && String(a).trim() !== '';
   }
 
-  /** Inline SVG markup (trusted, same model as slot avatars). */
+  /** Inline SVG markup. Per-message values are sanitized before rendering. */
   private _isInlineSvg(str: string): boolean {
     return /^<svg[\s>/]/i.test(str.trim());
   }
@@ -175,7 +176,10 @@ export class ChatMessageElement extends LitElement {
     if (this._hasPerMessageAvatar()) {
       const explicit = String(this.message.avatar).trim();
       if (this._isInlineSvg(explicit)) {
-        return html`<div class="avatar avatar--custom">${unsafeHTML(explicit)}</div>`;
+        const sanitizedSvg = sanitizeInlineSvgAvatar(explicit);
+        return sanitizedSvg
+          ? html`<div class="avatar avatar--custom">${unsafeHTML(sanitizedSvg)}</div>`
+          : html`<div class="avatar">${this._defaultAvatarLabel(role)}</div>`;
       }
       const fromB64 = this._tryDataUrlFromRawBase64(explicit);
       const imgSrc = fromB64 ?? (this._isImageUrl(explicit) ? explicit : null);
