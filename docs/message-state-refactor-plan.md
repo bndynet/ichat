@@ -7,7 +7,7 @@
 | Item | Value |
 |------|-------|
 | Document status | **Planned, implementation in progress** |
-| Implementation progress | **3 / 9** |
+| Implementation progress | **4 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -181,7 +181,7 @@ Event requirements:
 | CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `DONE` | None | Medium | No (bug fix) |
 | CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
-| CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `NOT STARTED` | CHG-03 | Medium | No (bug fix) |
+| CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
 | CHG-05 | Separate cancellation data semantics from animation side effects | `NOT STARTED` | CHG-04 | High | No (bug fix) |
 | CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `NOT STARTED` | CHG-06 | Medium | No (internal) |
@@ -1069,4 +1069,24 @@ Future AI agents must execute one Change at a time:
   - `try*`/`cancel`/SSE methods still delegate to child (CHG-04 / CHG-05)
   - CHG-01 bridge remains for unmigrated paths
 - Follow-up work: CHG-04
+
+### CHG-04 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-21
+- Release version: 2.0.x (target)
+- Main files:
+  - `packages/chat/src/components/chat.ts` — `tryUpdatePart`/`tryUpdateToolCall`/`tryUpdateTodoItem`/`tryApplyMessagePartUpdateEvent`/`tryApplyTodoItemUpdateEvent` now direct top-level implementations using shared pure helpers; restored `cancel`/`cancelMessage` proxy methods
+- Public API changes: None
+- Behavior changes:
+  - All diagnostic (`try*`) and SSE event methods now write through `Chat._commitMessages`
+  - Boolean wrappers (`updateToolCall`, `updateTodoItem`, `apply*Event`) unchanged
+  - Failed updates return identical diagnostic shapes, emit no event
+- Breaking change: No
+- Automated tests: All 8 test files pass
+- Manual regression: Full build (4 packages) — zero errors
+- Known limitations:
+  - `cancel`/`cancelMessage` still proxy to child (CHG-05)
+  - Bridge (`_handleMessagesChange`) remains active for cancel paths
+- Follow-up work: CHG-05
 

@@ -12,6 +12,11 @@ import type {
   ToolActionDetail,
   MessagesChangeDetail,
   MessagesChangeReason,
+  MessagePartUpdateResult,
+  ToolCallUpdateResult,
+  TodoItemUpdateResult,
+  MessagePartUpdateEventResult,
+  TodoItemUpdateEventResult,
 } from '@bndynet/ichat-messages';
 import {
   ChatMessages,
@@ -23,6 +28,15 @@ import {
   clearMessages,
   appendMessagePart,
   patchMessagePart,
+  applyMessagePartUpdate,
+  findMessagePart,
+  replaceMessagePart,
+  patchToolCallPart,
+  patchTodoItem,
+  isToolCallPart,
+  isTodoPart,
+  normalizeMessagePartUpdateEvent,
+  normalizeTodoItemUpdateEvent,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
@@ -297,16 +311,23 @@ export class Chat extends LitElement {
     });
   }
 
-  // ── Proxy methods (not yet migrated — CHG-04 / CHG-05) ────────────
+  // ── Diagnostic / tool / todo / SSE (CHG-04) ──────────────────────
+  //
+  // Methods below now read `this.messages`, call the same pure helpers
+  // the child uses, and commit through `_commitMessages`.  Diagnostic
+  // results are identical to the pre-migration child implementations.
 
   /** Patch any message part and return a diagnostic result. */
   tryUpdatePart(
     messageId: string,
     partId: string,
     patch: Parameters<ChatMessages['tryUpdatePart']>[2]
-  ): ReturnType<ChatMessages['tryUpdatePart']> {
-    this._ensureChildSynced();
-    return this._messages.tryUpdatePart(messageId, partId, patch);
+  ): MessagePartUpdateResult {
+    const result = applyMessagePartUpdate(this.messages, { messageId, partId, patch });
+    if (!result.ok) return { ok: false, reason: result.reason, part: result.part };
+
+    this._commitMessages(result.messages, { reason: 'part:update', messageId, partId });
+    return { ok: true, part: result.part };
   }
 
   /** Patch a `tool-call` part and return a diagnostic result. */
@@ -314,9 +335,21 @@ export class Chat extends LitElement {
     messageId: string,
     partId: string,
     patch: Parameters<ChatMessages['tryUpdateToolCall']>[2]
-  ): ReturnType<ChatMessages['tryUpdateToolCall']> {
-    this._ensureChildSynced();
-    return this._messages.tryUpdateToolCall(messageId, partId, patch);
+  ): ToolCallUpdateResult {
+    const lookup = findMessagePart(this.messages, messageId, partId);
+    if (!lookup.ok) return { ok: false, reason: lookup.reason };
+
+    const { part } = lookup;
+    if (!isToolCallPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
+
+    const tcResult = patchToolCallPart(part, patch);
+    if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
+
+    const replacement = replaceMessagePart(this.messages, messageId, partId, tcResult.part);
+    if (!replacement.ok) return { ok: false, reason: replacement.reason };
+
+    this._commitMessages(replacement.messages, { reason: 'tool-call:update', messageId, partId });
+    return { ok: true, part: tcResult.part };
   }
 
   /** Boolean compatibility wrapper around {@link tryUpdateToolCall}. */
@@ -325,7 +358,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['updateToolCall']>[2]
   ): boolean {
-    return this._messages.updateToolCall(messageId, partId, patch);
+    return this.tryUpdateToolCall(messageId, partId, patch).ok;
   }
 
   /** Immutably patch one todo item and return a diagnostic result. */
@@ -335,9 +368,26 @@ export class Chat extends LitElement {
     itemId: string,
     patch: Parameters<ChatMessages['tryUpdateTodoItem']>[3],
     revision?: number,
-  ): ReturnType<ChatMessages['tryUpdateTodoItem']> {
-    this._ensureChildSynced();
-    return this._messages.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+  ): TodoItemUpdateResult {
+    const lookup = findMessagePart(this.messages, messageId, partId);
+    if (!lookup.ok) return { ok: false, reason: lookup.reason };
+
+    const { part } = lookup;
+    if (!isTodoPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
+
+    const todoResult = patchTodoItem(part, itemId, patch, revision);
+    if (!todoResult.ok) return { ok: false, reason: todoResult.reason, part: todoResult.part };
+
+    const replacement = replaceMessagePart(this.messages, messageId, partId, todoResult.part);
+    if (!replacement.ok) return { ok: false, reason: replacement.reason };
+
+    this._commitMessages(replacement.messages, {
+      reason: 'todo-item:update',
+      messageId,
+      partId,
+      itemId,
+    });
+    return { ok: true, part: todoResult.part };
   }
 
   /** Boolean compatibility wrapper around {@link tryUpdateTodoItem}. */
@@ -348,33 +398,64 @@ export class Chat extends LitElement {
     patch: Parameters<ChatMessages['updateTodoItem']>[3],
     revision?: number,
   ): boolean {
-    return this._messages.updateTodoItem(messageId, partId, itemId, patch, revision);
+    return this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision).ok;
   }
 
   /** Apply a backend/SSE todo item update and return a diagnostic result. */
   tryApplyTodoItemUpdateEvent(
     event: Parameters<ChatMessages['tryApplyTodoItemUpdateEvent']>[0]
-  ): ReturnType<ChatMessages['tryApplyTodoItemUpdateEvent']> {
-    return this._messages.tryApplyTodoItemUpdateEvent(event);
+  ): TodoItemUpdateEventResult {
+    const norm = normalizeTodoItemUpdateEvent(event);
+    if (!norm.ok) return { ok: false, reason: norm.reason };
+
+    const { messageId, partId, itemId, patch, revision } = norm.update;
+    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+    if (!update.ok) {
+      return { ok: false, reason: update.reason, update: norm.update, part: update.part };
+    }
+    return { ok: true, update: norm.update, part: update.part };
   }
 
   /** Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}. */
   applyTodoItemUpdateEvent(event: Parameters<ChatMessages['applyTodoItemUpdateEvent']>[0]): boolean {
-    return this._messages.applyTodoItemUpdateEvent(event);
+    return this.tryApplyTodoItemUpdateEvent(event).ok;
   }
 
   /** Apply a backend/SSE message part update and return a diagnostic result. */
   tryApplyMessagePartUpdateEvent(
     event: Parameters<ChatMessages['tryApplyMessagePartUpdateEvent']>[0]
-  ): ReturnType<ChatMessages['tryApplyMessagePartUpdateEvent']> {
-    return this._messages.tryApplyMessagePartUpdateEvent(event);
+  ): MessagePartUpdateEventResult {
+    const norm = normalizeMessagePartUpdateEvent(event);
+    if (!norm.ok) return { ok: false, reason: norm.reason };
+
+    const update = this.tryUpdatePart(norm.update.messageId, norm.update.partId, norm.update.patch);
+    if (!update.ok) {
+      return { ok: false, reason: update.reason, update: norm.update, part: update.part };
+    }
+    return { ok: true, update: norm.update, part: update.part };
   }
 
   /** Boolean compatibility wrapper around {@link tryApplyMessagePartUpdateEvent}. */
   applyMessagePartUpdateEvent(
     event: Parameters<ChatMessages['applyMessagePartUpdateEvent']>[0]
   ): boolean {
-    return this._messages.applyMessagePartUpdateEvent(event);
+    return this.tryApplyMessagePartUpdateEvent(event).ok;
+  }
+
+  // ── Remaining proxy methods (CHG-05) ──────────────────────────────
+  //
+  // cancel / cancelMessage still delegate to the child for animation
+  // freeze + data mutation.  The bridge (_handleMessagesChange) remains
+  // active for these paths.
+
+  cancel(hint?: string): void {
+    this._ensureChildSynced();
+    this._messages.cancel(hint);
+  }
+
+  cancelMessage(id: string, hint?: string): void {
+    this._ensureChildSynced();
+    this._messages.cancelMessage(id, hint);
   }
 
   showError(text: string, options?: { duration?: number }): void {
