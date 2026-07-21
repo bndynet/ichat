@@ -1,6 +1,7 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { setVersionAttribute } from '../version.js';
 import type { ReasoningLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
 import { renderMarkdownInto } from '../renderers/markdown-morph.js';
@@ -20,6 +21,12 @@ export class ChatReasoning extends LitElement {
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
   /** Localized header strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ReasoningLabels;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
+  }
+
   @state() private _expanded = false;
   @query('.reasoning-body') private _bodyEl?: HTMLDivElement;
   private _bodyHtmlCache = '';

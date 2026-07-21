@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { customElement, property } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
 import { ref, createRef } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type {
@@ -69,6 +70,7 @@ export class ChatPartHost extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    setVersionAttribute(this);
     this.addEventListener('form-submit', this._onFormSubmit);
     this.addEventListener('todo-action', this._onTodoAction);
     this.addEventListener('tool-action', this._onToolAction);

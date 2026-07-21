@@ -1,6 +1,7 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
+import { setVersionAttribute } from '../version.js';
 import type {
   ChatMessage,
   ChatConfig,
@@ -135,6 +136,7 @@ export class ChatMessages extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    setVersionAttribute(this);
   }
 
   override firstUpdated(changed: PropertyValues): void {

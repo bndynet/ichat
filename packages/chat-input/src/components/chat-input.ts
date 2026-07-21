@@ -1,5 +1,6 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
 import { resolveComposerLabels, type ComposerLabels } from '../i18n.js';
 import { chatInputIcons } from '../icons.js';
 import styles from '../styles/chat-input.scss';
@@ -142,6 +143,11 @@ export class ChatInput extends LitElement {
       placeholder: this.placeholder || resolved.placeholder,
       voiceListening: this.voiceListeningLabel || resolved.voiceListening,
     };
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
   }
 
   override firstUpdated(): void {

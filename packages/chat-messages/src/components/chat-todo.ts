@@ -1,5 +1,6 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
 import type { TodoItem, TodoItemStatus, TodoPart } from '../types.js';
 import type { TodoLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
@@ -35,6 +36,11 @@ export class ChatTodo extends LitElement {
   @query('details') private _details!: HTMLDetailsElement;
   @state() private _expanded = true;
   private _initializedPartId?: string;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
+  }
 
   protected updated(): void {
     if (shouldInitializeTodoExpansion(this._initializedPartId, this.data?.id)) {

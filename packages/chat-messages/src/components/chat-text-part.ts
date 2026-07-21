@@ -1,5 +1,6 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
 import type { TextPart } from '../types.js';
 import { renderMarkdownInto } from '../renderers/markdown-morph.js';
 
@@ -12,6 +13,11 @@ export class ChatTextPart extends LitElement {
 
   @query('.content') private _contentEl?: HTMLDivElement;
   private _htmlCache = '';
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
+  }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
     return this;

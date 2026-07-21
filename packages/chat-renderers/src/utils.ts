@@ -3,6 +3,7 @@
  * into HTML attributes or text nodes.
  */
 import { rendererIcons } from './icons.js';
+import { setVersionAttribute } from './version.js';
 
 export function escapeHtml(str: string): string {
   return str
@@ -111,6 +112,7 @@ class ChatCodeToggle extends HTMLElement {
   private _mutationFlush = false;
 
   connectedCallback(): void {
+    setVersionAttribute(this);
     if (!this.shadowRoot) {
       this._initShadow();
     }

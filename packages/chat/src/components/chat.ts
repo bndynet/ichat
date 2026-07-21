@@ -1,5 +1,6 @@
 import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
 import type {
   ChatFormSubmitDetail,
   ChatPartActionDetail,
@@ -605,6 +606,7 @@ export class Chat extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    setVersionAttribute(this);
     this._syncInputSlotPresence();
     this._lightChildObserver = new MutationObserver(() => {
       this._syncInputSlotPresence();

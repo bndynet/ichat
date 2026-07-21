@@ -2,7 +2,10 @@ import { defineConfig } from 'tsup';
 import * as sass from 'sass-embedded';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import type { Plugin } from 'esbuild';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
 
 const scssPlugin: Plugin = {
   name: 'scss',
@@ -33,5 +36,8 @@ export default defineConfig({
   sourcemap: true,
   clean: !process.argv.includes('--watch'),
   treeshake: true,
+  define: {
+    __PACKAGE_VERSION__: JSON.stringify(pkg.version),
+  },
   esbuildPlugins: [scssPlugin],
 });

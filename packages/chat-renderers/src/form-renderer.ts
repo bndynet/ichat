@@ -1,6 +1,7 @@
 import type { BlockRenderer } from '@bndynet/ichat-messages';
 import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 import { rendererIcons } from './icons.js';
+import { setVersionAttribute } from './version.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -428,6 +429,7 @@ class ChatFormElement extends HTMLElement {
   }
 
   connectedCallback() {
+    setVersionAttribute(this);
     this._render();
   }
 

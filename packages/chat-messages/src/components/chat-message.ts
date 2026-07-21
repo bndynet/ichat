@@ -1,6 +1,7 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { setVersionAttribute } from '../version.js';
 import type {
   ChatLinkClickDetail,
   ChatMessage,
@@ -44,6 +45,11 @@ export class ChatMessageElement extends LitElement {
    * Empty → browser default locale for `toLocaleString` / `toLocaleTimeString`.
    */
   @property() locale = '';
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
+  }
 
   /**
    * Resolved UI strings forwarded from `<i-chat-messages>`. When omitted (e.g.

@@ -1,6 +1,7 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { setVersionAttribute } from '../version.js';
 import type { MessagePart, ToolCallPart, ToolCallState } from '../types.js';
 import type { ToolCallLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
@@ -79,6 +80,11 @@ export class ChatToolCall extends LitElement {
   /** Localized tool-call strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ToolCallLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    setVersionAttribute(this);
+  }
 
   private _linkHref(rawHref: string): string | typeof nothing {
     return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
