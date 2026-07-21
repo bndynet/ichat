@@ -7,7 +7,7 @@
 | Item | Value |
 |------|-------|
 | Document status | **Planned, implementation in progress** |
-| Implementation progress | **1 / 9** |
+| Implementation progress | **2 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -179,7 +179,7 @@ Event requirements:
 | Change | Scope | Status | Dependency | Risk | Breaking |
 |--------|-------|--------|------------|------|----------|
 | CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `DONE` | None | Medium | No (bug fix) |
-| CHG-02 | Extract shared pure message-collection reducers | `NOT STARTED` | CHG-01 | Low | No |
+| CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `NOT STARTED` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `NOT STARTED` | CHG-03 | Medium | No (bug fix) |
 | CHG-05 | Separate cancellation data semantics from animation side effects | `NOT STARTED` | CHG-04 | High | No (bug fix) |
@@ -1025,3 +1025,24 @@ Future AI agents must execute one Change at a time:
   - `cancelMessage()` still uses `'message:update'` reason (will be `'message:cancel'` in CHG-05)
   - Bridge is temporary — CHG-03 through CHG-07 will progressively remove delegation
 - Follow-up work: CHG-02 (extract pure reducers)
+### CHG-02 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-21
+- Release version: 2.0.x (target)
+- Main files:
+  - `packages/chat-messages/src/message-collection-state.ts` (new) — pure reducers: `addMessage`, `patchMessageById`, `removeMessageById`, `clearMessages`, `cancelMessageData`
+  - `packages/chat-messages/src/components/chat-messages.ts` — `addMessage`, `updateMessage`, `removeMessage`, `clear` now delegate to pure functions
+  - `packages/chat-messages/src/index.ts` — export new pure functions
+  - `packages/chat-messages/test/message-collection-state.test.ts` (new) — 17 pure-function test cases
+- Public API changes:
+  - New exports: `addMessage`, `patchMessageById`, `removeMessageById`, `clearMessages`, `cancelMessageData`
+- Behavior changes:
+  - `updateMessage` / `removeMessage` with missing id: now returns original array reference (was new array with same content). This avoids unnecessary renders and `messages-change` emissions — bug fix.
+  - `cancelMessageData` is available but not yet wired into `ChatMessages.cancelMessage` (CHG-05 will do that).
+- Breaking change: No
+- Automated tests: 17 new pure-function tests; all 8 test files pass
+- Manual regression: Full build (4 packages) passes with zero errors
+- Known limitations:
+  - `cancelMessageData` is created and tested but not yet used by `ChatMessages.cancelMessage` — deferred to CHG-05
+- Follow-up work: CHG-03 (move regular mutations to top-level store)

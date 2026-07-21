@@ -35,6 +35,12 @@ import type {
   MessagesChangeDetail,
   MessagesChangeReason,
 } from '../messages-change-types.js';
+import {
+  addMessage,
+  patchMessageById,
+  removeMessageById,
+  clearMessages,
+} from '../message-collection-state.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
@@ -332,17 +338,17 @@ export class ChatMessages extends LitElement {
   }
 
   addMessage(message: ChatMessage): void {
-    this._commitMessages([...this.messages, message], {
+    this._commitMessages(addMessage(this.messages, message), {
       reason: 'message:add',
       messageId: message.id,
     });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this._commitMessages(
-      this.messages.map((m) => (m.id === id ? { ...m, ...partial } : m)),
-      { reason: 'message:update', messageId: id }
-    );
+    this._commitMessages(patchMessageById(this.messages, id, partial), {
+      reason: 'message:update',
+      messageId: id,
+    });
   }
 
   /**
@@ -547,7 +553,7 @@ export class ChatMessages extends LitElement {
   }
 
   removeMessage(id: string): void {
-    this._commitMessages(this.messages.filter((m) => m.id !== id), {
+    this._commitMessages(removeMessageById(this.messages, id), {
       reason: 'message:remove',
       messageId: id,
     });
@@ -654,7 +660,7 @@ export class ChatMessages extends LitElement {
   }
 
   clear(): void {
-    this._commitMessages([], { reason: 'message:clear' });
+    this._commitMessages(clearMessages(), { reason: 'message:clear' });
     this._autoScroll = true;
     this._hasNewContent = false;
     this._replies = [];

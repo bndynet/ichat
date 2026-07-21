@@ -113,8 +113,13 @@ export {
   patchMessagePart,
   replaceMessagePart,
 } from './message-part-state.js';
-export type {
-  MessagePartUpdateApplyResult,
+export type {  addMessage,
+  patchMessageById,
+  removeMessageById,
+  clearMessages,
+  cancelMessageData,
+} from './message-collection-state.js';
+export {  MessagePartUpdateApplyResult,
   MessagePartLookupFailureReason,
   MessagePartLookupResult,
   MessagePartPatchResult,
