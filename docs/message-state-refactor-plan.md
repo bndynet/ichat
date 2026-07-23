@@ -7,7 +7,7 @@
 | Item | Value |
 |------|-------|
 | Document status | **Planned, implementation in progress** |
-| Implementation progress | **4 / 9** |
+| Implementation progress | **5 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -182,7 +182,7 @@ Event requirements:
 | CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
-| CHG-05 | Separate cancellation data semantics from animation side effects | `IN PROGRESS` (steps 1-3 done) | CHG-04 | High | No (bug fix) |
+| CHG-05 | Separate cancellation data semantics from animation side effects | `DONE` | CHG-04 | High | No (bug fix) |
 | CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `NOT STARTED` | CHG-06 | Medium | No (internal) |
 | CHG-08 | Add explicit controlled and uncontrolled modes | `NOT STARTED` | CHG-07 | Medium | Potential; default remains compatible |
@@ -1088,9 +1088,10 @@ Future AI agents must execute one Change at a time:
 - Known limitations: Bridge remains for standalone child events only
 - Follow-up work: CHG-05
 
-### CHG-05 Implementation Record (in progress)
+### CHG-05 Implementation Record
 
-- Status: IN PROGRESS (steps 1-3 of 5 done)
+- Status: DONE
+- Completion date: 2026-07-23
 - Steps completed:
   1. ✅ `ChatMessageElement.freezeStreamingAnimation()` — extracted from `cancel()`
   2. ✅ `ChatMessages.freezeMessageAnimation(id)` — DOM lookup + freeze, no events
