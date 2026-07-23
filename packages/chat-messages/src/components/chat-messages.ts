@@ -661,6 +661,23 @@ export class ChatMessages extends LitElement {
     }
   }
 
+  /**
+   * Freeze the typewriter animation for a specific message row without
+   * writing to `messages` or emitting any event.  Safe to call when the
+   * row has not yet rendered (no-op).  Used by `<i-chat>` during cancel
+   * to separate animation control from data mutation.
+   *
+   * @returns `true` if a visible row was found and frozen.
+   */
+  freezeMessageAnimation(id: string): boolean {
+    const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
+      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
+    );
+    if (!msgEl) return false;
+    msgEl.freezeStreamingAnimation();
+    return true;
+  }
+
   clear(): void {
     this._commitMessages(clearMessages(), { reason: 'message:clear' });
     this._clearPresentation();
