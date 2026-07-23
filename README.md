@@ -170,6 +170,29 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 
 A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`updateToolCall`**, **`updateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateProgressStep`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createStreamingController()`** returns a helper bound to the inner list.
 
+### Framework integration (Vue / React)
+
+By default **`<i-chat>` owns its own message state**. Listen to `messages-change` for side effects like logging or persistence:
+
+```js
+chat.addEventListener('messages-change', (e) => {
+  console.log(e.detail.reason, e.detail.messages);
+});
+```
+
+When you need a **single source of truth** shared across multiple components (e.g. a chat panel + a sidebar + an export view all reading the same message list), use **controlled mode**:
+
+```js
+// Vue example — messages lives in a reactive store
+chat.messageMode = 'controlled';
+chat.addEventListener('messages-change', (e) => {
+  if (e.detail.committed) return;          // skip external assignments
+  messages.value = e.detail.messages;       // one source, many consumers
+});
+```
+
+In uncontrolled mode `chat.messages` is immediately up-to-date after any mutation — just read it. Controlled mode is opt-in and only needed when an external framework must own the array.
+
 When the user first opens a chat, load historical messages as completed content. Normalize stored messages by setting `message.streaming` to `false` and converting any persisted `status: 'streaming'` parts to a terminal state such as `complete`, especially for `reasoning` parts that have their own thinking/expanded state.
 
 ## Script tag (IIFE bundles)
