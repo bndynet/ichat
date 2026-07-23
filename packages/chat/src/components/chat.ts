@@ -201,6 +201,39 @@ export class Chat extends LitElement {
   private _confirmationQueue: PendingConfirmation[] = [];
   private _confirmationId = 0;
 
+  // ── Ready contract (CHG-06) ───────────────────────────────────────
+
+  /** Resolved after the first render when child queries are available. */
+  private _readyResolver!: () => void;
+  private readonly _readyPromise: Promise<void>;
+
+  /** Presentation commands queued before the first render. */
+  private _pendingCommands: Array<
+    | { kind: 'show-error'; text: string; options?: { duration?: number } }
+    | { kind: 'dismiss-error' }
+    | { kind: 'reply-message'; id: string; info?: Partial<ChatMessage> }
+    | { kind: 'clear-reply-message'; idOrKey?: string }
+  > = [];
+
+  /**
+   * Promise that resolves once the component is fully rendered and child
+   * elements (`i-chat-messages`, `i-chat-input`) are queryable.
+   *
+   * Data methods (addMessage, updateMessage, cancel, …) are safe to call
+   * before `ready` — only presentation methods that touch the DOM may
+   * need to `await chat.ready`.
+   */
+  get ready(): Promise<void> {
+    return this._readyPromise;
+  }
+
+  constructor() {
+    super();
+    this._readyPromise = new Promise((resolve) => {
+      this._readyResolver = resolve;
+    });
+  }
+
   // ── Top-level message-state owner (CHG-03) ────────────────────────
   //
   // Methods below write directly to `this.messages` using shared pure
@@ -298,6 +331,7 @@ export class Chat extends LitElement {
 
   clear(): void {
     this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    this._pendingCommands = [];
     if (this._messages) {
       this._messages._clearPresentation();
     }
@@ -483,17 +517,37 @@ export class Chat extends LitElement {
     this._commitMessages(next, { reason: 'message:cancel', messageId: id });
   }
 
-  // ── Presentation proxy methods ────────────────────────────────────
+  // ── Presentation proxy methods (CHG-06) ───────────────────────────
+  //
+  // Before the first render these methods queue lightweight commands
+  // that replay once child elements are available.  After readiness
+  // they delegate directly to the child.
+
+  private _isChildReady(): boolean {
+    return !!this._messages;
+  }
 
   showError(text: string, options?: { duration?: number }): void {
+    if (!this._isChildReady()) {
+      // Replace any previous pending error with the newest.
+      this._pendingCommands = this._pendingCommands.filter((c) => c.kind !== 'show-error' && c.kind !== 'dismiss-error');
+      this._pendingCommands.push({ kind: 'show-error', text, options });
+      return;
+    }
     this._messages.showError(text, options);
   }
 
   dismissError(): void {
+    if (!this._isChildReady()) {
+      this._pendingCommands = this._pendingCommands.filter((c) => c.kind !== 'show-error' && c.kind !== 'dismiss-error');
+      this._pendingCommands.push({ kind: 'dismiss-error' });
+      return;
+    }
     this._messages.dismissError();
   }
 
   updateProgressStep(messageId: string, step: number, status: string, bid?: string): boolean {
+    if (!this._isChildReady()) return false;
     return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
   }
 
@@ -507,7 +561,7 @@ export class Chat extends LitElement {
     return new StreamingController(this._messages);
   }
 
-  /** Focus the input textarea. */
+  /** Focus the input textarea. Safe to call before first render (no-op). */
   focusInput(): void {
     if (this._activeConfirmation) return;
     this._input?.focus();
@@ -552,10 +606,15 @@ export class Chat extends LitElement {
    *
    * @param id    The id of the message the reply block is attached under.
    * @param info  Optional display fields (`parts`, `avatar`, `role`, …).
-   * @returns A unique key for the created block — pass it to
-   *          `clearReplyMessage(key)` to remove just that block.
+   * @returns A unique key for the created block.  Before first render a
+   *          placeholder key is returned; the real key is assigned on replay.
    */
   replyMessage(id: string, info?: Partial<ChatMessage>): string {
+    if (!this._isChildReady()) {
+      const key = `pending-reply-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      this._pendingCommands.push({ kind: 'reply-message', id, info });
+      return key;
+    }
     return this._messages.replyMessage(id, info);
   }
 
@@ -566,7 +625,35 @@ export class Chat extends LitElement {
    *                 block. When omitted, clears all reply blocks.
    */
   clearReplyMessage(idOrKey?: string): void {
+    if (!this._isChildReady()) {
+      this._pendingCommands.push({ kind: 'clear-reply-message', idOrKey });
+      return;
+    }
     this._messages.clearReplyMessage(idOrKey);
+  }
+
+  // ── Pending command replay (CHG-06) ───────────────────────────────
+
+  private _replayPendingCommands(): void {
+    if (this._pendingCommands.length === 0) return;
+    const commands = this._pendingCommands;
+    this._pendingCommands = [];
+    for (const cmd of commands) {
+      switch (cmd.kind) {
+        case 'show-error':
+          this._messages.showError(cmd.text, cmd.options);
+          break;
+        case 'dismiss-error':
+          this._messages.dismissError();
+          break;
+        case 'reply-message':
+          this._messages.replyMessage(cmd.id, cmd.info);
+          break;
+        case 'clear-reply-message':
+          this._messages.clearReplyMessage(cmd.idOrKey);
+          break;
+      }
+    }
   }
 
   // ── Message-state bridge (CHG-01) ─────────────────────────────────
@@ -634,6 +721,7 @@ export class Chat extends LitElement {
     this._lightChildObserver?.disconnect();
     this._lightChildObserver = undefined;
     this._cancelAllConfirmations();
+    this._pendingCommands = [];
     super.disconnectedCallback();
   }
 
@@ -644,6 +732,8 @@ export class Chat extends LitElement {
   override firstUpdated(_changed: PropertyValues): void {
     super.firstUpdated(_changed);
     // Properties are bound in the template — no manual push needed.
+    this._readyResolver();
+    this._replayPendingCommands();
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────

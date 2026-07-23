@@ -7,7 +7,7 @@
 | Item | Value |
 |------|-------|
 | Document status | **Planned, implementation in progress** |
-| Implementation progress | **5 / 9** |
+| Implementation progress | **6 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -183,7 +183,7 @@ Event requirements:
 | CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
 | CHG-05 | Separate cancellation data semantics from animation side effects | `DONE` | CHG-04 | High | No (bug fix) |
-| CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
+| CHG-06 | Add pre-render safety and a ready contract | `DONE` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `NOT STARTED` | CHG-06 | Medium | No (internal) |
 | CHG-08 | Add explicit controlled and uncontrolled modes | `NOT STARTED` | CHG-07 | Medium | Potential; default remains compatible |
 | CHG-09 | Add `ChatRunController` and deprecate the old top-level animation entry point | `NOT STARTED` | CHG-07; preferably after CHG-08 | Medium-high | No for addition/deprecation; removal is Yes and deferred to a major |
@@ -1104,4 +1104,24 @@ Future AI agents must execute one Change at a time:
   - `_ensureChildSynced()` removed — no data proxy paths remain
   - Standalone and composed modes share `cancelMessageData` reducer
 - Breaking change: No
+
+### CHG-06 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-23
+- Release version: 2.1.0 (target)
+- Main files:
+  - `packages/chat/src/components/chat.ts` — `ready` getter, pending-command queue, safety guards on `showError`/`dismissError`/`replyMessage`/`clearReplyMessage`/`updateProgressStep`/`focusInput`, replay on ready, cleanup on clear/disconnect
+- Public API changes:
+  - New `readonly ready: Promise<void>` getter
+- Behavior changes:
+  - All public methods are safe to call before first render (no more throws)
+  - `showError`/`dismissError`/`replyMessage`/`clearReplyMessage` queue before ready, replay in order
+  - `updateProgressStep` returns `false` (was throw) before ready
+  - `focusInput` safe no-op (was throw via optional chaining)
+  - `clear()` also clears pending commands
+  - `disconnectedCallback` clears pending commands
+- Breaking change: No
+- Automated tests: All 8 test files pass; full build passes
+- Follow-up work: CHG-07
 
