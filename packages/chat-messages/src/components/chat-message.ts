@@ -333,6 +333,19 @@ export class ChatMessageElement extends LitElement {
   }
 
   /**
+   * Freeze the typewriter animation without dispatching any event.
+   * Buffered content is preserved and remains visible.  Use this from
+   * parent components that manage cancellation data separately.
+   *
+   * Safe to call multiple times — subsequent calls are no-ops when the
+   * message is not streaming.
+   */
+  freezeStreamingAnimation(): void {
+    if (!this.message?.streaming) return;
+    this._contentCtrl.freeze();
+  }
+
+  /**
    * Stop streaming for this message immediately.
    * The content received so far remains visible; the typing animation is
    * frozen and `message-complete` is NOT re-fired (the stream was aborted,
@@ -343,7 +356,7 @@ export class ChatMessageElement extends LitElement {
    */
   cancel(): void {
     if (!this.message?.streaming) return;
-    this._contentCtrl.freeze();
+    this.freezeStreamingAnimation();
     // Propagate the state change so parent components (e.g. chat-messages)
     // can update their messages array and remove the streaming flag.
     this.dispatchEvent(
