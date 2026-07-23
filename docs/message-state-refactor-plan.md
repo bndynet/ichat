@@ -1185,13 +1185,70 @@ Future AI agents must execute one Change at a time:
 ## 14. Final Summary
 
 All 9 changes are complete.  The `<i-chat>` component now has a single-source message
-state architecture:
+state architecture.
 
-- `chat.messages` is the sole authoritative store, updated synchronously
-- Every mutation emits one `messages-change` event from `<i-chat>`
-- Pure reducers are shared between composed and standalone modes
-- Cancel is one atomic data operation with separate animation control
-- `ready` promise for pre-render safety
-- Opt-in controlled mode for framework state management
-- `ChatRunController` for response-level orchestration
+### Before vs After
+
+| Aspect | Before (2.0.0) | After (refactor) |
+|--------|---------------|------------------|
+| **Message state** | Two divergent copies (chat + child), could lose data | Single source: `chat.messages`, always up-to-date |
+| **Sync timing** | `chat.messages` stale after `addMessage()` | Updated synchronously before method returns |
+| **Cancel events** | 2 `messages-change` with reason `message:update` | 1 event with reason `message:cancel` |
+| **Pre-render safety** | Methods throw if called before DOM ready | All safe: data executes, presentation queues |
+| **Cancel hint** | Could append twice on repeated calls | Idempotent — appended exactly once |
+| **Streaming detection** | Only checked the mutated message | Checks all messages (correct for multi-stream) |
+| **Lifecycle pushing** | `firstUpdated`/`updated` manually pushed properties | Template `.messages` one-way binding |
+| **Framework integration** | No standard pattern | `messages-change` event + `ready` promise + controlled mode |
+| **Response lifecycle** | `createStreamingController()` — animation only | `createRunController()` — full lifecycle (start/stream/complete/cancel/fail) |
+
+### Breaking Changes
+
+**Zero.** All 9 changes are additive API, internal refactoring, or bug fixes. No public method signature, property name, event name, slot name, or default behavior was removed or changed. Existing integrations require no migration.
+
+### Key New APIs (all additive)
+
+| API | Type | Description |
+|-----|------|-------------|
+| `messages-change` event | Event | Emitted after every mutation; `bubbles: true`, `composed: true` |
+| `MessagesChangeDetail` | Type | Event detail with `messages`, `previousMessages`, `reason`, `source`, ids |
+| `ready` | Getter | `Promise<void>` — resolves after first render |
+| `messageMode` | Property | `'uncontrolled'` (default) or `'controlled'` |
+| `createRunController()` | Method | Returns `ChatRunController` for full response lifecycle |
+| `ChatRunController` | Class | `start()`/`appendPart()`/`appendText()`/`updatePart()`/`complete()`/`fail()`/`cancel()` |
+| `chat.messages` | Property | Now the authoritative store (was merely "bound to inner list") |
+
+### Files Changed
+
+```
+packages/chat/src/components/chat.ts            (main — commit, cancel, ready, controlled, run controller)
+packages/chat/src/controllers/chat-run-controller.ts  (new)
+packages/chat/src/index.ts
+packages/chat-messages/src/components/chat-messages.ts  (commit, cancel, freeze, presentation cleanup)
+packages/chat-messages/src/components/chat-message.ts   (freezeStreamingAnimation)
+packages/chat-messages/src/messages-change-types.ts     (new)
+packages/chat-messages/src/message-collection-state.ts  (new — pure reducers)
+packages/chat-messages/src/index.ts
+packages/chat-messages/test/messages-change.test.ts     (new — 18 cases)
+packages/chat-messages/test/message-collection-state.test.ts (new — 17 cases)
+docs/message-state-refactor-plan.md
+docs/component-api.md
+README.md
+```
+
+### Architecture Diagram
+
+```mermaid
+flowchart TD
+  Host["Consumer / Framework"] -->|"chat.messages = [...]"| Chat
+  Host -->|"chat.addMessage / updateMessage / ..."| Chat
+  Host -->|"chat.cancel / cancelMessage"| Chat
+  Chat -->|"_commitMessages → this.messages = next"| Store["Single source of truth"]
+  Store -->|"emit messages-change"| Host
+  Store -->|".messages=\${this.messages}"| List["<i-chat-messages>: UI only"]
+  List --> Rows["<i-chat-message> / parts"]
+  Chat -->|"freezeMessageAnimation (non-event)"| List
+  Chat -->|"showError / replyMessage / ..."| List
+```
+
+
 
