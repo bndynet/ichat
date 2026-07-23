@@ -6,8 +6,8 @@
 
 | Item | Value |
 |------|-------|
-| Document status | **Planned, implementation in progress** |
-| Implementation progress | **8 / 9** |
+| Document status | **Complete — all 9 changes implemented** |
+| Implementation progress | **9 / 9** |
 | Current code baseline | monorepo `2.0.0` |
 | Last verified | 2026-07-21 |
 | Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
@@ -186,9 +186,9 @@ Event requirements:
 | CHG-06 | Add pre-render safety and a ready contract | `DONE` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `DONE` | CHG-06 | Medium | No (internal) |
 | CHG-08 | Add explicit controlled and uncontrolled modes | `DONE` | CHG-07 | Medium | Potential; default remains compatible |
-| CHG-09 | Add `ChatRunController` and deprecate the old top-level animation entry point | `NOT STARTED` | CHG-07; preferably after CHG-08 | Medium-high | No for addition/deprecation; removal is Yes and deferred to a major |
+| CHG-09 | Add `ChatRunController` and deprecate the old top-level animation entry point | `DONE` | CHG-07; preferably after CHG-08 | Medium-high | No for addition/deprecation; removal is Yes and deferred to a major |
 
-> The core state fix is complete at CHG-07. CHG-08 and CHG-09 may ship in later minor releases and must not block CHG-01 through CHG-07.
+> All 9 changes are complete. CHG-08 and CHG-09 may ship in later minor releases and must not block CHG-01 through CHG-07.
 
 ## 7. Detailed Change Plan
 
@@ -1163,4 +1163,35 @@ Future AI agents must execute one Change at a time:
   - `messages-change.detail.controlled` and `.committed` populated
 - Breaking change: No (default behavior unchanged; controlled is opt-in)
 - Follow-up work: CHG-09 (ChatRunController)
+
+### CHG-09 Implementation Record
+
+- Status: DONE
+- Completion date: 2026-07-23
+- Release version: 2.2.0 (target)
+- Main files:
+  - `packages/chat/src/controllers/chat-run-controller.ts` (new) — `ChatRunController`, `ChatRunStatus`, `ChatRunOptions`, `ChatMessageStorePort`
+  - `packages/chat/src/components/chat.ts` — `createRunController()`, `@deprecated createStreamingController()`
+  - `packages/chat/src/index.ts` — export controller and types
+- Public API changes:
+  - New `createRunController(options?)` factory method
+  - New `ChatRunController` class with `start`/`appendPart`/`updatePart`/`appendText`/`complete`/`fail`/`cancel`
+  - New `ChatRunStatus`, `ChatRunOptions`, `ChatMessageStorePort` types
+  - `@deprecated` on `createStreamingController()` (retained for 2.x)
+- Behavior changes: None (additive only)
+- Breaking change: No
+- Automated tests: All 8 test files pass; full build passes
+
+## 14. Final Summary
+
+All 9 changes are complete.  The `<i-chat>` component now has a single-source message
+state architecture:
+
+- `chat.messages` is the sole authoritative store, updated synchronously
+- Every mutation emits one `messages-change` event from `<i-chat>`
+- Pure reducers are shared between composed and standalone modes
+- Cancel is one atomic data operation with separate animation control
+- `ready` promise for pre-render safety
+- Opt-in controlled mode for framework state management
+- `ChatRunController` for response-level orchestration
 

@@ -42,6 +42,8 @@ import {
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
+import { ChatRunController } from '../controllers/chat-run-controller.js';
+import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 
 import styles from '../styles/chat.scss';
 
@@ -602,7 +604,27 @@ export class Chat extends LitElement {
     registerBlockRenderer(renderer);
   }
 
-  /** Create a `StreamingController` bound to this component's message list. */
+  /**
+   * Create a `ChatRunController` that orchestrates one AI response run
+   * through the top-level message store.  The controller manages the
+   * full lifecycle: create the placeholder message, append parts, stream
+   * text deltas, and transition to complete / cancel / error.
+   *
+   * Prefer this over the older `createStreamingController()` for
+   * response-level orchestration.
+   */
+  createRunController(options?: ChatRunOptions): ChatRunController {
+    return new ChatRunController(this, options);
+  }
+
+  /**
+   * Create a `StreamingController` bound to the inner `<i-chat-messages>`
+   * list.  The controller manages typewriter animation but has no
+   * understanding of message lifecycles.
+   *
+   * @deprecated Prefer {@link createRunController} for response-level
+   *   orchestration.  This method will be removed in a future major version.
+   */
   createStreamingController(): StreamingController {
     return new StreamingController(this._messages);
   }
