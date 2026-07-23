@@ -38,6 +38,7 @@ import {
   isTodoPart,
   normalizeMessagePartUpdateEvent,
   normalizeTodoItemUpdateEvent,
+  cancelMessageData,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
@@ -443,21 +444,46 @@ export class Chat extends LitElement {
     return this.tryApplyMessagePartUpdateEvent(event).ok;
   }
 
-  // ── Remaining proxy methods (CHG-05) ──────────────────────────────
+  // ── Cancellation (CHG-05) ────────────────────────────────────────
   //
-  // cancel / cancelMessage still delegate to the child for animation
-  // freeze + data mutation.  The bridge (_handleMessagesChange) remains
-  // active for these paths.
+  // cancel / cancelMessage now own the full lifecycle:
+  //   1. Freeze the typewriter animation (non-event, via child)
+  //   2. Compute cancelled data via pure reducer (one shot: hint + streaming:false + cancelled:true)
+  //   3. Commit through _commitMessages with reason 'message:cancel'
+  //
+  // The CHG-01 bridge (_handleMessagesChange) is no longer needed for
+  // these paths — it remains registered for standalone child events only.
 
+  /**
+   * Cancel the first streaming message (if any).
+   * Animation is frozen; received content is preserved.  Does NOT emit
+   * `message-complete`.  The consumer remains responsible for aborting
+   * its network request.
+   */
   cancel(hint?: string): void {
-    this._ensureChildSynced();
-    this._messages.cancel(hint);
+    const streamingMsg = this.messages.find((m) => m.streaming && !m.error);
+    if (streamingMsg) this.cancelMessage(streamingMsg.id, hint);
   }
 
+  /**
+   * Cancel a streaming message by id.  No-op when the id does not exist
+   * or the message is not in a streaming state.
+   */
   cancelMessage(id: string, hint?: string): void {
-    this._ensureChildSynced();
-    this._messages.cancelMessage(id, hint);
+    // 1. Freeze the typewriter animation if the row is rendered.
+    if (this._messages) {
+      this._messages.freezeMessageAnimation(id);
+    }
+
+    // 2. Compute cancelled data in one shot via pure reducer.
+    const next = cancelMessageData(this.messages, id, hint);
+    if (next === this.messages) return; // no-op: id not found or already terminal
+
+    // 3. Commit through the top-level store.
+    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
   }
+
+  // ── Presentation proxy methods ────────────────────────────────────
 
   showError(text: string, options?: { duration?: number }): void {
     this._messages.showError(text, options);
@@ -549,17 +575,6 @@ export class Chat extends LitElement {
   // synchronises the child's state back to `chat.messages` and re-emits
   // the `messages-change` event.  This ensures `chat.messages` is never
   // stale after any top-level mutation.
-
-  /**
-   * Ensure the child element is operating on the parent's current array before
-   * a delegated mutation.  Without this an external `chat.messages = […]`
-   * followed immediately by a proxy call could use a stale child base.
-   */
-  private _ensureChildSynced(): void {
-    if (this._messages && this._messages.messages !== this.messages) {
-      this._messages.messages = this.messages;
-    }
-  }
 
   /**
    * Adopt child-originated `messages-change`, synchronise the top-level

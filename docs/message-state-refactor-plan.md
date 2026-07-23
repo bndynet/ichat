@@ -182,7 +182,7 @@ Event requirements:
 | CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
-| CHG-05 | Separate cancellation data semantics from animation side effects | `IN PROGRESS` | CHG-04 | High | No (bug fix) |
+| CHG-05 | Separate cancellation data semantics from animation side effects | `IN PROGRESS` (steps 1-3 done) | CHG-04 | High | No (bug fix) |
 | CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `NOT STARTED` | CHG-06 | Medium | No (internal) |
 | CHG-08 | Add explicit controlled and uncontrolled modes | `NOT STARTED` | CHG-07 | Medium | Potential; default remains compatible |
@@ -1085,8 +1085,21 @@ Future AI agents must execute one Change at a time:
 - Breaking change: No
 - Automated tests: All 8 test files pass
 - Manual regression: Full build (4 packages) — zero errors
-- Known limitations:
-  - `cancel`/`cancelMessage` still proxy to child (CHG-05)
-  - Bridge (`_handleMessagesChange`) remains active for cancel paths
+- Known limitations: Bridge remains for standalone child events only
 - Follow-up work: CHG-05
+
+### CHG-05 Implementation Record (in progress)
+
+- Status: IN PROGRESS (steps 1-3 of 5 done)
+- Steps completed:
+  1. ✅ `ChatMessageElement.freezeStreamingAnimation()` — extracted from `cancel()`
+  2. ✅ `ChatMessages.freezeMessageAnimation(id)` — DOM lookup + freeze, no events
+  3. ✅ `Chat.cancel()` / `Chat.cancelMessage()` — top-level using `cancelMessageData` + freeze
+  4. ⬜ Standalone `ChatMessages.cancel()`/`cancelMessage()` using shared reducer
+  5. ⬜ Full build, test, docs
+- Behavior changes so far:
+  - Cancel emits 1 `messages-change` with reason `message:cancel` (was 2 with `message:update`)
+  - `cancel()` reads from `this.messages` (not child)
+  - `_ensureChildSynced()` removed — no data proxy paths remain
+- Breaking change: No
 
