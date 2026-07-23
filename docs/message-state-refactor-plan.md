@@ -182,7 +182,7 @@ Event requirements:
 | CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
 | CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
 | CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
-| CHG-05 | Separate cancellation data semantics from animation side effects | `NOT STARTED` | CHG-04 | High | No (bug fix) |
+| CHG-05 | Separate cancellation data semantics from animation side effects | `IN PROGRESS` | CHG-04 | High | No (bug fix) |
 | CHG-06 | Add pre-render safety and a ready contract | `NOT STARTED` | CHG-05 | Medium | No |
 | CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `NOT STARTED` | CHG-06 | Medium | No (internal) |
 | CHG-08 | Add explicit controlled and uncontrolled modes | `NOT STARTED` | CHG-07 | Medium | Potential; default remains compatible |
