@@ -41,6 +41,7 @@ import {
   patchMessageById,
   removeMessageById,
   clearMessages,
+  cancelMessageData,
 } from '../message-collection-state.js';
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
@@ -602,17 +603,11 @@ export class ChatMessages extends LitElement {
   /**
    * Cancel the currently streaming message (if any).
    *
-   * - Stops the typing animation immediately, keeping whatever content has
-   *   been received so far.
-   * - Clears the `streaming` flag so the component no longer treats the
-   *   message as in-flight.
-   * - Does NOT fire `message-complete`; fires `message-cancel` instead.
+   * Freezes the typewriter animation and commits cancelled data via the
+   * shared `cancelMessageData` reducer.  Does NOT emit `message-complete`.
+   * The consumer is responsible for aborting the network request.
    *
-   * @param hint  Optional markdown text appended to the message content so the
-   *              user knows the response was stopped (e.g. `'*— Response stopped —*'`).
-   *
-   * You are responsible for aborting the network request (e.g. via
-   * `AbortController.abort()`) before or after calling this method.
+   * @param hint  Optional markdown text appended to the message content.
    */
   cancel(hint?: string): void {
     const streamingMsg = this.messages.find((m) => m.streaming && !m.error);
@@ -620,45 +615,21 @@ export class ChatMessages extends LitElement {
   }
 
   /**
-   * Cancel a streaming message by id.
-   * Prefer `cancel()` when there is only one streaming message at a time.
+   * Cancel a streaming message by id.  No-op when the id does not exist
+   * or the message is already in a terminal state.
    *
    * @param hint  Optional markdown text appended to the message content.
    */
   cancelMessage(id: string, hint?: string): void {
-    if (hint) {
-      const msg = this.messages.find((m) => m.id === id);
-      if (msg) {
-        // Append the hint to the last text part, or add a new one.
-        const parts = msg.parts ?? [];
-        let lastTextIdx = -1;
-        for (let i = parts.length - 1; i >= 0; i--) {
-          if (parts[i].type === 'text') {
-            lastTextIdx = i;
-            break;
-          }
-        }
-        if (lastTextIdx >= 0) {
-          const target = parts[lastTextIdx] as Extract<MessagePart, { type: 'text' }>;
-          const nextParts = parts.slice();
-          nextParts[lastTextIdx] = { ...target, text: `${target.text}\n\n${hint}` };
-          this.updateMessage(id, { parts: nextParts });
-        } else {
-          this.updateMessage(id, { parts: [...parts, textPart(hint)] });
-        }
-      }
-    }
-    const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
-      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
-    );
-    // cancel() fires message-cancel which the template listener above catches
-    // and calls updateMessage() automatically. If the element is not in the
-    // DOM yet, fall back to a direct data update.
-    if (msgEl) {
-      msgEl.cancel();
-    } else {
-      this.updateMessage(id, { streaming: false, cancelled: true });
-    }
+    // 1. Freeze the typewriter animation if the row is rendered.
+    this.freezeMessageAnimation(id);
+
+    // 2. Compute cancelled data in one shot via shared pure reducer.
+    const next = cancelMessageData(this.messages, id, hint);
+    if (next === this.messages) return; // no-op: id not found or already terminal
+
+    // 3. Commit.
+    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
   }
 
   /**

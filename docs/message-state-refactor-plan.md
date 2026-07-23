@@ -1095,11 +1095,12 @@ Future AI agents must execute one Change at a time:
   1. ✅ `ChatMessageElement.freezeStreamingAnimation()` — extracted from `cancel()`
   2. ✅ `ChatMessages.freezeMessageAnimation(id)` — DOM lookup + freeze, no events
   3. ✅ `Chat.cancel()` / `Chat.cancelMessage()` — top-level using `cancelMessageData` + freeze
-  4. ⬜ Standalone `ChatMessages.cancel()`/`cancelMessage()` using shared reducer
-  5. ⬜ Full build, test, docs
-- Behavior changes so far:
+  4. ✅ Standalone `ChatMessages.cancel()`/`cancelMessage()` using shared reducer
+  5. ✅ Full build, test, docs
+- Behavior changes:
   - Cancel emits 1 `messages-change` with reason `message:cancel` (was 2 with `message:update`)
   - `cancel()` reads from `this.messages` (not child)
   - `_ensureChildSynced()` removed — no data proxy paths remain
+  - Standalone and composed modes share `cancelMessageData` reducer
 - Breaking change: No
 

@@ -279,7 +279,7 @@ test('tryUpdateTodoItem emits messages-change on success', () => {
   assert.equal(events[0].detail.itemId, 't1');
 });
 
-test('cancelMessage emits messages-change via updateMessage', () => {
+test('cancelMessage emits messages-change with message:cancel reason', () => {
   const el = new ChatMessages();
   el.addMessage({
     id: 'm1',
@@ -293,9 +293,10 @@ test('cancelMessage emits messages-change via updateMessage', () => {
     el.cancelMessage('m1');
   });
 
-  // cancelMessage sets streaming:false, cancelled:true via updateMessage
+  // After CHG-05: cancelMessage uses cancelMessageData pure reducer,
+  // emits exactly one event with reason 'message:cancel'.
   assert.equal(events.length, 1);
-  assert.equal(events[0].detail.reason, 'message:update');
+  assert.equal(events[0].detail.reason, 'message:cancel');
   const msg = el.messages[0];
   assert.equal(msg.streaming, false);
   assert.equal(msg.cancelled, true);
