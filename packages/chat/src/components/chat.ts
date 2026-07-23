@@ -656,12 +656,22 @@ export class Chat extends LitElement {
     }
   }
 
-  // ── Message-state bridge (CHG-01) ─────────────────────────────────
+  // ── Message-state compatibility guard (CHG-01, retained in CHG-07) ─
   //
-  // While proxy methods still delegate to <i-chat-messages>, the parent
-  // synchronises the child's state back to `chat.messages` and re-emits
-  // the `messages-change` event.  This ensures `chat.messages` is never
-  // stale after any top-level mutation.
+  // After CHG-03 through CHG-05, all normal data mutations write directly
+  // to `this.messages` via `_commitMessages`.  The child receives the array
+  // through one-way `.messages` template binding and does NOT emit
+  // `messages-change` for property-driven updates.
+  //
+  // This handler remains as a compatibility guard for:
+  //   - Standalone `<i-chat-messages>` usage (child owns its own state)
+  //   - `createStreamingController()` writes (controller targets child —
+  //     will be addressed by CHG-09)
+  //   - Any unexpected child-originated mutation in composed mode
+  //
+  // Stale mutations (where the child's base array doesn't match the
+  // current `this.messages`) are rejected and the authoritative array is
+  // pushed back down.
 
   /**
    * Adopt child-originated `messages-change`, synchronise the top-level
