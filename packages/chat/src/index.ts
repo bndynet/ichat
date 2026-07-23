@@ -6,6 +6,7 @@ export type {
   ChatConfirmationResolvedRequest,
   ChatConfirmationResult,
   ChatConfirmationVariant,
+  ChatMessageMode,
 } from './components/chat.js';
 export type {
   MessagesChangeDetail,

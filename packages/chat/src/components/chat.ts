@@ -61,6 +61,8 @@ export type {
 
 export type ChatConfirmationVariant = 'default' | 'danger';
 
+export type ChatMessageMode = 'uncontrolled' | 'controlled';
+
 export interface ChatConfirmationRequest {
   id?: string;
   title: string;
@@ -189,6 +191,23 @@ export class Chat extends LitElement {
   /** Passed to the default `<i-chat-input>` — enables `console.debug` speech logs. */
   @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics = false;
 
+  /**
+   * Message ownership mode.
+   *
+   * - `uncontrolled` (default): `<i-chat>` owns `messages` — imperative
+   *   methods update `chat.messages` directly.  `messages-change` fires
+   *   with `committed: true`.
+   * - `controlled`: the host owns `messages`.  Imperative methods compute
+   *   the next state but do **not** assign `chat.messages`.  They emit
+   *   `messages-change` with `committed: false`; the host must synchronously
+   *   write `event.detail.messages` back to `chat.messages` in the handler.
+   *
+   * Changing the mode after messages exist is safe — the next mutation
+   * uses the new mode.  Switching from `controlled` back to `uncontrolled`
+   * before the next mutation is also safe.
+   */
+  @property({ attribute: 'message-mode' }) messageMode: ChatMessageMode = 'uncontrolled';
+
   @query('i-chat-messages') private _messages!: ChatMessages;
   @query('i-chat-input') private _input!: ChatInput;
 
@@ -256,6 +275,31 @@ export class Chat extends LitElement {
   ): void {
     if (next === this.messages) return;
     const previousMessages = this.messages;
+
+    if (this.messageMode === 'controlled') {
+      // Controlled: emit proposal, host must write back.
+      this._syncStreamingFromMessages(next);
+      this.dispatchEvent(
+        new CustomEvent<MessagesChangeDetail>('messages-change', {
+          detail: {
+            messages: next,
+            previousMessages,
+            reason: context.reason,
+            source: 'i-chat',
+            messageId: context.messageId,
+            partId: context.partId,
+            itemId: context.itemId,
+            controlled: true,
+            committed: false,
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+
+    // Uncontrolled (default): component owns the state.
     this.messages = next;
     this._syncStreamingFromMessages(next);
     this.dispatchEvent(
@@ -268,6 +312,8 @@ export class Chat extends LitElement {
           messageId: context.messageId,
           partId: context.partId,
           itemId: context.itemId,
+          controlled: false,
+          committed: true,
         },
         bubbles: true,
         composed: true,
