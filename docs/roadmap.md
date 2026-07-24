@@ -2,6 +2,8 @@
 
 Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: when an item lands, mark or move it in the same change. Add new sections as other areas grow.
 
+> **For cross-cutting architecture, performance, and DX improvements see the [Optimization Plan](./optimization-plan.md).**
+
 ## Completed
 
 ### Message Body & Parts
