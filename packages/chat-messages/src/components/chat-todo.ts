@@ -124,7 +124,7 @@ export class ChatTodo extends LitElement {
 
         <ol class="todo__list">
           ${part.items.map(
-            (item) => html`<li class="todo__item todo__item--${item.status}">
+            (item) => html`<li class="todo__item todo__item--${item.status}" data-item-id=${item.id}>
               <button
                 class="todo__status"
                 type="button"
