@@ -126,12 +126,11 @@ export class ChatMessages extends LitElement {
     | { kind: 'msg'; key: string; message: ChatMessage }
   > {
     const msgs = this.messages;
-    // Memoization: compute cache key from collection shape
-    const first = msgs.length > 0 ? msgs[0] : null;
-    const last = msgs.length > 0 ? msgs[msgs.length - 1] : null;
-    const cacheKey = `${msgs.length}|${first?.id ?? ''}|${last?.id ?? ''}|${first?.timestamp ?? ''}|${last?.timestamp ?? ''}`;
 
-    if (this.__renderItemsCache && this.__renderItemsCache.key === cacheKey) {
+    // Memoization: use the messages array reference as cache key.
+    // Since every mutation produces a new array (immutability), part-level
+    // changes inside a message (e.g. todo status updates) also invalidate.
+    if (this.__renderItemsCache && this.__renderItemsCache.ref === msgs) {
       return this.__renderItemsCache.value;
     }
 
@@ -159,11 +158,11 @@ export class ChatMessages extends LitElement {
       items.push({ kind: 'msg', key: m.id, message: m });
     }
 
-    this.__renderItemsCache = { key: cacheKey, value: items };
+    this.__renderItemsCache = { ref: msgs, value: items };
     return items;
   }
   private __renderItemsCache?: {
-    key: string;
+    ref: readonly ChatMessage[];
     value: Array<
       | { kind: 'sep'; key: string; label: string }
       | { kind: 'msg'; key: string; message: ChatMessage }
