@@ -6,6 +6,11 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ## Completed
 
+### Testing & CI
+
+- [x] Unit tests for pure helpers — `message-part-state`, `todo-state`, `tool-call-state`, `message-part-events`, `date-separator`, `duration-format`, `update-results`. 24 tests, all passing. (Phase 1.1)
+- [x] CI pipeline — GitHub Actions with Node.js 18/20/22 matrix, test + coverage on push/PR to `main`/`v3`. (Phase 1.2)
+
 ### Message Body & Parts
 
 - [x] Centralize todo state updates in pure helpers. `patchTodoItem()` owns todo item validation, revision checks, immutable updates, and lifecycle status updates. `updateTodoItem()` and backend event handling route through the same reducer.
@@ -23,17 +28,61 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Share markdown morphing between text and reasoning. `renderMarkdownInto()` now centralizes markdown rendering, morphdom patching, and HTML cache checks for both `i-chat-text-part` and `i-chat-reasoning`.
 - [x] Align SSE envelopes with OpenAI Responses style. Canonical backend events now document `event` + matching `data.type` + `sequence_number`, while normalizers continue accepting legacy payloads without `data.type`.
 
+### Performance
+
+- [x] Markdown cache — Two-level cache (raw content + HTML comparison) in `renderMarkdownInto()`. Skips markdown-it + DOMPurify when raw content unchanged; skips morphdom when HTML unchanged. (Phase 2.2)
+- [x] highlight.js configurable — `ChatConfig.highlightJs` optional injection. When omitted, code blocks fall back to plain escaped `<pre><code>`. Threaded through full component chain. (Phase 2.3)
+- [x] Memoized computed properties — `_messageRenderItems()` cached by collection shape (length + first/last id + timestamp). `_labels` cached by locale + labels reference. (Phase 2.4)
+
+### SSE & Backend Integration
+
+- [x] SSE client — `createChatSSEClient()` with auto event routing for all 8 SSE event types. Supports named events and `data.type` routing, reconnection with exponential backoff + jitter. Exported via `@bndynet/ichat/sse`. (Phase 3.1)
+
+### Developer Experience
+
+- [x] AbortController in ChatRunController — `run.signal` for fetch integration. Auto-aborted on `complete()` / `fail()` / `cancel()`. (Phase 3.5)
+- [x] Middleware chain — `ChatMiddleware` with `beforeSend`, `afterMessageAdded`, `beforeAppendPart`, `onError` hooks. FIFO execution, null short-circuits. (Phase 3.2)
+
+### Extensibility
+
+- [x] Plugin system — `ChatPlugin` interface with `install(chat)` + optional teardown. `chat.use()` unified for both middleware and plugins. (Phase 4.3)
+- [x] Async BlockRenderer — `renderAsync()` for fenced blocks. Placeholder on first render, swapped when promise resolves. `resolveAsyncBlocks()` exported. (Phase 4.2)
+
+### Documentation
+
+- [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
+- [x] `component-api.md` — Syntax highlighting section with usage example. (Phase 7)
+- [x] Phase summaries — `docs/phase-*.md` for all 7 phases + `implementation-review.md`. (Phase 7)
+
 ## Backlog
-
-### Message Body & Parts
-
-- [ ] Run an accessibility pass over interactive parts. Recheck todo status controls, collapsible headers, tool approval buttons, keyboard behavior, and aria labels.
-- [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel. If this becomes hard to maintain, consider a shared markdown render helper/controller first, then evaluate whether a tiny shared markdown content component can preserve both styling boundaries without changing public DOM expectations.
-- [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls such as remove, collapse, or richer quote styling land.
 
 ### Performance
 
-- [ ] **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (from [optimization plan Phase 2.1](./optimization-plan.md#21-virtual-scrolling))
+- [ ] **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
+
+### Message Body & Parts
+
+- [ ] Run an accessibility pass over interactive parts. Recheck todo status controls, collapsible headers, tool approval buttons, keyboard behavior, and aria labels. (Phase 5)
+- [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel.
+- [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls land.
+
+### Developer Experience
+
+- [ ] Type system cleanup — Split public API types from internal diagnostic types. `@bndynet/ichat/messages` re-export path. (Phase 3.3)
+- [ ] Generic type support — Make `<i-chat>` generic over custom part types. (Phase 3.4)
+- [ ] Component tests — `<i-chat-input>` (send/cancel, disabled, voice, auto-resize) and `<i-chat>` (controlled/uncontrolled, slots, confirmations, `ready`, `createRunController()`). (Phase 1.1 remaining)
+
+### Architecture (v3)
+
+- [ ] `<i-chat>` decomposition — Extract `ConfirmationController`, `SlotForwardingController`, `CommandQueue`. Target ≤ 300 lines. (Phase 6.1)
+- [ ] Remove deprecated APIs — `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers. (Phase 6.2)
+- [ ] Peer dependency migration — Move `markdown-it`, `dompurify`, `highlight.js` to peerDependencies. Provide tree-shakeable ESM build. (Phase 6.3)
+
+### Documentation & Showcase
+
+- [ ] Storybook 8+ — Stories for each component with knobs and Chromatic deployment. (Phase 7.2)
+- [ ] Interactive playground — Live `<i-chat>` embedded in docs with framework wrappers. (Phase 7.3)
+- [ ] Migration guides — v1→v2 and v2→v3. (Phase 7.1)
 
 ## Compatibility & Deprecation
 
