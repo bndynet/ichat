@@ -14,6 +14,7 @@ export type {
   ChatRunOptions,
 } from './controllers/chat-run-controller.js';
 export type { ChatMiddleware } from './middleware/chat-middleware.js';
+export type { ChatPlugin } from './middleware/chat-plugin.js';
 export { createMiddlewareChain } from './middleware/chat-middleware.js';
 export type {
   MessagesChangeDetail,

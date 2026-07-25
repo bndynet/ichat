@@ -11,7 +11,13 @@ export interface BlockRenderer {
    * @param lang - The first word of the info string (e.g. `"details"`).
    * @param info - The full info string after the opening fence markers (e.g. `"details My Title"`).
    */
-  render: (code: string, lang: string, info?: string) => string;
+  render?: (code: string, lang: string, info?: string) => string;
+  /**
+   * Async renderer. When provided, the fenced block renders a placeholder
+   * (loading indicator) and replaces it when the promise resolves.
+   * Use this for renderers that need to fetch external resources.
+   */
+  renderAsync?: (code: string, lang: string, info?: string) => Promise<string>;
 }
 
 /**

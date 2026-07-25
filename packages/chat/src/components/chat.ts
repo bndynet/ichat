@@ -49,6 +49,7 @@ import {
   type ChatMiddleware,
   type MiddlewareChain,
 } from '../middleware/chat-middleware.js';
+import type { ChatPlugin } from '../middleware/chat-plugin.js';
 
 import styles from '../styles/chat.scss';
 
@@ -258,11 +259,14 @@ export class Chat extends LitElement {
   private readonly _middlewareChain: MiddlewareChain = createMiddlewareChain();
 
   /**
-   * Register a middleware in the processing chain.
-   * Returns a disposal function to unregister.
+   * Register a middleware or plugin.
+   *
+   * - `ChatMiddleware`: Returns a disposal function to unregister.
+   * - `ChatPlugin`: Calls `plugin.install(chat)` and returns its disposal function.
    *
    * @example
    * ```ts
+   * // Middleware
    * const dispose = chat.use({
    *   name: 'logger',
    *   beforeSend: (content) => {
@@ -270,10 +274,23 @@ export class Chat extends LitElement {
    *     return content;
    *   },
    * });
+   *
+   * // Plugin
+   * chat.use({
+   *   name: 'my-plugin',
+   *   install(chat) { ... },
+   * });
    * ```
    */
-  use(middleware: ChatMiddleware): () => void {
-    return this._middlewareChain.use(middleware);
+  use(middlewareOrPlugin: ChatMiddleware | ChatPlugin): () => void {
+    // Plugin
+    if ('install' in middlewareOrPlugin) {
+      const plugin = middlewareOrPlugin as ChatPlugin;
+      const teardown = plugin.install(this);
+      return () => teardown?.();
+    }
+    // Middleware
+    return this._middlewareChain.use(middlewareOrPlugin as ChatMiddleware);
   }
 
   constructor() {

@@ -152,16 +152,65 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const customRenderer = rendererRegistry.getRenderer(lang);
 
   if (customRenderer) {
-    const html = customRenderer.render(token.content, lang, info);
-    // Use a stable, collision-resistant placeholder id.
-    const id = `_br_${idx}_${pendingBlockHTML.size}`;
-    pendingBlockHTML.set(id, html);
-    // <div id="..."> is kept verbatim by DOMPurify.
-    return `<div id="${id}"></div>`;
+    // Async renderer: show placeholder, replace when promise resolves
+    if (customRenderer.renderAsync) {
+      const id = `_br_${idx}_${pendingBlockHTML.size}`;
+      const placeholderHtml =
+        customRenderer.render
+          ? customRenderer.render(token.content, lang, info)
+          : `<div class="chat-block-loading" aria-label="Loading...">
+              <span class="chat-block-loading__spinner"></span>
+            </div>`;
+      pendingBlockHTML.set(id, placeholderHtml);
+
+      // Kick off async render — the promise resolves later
+      const asyncId = `_async_${idx}_${Date.now()}`;
+      pendingAsyncBlocks.set(asyncId, {
+        placeholderId: id,
+        promise: customRenderer.renderAsync(token.content, lang, info),
+      });
+
+      return `<div id="${id}"></div>`;
+    }
+
+    // Sync renderer
+    if (customRenderer.render) {
+      const html = customRenderer.render(token.content, lang, info);
+      const id = `_br_${idx}_${pendingBlockHTML.size}`;
+      pendingBlockHTML.set(id, html);
+      return `<div id="${id}"></div>`;
+    }
+
+    // No render method — fallback to default
   }
 
   return defaultFence(tokens, idx, options, env, self);
 };
+
+/** Pending async block renderers that will resolve after the initial render. */
+const pendingAsyncBlocks = new Map<string, { placeholderId: string; promise: Promise<string> }>();
+
+/**
+ * Resolve all pending async block renderers and replace their placeholders.
+ * Call this after `renderMarkdown` to swap loading spinners with final content.
+ */
+export async function resolveAsyncBlocks(container: HTMLElement): Promise<void> {
+  for (const [, { placeholderId, promise }] of pendingAsyncBlocks) {
+    try {
+      const html = await promise;
+      const placeholder = container.querySelector(`#${CSS.escape(placeholderId)}`);
+      if (placeholder) {
+        placeholder.outerHTML = html;
+      }
+    } catch {
+      const placeholder = container.querySelector(`#${CSS.escape(placeholderId)}`);
+      if (placeholder) {
+        placeholder.outerHTML = '<div class="chat-block-error">Render failed</div>';
+      }
+    }
+  }
+  pendingAsyncBlocks.clear();
+}
 
 /**
  * The underlying markdown-it instance.

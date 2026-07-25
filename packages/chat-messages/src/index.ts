@@ -17,6 +17,7 @@ export {
   extractReasoning,
   hasUnclosedReasoning,
   invalidateMarkdownCache,
+  resolveAsyncBlocks,
 } from './renderers/markdown-renderer.js';
 export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
 export {
