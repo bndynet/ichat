@@ -60,6 +60,7 @@ export class ChatPartHost extends LitElement {
   @property() reasoningHeaderHtml = '';
   @property({ attribute: false }) labels?: ChatLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+  @property({ attribute: false }) highlightJs?: import('../types.js').ChatConfig['highlightJs'];
 
   private _customRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
   private _customCache = new Map<string, string>();
@@ -338,6 +339,7 @@ export class ChatPartHost extends LitElement {
           .content=${content}
           .animating=${animatingHere}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
+          .highlightJs=${this.highlightJs}
           @chat-text-part-updated=${this._handleRenderedPartUpdated}
         ></i-chat-text-part>`;
       }

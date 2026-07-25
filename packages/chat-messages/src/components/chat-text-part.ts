@@ -2,7 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
 import type { TextPart } from '../types.js';
-import { renderMarkdownInto } from '../renderers/markdown-morph.js';
+import { renderMarkdownInto, type RenderMarkdownIntoOptions } from '../renderers/markdown-morph.js';
 
 @customElement('i-chat-text-part')
 export class ChatTextPart extends LitElement {
@@ -10,6 +10,7 @@ export class ChatTextPart extends LitElement {
   @property() content = '';
   @property({ type: Boolean }) animating = false;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+  @property({ attribute: false }) highlightJs?: RenderMarkdownIntoOptions['highlightJs'];
 
   @query('.content') private _contentEl?: HTMLDivElement;
   private _htmlCache = '';
@@ -31,6 +32,7 @@ export class ChatTextPart extends LitElement {
       previousHtml: this._htmlCache,
       allowedLinkProtocols: this.allowedLinkProtocols,
       partId: this.data?.id,
+      highlightJs: this.highlightJs,
     });
     this._htmlCache = result.html;
     if (!result.changed) return;

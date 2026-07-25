@@ -58,6 +58,7 @@ export class ChatMessageElement extends LitElement {
    */
   @property({ attribute: false }) labels?: ChatLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
+  @property({ attribute: false }) highlightJs?: import('../types.js').ChatConfig['highlightJs'];
 
   /**
    * Single typewriter controller, bound to the message's currently-streaming
@@ -226,6 +227,7 @@ export class ChatMessageElement extends LitElement {
                 .locale=${this.locale}
                 .labels=${this.labels}
                 .allowedLinkProtocols=${this.allowedLinkProtocols}
+                .highlightJs=${this.highlightJs}
                 .speed=${0}
                 .selfAvatar=${this.selfAvatar}
                 .peerAvatar=${this.peerAvatar}
@@ -488,6 +490,7 @@ export class ChatMessageElement extends LitElement {
             .reasoningHeaderHtml=${this.reasoningHeaderHtml}
             .labels=${this.labels}
             .allowedLinkProtocols=${this.allowedLinkProtocols}
+            .highlightJs=${this.highlightJs}
             @chat-part-host-updated=${this._handlePartHostUpdated}
           ></i-chat-part-host>
           <div class="message-footer">

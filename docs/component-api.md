@@ -90,6 +90,26 @@ chat.addEventListener('link-click', (e) => {
 });
 ```
 
+### Syntax highlighting
+
+By default, code blocks render as plain escaped `<pre><code>` without language-based highlighting. To enable highlighting, pass your own `highlight.js` instance via `config.highlightJs`. This keeps the bundle small — only the languages you register are included.
+
+```typescript
+import hljs from 'highlight.js/lib/core';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+
+chat.config = {
+  ...chat.config,
+  highlightJs: hljs,
+};
+```
+
+If `highlightJs` is not set, code blocks fall back to plain escaped text — no errors, no missing imports.
+
 ## Composer confirmations
 
 Use `requestConfirmation(request)` when an AI or host action must pause for user approval before continuing. The confirmation panel is a composer state: while it is active, it replaces the default `<i-chat-input>` in the footer. If you provide a custom `slot="input"`, that slotted composer is also hidden until the active confirmation is resolved.

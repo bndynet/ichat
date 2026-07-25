@@ -826,6 +826,7 @@ export class ChatMessages extends LitElement {
                               .locale=${cfg.locale}
                               .labels=${labels}
                               .allowedLinkProtocols=${cfg.allowedLinkProtocols}
+                              .highlightJs=${cfg.highlightJs}
                               .speed=${cfg.streamingSpeed}
                               .selfAvatar=${cfg.selfAvatar}
                               .peerAvatar=${cfg.peerAvatar}

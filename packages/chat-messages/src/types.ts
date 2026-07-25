@@ -376,6 +376,21 @@ export interface ChatConfig {
    */
   allowedLinkProtocols?: readonly string[];
   /**
+   * Optional highlight.js instance for syntax highlighting in code blocks.
+   * When omitted, code blocks render as plain escaped `<pre><code>` without
+   * language-based highlighting.  Pass your own `highlight.js` import to keep
+   * the bundle small (only the languages you register are included).
+   *
+   * @example
+   * ```ts
+   * import hljs from 'highlight.js/lib/core';
+   * import typescript from 'highlight.js/lib/languages/typescript';
+   * hljs.registerLanguage('typescript', typescript);
+   * chat.config = { ...chat.config, highlightJs: hljs };
+   * ```
+   */
+  highlightJs?: typeof import('highlight.js').default;
+  /**
    * BCP 47 locale for built-in UI: all text strings (see {@link ChatLabels}),
    * per-message timestamps, and assistant **duration**
    * (`Intl.NumberFormat` / `Intl.DurationFormat` where available).
@@ -396,7 +411,7 @@ export interface ChatConfig {
 }
 
 export const DEFAULT_CONFIG: Required<
-  Omit<ChatConfig, 'labels' | 'dateSeparatorLabels' | 'allowedLinkProtocols'>
+  Omit<ChatConfig, 'labels' | 'dateSeparatorLabels' | 'allowedLinkProtocols' | 'highlightJs'>
 > = {
   streamingSpeed: 3,
   selfAvatar: '',
