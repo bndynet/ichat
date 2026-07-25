@@ -30,6 +30,7 @@ export class ChatTextPart extends LitElement {
     const result = renderMarkdownInto(el, this.content, {
       previousHtml: this._htmlCache,
       allowedLinkProtocols: this.allowedLinkProtocols,
+      partId: this.data?.id,
     });
     this._htmlCache = result.html;
     if (!result.changed) return;

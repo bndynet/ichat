@@ -16,8 +16,13 @@ export {
   sanitizeHtml,
   extractReasoning,
   hasUnclosedReasoning,
+  invalidateMarkdownCache,
 } from './renderers/markdown-renderer.js';
 export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
+export {
+  renderMarkdownInto,
+} from './renderers/markdown-morph.js';
+export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
 export { updateProgressStepStatus } from './renderers/progress-plugin.js';
 export type { ProgressStatus } from './renderers/progress-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';

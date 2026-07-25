@@ -1,5 +1,5 @@
 import MarkdownIt from 'markdown-it';
-import hljs from 'highlight.js';
+import type hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import { rendererRegistry } from './registry.js';
 import { progressPlugin } from './progress-plugin.js';
@@ -15,6 +15,22 @@ export interface MarkdownRenderOptions {
    * are used. Relative URLs and fragment links are always kept.
    */
   allowedLinkProtocols?: readonly string[];
+
+  /**
+   * Optional highlight.js instance for syntax highlighting.
+   * When omitted, code blocks render as plain `<pre><code>` without highlighting.
+   * Pass your own `highlight.js` import (possibly with only the languages you need)
+   * to keep bundle size small.
+   */
+  highlightJs?: typeof hljs;
+}
+
+/** Active highlight.js instance for the current render pass (set per-render). */
+let activeHighlightJs: typeof hljs | undefined;
+
+/** Safe default: render code blocks without highlighting when hljs is unavailable. */
+function defaultHighlight(str: string, _lang: string): string {
+  return md.utils.escapeHtml(str);
 }
 
 const md = new MarkdownIt({
@@ -22,10 +38,15 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true,
   highlight(str: string, lang: string): string {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(str, { language: lang }).value;
+    const hl = activeHighlightJs;
+    if (hl && lang && hl.getLanguage(lang)) {
+      try {
+        return hl.highlight(str, { language: lang }).value;
+      } catch {
+        // Fall through to escaped fallback on highlight error
+      }
     }
-    return '';
+    return defaultHighlight(str, lang);
   },
 });
 
@@ -156,10 +177,24 @@ export function sanitizeHtml(html: string, options?: MarkdownRenderOptions): str
   return DOMPurify.sanitize(html, domPurifyConfig(options));
 }
 
+// ── Markdown content cache ────────────────────────────────────────────────────
+// Avoid re-rendering unchanged markdown content during streaming updates.
+const markdownContentCache = new Map<string, { rawMd: string; html: string }>();
+
+/** Invalidate the markdown cache for a specific part or entirely. */
+export function invalidateMarkdownCache(partId?: string): void {
+  if (partId) {
+    markdownContentCache.delete(partId);
+  } else {
+    markdownContentCache.clear();
+  }
+}
+
 export function renderMarkdown(content: string, options?: MarkdownRenderOptions): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
   activeRenderOptions = options;
+  activeHighlightJs = options?.highlightJs;
 
   try {
     const raw = md.render(content);
@@ -174,6 +209,7 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
     return sanitized;
   } finally {
     activeRenderOptions = previousOptions;
+    activeHighlightJs = undefined;
     pendingBlockHTML.clear();
   }
 }

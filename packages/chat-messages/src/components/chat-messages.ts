@@ -97,31 +97,57 @@ export class ChatMessages extends LitElement {
 
   /** Fully-resolved UI strings (built-ins from `locale` + host `labels` overrides). */
   private get _labels(): ChatLabels {
-    return resolveLabels({
-      locale: this.config.locale ?? DEFAULT_CONFIG.locale,
-      labels: this.config.labels,
-      dateSeparatorLabels: this.config.dateSeparatorLabels,
+    const locale = this.config.locale ?? DEFAULT_CONFIG.locale;
+    const labelsRef = this.config.labels;
+    const dateSepRef = this.config.dateSeparatorLabels;
+
+    // Memoization: cache key based on locale + label references
+    if (
+      this.__labelsCache &&
+      this.__labelsCache.key === `${locale}|${!!labelsRef}|${!!dateSepRef}`
+    ) {
+      return this.__labelsCache.value;
+    }
+
+    const value = resolveLabels({
+      locale,
+      labels: labelsRef,
+      dateSeparatorLabels: dateSepRef,
     });
+
+    this.__labelsCache = { key: `${locale}|${!!labelsRef}|${!!dateSepRef}`, value };
+    return value;
   }
+  private __labelsCache?: { key: string; value: ChatLabels };
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
   private _messageRenderItems(): Array<
     | { kind: 'sep'; key: string; label: string }
     | { kind: 'msg'; key: string; message: ChatMessage }
   > {
+    const msgs = this.messages;
+    // Memoization: compute cache key from collection shape
+    const first = msgs.length > 0 ? msgs[0] : null;
+    const last = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+    const cacheKey = `${msgs.length}|${first?.id ?? ''}|${last?.id ?? ''}|${first?.timestamp ?? ''}|${last?.timestamp ?? ''}`;
+
+    if (this.__renderItemsCache && this.__renderItemsCache.key === cacheKey) {
+      return this.__renderItemsCache.value;
+    }
+
     const items: Array<
       | { kind: 'sep'; key: string; label: string }
       | { kind: 'msg'; key: string; message: ChatMessage }
     > = [];
     const sepLabels = this._labels.dateSeparator;
     const onlyToday =
-      this.messages.length > 0 &&
-      this.messages.every((m) => {
+      msgs.length > 0 &&
+      msgs.every((m) => {
         const ts = m.timestamp ?? Date.now();
         return getDateSeparatorInfo(ts, sepLabels).key === 'today';
       });
     let prevKey: string | undefined;
-    for (const m of this.messages) {
+    for (const m of msgs) {
       const ts = m.timestamp ?? Date.now();
       const { key, label } = getDateSeparatorInfo(ts, sepLabels);
       if (prevKey === undefined || key !== prevKey) {
@@ -132,8 +158,17 @@ export class ChatMessages extends LitElement {
       }
       items.push({ kind: 'msg', key: m.id, message: m });
     }
+
+    this.__renderItemsCache = { key: cacheKey, value: items };
     return items;
   }
+  private __renderItemsCache?: {
+    key: string;
+    value: Array<
+      | { kind: 'sep'; key: string; label: string }
+      | { kind: 'msg'; key: string; message: ChatMessage }
+    >;
+  };
 
   override connectedCallback(): void {
     super.connectedCallback();
