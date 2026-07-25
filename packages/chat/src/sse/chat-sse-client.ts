@@ -21,6 +21,12 @@ export interface SSEClientOptions {
   onCompleted?: (messageId: string, patch?: Partial<ChatMessage>) => void;
 
   /**
+   * Called when the SSE stream emits a `stream.done` event.
+   * The connection is automatically closed after this event.
+   */
+  onStreamDone?: (messageId?: string) => void;
+
+  /**
    * Called when the SSE stream emits an `error` event.
    */
   onError?: (error: string) => void;
@@ -52,9 +58,11 @@ export interface SSEClientOptions {
 
 export interface ChatStorePort {
   readonly messages: ChatMessage[];
+  addMessage(message: ChatMessage): void;
+  updateMessage(id: string, partial: Partial<ChatMessage>): void;
+  appendPart(messageId: string, part: MessagePart): void;
   tryApplyMessagePartUpdateEvent(event: unknown): { ok: boolean };
   tryApplyTodoItemUpdateEvent(event: unknown): { ok: boolean };
-  updateMessage(id: string, partial: Partial<ChatMessage>): void;
   cancelMessage(id: string, hint?: string): void;
   addErrorMessage(error: string, text?: string): void;
 }
@@ -106,6 +114,19 @@ function resolveReconnectDelay(
 /**
  * Create an SSE client that connects to a backend streaming endpoint and
  * automatically routes events to a chat store.
+ *
+ * Supports the following SSE events (both named `event:` and `data.type` routing):
+ *
+ * | Event                    | Action                                       |
+ * |--------------------------|----------------------------------------------|
+ * | `message.created`        | `store.addMessage(message)`                  |
+ * | `message.updated`        | `store.updateMessage(id, patch)`             |
+ * | `message.part.appended`  | `store.appendPart(messageId, part)`          |
+ * | `message.part.updated`   | `store.tryApplyMessagePartUpdateEvent(event)`|
+ * | `todo.item.updated`      | `store.tryApplyTodoItemUpdateEvent(event)`   |
+ * | `message.completed`      | `store.updateMessage(id, patch)` + abort     |
+ * | `stream.done`            | abort connection                             |
+ * | `error`                  | `options.onError(error)`                     |
  *
  * @example
  * ```ts
@@ -251,54 +272,124 @@ export function createChatSSEClient(
     }
 
     switch (eventType) {
+      case 'message.created':
+        handleMessageCreated(parsed);
+        return;
+      case 'message.updated':
+        handleMessageUpdated(parsed);
+        return;
+      case 'message.part.appended':
+        handlePartAppended(parsed);
+        return;
       case 'message.part.updated':
-      case 'message': {
-        // 'message' is the default SSE event — check if data contains a typed event
-        if (eventType === 'message' || !eventType) {
-          // Try to route by data.type
-          if (isSSEEvent(parsed) && typeof parsed.type === 'string') {
-            if (parsed.type === 'message.part.updated') {
+        handlePartUpdate(parsed);
+        return;
+      case 'todo.item.updated':
+        handleTodoUpdate(parsed);
+        return;
+      case 'message.completed':
+        handleCompleted(parsed);
+        return;
+      case 'stream.done':
+        handleStreamDone(parsed);
+        return;
+      case 'message':
+      case '': {
+        // Default SSE event or unnamed — route by data.type
+        if (isSSEEvent(parsed) && typeof parsed.type === 'string') {
+          switch (parsed.type) {
+            case 'message.created':
+              handleMessageCreated(parsed);
+              return;
+            case 'message.updated':
+              handleMessageUpdated(parsed);
+              return;
+            case 'message.part.appended':
+              handlePartAppended(parsed);
+              return;
+            case 'message.part.updated':
               handlePartUpdate(parsed);
               return;
-            }
-            if (parsed.type === 'todo.item.updated') {
+            case 'todo.item.updated':
               handleTodoUpdate(parsed);
               return;
-            }
-            if (parsed.type === 'message.completed') {
+            case 'message.completed':
               handleCompleted(parsed);
               return;
-            }
-            if (parsed.type === 'error') {
+            case 'stream.done':
+              handleStreamDone(parsed);
+              return;
+            case 'error': {
               const msg = 'message' in parsed ? String((parsed as { message: string }).message) : 'Unknown error';
               options.onError?.(msg);
               return;
             }
           }
-          // Fallback: try as part update
-          handlePartUpdate(parsed);
-          return;
         }
+        // Fallback: treat as part update
         handlePartUpdate(parsed);
         return;
       }
-      case 'todo.item.updated':
-        handleTodoUpdate(parsed);
-        break;
-      case 'message.completed':
-        handleCompleted(parsed);
-        break;
       default:
-        // Unknown event — try to route by parsed type
-        if (isSSEEvent(parsed)) {
-          if (parsed.type === 'message.part.updated') {
-            handlePartUpdate(parsed);
-          } else if (parsed.type === 'todo.item.updated') {
-            handleTodoUpdate(parsed);
-          } else if (parsed.type === 'message.completed') {
-            handleCompleted(parsed);
+        // Unknown named event — try to route by parsed data.type
+        if (isSSEEvent(parsed) && typeof parsed.type === 'string') {
+          switch (parsed.type) {
+            case 'message.created':
+              handleMessageCreated(parsed);
+              return;
+            case 'message.updated':
+              handleMessageUpdated(parsed);
+              return;
+            case 'message.part.appended':
+              handlePartAppended(parsed);
+              return;
+            case 'message.part.updated':
+              handlePartUpdate(parsed);
+              return;
+            case 'todo.item.updated':
+              handleTodoUpdate(parsed);
+              return;
+            case 'message.completed':
+              handleCompleted(parsed);
+              return;
+            case 'stream.done':
+              handleStreamDone(parsed);
+              return;
           }
         }
+    }
+  }
+
+  function handleMessageCreated(parsed: unknown): void {
+    if (!isSSEEvent(parsed)) return;
+    const payload = parsed as Record<string, unknown>;
+    const message = payload.message as ChatMessage | undefined;
+    if (message && typeof message.id === 'string' && message.role) {
+      store.addMessage(message);
+      if (!_messageId) _messageId = message.id;
+    }
+  }
+
+  function handleMessageUpdated(parsed: unknown): void {
+    if (!isSSEEvent(parsed)) return;
+    const payload = parsed as Record<string, unknown>;
+    const messageId = typeof payload.messageId === 'string' ? payload.messageId : _messageId;
+    if (messageId) {
+      // Strip envelope fields from patch
+      const { type: _t, messageId: _m, sequence_number: _s, sequenceNumber: _sn, ...cleanPatch } = payload;
+      if (Object.keys(cleanPatch).length > 0) {
+        store.updateMessage(messageId, cleanPatch as Partial<ChatMessage>);
+      }
+    }
+  }
+
+  function handlePartAppended(parsed: unknown): void {
+    if (!isSSEEvent(parsed)) return;
+    const payload = parsed as Record<string, unknown>;
+    const messageId = typeof payload.messageId === 'string' ? payload.messageId : _messageId;
+    const part = payload.part as MessagePart | undefined;
+    if (messageId && part && typeof part.id === 'string' && typeof part.type === 'string') {
+      store.appendPart(messageId, part);
     }
   }
 
@@ -318,6 +409,14 @@ export function createChatSSEClient(
       }
       options.onCompleted?.(_messageId, rest as Partial<ChatMessage>);
     }
+    abort();
+  }
+
+  function handleStreamDone(parsed: unknown): void {
+    const messageId = isSSEEvent(parsed) && typeof (parsed as Record<string, unknown>).messageId === 'string'
+      ? (parsed as Record<string, unknown>).messageId as string
+      : _messageId;
+    options.onStreamDone?.(messageId);
     abort();
   }
 
