@@ -344,6 +344,23 @@ i-chat-text-part {
     }
   }
 
+  // ── Code copy button ──────────────────────────────────────────────
+  .ichat-code-block pre {
+    margin-top: 1.2em;
+  }
+  .ichat-code-block:hover .ichat-code-copy-btn,
+  .ichat-code-copy-btn:focus-visible {
+    opacity: 1 !important;
+  }
+  .ichat-code-copy-btn:hover {
+    color: var(--chat-primary, #2563eb) !important;
+    background: var(--chat-surface-alt, #f0f2f5) !important;
+  }
+  .ichat-code-copy-btn.copied {
+    color: var(--chat-success, #16a34a) !important;
+    opacity: 1 !important;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;

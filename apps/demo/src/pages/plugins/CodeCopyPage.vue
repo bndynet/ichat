@@ -1,6 +1,5 @@
 <script setup>
 import '@bndynet/ichat';
-import { codeCopyPlugin } from '@bndynet/ichat';
 import { nextTick, onMounted, ref } from 'vue';
 import { nextId } from '../../composables/demo-data.js';
 import { textPart } from '@bndynet/ichat';
@@ -21,8 +20,7 @@ onMounted(async () => {
   const chat = await waitForChatHost();
   if (!chat) return;
 
-  // Register the code copy plugin
-  chat.use(codeCopyPlugin);
+  // Code copy is built-in — no plugin registration needed
 
   // Add a message with fenced code blocks to demonstrate
   chat.addMessage({
@@ -63,11 +61,11 @@ Click the **Copy** button on any block to copy the code to your clipboard.`),
 
 <template>
   <div style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
-    <h2 style="margin: 0 0 8px;">Code Copy Plugin</h2>
+    <h2 style="margin: 0 0 8px;">Code Copy (Built-in)</h2>
     <p style="margin: 0 0 12px;">
-      The <code>codeCopyPlugin</code> adds a hover-visible copy button to every
-      fenced code block in rendered markdown. Register it once with
-      <code>chat.use(codeCopyPlugin)</code>.
+      Every fenced code block automatically has a copy button —
+      <strong>zero configuration required</strong>. Hover over any code block
+      to see the copy icon, click to copy the code to your clipboard.
     </p>
     <i-chat ref="chatRef" style="flex: 1; min-height: 0;" />
   </div>

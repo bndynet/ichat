@@ -184,8 +184,35 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     // No render method — fallback to default
   }
 
-  return defaultFence(tokens, idx, options, env, self);
+  // Built-in code copy button: wrap every code block
+  return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
 };
+
+// ── Code copy button (built-in) ──────────────────────────────────────────────
+
+const COPY_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
+const BTN_STYLE =
+  'position:absolute;top:-14px;right:1rem;z-index:1;' +
+  'display:flex;align-items:center;justify-content:center;' +
+  'width:28px;height:28px;padding:0;' +
+  'color:var(--chat-text-secondary,#6b7280);' +
+  'background:var(--chat-surface,#fff);' +
+  'border:1px solid var(--chat-border,#e8e8e8);' +
+  'border-radius:4px;cursor:pointer;' +
+  'opacity:0;transition:opacity 0.15s;';
+
+function wrapCodeBlock(highlighted: string, rawCode: string, lang: string): string {
+  const encoded = encodeURIComponent(rawCode);
+  return (
+    `<div class="ichat-code-block" style="position:relative;margin:0.5em 0;overflow:visible;">` +
+    `<button class="ichat-code-copy-btn" style="${BTN_STYLE}" data-code="${encoded}" data-lang="${md.utils.escapeHtml(lang)}" title="Copy code">` +
+    `${COPY_ICON}` +
+    `</button>` +
+    highlighted +
+    `</div>`
+  );
+}
 
 /** Pending async block renderers that will resolve after the initial render. */
 const pendingAsyncBlocks = new Map<string, { placeholderId: string; promise: Promise<string> }>();
