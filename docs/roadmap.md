@@ -31,6 +31,10 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel. If this becomes hard to maintain, consider a shared markdown render helper/controller first, then evaluate whether a tiny shared markdown content component can preserve both styling boundaries without changing public DOM expectations.
 - [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls such as remove, collapse, or richer quote styling land.
 
+### Performance
+
+- [ ] **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (from [optimization plan Phase 2.1](./optimization-plan.md#21-virtual-scrolling))
+
 ## Compatibility & Deprecation
 
 These surfaces remain supported for compatibility. New integrations should use the preferred API, and removal should only happen in a future major version with migration notes.
