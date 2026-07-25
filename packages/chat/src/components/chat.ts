@@ -44,6 +44,11 @@ import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
+import {
+  createMiddlewareChain,
+  type ChatMiddleware,
+  type MiddlewareChain,
+} from '../middleware/chat-middleware.js';
 
 import styles from '../styles/chat.scss';
 
@@ -246,6 +251,29 @@ export class Chat extends LitElement {
    */
   get ready(): Promise<void> {
     return this._readyPromise;
+  }
+
+  // ── Middleware ────────────────────────────────────────────────────
+
+  private readonly _middlewareChain: MiddlewareChain = createMiddlewareChain();
+
+  /**
+   * Register a middleware in the processing chain.
+   * Returns a disposal function to unregister.
+   *
+   * @example
+   * ```ts
+   * const dispose = chat.use({
+   *   name: 'logger',
+   *   beforeSend: (content) => {
+   *     console.log('Sending:', content);
+   *     return content;
+   *   },
+   * });
+   * ```
+   */
+  use(middleware: ChatMiddleware): () => void {
+    return this._middlewareChain.use(middleware);
   }
 
   constructor() {
@@ -823,12 +851,18 @@ export class Chat extends LitElement {
 
   // ── Events ────────────────────────────────────────────────────────
 
-  private _handleSend(e: CustomEvent<{ content: string }>): void {
+  private async _handleSend(e: CustomEvent<{ content: string }>): Promise<void> {
     e.stopPropagation();
     if (this.disabled || this._streaming || this._activeConfirmation) return;
+
+    let content = e.detail.content;
+    // Run through beforeSend middleware chain
+    const processed = await this._middlewareChain.executeBeforeSend(content);
+    if (processed == null) return; // Dropped by middleware
+
     this.dispatchEvent(
       new CustomEvent('send', {
-        detail: e.detail,
+        detail: { content: processed },
         bubbles: true,
         composed: true,
       })

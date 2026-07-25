@@ -60,6 +60,7 @@ export class ChatRunController {
 
   private _messageId!: string;
   private _status: ChatRunStatus = 'idle';
+  private _abortController?: AbortController;
 
   constructor(store: ChatMessageStorePort, options: ChatRunOptions = {}) {
     this._store = store;
@@ -74,6 +75,18 @@ export class ChatRunController {
   /** Current run status. */
   get status(): ChatRunStatus {
     return this._status;
+  }
+
+  /**
+   * An `AbortSignal` that is aborted when the run is cancelled, completed,
+   * or fails.  Pass this to `fetch()` or any cancellable API so in-flight
+   * network requests are automatically torn down when the run ends.
+   */
+  get signal(): AbortSignal {
+    if (!this._abortController) {
+      this._abortController = new AbortController();
+    }
+    return this._abortController.signal;
   }
 
   // ── lifecycle ──────────────────────────────────────────────────
@@ -142,7 +155,7 @@ export class ChatRunController {
 
   /**
    * Mark the run as successfully completed.  Clears the streaming flag
-   * on the message.  No-op if already in a terminal state.
+   * on the message and aborts the signal.  No-op if already terminal.
    */
   complete(patch?: Partial<ChatMessage>): void {
     if (this._status !== 'streaming') return;
@@ -151,11 +164,12 @@ export class ChatRunController {
       ...patch,
     });
     this._status = 'completed';
+    this._cleanup();
   }
 
   /**
-   * Mark the run as failed.  Records the error on the message and clears
-   * streaming so the composer recovers.  No-op if already terminal.
+   * Mark the run as failed.  Records the error on the message, clears
+   * streaming, and aborts the signal.  No-op if already terminal.
    */
   fail(error: string, text?: string): void {
     if (this._status !== 'streaming') return;
@@ -172,17 +186,27 @@ export class ChatRunController {
         : {}),
     });
     this._status = 'error';
+    this._cleanup();
   }
 
   /**
-   * Cancel the run.  Invokes the host `onCancel` callback (if provided)
-   * and then delegates to the store's cancel logic.  No-op if already
-   * in a terminal state.
+   * Cancel the run.  Invokes the host `onCancel` callback, delegates to
+   * the store's cancel logic, and aborts the signal.  No-op if already
+   * terminal.
    */
   cancel(hint?: string): void {
     if (this._status !== 'streaming') return;
     this._options.onCancel?.();
     this._store.cancelMessage(this._messageId, hint);
     this._status = 'cancelled';
+    this._cleanup();
+  }
+
+  /** Abort the signal and release the controller. */
+  private _cleanup(): void {
+    if (this._abortController) {
+      this._abortController.abort();
+      this._abortController = undefined;
+    }
   }
 }

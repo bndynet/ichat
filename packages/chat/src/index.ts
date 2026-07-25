@@ -13,6 +13,8 @@ export type {
   ChatRunStatus,
   ChatRunOptions,
 } from './controllers/chat-run-controller.js';
+export type { ChatMiddleware } from './middleware/chat-middleware.js';
+export { createMiddlewareChain } from './middleware/chat-middleware.js';
 export type {
   MessagesChangeDetail,
   MessagesChangeReason,
