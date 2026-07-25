@@ -19,7 +19,8 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "test": "tsup test/*.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --external node:assert/strict --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test ../../node_modules/.cache/ichat-messages-tests/*.js"
+    "test": "tsup test/*.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --external node:assert/strict --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test ../../node_modules/.cache/ichat-messages-tests/*.js",
+    "test:coverage": "tsup test/*.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --external node:assert/strict --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test --experimental-test-coverage ../../node_modules/.cache/ichat-messages-tests/*.js"
   },
   "dependencies": {
     "@types/morphdom": "^2.3.0",
