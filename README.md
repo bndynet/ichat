@@ -195,6 +195,62 @@ In uncontrolled mode `chat.messages` is immediately up-to-date after any mutatio
 
 When the user first opens a chat, load historical messages as completed content. Normalize stored messages by setting `message.streaming` to `false` and converting any persisted `status: 'streaming'` parts to a terminal state such as `complete`, especially for `reasoning` parts that have their own thinking/expanded state.
 
+### SSE client (built-in)
+
+When your backend follows the [SSE response format](docs/sse-response-format.md), use the built-in SSE client instead of hand-writing a streaming loop:
+
+```js
+import { createChatSSEClient } from '@bndynet/ichat/sse';
+
+const sse = createChatSSEClient('/api/chat/stream', chat, {
+  onError: (err) => chat.showError(err),
+});
+
+chat.addEventListener('send', (e) => {
+  sse.start();  // auto-creates assistant placeholder, routes all SSE events
+});
+
+chat.addEventListener('cancel', () => {
+  sse.abort();
+});
+```
+
+The SSE client automatically handles `message.created`, `message.part.updated`, `todo.item.updated`, `message.completed`, and `stream.done` events — no manual parsing needed. For custom backends, the manual `addMessage` / `updatePart` approach shown above still works.
+
+### Syntax highlighting
+
+By default code blocks render as plain escaped `<pre><code>`. Pass your own `highlight.js` instance to keep the bundle small:
+
+```js
+import hljs from 'highlight.js/lib/core';
+import ts from 'highlight.js/lib/languages/typescript';
+hljs.registerLanguage('typescript', ts);
+
+chat.config = { ...chat.config, highlightJs: hljs };
+```
+
+### Middleware & plugins
+
+Intercept or transform messages with middleware, or package reusable logic as plugins:
+
+```js
+// Middleware — transform content before send
+chat.use({
+  name: 'trim',
+  beforeSend: (content) => content.trim(),
+});
+
+// Plugin — packaged logic with install/teardown
+chat.use({
+  name: 'logger',
+  install(chat) {
+    const onSend = (e) => console.log('send:', e.detail.content);
+    chat.addEventListener('send', onSend);
+    return () => chat.removeEventListener('send', onSend);
+  },
+});
+```
+
 ## Script tag (IIFE bundles)
 
 For pages without a bundler, load the **`@bndynet/ichat`** IIFE build. The global object is **`iChat`** (e.g. **`iChat.Chat`**, **`iChat.registerRenderer`**, **`iChat.rendererRegistry`**, …). Optional renderers still come from the **`@bndynet/ichat-renderers`** IIFE (global **`iChatRenderers`**) — after both scripts load, call **`iChat.registerRenderer(iChatRenderers.chartRenderer)`** (and **`kpiRenderer`**, **`kpisRenderer`**, **`formRenderer`**, **`mermaidRenderer`** as needed).
@@ -216,6 +272,9 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 ## Features
 
 - **`<i-chat>` shell** — default textarea + send/cancel, or replace the footer with **`slot="input"`** ([`<i-chat>` API](docs/component-api.md))
+- **Built-in SSE client** — `createChatSSEClient()` auto-routes backend streaming events ([SSE response format](docs/sse-response-format.md))
+- **Middleware & plugins** — `chat.use()` for `ChatMiddleware` hooks and `ChatPlugin` lifecycle ([`<i-chat>` API](docs/component-api.md))
+- **Configurable syntax highlighting** — optional `config.highlightJs` injection; falls back to plain `<pre><code>` when omitted
 - **Voice input (default composer)** — microphone button uses Web Speech API when available; hidden automatically on unsupported browsers ([Composer & interaction](docs/composer.md#default-composer-voice-input))
 - **Lit 3 Web Components** — works with any framework or vanilla HTML
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
@@ -241,7 +300,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 |-----|--------|
 | [Message model](docs/message-model.md) | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating |
 | [SSE response format](docs/sse-response-format.md) | Recommended backend event stream contract for live assistant responses |
-| [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, per-message avatar |
+| [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, confirmations, highlight.js, SSE client, middleware |
 | [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
 | [Custom renderers](docs/renderers.md) | `registerRenderer` + built-in chart / KPI / form / Mermaid renderers |
 | [Progress](docs/progress.md) | `[status]` lists, block IDs, programmatic updates, SSE integration |
@@ -257,12 +316,15 @@ Clone, install, build, run the static demo:
 ```bash
 npm install
 npm run build    # workspace order: chat-messages, chat-input, chat-renderers, chat, apps/demo
+npm run test     # 24 unit tests (pure helpers)
 npm run dev      # concurrent watch on all packages + chat-demo dev server (see root `package.json`)
 ```
 
 | Script | Description |
 |--------|----------------|
 | `npm run build` | Builds all workspaces in dependency order (ends with `apps/demo`) |
+| `npm run test` | Runs 24 unit tests for pure helpers |
+| `npm run test:coverage` | Runs tests with Node.js coverage report |
 | `npm run dev` | Watch mode for packages and the Vue demo app (`chat-demo`) |
 | `npm run start` | Alias for `npm run dev` (see root `package.json`) |
 
