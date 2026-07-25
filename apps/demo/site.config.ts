@@ -5,6 +5,13 @@ export default defineConfig({
   nav: [
     { label: 'Home', icon: 'home', page: () => import('../../README.md?raw') },
     { label: 'Chat', icon: 'message-circle', page: () => import('./src/pages/ChatPage.vue') },
+    {
+      label: 'Plugins',
+      icon: 'plug',
+      children: [
+        { label: 'Code Copy', icon: 'clipboard-copy', page: () => import('./src/pages/plugins/CodeCopyPage.vue') },
+      ],
+    },
     { label: 'Renderers', icon: 'layout-list',  children: [
       { label: 'Tool calls', icon: 'wrench', page: () => import('./src/pages/renderers/ToolCallsPage.vue') },
       { label: 'To-dos', icon: 'list-checks', page: () => import('./src/pages/renderers/TodoPage.vue') },

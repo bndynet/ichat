@@ -16,6 +16,7 @@ export type {
 export type { ChatMiddleware } from './middleware/chat-middleware.js';
 export type { ChatPlugin } from './middleware/chat-plugin.js';
 export { createMiddlewareChain } from './middleware/chat-middleware.js';
+export { codeCopyPlugin } from './plugins/code-copy-plugin.js';
 export type {
   MessagesChangeDetail,
   MessagesChangeReason,
