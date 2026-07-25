@@ -62,14 +62,14 @@ Click the **Copy** button on any block to copy the code to your clipboard.`),
 </script>
 
 <template>
-  <div style="max-width: 800px; margin: 0 auto; padding: 16px;">
-    <h2>Code Copy Plugin</h2>
-    <p>
+  <div style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
+    <h2 style="margin: 0 0 8px;">Code Copy Plugin</h2>
+    <p style="margin: 0 0 12px;">
       The <code>codeCopyPlugin</code> adds a hover-visible copy button to every
       fenced code block in rendered markdown. Register it once with
       <code>chat.use(codeCopyPlugin)</code>.
     </p>
-    <i-chat ref="chatRef" />
+    <i-chat ref="chatRef" style="flex: 1; min-height: 0;" />
   </div>
   <ExampleCodeDrawer title="Code copy plugin example" :content="codeCopyExample" />
 </template>
