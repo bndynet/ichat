@@ -221,6 +221,8 @@ The SSE client automatically handles `message.created`, `message.part.updated`, 
 
 By default code blocks render as plain escaped `<pre><code>`. Pass your own `highlight.js` instance to keep the bundle small:
 
+> **Bundle size:** `@bndynet/ichat-messages` ESM is **~177KB** (third-party deps like `markdown-it`, `dompurify`, `highlight.js`, `lit` are resolved by your bundler — no duplicates).
+
 ```js
 import hljs from 'highlight.js/lib/core';
 import ts from 'highlight.js/lib/languages/typescript';
@@ -308,6 +310,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 | [Theming](docs/theming.md) | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference |
 | [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL |
 | [Composer & interaction](docs/composer.md) | Streaming, reply blocks, voice input |
+| [Migration: v2 → v3](docs/migration-v2-to-v3.md) | Breaking changes, deprecated API table, upgrade timeline |
 
 ## Development
 
