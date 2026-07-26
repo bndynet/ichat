@@ -122,13 +122,14 @@ export class ChatTodo extends LitElement {
           </span>
         </summary>
 
-        <ol class="todo__list">
+        <ol class="todo__list" role="list">
           ${part.items.map(
-            (item) => html`<li class="todo__item todo__item--${item.status}" data-item-id=${item.id}>
+            (item) => html`<li class="todo__item todo__item--${item.status}" data-item-id=${item.id} role="listitem">
               <button
                 class="todo__status"
                 type="button"
                 ?disabled=${!interactive}
+                aria-checked=${item.status === 'done' ? 'true' : 'false'}
                 aria-label=${`${item.title}: ${this._statusLabel(item.status, labels)}. ${labels.changeStatus}`}
                 title=${interactive ? labels.changeStatus : this._statusLabel(item.status, labels)}
                 @click=${() => this._requestStatusChange(item)}
