@@ -780,7 +780,7 @@ export class ChatMessages extends LitElement {
         <slot name="message-actions" @slotchange=${(e: Event) => this._handleSlotChange('message-actions', e)}></slot>
         <slot name="reasoning-header" @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}></slot>
       </div>
-      <div class="chat-messages-wrapper">
+      <div class="chat-messages-wrapper" role="log" aria-live="polite" aria-label=${labels.messages.chatMessages}>
         ${this._errorBanner
           ? html`<div class="error-banner" role="alert">
               ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}

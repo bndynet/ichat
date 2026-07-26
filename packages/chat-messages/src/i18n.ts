@@ -85,6 +85,8 @@ export interface MessagesLabels {
   dismissError: string;
   /** `aria-label` for the scroll-to-latest button. */
   scrollToLatest: string;
+  /** `aria-label` for the chat messages region. */
+  chatMessages: string;
 }
 
 /** Strings for composer-level confirmations (`<i-chat>`). */
@@ -168,6 +170,7 @@ export const CHAT_LABELS_EN: ChatLabels = {
     empty: 'No messages yet. Start a conversation!',
     dismissError: 'Dismiss error',
     scrollToLatest: 'Scroll to latest message',
+    chatMessages: 'Chat messages',
   },
   confirmation: {
     required: 'Confirmation required',
@@ -226,6 +229,7 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
     empty: '还没有消息，开始对话吧！',
     dismissError: '关闭错误提示',
     scrollToLatest: '滚动到最新消息',
+    chatMessages: '聊天消息',
   },
   confirmation: {
     required: '需要确认',
