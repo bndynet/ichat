@@ -45,6 +45,7 @@ import { registerRenderer as registerBlockRenderer } from '../register-renderer.
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
+import { ConfirmationController } from '../controllers/confirmation-controller.js';
 import {
   createMiddlewareChain,
   type ChatMiddleware,
@@ -99,11 +100,6 @@ export interface ChatConfirmationChangeDetail {
   queue: ChatConfirmationResolvedRequest[];
   queueLength: number;
 }
-
-type PendingConfirmation = {
-  request: ChatConfirmationResolvedRequest;
-  resolve: (result: ChatConfirmationResult) => void;
-};
 
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
@@ -222,12 +218,13 @@ export class Chat extends LitElement {
 
   @state() private _streaming = false;
   @state() private _hasCustomInput = false;
-  @state() private _activeConfirmation: PendingConfirmation | null = null;
 
   /** Observes light-DOM children so slots added after first render (e.g. Vue `onMounted`) are forwarded. */
   private _lightChildObserver?: MutationObserver;
-  private _confirmationQueue: PendingConfirmation[] = [];
-  private _confirmationId = 0;
+
+  // ── Controllers ──────────────────────────────────────────────────
+
+  private _confirmCtrl = new ConfirmationController(this);
 
   // ── Ready contract (CHG-06) ───────────────────────────────────────
 
@@ -673,7 +670,7 @@ export class Chat extends LitElement {
 
   /** Focus the input textarea. Safe to call before first render (no-op). */
   focusInput(): void {
-    if (this._activeConfirmation) return;
+    if (this._confirmCtrl.active) return;
     this._input?.focus();
   }
 
@@ -683,26 +680,11 @@ export class Chat extends LitElement {
    * panel. Requests are shown FIFO, one at a time.
    */
   requestConfirmation(request: ChatConfirmationRequest): Promise<ChatConfirmationResult> {
-    const normalized: ChatConfirmationResolvedRequest = {
-      ...request,
-      id: request.id?.trim() || this._nextConfirmationId(),
-      variant: request.variant ?? 'default',
-    };
-
-    return new Promise((resolve) => {
-      const pending: PendingConfirmation = { request: normalized, resolve };
-      if (this._activeConfirmation) {
-        this._confirmationQueue = [...this._confirmationQueue, pending];
-      } else {
-        this._activeConfirmation = pending;
-      }
-      this._emitConfirmationChange();
-    });
+    return this._confirmCtrl.request(request);
   }
 
-  /** Cancel the active confirmation and any queued confirmations. */
   clearConfirmations(): void {
-    this._cancelAllConfirmations();
+    this._confirmCtrl.cancelAll();
   }
 
   /**
@@ -839,7 +821,7 @@ export class Chat extends LitElement {
   override disconnectedCallback(): void {
     this._lightChildObserver?.disconnect();
     this._lightChildObserver = undefined;
-    this._cancelAllConfirmations();
+    this._confirmCtrl.cancelAll();
     this._pendingCommands.clear();
     super.disconnectedCallback();
   }
@@ -859,12 +841,11 @@ export class Chat extends LitElement {
 
   override updated(_changed: PropertyValues): void {
     // Auto-focus the confirmation dialog when it appears
-    if (_changed.has('_activeConfirmation') && this._activeConfirmation) {
+    if (this._confirmCtrl.active) {
       requestAnimationFrame(() => {
-        const confirmBtn = this.renderRoot.querySelector<HTMLElement>(
+        this.renderRoot.querySelector<HTMLElement>(
           '.chat-confirmation__btn--confirm'
-        );
-        confirmBtn?.focus();
+        )?.focus();
       });
     }
   }
@@ -873,7 +854,7 @@ export class Chat extends LitElement {
 
   private async _handleSend(e: CustomEvent<{ content: string }>): Promise<void> {
     e.stopPropagation();
-    if (this.disabled || this._streaming || this._activeConfirmation) return;
+    if (this.disabled || this._streaming || this._confirmCtrl.active) return;
 
     let content = e.detail.content;
     // Run through beforeSend middleware chain
@@ -964,62 +945,12 @@ export class Chat extends LitElement {
     }).confirmation;
   }
 
-  private _nextConfirmationId(): string {
-    this._confirmationId += 1;
-    return `confirm-${Date.now().toString(36)}-${this._confirmationId.toString(36)}`;
-  }
-
-  private _emitConfirmationChange(): void {
-    this.dispatchEvent(
-      new CustomEvent<ChatConfirmationChangeDetail>('confirmation-change', {
-        detail: {
-          active: this._activeConfirmation?.request ?? null,
-          queue: this._confirmationQueue.map((item) => item.request),
-          queueLength: this._confirmationQueue.length,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
-  private _resultFor(
-    item: PendingConfirmation,
-    action: ChatConfirmationAction
-  ): ChatConfirmationResult {
-    return {
-      id: item.request.id,
-      action,
-      confirmed: action === 'confirm',
-      request: item.request,
-    };
-  }
-
-  private _settleActiveConfirmation(action: ChatConfirmationAction): void {
-    const item = this._activeConfirmation;
-    if (!item) return;
-
-    this._activeConfirmation = this._confirmationQueue[0] ?? null;
-    this._confirmationQueue = this._confirmationQueue.slice(1);
-
-    const result = this._resultFor(item, action);
-    item.resolve(result);
-    this.dispatchEvent(
-      new CustomEvent<ChatConfirmationResult>('confirmation-decision', {
-        detail: result,
-        bubbles: true,
-        composed: true,
-      })
-    );
-    this._emitConfirmationChange();
-  }
-
   private _handleConfirmationKeydown(e: KeyboardEvent): void {
     const section = e.currentTarget as HTMLElement;
 
     if (e.key === 'Escape') {
       e.preventDefault();
-      this._settleActiveConfirmation('cancel');
+      this._confirmCtrl.settle('cancel');
       return;
     }
 
@@ -1040,19 +971,6 @@ export class Chat extends LitElement {
         first.focus();
       }
     }
-  }
-
-  private _cancelAllConfirmations(): void {
-    const pending = [
-      ...(this._activeConfirmation ? [this._activeConfirmation] : []),
-      ...this._confirmationQueue,
-    ];
-    if (pending.length === 0) return;
-
-    this._activeConfirmation = null;
-    this._confirmationQueue = [];
-    pending.forEach((item) => item.resolve(this._resultFor(item, 'cancel')));
-    this._emitConfirmationChange();
   }
 
   private _formatConfirmationDetails(details: unknown): string {
@@ -1109,14 +1027,14 @@ export class Chat extends LitElement {
           <button
             type="button"
             class="chat-confirmation__btn chat-confirmation__btn--cancel"
-            @click=${() => this._settleActiveConfirmation('cancel')}
+            @click=${() => this._confirmCtrl.settle('cancel')}
           >
             ${request.cancelLabel || labels.cancel}
           </button>
           <button
             type="button"
             class="chat-confirmation__btn chat-confirmation__btn--confirm"
-            @click=${() => this._settleActiveConfirmation('confirm')}
+            @click=${() => this._confirmCtrl.settle('confirm')}
           >
             ${request.confirmLabel || labels.confirm}
           </button>
@@ -1132,7 +1050,7 @@ export class Chat extends LitElement {
   // `updated` no longer need to push them manually.
 
   render() {
-    const confirmation = this._activeConfirmation?.request;
+    const confirmation = this._confirmCtrl.activeRequest;
 
     return html`
       <div class="chat-body">
