@@ -52,7 +52,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
 - [x] `component-api.md` — Syntax highlighting section with usage example. (Phase 7)
-- [x] Phase summaries — `docs/phase-*.md` for all 7 phases + `implementation-review.md`. (Phase 7)
+- [x] `implementation-review.md` — Codebase architecture review. (Phase 7)
 
 ## Backlog
 
