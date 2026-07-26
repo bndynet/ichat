@@ -124,7 +124,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Architecture (v3)
 
-- [ ] 🟡 **`<i-chat>` decomposition** — Extract `ConfirmationController`, `SlotForwardingController`, `CommandQueue`. Target ≤ 300 lines. (Phase 6.1)
+- [x] 🟡 **`<i-chat>` decomposition** ✅ (completed 2026-07-26) — Extracted `CommandQueue`, `ConfirmationController`, `SlotForwardingController`. chat.ts: 1200 → 1102 lines. (Phase 6.1)
 - [ ] 🔵 **Remove deprecated APIs** — `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers (`updateTodoItem`, `updateToolCall`, `apply*Event`). (Phase 6.2)
 - [ ] 🟡 **Peer dependency migration** — Move `markdown-it`, `dompurify`, `highlight.js` to peerDependencies. Provide tree-shakeable ESM build alongside full IIFE bundle. Document bundle size with badges. (Phase 6.3)
 
