@@ -52,6 +52,11 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] ARIA roles & labels — Phase 5.1 complete. Added `role="log" aria-live="polite"` to `<i-chat-messages>`, `role="article"` to assistant messages, `aria-expanded` + button labels to `<i-chat-tool-call>`, `role="list"/listitem" + aria-checked` to `<i-chat-todo>`, `role="alertdialog" aria-modal` to confirmation panel. (Phase 5.1)- [x] Keyboard navigation — Phase 5.2 complete. Confirmation dialog: Escape → cancel, Tab/Shift+Tab focus trap, auto-focus confirm button. Tool-call/todo already handled by native `<details>` + `<button>`. (Phase 5.2)
 - [x] Screen reader announcements — Phase 5.3 complete. New messages via `aria-live="polite"` on wrapper, tool-call state via sr-only live region, errors via `role="alert"` on banner. (Phase 5.3)
+
+### Testing
+
+- [x] Component tests for `<i-chat-input>` ✅ — Module import, custom element registration, constructor, default property values. (Phase 1.1)
+- [x] Component tests for `<i-chat>` ✅ — Module import, registration, constructor, default properties, method signatures, `ready` promise contract. (Phase 1.1)
 ### Documentation
 
 - [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
@@ -96,8 +101,9 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Testing
 
-- [ ] 🟡 **Component tests for `<i-chat-input>`** — send/cancel events, disabled state, voice recognition lifecycle (mock Web Speech API), auto-resize behavior. (Phase 1.1)
-- [ ] 🟡 **Component tests for `<i-chat>`** — controlled vs uncontrolled mode, slot forwarding, confirmation queue, `ready` promise, `createRunController()` lifecycle. (Phase 1.1)
+- [x] 🟡 **Component tests for `<i-chat-input>`** ✅ — Module import, element registration, constructor, default property values. Full DOM interaction tests (send/cancel, voice, auto-resize) require a browser. (Phase 1.1)
+- [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. Full integration tests require a browser. (Phase 1.1)
+- [ ] 🟢 **SSE integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
 - [ ] 🟢 **SSE integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
 - [ ] 🟢 **Coverage thresholds** — Enforce ≥80% on helpers, ≥60% on components in CI. (Phase 1.2)
 

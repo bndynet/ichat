@@ -9,7 +9,7 @@
   "scripts": {
     "version": "node tools/bump-workspace-version.mjs",
     "build": "npm run build -w @bndynet/ichat-messages && npm run build -w @bndynet/ichat-input && npm run build -w @bndynet/ichat-renderers && npm run build -w @bndynet/ichat && npm run build -w apps/demo",
-    "test": "npm run test -w @bndynet/ichat-messages",
+    "test": "npm run test -w @bndynet/ichat-messages && npm run test -w @bndynet/ichat-input && npm run test -w @bndynet/ichat",
     "test:coverage": "npm run test:coverage -w @bndynet/ichat-messages",
     "dev": "concurrently -n messages,input,renderers,chat,demo -c cyan,magenta,yellow,blue,green \"npm run dev -w @bndynet/ichat-messages\" \"npm run dev -w @bndynet/ichat-input\" \"npm run dev -w @bndynet/ichat-renderers\" \"npm run dev -w @bndynet/ichat\" \"npm run dev -w chat-demo\"",
     "start": "npm run dev",
