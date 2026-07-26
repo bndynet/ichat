@@ -1059,7 +1059,8 @@ export class Chat extends LitElement {
     return html`
       <section
         class="chat-confirmation chat-confirmation--${variant}"
-        role="group"
+        role="alertdialog"
+        aria-modal="true"
         aria-label=${request.title}
       >
         <div class="chat-confirmation__body">
