@@ -44,6 +44,7 @@ import { ChatInput } from '@bndynet/ichat-input';
 import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
+import { CommandQueue } from '../controllers/command-queue.js';
 import {
   createMiddlewareChain,
   type ChatMiddleware,
@@ -235,12 +236,7 @@ export class Chat extends LitElement {
   private readonly _readyPromise: Promise<void>;
 
   /** Presentation commands queued before the first render. */
-  private _pendingCommands: Array<
-    | { kind: 'show-error'; text: string; options?: { duration?: number } }
-    | { kind: 'dismiss-error' }
-    | { kind: 'reply-message'; id: string; info?: Partial<ChatMessage> }
-    | { kind: 'clear-reply-message'; idOrKey?: string }
-  > = [];
+  private _pendingCommands = new CommandQueue();
 
   /**
    * Promise that resolves once the component is fully rendered and child
@@ -424,7 +420,7 @@ export class Chat extends LitElement {
 
   clear(): void {
     this._commitMessages(clearMessages(), { reason: 'message:clear' });
-    this._pendingCommands = [];
+    this._pendingCommands.clear();
     if (this._messages) {
       this._messages._clearPresentation();
     }
@@ -623,8 +619,9 @@ export class Chat extends LitElement {
   showError(text: string, options?: { duration?: number }): void {
     if (!this._isChildReady()) {
       // Replace any previous pending error with the newest.
-      this._pendingCommands = this._pendingCommands.filter((c) => c.kind !== 'show-error' && c.kind !== 'dismiss-error');
-      this._pendingCommands.push({ kind: 'show-error', text, options });
+    this._pendingCommands.clear();
+    this._pendingCommands.removeByKind('show-error', 'dismiss-error');
+    this._pendingCommands.enqueue({ kind: 'show-error', text, options });
       return;
     }
     this._messages.showError(text, options);
@@ -632,8 +629,8 @@ export class Chat extends LitElement {
 
   dismissError(): void {
     if (!this._isChildReady()) {
-      this._pendingCommands = this._pendingCommands.filter((c) => c.kind !== 'show-error' && c.kind !== 'dismiss-error');
-      this._pendingCommands.push({ kind: 'dismiss-error' });
+      this._pendingCommands.removeByKind('show-error', 'dismiss-error');
+      this._pendingCommands.enqueue({ kind: 'dismiss-error' });
       return;
     }
     this._messages.dismissError();
@@ -725,7 +722,7 @@ export class Chat extends LitElement {
   replyMessage(id: string, info?: Partial<ChatMessage>): string {
     if (!this._isChildReady()) {
       const key = `pending-reply-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-      this._pendingCommands.push({ kind: 'reply-message', id, info });
+      this._pendingCommands.enqueue({ kind: 'reply-message', id, info });
       return key;
     }
     return this._messages.replyMessage(id, info);
@@ -739,7 +736,7 @@ export class Chat extends LitElement {
    */
   clearReplyMessage(idOrKey?: string): void {
     if (!this._isChildReady()) {
-      this._pendingCommands.push({ kind: 'clear-reply-message', idOrKey });
+      this._pendingCommands.enqueue({ kind: 'clear-reply-message', idOrKey });
       return;
     }
     this._messages.clearReplyMessage(idOrKey);
@@ -749,8 +746,7 @@ export class Chat extends LitElement {
 
   private _replayPendingCommands(): void {
     if (this._pendingCommands.length === 0) return;
-    const commands = this._pendingCommands;
-    this._pendingCommands = [];
+    const commands = this._pendingCommands.drain();
     for (const cmd of commands) {
       switch (cmd.kind) {
         case 'show-error':
@@ -844,7 +840,7 @@ export class Chat extends LitElement {
     this._lightChildObserver?.disconnect();
     this._lightChildObserver = undefined;
     this._cancelAllConfirmations();
-    this._pendingCommands = [];
+    this._pendingCommands.clear();
     super.disconnectedCallback();
   }
 
