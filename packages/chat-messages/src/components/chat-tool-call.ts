@@ -149,6 +149,13 @@ export class ChatToolCall extends LitElement {
 
     return html`
       <details class="tc tc--${status}" ?open=${open} aria-expanded=${open ? 'true' : 'false'}>
+        <span
+          class="tc__sr-announce"
+          aria-live="polite"
+          style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"
+        >
+          ${name}: ${stateLabel(tc.state, labels)}
+        </span>
         <summary>
           ${this._renderIcon(status)}
           <span class="tc__name">${name}</span>

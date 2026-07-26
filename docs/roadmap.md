@@ -50,8 +50,8 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Accessibility
 
-- [x] ARIA roles & labels — Phase 5.1 complete. Added `role="log" aria-live="polite"` to `<i-chat-messages>`, `role="article"` to assistant messages, `aria-expanded` + button labels to `<i-chat-tool-call>`, `role="list"/listitem" + aria-checked` to `<i-chat-todo>`, `role="alertdialog" aria-modal` to confirmation panel. (Phase 5.1)
-
+- [x] ARIA roles & labels — Phase 5.1 complete. Added `role="log" aria-live="polite"` to `<i-chat-messages>`, `role="article"` to assistant messages, `aria-expanded` + button labels to `<i-chat-tool-call>`, `role="list"/listitem" + aria-checked` to `<i-chat-todo>`, `role="alertdialog" aria-modal` to confirmation panel. (Phase 5.1)- [x] Keyboard navigation — Phase 5.2 complete. Confirmation dialog: Escape → cancel, Tab/Shift+Tab focus trap, auto-focus confirm button. Tool-call/todo already handled by native `<details>` + `<button>`. (Phase 5.2)
+- [x] Screen reader announcements — Phase 5.3 complete. New messages via `aria-live="polite"` on wrapper, tool-call state via sr-only live region, errors via `role="alert"` on banner. (Phase 5.3)
 ### Documentation
 
 - [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
@@ -62,7 +62,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 > **Recommended execution order** (from [implementation review](./implementation-review.md)):
 >
-> 🔴 **Immediate** — Phase 5 Accessibility + Phase 2.1 Virtual scroll (biggest gaps, highest impact)
+🔴 **Immediate** — Phase 2.1 Virtual scroll (performance critical path)
 > 🟡 **Next** — Phase 2.3/6.3 Bundle optimization + Phase 1.1 Component tests + Phase 6.1 Architecture decomposition
 > 🟢 **Later** — Phase 3.3/3.4 Type system + Phase 4.1 Overridable renderers + Phase 4.3 Built-in plugins
 > 🔵 **Pre-release** — Phase 7 Storybook + Playground + Migration guides
@@ -83,16 +83,16 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
   - `<i-chat-reasoning>`: already has `aria-expanded` ✅
   - `<i-chat-input>`: `aria-label` on textarea, voice button ✅
   - Confirmation panel: `role="alertdialog"` with `aria-modal="true"`
-- [ ] 🔴 **Keyboard navigation**
-  - `<i-chat-tool-call>`: Enter/Space to toggle collapse, Tab to approve/reject
-  - `<i-chat-todo>`: Enter/Space to cycle status on interactive items
+- [x] 🔴 **Keyboard navigation** ✅ (completed 2026-07-26)
+  - `<i-chat-tool-call>`: Enter/Space/Tab via native `<details>` + `<button>` ✅
+  - `<i-chat-todo>`: Enter/Space via native `<button>` ✅
   - `<i-chat-reasoning>`: Enter/Space to toggle ✅
-  - Confirmation panel: Escape to cancel, Enter to confirm, focus trap
-- [ ] 🔴 **Screen reader announcements**
-  - Announce new messages (especially streaming completion) via `aria-live` region
-  - Announce tool-call state transitions
-  - Announce errors
-  - Voice listening overlay already has `role="status" aria-live="polite"` ✅
+  - Confirmation panel: Escape to cancel, Tab/Shift+Tab focus trap, auto-focus confirm button
+- [x] 🔴 **Screen reader announcements** ✅ (completed 2026-07-26)
+  - New messages: `aria-live="polite"` on wrapper (Phase 5.1)
+  - Tool-call state transitions: sr-only `<span aria-live="polite">`
+  - Errors: `role="alert"` on error banner ✅
+  - Voice listening overlay: `role="status" aria-live="polite"` ✅
 
 ### Testing
 
