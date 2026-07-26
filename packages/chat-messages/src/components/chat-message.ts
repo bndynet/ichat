@@ -488,6 +488,7 @@ export class ChatMessageElement extends LitElement {
         class="message message--${role} ${this.message.parentId ? 'message--reply' : ''} ${error
           ? 'message--error'
           : ''}"
+        role=${role === 'assistant' ? 'article' : nothing}
         @click=${this._handleLinkClick}
       >
         ${this._renderAvatar(resolvedAvatar, role)}
