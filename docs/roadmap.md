@@ -48,6 +48,10 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Plugin system — `ChatPlugin` interface with `install(chat)` + optional teardown. `chat.use()` unified for both middleware and plugins. (Phase 4.3)
 - [x] Async BlockRenderer — `renderAsync()` for fenced blocks. Placeholder on first render, swapped when promise resolves. `resolveAsyncBlocks()` exported. (Phase 4.2)
 
+### Accessibility
+
+- [x] ARIA roles & labels — Phase 5.1 complete. Added `role="log" aria-live="polite"` to `<i-chat-messages>`, `role="article"` to assistant messages, `aria-expanded` + button labels to `<i-chat-tool-call>`, `role="list"/listitem" + aria-checked` to `<i-chat-todo>`, `role="alertdialog" aria-modal` to confirmation panel. (Phase 5.1)
+
 ### Documentation
 
 - [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
@@ -71,14 +75,14 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Accessibility (Phase 5)
 
-- [ ] 🔴 **ARIA roles & labels**
+- [x] 🔴 **ARIA roles & labels** ✅ (completed 2026-07-26)
   - `<i-chat-messages>`: `role="log"`, `aria-live="polite"`, `aria-label`
   - `<i-chat-message>`: `role="article"` on assistant messages
   - `<i-chat-tool-call>`: `aria-expanded` on collapsible body, `aria-label` on approve/reject buttons
   - `<i-chat-todo>`: `role="list"` + `role="listitem"` with `aria-checked`
   - `<i-chat-reasoning>`: already has `aria-expanded` ✅
   - `<i-chat-input>`: `aria-label` on textarea, voice button ✅
-  - Confirmation panel: `role="alertdialog"` or `role="dialog"`
+  - Confirmation panel: `role="alertdialog"` with `aria-modal="true"`
 - [ ] 🔴 **Keyboard navigation**
   - `<i-chat-tool-call>`: Enter/Space to toggle collapse, Tab to approve/reject
   - `<i-chat-todo>`: Enter/Space to cycle status on interactive items
