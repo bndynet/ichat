@@ -30,7 +30,6 @@ export default defineConfig({
   entry: { index: 'src/index.ts' },
   format: ['esm', 'cjs', 'iife'],
   globalName: 'iChatInput',
-  noExternal: [/.*/],
   dts: true,
   splitting: false,
   sourcemap: true,

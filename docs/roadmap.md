@@ -71,7 +71,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
 - [ ] 🟡 **Markdown streaming light mode** — During active streaming, render plain text only; run full markdown-it + DOMPurify pass once streaming stops. Controlled by `config.markdownMode: 'full' | 'streaming-light'`. Reduces jank during high-frequency token delivery. (Phase 2.2)
-- [ ] 🟡 **Bundle size optimization** — Remove `noExternal: [/.*/]` from `chat-messages/tsup.config.ts` to stop bundling `markdown-it`, `dompurify`, `highlight.js`. Requires peer dependency migration first (see Architecture → v3 below). (Phase 2.3 + 6.3)
+- [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
 
 ### Accessibility (Phase 5)
 
@@ -126,7 +126,8 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [ ] 🔵 **Storybook 8+** — Stories for each component with configurable knobs (locale, theme, message count, streaming simulation). Deploy to Chromatic for visual regression testing. (Phase 7.2)
 - [ ] 🔵 **Interactive playground** — Live `<i-chat>` embedded in docs site with framework wrappers (Vue, React, plain HTML). (Phase 7.3)
-- [ ] 🔵 **Migration guides** — v1→v2 and v2→v3. (Phase 7.1)
+- [ ] 🔵 **Migration guides** — v1→v2. (Phase 7.1)
+- [x] 🔵 **v2→v3 migration guide** ✅ — `docs/migration-v2-to-v3.md` created with breaking changes, deprecated API table, and timeline. (Phase 7.1 partial)
 
 ## Compatibility & Deprecation
 
