@@ -862,8 +862,15 @@ export class Chat extends LitElement {
   // ── Lifecycle ──────────────────────────────────────────────────────
 
   override updated(_changed: PropertyValues): void {
-    // All bindings (.messages, .config, .emptyText) are in the template.
-    // Streaming state is derived from the message array during commits.
+    // Auto-focus the confirmation dialog when it appears
+    if (_changed.has('_activeConfirmation') && this._activeConfirmation) {
+      requestAnimationFrame(() => {
+        const confirmBtn = this.renderRoot.querySelector<HTMLElement>(
+          '.chat-confirmation__btn--confirm'
+        );
+        confirmBtn?.focus();
+      });
+    }
   }
 
   // ── Events ────────────────────────────────────────────────────────
@@ -1011,6 +1018,34 @@ export class Chat extends LitElement {
     this._emitConfirmationChange();
   }
 
+  private _handleConfirmationKeydown(e: KeyboardEvent): void {
+    const section = e.currentTarget as HTMLElement;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this._settleActiveConfirmation('cancel');
+      return;
+    }
+
+    // Focus trap: wrap Tab / Shift+Tab within the dialog
+    if (e.key === 'Tab') {
+      const focusable = section.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
   private _cancelAllConfirmations(): void {
     const pending = [
       ...(this._activeConfirmation ? [this._activeConfirmation] : []),
@@ -1062,6 +1097,7 @@ export class Chat extends LitElement {
         role="alertdialog"
         aria-modal="true"
         aria-label=${request.title}
+        @keydown=${this._handleConfirmationKeydown}
       >
         <div class="chat-confirmation__body">
           ${requiredLabel
