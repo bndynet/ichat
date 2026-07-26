@@ -148,7 +148,7 @@ export class ChatToolCall extends LitElement {
       (tc.result !== undefined && tc.result !== null && pretty(tc.result).trim() !== '');
 
     return html`
-      <details class="tc tc--${status}" ?open=${open}>
+      <details class="tc tc--${status}" ?open=${open} aria-expanded=${open ? 'true' : 'false'}>
         <summary>
           ${this._renderIcon(status)}
           <span class="tc__name">${name}</span>
@@ -178,10 +178,10 @@ export class ChatToolCall extends LitElement {
             : nothing}
           ${tc.approval === 'required'
             ? html`<div class="tc__approval">
-                <button class="tc__btn tc__btn--approve" @click=${() => this._emit('approve')}>
+                <button class="tc__btn tc__btn--approve" aria-label=${labels.approve} @click=${() => this._emit('approve')}>
                   ${labels.approve}
                 </button>
-                <button class="tc__btn" @click=${() => this._emit('reject')}>${labels.reject}</button>
+                <button class="tc__btn" aria-label=${labels.reject} @click=${() => this._emit('reject')}>${labels.reject}</button>
               </div>`
             : nothing}
           ${tc.approval === 'approved'
