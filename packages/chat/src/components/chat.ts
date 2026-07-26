@@ -46,6 +46,7 @@ import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
 import { ConfirmationController } from '../controllers/confirmation-controller.js';
+import { SlotForwardingController } from '../controllers/slot-forwarding-controller.js';
 import {
   createMiddlewareChain,
   type ChatMiddleware,
@@ -217,10 +218,8 @@ export class Chat extends LitElement {
   @query('i-chat-input') private _input!: ChatInput;
 
   @state() private _streaming = false;
-  @state() private _hasCustomInput = false;
 
-  /** Observes light-DOM children so slots added after first render (e.g. Vue `onMounted`) are forwarded. */
-  private _lightChildObserver?: MutationObserver;
+  private _slotCtrl = new SlotForwardingController(this);
 
   // ── Controllers ──────────────────────────────────────────────────
 
@@ -810,24 +809,12 @@ export class Chat extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
-    this._syncInputSlotPresence();
-    this._lightChildObserver = new MutationObserver(() => {
-      this._syncInputSlotPresence();
-      this.requestUpdate();
-    });
-    this._lightChildObserver.observe(this, { childList: true, subtree: false });
   }
 
   override disconnectedCallback(): void {
-    this._lightChildObserver?.disconnect();
-    this._lightChildObserver = undefined;
     this._confirmCtrl.cancelAll();
     this._pendingCommands.clear();
     super.disconnectedCallback();
-  }
-
-  private _syncInputSlotPresence(): void {
-    this._hasCustomInput = !!this.querySelector('[slot="input"]');
   }
 
   override firstUpdated(_changed: PropertyValues): void {
@@ -934,7 +921,8 @@ export class Chat extends LitElement {
 
   private _handleInputSlotChange(e: Event): void {
     const slot = e.target as HTMLSlotElement;
-    this._hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
+    this._slotCtrl.hasCustomInput = slot.assignedElements({ flatten: true }).length > 0;
+    this.requestUpdate();
   }
 
   private get _confirmationLabels(): ConfirmationLabels {
@@ -1082,7 +1070,7 @@ export class Chat extends LitElement {
                 @send=${this._handleSend}
                 @cancel=${this._handleCancel}
               ></slot>
-              ${this._hasCustomInput
+              ${this._slotCtrl.hasCustomInput
                 ? nothing
                 : html`
                     <i-chat-input
