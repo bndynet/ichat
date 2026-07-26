@@ -56,33 +56,73 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ## Backlog
 
+> **Recommended execution order** (from [implementation review](./implementation-review.md)):
+>
+> 🔴 **Immediate** — Phase 5 Accessibility + Phase 2.1 Virtual scroll (biggest gaps, highest impact)
+> 🟡 **Next** — Phase 2.3/6.3 Bundle optimization + Phase 1.1 Component tests + Phase 6.1 Architecture decomposition
+> 🟢 **Later** — Phase 3.3/3.4 Type system + Phase 4.1 Overridable renderers + Phase 4.3 Built-in plugins
+> 🔵 **Pre-release** — Phase 7 Storybook + Playground + Migration guides
+
 ### Performance
 
-- [ ] **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
+- [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
+- [ ] 🟡 **Markdown streaming light mode** — During active streaming, render plain text only; run full markdown-it + DOMPurify pass once streaming stops. Controlled by `config.markdownMode: 'full' | 'streaming-light'`. Reduces jank during high-frequency token delivery. (Phase 2.2)
+- [ ] 🟡 **Bundle size optimization** — Remove `noExternal: [/.*/]` from `chat-messages/tsup.config.ts` to stop bundling `markdown-it`, `dompurify`, `highlight.js`. Requires peer dependency migration first (see Architecture → v3 below). (Phase 2.3 + 6.3)
+
+### Accessibility (Phase 5)
+
+- [ ] 🔴 **ARIA roles & labels**
+  - `<i-chat-messages>`: `role="log"`, `aria-live="polite"`, `aria-label`
+  - `<i-chat-message>`: `role="article"` on assistant messages
+  - `<i-chat-tool-call>`: `aria-expanded` on collapsible body, `aria-label` on approve/reject buttons
+  - `<i-chat-todo>`: `role="list"` + `role="listitem"` with `aria-checked`
+  - `<i-chat-reasoning>`: already has `aria-expanded` ✅
+  - `<i-chat-input>`: `aria-label` on textarea, voice button ✅
+  - Confirmation panel: `role="alertdialog"` or `role="dialog"`
+- [ ] 🔴 **Keyboard navigation**
+  - `<i-chat-tool-call>`: Enter/Space to toggle collapse, Tab to approve/reject
+  - `<i-chat-todo>`: Enter/Space to cycle status on interactive items
+  - `<i-chat-reasoning>`: Enter/Space to toggle ✅
+  - Confirmation panel: Escape to cancel, Enter to confirm, focus trap
+- [ ] 🔴 **Screen reader announcements**
+  - Announce new messages (especially streaming completion) via `aria-live` region
+  - Announce tool-call state transitions
+  - Announce errors
+  - Voice listening overlay already has `role="status" aria-live="polite"` ✅
+
+### Testing
+
+- [ ] 🟡 **Component tests for `<i-chat-input>`** — send/cancel events, disabled state, voice recognition lifecycle (mock Web Speech API), auto-resize behavior. (Phase 1.1)
+- [ ] 🟡 **Component tests for `<i-chat>`** — controlled vs uncontrolled mode, slot forwarding, confirmation queue, `ready` promise, `createRunController()` lifecycle. (Phase 1.1)
+- [ ] 🟢 **SSE integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
+- [ ] 🟢 **Coverage thresholds** — Enforce ≥80% on helpers, ≥60% on components in CI. (Phase 1.2)
 
 ### Message Body & Parts
 
-- [ ] Run an accessibility pass over interactive parts. Recheck todo status controls, collapsible headers, tool approval buttons, keyboard behavior, and aria labels. (Phase 5)
 - [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel.
 - [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls land.
 
 ### Developer Experience
 
-- [ ] Type system cleanup — Split public API types from internal diagnostic types. `@bndynet/ichat/messages` re-export path. (Phase 3.3)
-- [ ] Generic type support — Make `<i-chat>` generic over custom part types. (Phase 3.4)
-- [ ] Component tests — `<i-chat-input>` (send/cancel, disabled, voice, auto-resize) and `<i-chat>` (controlled/uncontrolled, slots, confirmations, `ready`, `createRunController()`). (Phase 1.1 remaining)
+- [ ] 🟢 **Type system cleanup** — Split public API types from internal diagnostic types. `@bndynet/ichat/messages` re-export path. `docs/public-api.md`. (Phase 3.3)
+- [ ] 🟢 **Generic type support** — Make `<i-chat>` generic over custom part types (`Chat<TExtraParts>`). Type helpers: `CustomPartOf<T>`, `PartOf<M, T>`. (Phase 3.4)
+
+### Extensibility
+
+- [ ] 🟢 **Overridable built-in part renderers** — Extend `PartRenderer` lookup to allow replacing built-in `text` and `tool-call` renderers through the custom registry. Currently the registry only handles custom `x-*` types; built-in types always use the default components. (Phase 4.1)
+- [ ] 🟢 **Built-in plugins** — Ship `MarkdownPlugin` (markdown-it config) and `HighlightPlugin` (highlight.js injection) as pre-built plugins so consumers don't need to write their own. (Phase 4.3)
 
 ### Architecture (v3)
 
-- [ ] `<i-chat>` decomposition — Extract `ConfirmationController`, `SlotForwardingController`, `CommandQueue`. Target ≤ 300 lines. (Phase 6.1)
-- [ ] Remove deprecated APIs — `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers. (Phase 6.2)
-- [ ] Peer dependency migration — Move `markdown-it`, `dompurify`, `highlight.js` to peerDependencies. Provide tree-shakeable ESM build. (Phase 6.3)
+- [ ] 🟡 **`<i-chat>` decomposition** — Extract `ConfirmationController`, `SlotForwardingController`, `CommandQueue`. Target ≤ 300 lines. (Phase 6.1)
+- [ ] 🔵 **Remove deprecated APIs** — `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers (`updateTodoItem`, `updateToolCall`, `apply*Event`). (Phase 6.2)
+- [ ] 🟡 **Peer dependency migration** — Move `markdown-it`, `dompurify`, `highlight.js` to peerDependencies. Provide tree-shakeable ESM build alongside full IIFE bundle. Document bundle size with badges. (Phase 6.3)
 
 ### Documentation & Showcase
 
-- [ ] Storybook 8+ — Stories for each component with knobs and Chromatic deployment. (Phase 7.2)
-- [ ] Interactive playground — Live `<i-chat>` embedded in docs with framework wrappers. (Phase 7.3)
-- [ ] Migration guides — v1→v2 and v2→v3. (Phase 7.1)
+- [ ] 🔵 **Storybook 8+** — Stories for each component with configurable knobs (locale, theme, message count, streaming simulation). Deploy to Chromatic for visual regression testing. (Phase 7.2)
+- [ ] 🔵 **Interactive playground** — Live `<i-chat>` embedded in docs site with framework wrappers (Vue, React, plain HTML). (Phase 7.3)
+- [ ] 🔵 **Migration guides** — v1→v2 and v2→v3. (Phase 7.1)
 
 ## Compatibility & Deprecation
 

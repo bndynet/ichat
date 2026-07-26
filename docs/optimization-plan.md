@@ -1,24 +1,15 @@
-# Chat UI Library — Optimization Plan
+# Optimization Plan — Remaining Work
 
-Actionable, staged plan to evolve `@bndynet/ichat` into a powerful AI UI chat component library. Each phase is self-contained and can ship independently.
+> **Implementation supplement to [roadmap.md](./roadmap.md).** Completed items have been moved to the roadmap's "Completed" section. This file retains only the detailed implementation guidance for work that isn't done yet.
 
 ---
 
-## Phase 1 — Foundations (quality & scalability)
+## Phase 1 — Foundations (remaining)
 
-### 1.1 Test coverage
+### 1.1 Component & integration tests
 
-> **Goal:** protect existing behaviour before refactoring.
+> **Goal:** add component-level regression coverage after the message-state refactor.
 
-- [ ] **Unit tests for pure helpers** — `packages/chat-messages/test/`
-  - `message-part-state.test.ts` — `appendMessagePart`, `findMessagePart`, `patchMessagePart`, `replaceMessagePart`, `applyMessagePartUpdate`
-  - `message-collection-state.test.ts` — (extend existing) edge cases: duplicate ids, empty arrays, immutability
-  - `todo-state.test.ts` — `patchTodoItem` lifecycle, stale revision rejection, terminal detection
-  - `tool-call-state.test.ts` — `patchToolCallPart` state-machine transitions, invalid transitions
-  - `message-part-events.test.ts` — `normalizeMessagePartUpdateEvent` malformed payloads
-  - `update-results.test.ts` — all diagnostic result shapes
-  - `date-separator.test.ts` — `getDateSeparatorInfo` across locales
-  - `duration-format.test.ts` — `formatAssistantDurationMs` edge cases
 - [ ] **Component tests for `<i-chat-input>`** — `packages/chat-input/test/`
   - send / cancel events
   - disabled state
@@ -31,17 +22,15 @@ Actionable, staged plan to evolve `@bndynet/ichat` into a powerful AI UI chat co
   - `ready` promise contract
   - pending command replay on first render
   - `createRunController()` lifecycle
-- [ ] **Integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent`
+- [ ] **Integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end
 
-### 1.2 Test infrastructure
+### 1.2 Coverage thresholds
 
-- [ ] Switch to `vitest` (faster, better DX, native ESM) or keep node-based with a proper test runner
-- [ ] Add `packages/*/test/` coverage threshold (≥80% on helpers, ≥60% on components)
-- [ ] CI: run tests on PR, block merge on failure
+- [ ] Enforce `packages/*/test/` coverage threshold in CI (≥80% helpers, ≥60% components)
 
 ---
 
-## Phase 2 — Performance
+## Phase 2 — Performance (remaining)
 
 ### 2.1 Virtual scrolling
 
@@ -53,79 +42,36 @@ Actionable, staged plan to evolve `@bndynet/ichat` into a powerful AI UI chat co
   - Add `virtualScroll` config option (default on, can disable)
 - [ ] Add perf benchmark: 100 / 1000 / 10000 messages render time
 
-### 2.2 Markdown rendering
+### 2.2 Markdown streaming light mode
 
-- [ ] Cache parsed markdown per text part — `Map<partId, { rawMd: string; html: string }>`
-  - On `updatePart`, diff the raw markdown; if unchanged from cache, skip re-render
-  - Invalidate cache on `config.allowedLinkProtocols` change
-- [ ] Consider a "light mode" for streaming: render plain text until streaming stops, then do full markdown pass
+- [ ] During active streaming, render plain text only; run full markdown-it + DOMPurify pass once streaming stops
   - Controlled by `config.markdownMode: 'full' | 'streaming-light'`
+  - Reduces jank during high-frequency token delivery
 
-### 2.3 highlight.js bundle
+### 2.3 Bundle size: peerDependencies + tree-shaking
 
-- [ ] Make highlight.js a **peerDependency** (or optional `config.highlightJs` injection)
-  - `config.highlightJs?: typeof hljs` — user passes their own instance with registered languages
-  - Fallback: code blocks without highlight.js get plain `<pre><code>` (no highlighting)
-- [ ] Remove `noExternal: [/.*/]` from tsup config for packages that should tree-shake (or keep it but document the bundle-size trade-off)
-
-### 2.4 Memoized computed properties
-
-- [ ] `<i-chat-messages>._messageRenderItems()` — cache based on `messages.length` + first/last `message.id` + first/last `message.timestamp`
-- [ ] `<i-chat-messages>._labels` — cache based on `config.locale` + `config.labels` reference
-- [ ] `<i-chat-message>._hasPerMessageAvatar()` — cache based on `message.avatar`
+- [ ] Move `markdown-it`, `dompurify`, `highlight.js` from `dependencies` → `peerDependencies`
+  - `highlight.js` is already config-injectable via `config.highlightJs`; this completes the split
+- [ ] Remove `noExternal: [/.*/]` from `chat-messages/tsup.config.ts`
+- [ ] Provide both an ESM build (for tree-shaking consumers) and a full IIFE bundle
+- [ ] Document bundle size in README with badges
 
 ---
 
-## Phase 3 — Developer Experience
+## Phase 3 — Developer Experience (remaining)
 
-### 3.1 Built-in SSE client
-
-- [ ] Create `packages/chat/src/sse/` module:
-  - `createChatSSEClient(url, chat, options?)` — connects to an SSE endpoint
-  - Auto-parses `message.part.updated`, `todo.item.updated`, `tool-call.*` events
-  - Maps OpenAI Responses-style streaming events to part updates
-  - Returns `{ abort, connectionStatus }`
-  - Handles reconnection with exponential backoff
-- [ ] Export from `@bndynet/ichat/sse`
-
-```typescript
-// Target DX:
-import { createChatSSEClient } from '@bndynet/ichat/sse';
-
-const client = createChatSSEClient('/api/chat/stream', chat, {
-  onError: (err) => chat.showError(err.message),
-});
-chat.addEventListener('send', (e) => {
-  client.send(e.detail.content);
-});
-```
-
-### 3.2 Message lifecycle hooks (middleware)
-
-- [ ] Define `ChatMiddleware` interface:
-  ```typescript
-  interface ChatMiddleware {
-    name: string;
-    beforeSend?: (content: string) => string | Promise<string>;
-    afterReceive?: (message: ChatMessage) => ChatMessage;
-    beforeAppendPart?: (messageId: string, part: MessagePart) => MessagePart;
-    onError?: (error: string, messageId?: string) => void;
-  }
-  ```
-- [ ] `chat.use(middleware)` — register middleware chain
-- [ ] Execute in FIFO order; short-circuit on null return
-
-### 3.3 Type system cleanup
+### 3.1 Type system cleanup
 
 - [ ] Split `packages/chat/src/index.ts` into `index.ts` (user-facing) + `internals.ts` (diagnostics)
   - Keep ~20 core types in main export
   - Move 40+ diagnostic types (`*FailureReason`, `*Result`) to subpath export
-- [ ] Add `@bndynet/ichat/messages` re-export path for users who want direct messages package access
-- [ ] Document the public API surface explicitly in `docs/public-api.md`
+- [ ] Add `@bndynet/ichat/messages` re-export path for direct messages package access
+- [ ] Document the public API surface in `docs/public-api.md`
 
-### 3.4 Generic type support
+### 3.2 Generic type support
 
 - [ ] Make `<i-chat>` generic over custom part types:
+
   ```typescript
   interface ChatMessageExtraParts {
     [type: `x-${string}`]: unknown;
@@ -135,75 +81,53 @@ chat.addEventListener('send', (e) => {
     messages: Array<ChatMessage & { parts: Array<MessagePart | CustomPart<TExtraParts>> }>;
   }
   ```
+
 - [ ] Provide type helpers: `CustomPartOf<T>`, `PartOf<M, T>`
-
-### 3.5 AbortController built into ChatRunController
-
-- [ ] `ChatRunController` creates an internal `AbortController` on `start()`
-- [ ] Expose `controller.signal` for consumers to pass to `fetch()`
-- [ ] `cancel()` calls `controller.abort()` before the store mutation
-- [ ] `complete()` / `fail()` / `cancel()` all clean up the controller
 
 ---
 
-## Phase 4 — Extensibility
+## Phase 4 — Extensibility (remaining)
 
 ### 4.1 Overridable built-in part renderers
 
-- [ ] Extend `PartRenderer` to allow matching built-in types:
+- [ ] Extend `PartRenderer` lookup to allow replacing built-in types (`text`, `tool-call`) via the custom registry:
+
   ```typescript
   interface PartRenderer {
-    test: (type: string) => boolean; // now matches 'text', 'tool-call' too
+    test: (type: string) => boolean; // already accepts any string
     // ...
   }
   ```
+
 - [ ] `<i-chat-part-host>` lookup order: custom registry → built-in renderers
+  - Currently the registry only handles custom `x-*` types; built-in types always use the default components
 - [ ] Allow consumers to replace the markdown-based `text` part renderer entirely
 
-### 4.2 Async BlockRenderer
+### 4.2 Built-in plugins
 
-- [ ] Add optional `renderAsync` to `BlockRenderer`:
-  ```typescript
-  interface BlockRenderer {
-    render?: (code: string, lang: string, info?: string) => string;
-    renderAsync?: (code: string, lang: string, info?: string) => Promise<string>;
-  }
-  ```
-- [ ] Fence renderer in markdown-it: if `renderAsync` exists, render a placeholder and replace when the promise resolves
-- [ ] Show loading state while async renderer resolves
-
-### 4.3 Plugin system
-
-- [ ] Define `ChatPlugin` interface:
-  ```typescript
-  interface ChatPlugin {
-    name: string;
-    install(chat: Chat): void | (() => void); // returns optional teardown
-  }
-  ```
-- [ ] `chat.use(plugin)` — calls `install`, collects teardown functions
-- [ ] Built-in plugins: `MarkdownPlugin` (markdown-it config), `HighlightPlugin` (highlight.js injection)
+- [ ] Ship pre-built plugins so consumers don't need to write their own:
+  - `MarkdownPlugin` — markdown-it config (linkify, typographer, custom fences)
+  - `HighlightPlugin` — highlight.js injection with language registration
 - [ ] User-land examples: KaTeX math plugin, link preview plugin, code copy button plugin
 
 ---
 
 ## Phase 5 — Accessibility
 
+> **Status: ~15% complete.** Only `<i-chat-reasoning>` `aria-expanded` and `<i-chat-input>` partial labels exist.
+
 ### 5.1 ARIA & roles
 
 - [ ] `<i-chat-messages>` — `role="log"`, `aria-live="polite"`, `aria-label`
 - [ ] `<i-chat-message>` — `role="article"` for assistant messages
-- [ ] `<i-chat-tool-call>` — `aria-expanded` on collapsible, `aria-label` on approve/reject buttons
+- [ ] `<i-chat-tool-call>` — `aria-expanded` on collapsible body, `aria-label` on approve/reject buttons
 - [ ] `<i-chat-todo>` — `role="list"`, `role="listitem"` with `aria-checked`
-- [ ] `<i-chat-reasoning>` — `aria-expanded` on collapsible header
-- [ ] `<i-chat-input>` — `aria-label` on textarea, voice button
 - [ ] confirmation panel — `role="alertdialog"` or `role="dialog"`
 
 ### 5.2 Keyboard navigation
 
 - [ ] `<i-chat-tool-call>` — Enter/Space to toggle collapse, Tab to approve/reject
 - [ ] `<i-chat-todo>` — Enter/Space to cycle status on interactive items
-- [ ] `<i-chat-reasoning>` — Enter/Space to toggle collapse
 - [ ] confirmation panel — Escape to cancel, Enter to confirm, focus trap
 
 ### 5.3 Screen reader announcements
@@ -214,32 +138,26 @@ chat.addEventListener('send', (e) => {
 
 ---
 
-## Phase 6 — Architecture Cleanup
+## Phase 6 — Architecture Cleanup (v3 prep)
 
 ### 6.1 `<i-chat>` decomposition
 
-- [ ] Extract `ConfirmationController` from `<i-chat>` (ReactiveController pattern, similar to `ChatRunController`)
-- [ ] Extract slot-forwarding logic into `SlotForwardingController`
+- [ ] Extract `ConfirmationController` (ReactiveController pattern, similar to `ChatRunController`)
+- [ ] Extract `SlotForwardingController`
 - [ ] Replace `_pendingCommands` array with a `CommandQueue` class (typed, testable)
 - [ ] Target: `<i-chat>` component file ≤ 300 lines
 
-### 6.2 Remove deprecated APIs (v3)
+### 6.2 Remove deprecated APIs
 
-- [ ] Remove `createStreamingController()` (use `createRunController()`)
-- [ ] Remove `form-submit`, `todo-action`, `tool-action` compatibility events (use `part-action`)
-- [ ] Remove `patchTodoItemInPart` alias (use `patchTodoItem`)
-- [ ] Remove `updateTodoItem` / `updateToolCall` / `applyMessagePartUpdateEvent` / `applyTodoItemUpdateEvent` boolean returns (use `try*` variants)
-- [ ] Remove `config.dateSeparatorLabels` (use `config.labels.dateSeparator`)
-
-### 6.3 Re-evaluate `noExternal` bundling
-
-- [ ] Move `markdown-it`, `dompurify`, `highlight.js` to peerDependencies
-- [ ] Provide a "full" bundle (`iife`) and an "esm-only" build for tree-shaking consumers
-- [ ] Document bundle size in README with badges
+- [ ] Remove `createStreamingController()` — use `createRunController()`
+- [ ] Remove `form-submit`, `todo-action`, `tool-action` compatibility events — use `part-action`
+- [ ] Remove `patchTodoItemInPart` alias — use `patchTodoItem`
+- [ ] Remove boolean-return wrappers: `updateTodoItem`, `updateToolCall`, `applyMessagePartUpdateEvent`, `applyTodoItemUpdateEvent` — use `try*` variants
+- [ ] Remove `config.dateSeparatorLabels` — use `config.labels.dateSeparator`
 
 ---
 
-## Phase 7 — Documentation & Showcase
+## Phase 7 — Documentation & Showcase (remaining)
 
 ### 7.1 Migration guides
 
@@ -260,16 +178,16 @@ chat.addEventListener('send', (e) => {
 
 ---
 
-## Priority Summary
+## Current Priority
 
 ```
-Phase 1  🔴  Tests                     ← START HERE (quality foundation)
-Phase 2  🔴  Performance (virtual scroll, hljs, markdown cache)
-Phase 3  🟡  DX (SSE client, hooks, types)
-Phase 4  🟢  Extensibility (overridable renderers, async, plugins)
-Phase 5  🟡  Accessibility
-Phase 6  🔵  Architecture cleanup (v3 prep)
-Phase 7  🔵  Documentation & Storybook
+🔴 Phase 5   Accessibility           (largest gap, compliance risk)
+🔴 Phase 2.1 Virtual scroll          (performance critical path)
+🟡 Phase 2.3 Bundle size            (small change, big impact)
+🟡 Phase 1.1 Component tests        (regression safety net)
+🟡 Phase 6.1 Decomposition          (maintainability)
+🟢 Phase 3   Type system + generics (nice to have)
+🟢 Phase 4   Overridable renderers + built-in plugins
+🔵 Phase 6.2 Remove deprecated      (v3 only)
+🔵 Phase 7   Storybook + playground (pre-release)
 ```
-
-Each phase produces a ship-able improvement. Phases 1-3 are the highest-impact; you'll feel the difference immediately from better perf + SSE client + test confidence.
