@@ -19,6 +19,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
+      - run: npm run build -w @bndynet/ichat-messages -w @bndynet/ichat-input
       - run: npm run test
       - run: npm run test:coverage
         working-directory: packages/chat-messages
