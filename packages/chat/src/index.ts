@@ -117,6 +117,7 @@ export {
   CHAT_LABELS_EN,
   CHAT_LABELS_ZH_CN,
   formatAssistantDurationMs,
+  normalizeHistoryMessages,
 } from '@bndynet/ichat-messages';
 export type {
   ChatPartRenderContext,
@@ -149,6 +150,7 @@ export type {
   ChatFormSubmitRequestDetail,
   TodoActionRequestDetail,
   ToolActionRequestDetail,
+  NormalizeHistoryOptions,
 } from '@bndynet/ichat-messages';
 export { ChatInput } from '@bndynet/ichat-input';
 export { ChatMessages, ChatPartHost, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';

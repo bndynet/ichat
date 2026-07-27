@@ -111,6 +111,23 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel.
 - [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls land.
+- [x] 🟢 **`normalizeHistoryMessages()` 历史消息清洗** ✅ (completed 2026-07-27) — `packages/chat-messages/src/normalize-history.ts`，25 测试全部通过。
+
+  **用法**：
+  ```ts
+  import { normalizeHistoryMessages } from '@bndynet/ichat-messages';
+  const history = await fetchHistory();
+  chat.messages = normalizeHistoryMessages(history.messages, {
+    interruptedStatus: 'complete',  // 默认
+    removeEmptyMessages: true,       // 默认
+  });
+  ```
+
+  **行为**：
+  - `streaming` → `false`，`cancelled` → `true`（标记中断）
+  - part `status: 'streaming' | 'pending'` → `interruptedStatus`（默认 `'complete'`）
+  - 清除空 `parts` 的占位消息
+  - 保持顺序和 ID 不变，不修改原数组；已是终态的消息返回原引用（fast path）
 
 ### Developer Experience
 

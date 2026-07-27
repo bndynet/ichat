@@ -128,6 +128,8 @@ export {
   clearMessages,
   cancelMessageData,
 } from './message-collection-state.js';
+export { normalizeHistoryMessages } from './normalize-history.js';
+export type { NormalizeHistoryOptions } from './normalize-history.js';
 export {  MessagePartUpdateApplyResult,
   MessagePartLookupFailureReason,
   MessagePartLookupResult,

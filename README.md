@@ -63,7 +63,7 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 <i-chat id="chat"></i-chat>
 
 <script type="module">
-  import { textPart } from '@bndynet/ichat';
+  import { textPart, normalizeHistoryMessages } from '@bndynet/ichat';
 
   const chat = document.getElementById('chat');
   let idSeq = 0;
@@ -74,15 +74,7 @@ Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, 
 
   // TODO: Replace with your history loader, or use [] when there is no history.
   const history = await fetchHistory();
-  chat.messages = history.map((message) => ({
-    ...message,
-    streaming: false,
-    parts: message.parts.map((part) =>
-      part.status === 'streaming'
-        ? { ...part, status: 'complete' }
-        : part,
-    ),
-  }));
+  chat.messages = normalizeHistoryMessages(history.messages);
 
   chat.addEventListener('send', async (e) => {
     const text = e.detail.content;
@@ -193,7 +185,7 @@ chat.addEventListener('messages-change', (e) => {
 
 In uncontrolled mode `chat.messages` is immediately up-to-date after any mutation — just read it. Controlled mode is opt-in and only needed when an external framework must own the array.
 
-When the user first opens a chat, load historical messages as completed content. Normalize stored messages by setting `message.streaming` to `false` and converting any persisted `status: 'streaming'` parts to a terminal state such as `complete`, especially for `reasoning` parts that have their own thinking/expanded state.
+When the user first opens a chat, load historical messages as completed content. Use `normalizeHistoryMessages()` from `@bndynet/ichat-messages` (re-exported by `@bndynet/ichat`) to sanitise messages loaded from your backend — it sets `streaming: false`, marks interrupted messages as `cancelled`, converts any persisted `status: 'streaming' | 'pending'` parts to `'complete'`, and removes empty placeholder messages. Pass `interruptedStatus` / `removeEmptyMessages` options to customise the behaviour.
 
 ### SSE client (built-in)
 
