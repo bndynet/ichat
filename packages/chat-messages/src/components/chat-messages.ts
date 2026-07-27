@@ -835,6 +835,8 @@ export class ChatMessages extends LitElement {
                               .assistantAvatarHtml=${this._assistantAvatarHtml}
                               .actionsHtml=${this._messageActionsHtml}
                               .reasoningHeaderHtml=${this._reasoningHeaderHtml}
+                              .pendingIndicator=${cfg.pendingIndicator}
+                              .pendingDelay=${cfg.pendingDelay}
                               .replyTargets=${replyBlocks.get(item.message.id)}
                               @message-cancel=${(e: CustomEvent<{ id: string }>) =>
                                 this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}

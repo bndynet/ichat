@@ -9,6 +9,7 @@ import { StreamingController } from '../controllers/streaming-controller.js';
 import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-reasoning.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
+import './chat-dots.js';
 
 @customElement('i-chat-reasoning')
 export class ChatReasoning extends LitElement {
@@ -120,11 +121,10 @@ export class ChatReasoning extends LitElement {
                   ? (this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking)
                   : (this.labels?.reasoning ?? CHAT_LABELS_EN.reasoning.reasoning)}
                 ${isThinking
-                  ? html`<span class="reasoning-thinking">
-                      <span class="dot"></span>
-                      <span class="dot"></span>
-                      <span class="dot"></span>
-                    </span>`
+                  ? html`<i-chat-dots
+                      style="--chat-dots-color:var(--chat-reasoning-accent,var(--chat-primary,#1a73e8))"
+                      label=${this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking}
+                    ></i-chat-dots>`
                   : nothing}
               </span>`}
           <span class="reasoning-chevron ${bodyOpen ? 'expanded' : ''}">

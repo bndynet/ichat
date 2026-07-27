@@ -368,6 +368,18 @@ export interface ChatConfig {
   /** Default avatar for assistant/system messages (text, emoji, or image URL) */
   assistantAvatar?: string;
   /**
+   * Pending indicator shown before the first substantive part arrives.
+   * - `'dots'` — animated bouncing dots (default)
+   * - `'spinner'` — rotating spinner
+   * - `'none'` — no indicator
+   */
+  pendingIndicator?: 'dots' | 'spinner' | 'none';
+  /**
+   * Delay (ms) before the pending indicator appears. Prevents flickering for
+   * near-instant responses. Default: 200.
+   */
+  pendingDelay?: number;
+  /**
    * Non-empty list of URI protocols to keep in rendered links.
    * Values may include or omit the trailing colon (`myapp` and `myapp:` both work).
    * When omitted or empty, `http`, `https`, `mailto`, and `tel` are allowed.
@@ -418,6 +430,8 @@ export const DEFAULT_CONFIG: Required<
   peerAvatar: '',
   assistantAvatar: '',
   locale: 'en',
+  pendingIndicator: 'dots',
+  pendingDelay: 200,
 };
 
 /**

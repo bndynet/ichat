@@ -2,6 +2,8 @@ export { ChatMessages } from './components/chat-messages.js';
 export { ChatMessageElement } from './components/chat-message.js';
 export { ChatPartHost } from './components/chat-part-host.js';
 export { ChatReasoning } from './components/chat-reasoning.js';
+export { ChatDots } from './components/chat-dots.js';
+export { ChatSpinner } from './components/chat-spinner.js';
 export { ChatTextPart } from './components/chat-text-part.js';
 export { ChatToolCall } from './components/chat-tool-call.js';
 export { ChatTodo } from './components/chat-todo.js';

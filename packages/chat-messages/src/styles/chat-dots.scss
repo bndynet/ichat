@@ -1,0 +1,47 @@
+// Shared bouncing-dots animation. Sizing & color are driven by CSS custom
+// properties so the same element works in reasoning headers (small, accent
+// color) and the pending indicator (slightly larger, secondary text color).
+
+:host {
+  display: inline-flex;
+}
+
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--chat-dots-gap, 3px);
+}
+
+.dots__dot {
+  width: var(--chat-dots-size, 4px);
+  height: var(--chat-dots-size, 4px);
+  border-radius: 50%;
+  background: var(--chat-dots-color, currentColor);
+  opacity: 0.4;
+  animation: chatDotsBounce 1.4s ease-in-out infinite;
+
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes chatDotsBounce {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots__dot {
+    animation: none;
+  }
+}

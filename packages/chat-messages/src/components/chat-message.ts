@@ -1,5 +1,5 @@
 import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { setVersionAttribute } from '../version.js';
 import type {
@@ -19,6 +19,8 @@ import { sanitizeInlineSvgAvatar } from '../avatar-sanitizer.js';
 import styles from '../styles/chat-message.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-part-host.js';
+import './chat-dots.js';
+import './chat-spinner.js';
 
 @customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
@@ -46,6 +48,25 @@ export class ChatMessageElement extends LitElement {
    */
   @property() locale = '';
 
+  /**
+   * Pending indicator style: `'dots'`, `'spinner'`, or `'none'`.
+   * Forwarded from parent {@link ChatConfig.pendingIndicator}.
+   */
+  @property() pendingIndicator: 'dots' | 'spinner' | 'none' = 'dots';
+
+  /**
+   * Delay (ms) before the pending indicator appears. Forwarded from
+   * parent {@link ChatConfig.pendingDelay}.
+   */
+  @property({ type: Number }) pendingDelay = 200;
+
+  /** Whether the pending indicator is currently visible. */
+  @state() private _showPending = false;
+
+  /** Whether we are in the pending phase (streaming, no substantive parts).
+   *  Set immediately so the part-host is hidden even before the delay timer fires. */
+  @state() private _pendingActive = false;
+
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
@@ -55,6 +76,11 @@ export class ChatMessageElement extends LitElement {
     super.firstUpdated(changed);
     // Code copy button click handler (delegated)
     this.renderRoot.addEventListener('click', this._handleCodeCopy);
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._cancelPendingTimer();
   }
 
   private _handleCodeCopy = (e: Event): void => {
@@ -100,6 +126,81 @@ export class ChatMessageElement extends LitElement {
     },
   });
 
+  // ── Pending indicator ──────────────────────────────────────────────
+
+  private _pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Returns `true` when a part has real content that should suppress the
+   * pending indicator. Empty text placeholders (e.g. from `run.start()`)
+   * and empty reasoning blocks do NOT count as substantive.
+   */
+  private _hasSubstantiveParts(): boolean {
+    const parts = this.message?.parts;
+    if (!parts || parts.length === 0) return false;
+    return parts.some((p) => {
+      switch (p.type) {
+        case 'text':
+        case 'reasoning':
+          return (p as { text?: string }).text != null && (p as { text?: string }).text!.length > 0;
+        case 'todo':
+          return (p as { items?: unknown[] }).items != null && (p as { items?: unknown[] }).items!.length > 0;
+        case 'tool-call':
+        case 'file':
+        case 'source':
+          return true;
+        default:
+          // Custom x-* parts — host-defined, treat as substantive.
+          return true;
+      }
+    });
+  }
+
+  private _cancelPendingTimer(): void {
+    if (this._pendingTimer !== null) {
+      clearTimeout(this._pendingTimer);
+      this._pendingTimer = null;
+    }
+  }
+
+  private _startPendingTimer(): void {
+    this._cancelPendingTimer();
+    if (this.pendingIndicator === 'none' || this.pendingDelay <= 0) {
+      this._showPending = this.pendingIndicator !== 'none';
+      return;
+    }
+    this._pendingTimer = setTimeout(() => {
+      this._pendingTimer = null;
+      // Re-check conditions when timer fires — streaming may have ended
+      // or parts may have arrived in the meantime.
+      if (
+        this.message?.streaming &&
+        !this.message?.error &&
+        !this._hasSubstantiveParts()
+      ) {
+        this._showPending = true;
+      }
+    }, this.pendingDelay);
+  }
+
+  private _syncPendingState(): void {
+    const shouldShow =
+      this.message?.streaming === true &&
+      !this.message?.error &&
+      !this._hasSubstantiveParts() &&
+      this.pendingIndicator !== 'none';
+
+    // _pendingActive is immediate — hides part-host right away.
+    this._pendingActive = shouldShow;
+
+    if (shouldShow && !this._showPending && this._pendingTimer === null) {
+      this._startPendingTimer();
+    } else if (!shouldShow) {
+      this._cancelPendingTimer();
+      this._showPending = false;
+    }
+  }
+
   willUpdate(changed: Map<string, unknown>): void {
     // Update speed first so _charsPerTick is correct when setContent is called below.
     if (changed.has('speed')) {
@@ -135,6 +236,17 @@ export class ChatMessageElement extends LitElement {
           this._streamStartTime = null;
         }
       }
+
+      // Sync pending indicator state after message/parts change.
+      this._syncPendingState();
+    }
+
+    // Re-sync when pending config changes without a message change.
+    if (
+      (changed.has('pendingIndicator') || changed.has('pendingDelay')) &&
+      !changed.has('message')
+    ) {
+      this._syncPendingState();
     }
   }
 
@@ -501,7 +613,24 @@ export class ChatMessageElement extends LitElement {
                 </div>
               </div>`
             : nothing}
-          <i-chat-part-host
+          ${this._showPending
+            ? html`<div
+                class="pending-indicator pending-indicator--${this.pendingIndicator}"
+              >
+                ${this.pendingIndicator === 'spinner'
+                  ? html`<i-chat-spinner
+                      style="--chat-spinner-color:var(--chat-text-secondary,#909399);--chat-spinner-track:var(--chat-border,#dcdfe6)"
+                      label=${this.labels?.messages?.generating ?? 'Generating response…'}
+                    ></i-chat-spinner>`
+                  : html`<i-chat-dots
+                      style="--chat-dots-size:6px;--chat-dots-color:var(--chat-text-secondary,#909399)"
+                      label=${this.labels?.messages?.generating ?? 'Generating response…'}
+                    ></i-chat-dots>`}
+              </div>`
+            : nothing}
+          ${this._pendingActive
+            ? nothing
+            : html`<i-chat-part-host
             .message=${this.message}
             .parts=${this.message.parts ?? []}
             .streamingTextId=${this._streamingTextId}
@@ -513,7 +642,7 @@ export class ChatMessageElement extends LitElement {
             .allowedLinkProtocols=${this.allowedLinkProtocols}
             .highlightJs=${this.highlightJs}
             @chat-part-host-updated=${this._handlePartHostUpdated}
-          ></i-chat-part-host>
+          ></i-chat-part-host>`}
           <div class="message-footer">
             ${timestamp && !streaming
               ? html`<div class="timestamp">${this._formatTimestamp(timestamp)}</div>`

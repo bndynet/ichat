@@ -307,7 +307,7 @@ function responseThinking(chatRef) {
     if (cancelStream !== cancelBeforeStart) return;
     cancelStream = null;
     playEvents(chatRef, aiId, thinkingDemoEvents);
-  }, 400);
+  }, 3000);
 
   const cancelBeforeStart = () => {
     clearTimeout(startTimer);

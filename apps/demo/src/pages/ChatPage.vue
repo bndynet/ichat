@@ -57,9 +57,23 @@ const AR_LABELS = {
 };
 
 const locale = ref('zh-CN');
-const chatConfig = computed(() =>
-  locale.value === 'ar' ? { locale: 'ar', labels: AR_LABELS } : { locale: locale.value },
-);
+
+const PENDING_OPTIONS = [
+  { value: 'dots', label: 'Dots' },
+  { value: 'spinner', label: 'Spinner' },
+  { value: 'none', label: 'None' },
+];
+const pendingIndicator = ref('dots');
+const pendingDelay = ref(200);
+
+const chatConfig = computed(() => {
+  const base = locale.value === 'ar' ? { locale: 'ar', labels: AR_LABELS } : { locale: locale.value };
+  return {
+    ...base,
+    pendingIndicator: pendingIndicator.value,
+    pendingDelay: pendingDelay.value,
+  };
+});
 const dir = computed(() => (locale.value === 'ar' ? 'rtl' : 'ltr'));
 
 /** 64×64 PNG (person silhouette) — valid `data:image/png;base64,…` for avatar demo */
@@ -318,6 +332,18 @@ function handleLinkClick(e) {
         </el-radio-button>
       </el-radio-group>
     </div>
+    <div class="demo-chat-bar__pending">
+      <span class="demo-chat-bar__label">Pending</span>
+      <el-radio-group v-model="pendingIndicator" size="small">
+        <el-radio-button
+          v-for="opt in PENDING_OPTIONS"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ opt.label }}
+        </el-radio-button>
+      </el-radio-group>
+    </div>
     <ChatToolbar :chat-ref="chatRef" />
   </div>
   <i-chat
@@ -386,7 +412,8 @@ function handleLinkClick(e) {
   background: var(--el-fill-color-light, #f5f7fa);
 }
 
-.demo-chat-bar__locale {
+.demo-chat-bar__locale,
+.demo-chat-bar__pending {
   display: flex;
   align-items: center;
   gap: 10px;

@@ -688,3 +688,20 @@ i-chat-text-part {
     opacity: 0;
   }
 }
+
+// ── Pending indicator (shown before first substantive part arrives) ──
+
+.pending-indicator {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--chat-spacing-md, #{$spacing-md});
+  min-height: 24px;
+
+  .message--self & {
+    justify-content: flex-end;
+  }
+
+  .message--reply & {
+    justify-content: flex-start;
+  }
+}
