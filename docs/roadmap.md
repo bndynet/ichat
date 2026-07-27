@@ -75,7 +75,9 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 ### Performance
 
 - [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
-- [ ] 🟡 **Markdown streaming light mode** — During active streaming, render plain text only; run full markdown-it + DOMPurify pass once streaming stops. Controlled by `config.markdownMode: 'full' | 'streaming-light'`. Reduces jank during high-frequency token delivery. (Phase 2.2)
+- [ ] 🟡 **Markdown streaming light mode** — Optimise the streaming render path in `i-chat-text-part`: when `message.streaming === true`, skip DOMPurify (trusted SSE source) and skip morphdom diff (use `innerHTML` — every token grows the full text, so incremental diff has zero reuse value). Once streaming stops, run the full pipeline (DOMPurify + morphdom) for the clean terminal render. markdown-it always runs so users see formatted text, never raw markdown.
+
+  No new config — this is a strict improvement over the current path and the default behavior. (Phase 2.2)
 - [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
 
 ### Accessibility (Phase 5)
