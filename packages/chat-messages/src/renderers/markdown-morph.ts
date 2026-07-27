@@ -37,8 +37,15 @@ export function renderMarkdownInto(
   if (partId) {
     const cached = rawContentCache.get(partId);
     if (cached === content) {
-      // Content unchanged — return previous HTML without re-rendering
-      return { changed: false, html: previousHtml };
+      // Raw content unchanged from last render of this partId.
+      // Still need to ensure the DOM element shows the correct HTML —
+      // Lit may have re-rendered the template (e.g. via `repeat` reconciling
+      // after a history prepend), creating a new empty DOM that needs patching.
+      if (previousHtml) {
+        morphHtmlInto(el, previousHtml);
+        return { changed: false, html: previousHtml };
+      }
+      // New element instance with no previous HTML — fall through to render.
     }
   }
 
