@@ -21,6 +21,7 @@ import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-part-host.js';
 import './chat-dots.js';
 import './chat-spinner.js';
+import { injectPluginCss } from '../renderers/extension-styles.js';
 
 @customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
@@ -67,20 +68,24 @@ export class ChatMessageElement extends LitElement {
    *  Set immediately so the part-host is hidden even before the delay timer fires. */
   @state() private _pendingActive = false;
 
+  private _extCleanup?: () => void;
+
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    this._extCleanup = injectPluginCss(this.shadowRoot!);
+  }
+
+  override disconnectedCallback(): void {
+    this._extCleanup?.();
+    this._cancelPendingTimer();
+    super.disconnectedCallback();
   }
 
   override firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
     // Code copy button click handler (delegated)
     this.renderRoot.addEventListener('click', this._handleCodeCopy);
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._cancelPendingTimer();
   }
 
   private _handleCodeCopy = (e: Event): void => {

@@ -26,6 +26,10 @@ export {
   renderMarkdownInto,
 } from './renderers/markdown-morph.js';
 export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
+export {
+  registerMarkdownPlugin,
+} from './renderers/markdown-extensions.js';
+export type { MarkdownPlugin } from './renderers/markdown-extensions.js';
 export { updateProgressStepStatus } from './renderers/progress-plugin.js';
 export type { ProgressStatus } from './renderers/progress-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';

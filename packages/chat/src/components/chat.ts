@@ -41,7 +41,7 @@ import {
   cancelMessageData,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
-import { registerRenderer as registerBlockRenderer } from '../register-renderer.js';
+import { registerCodeRenderer } from '../register-renderer.js';
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
@@ -637,9 +637,16 @@ export class Chat extends LitElement {
     return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
   }
 
-  /** Register an additional block renderer at runtime (same as `registerRenderer` from `@bndynet/ichat`). */
+  /** Register a fenced-code block renderer at runtime. */
+  registerCodeRenderer(renderer: BlockRenderer): void {
+    registerCodeRenderer(renderer);
+  }
+
+  /**
+   * @deprecated Use {@link registerCodeRenderer} instead.
+   */
   registerRenderer(renderer: BlockRenderer): void {
-    registerBlockRenderer(renderer);
+    this.registerCodeRenderer(renderer);
   }
 
   /**

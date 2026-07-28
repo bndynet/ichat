@@ -9,6 +9,7 @@ import { renderMarkdown } from '../renderers/markdown-renderer.js';
 import { isAllowedLinkHref } from '../link-protocols.js';
 import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-tool-call.scss';
+import { injectPluginCss } from '../renderers/extension-styles.js';
 
 /** Map the tool-call state to a coarse visual status used for theming. */
 function statusOf(state: ToolCallState): 'pending' | 'running' | 'success' | 'error' {
@@ -81,9 +82,17 @@ export class ChatToolCall extends LitElement {
   @property({ attribute: false }) labels?: ToolCallLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
 
+  private _extCleanup?: () => void;
+
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    this._extCleanup = injectPluginCss(this.shadowRoot!);
+  }
+
+  override disconnectedCallback(): void {
+    this._extCleanup?.();
+    super.disconnectedCallback();
   }
 
   private _linkHref(rawHref: string): string | typeof nothing {

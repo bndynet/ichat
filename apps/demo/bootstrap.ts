@@ -1,6 +1,6 @@
 import './styles.css'
 import '@bndynet/ichat'
-import { registerRenderer, registerPartRenderer } from '@bndynet/ichat'
+import { registerCodeRenderer, registerPartRenderer } from '@bndynet/ichat'
 import {
   chartRenderer,
   kpiRenderer,
@@ -12,11 +12,11 @@ import {
 // only ships the `registerPartRenderer` capability, not these renderers.
 import { weatherElementRenderer, weatherStringRenderer } from './src/renderers/weather'
 
-registerRenderer(chartRenderer)
-registerRenderer(kpiRenderer)
-registerRenderer(kpisRenderer)
-registerRenderer(formRenderer)
-registerRenderer(mermaidRenderer)
+registerCodeRenderer(chartRenderer)
+registerCodeRenderer(kpiRenderer)
+registerCodeRenderer(kpisRenderer)
+registerCodeRenderer(formRenderer)
+registerCodeRenderer(mermaidRenderer)
 
 registerPartRenderer(weatherElementRenderer)
 registerPartRenderer(weatherStringRenderer)

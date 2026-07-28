@@ -21,8 +21,15 @@ export type {
   MessagesChangeReason,
   MessagesChangeSource,
 } from '@bndynet/ichat-messages';
-export { registerRenderer } from './register-renderer.js';
+export { registerCodeRenderer, registerRenderer } from './register-renderer.js';
 export { registerPartRenderer } from './register-part-renderer.js';
+
+// Re-export markdown extension API so consumers can register extensions
+// from the top-level @bndynet/ichat package.
+export {
+  registerMarkdownPlugin,
+} from '@bndynet/ichat-messages';
+export type { MarkdownPlugin } from '@bndynet/ichat-messages';
 
 // Re-export commonly used types and utilities so consumers don't need
 // to install the sub-packages separately.

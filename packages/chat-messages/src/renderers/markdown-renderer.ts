@@ -6,6 +6,7 @@ import { progressPlugin } from './progress-plugin.js';
 import { collapsiblePlugin } from './collapsible-plugin.js';
 import { normalizeAllowedLinkProtocols, uriRegexpForAllowedLinkProtocols } from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
+import { getSharedMd } from './md-instance.js';
 
 export interface MarkdownRenderOptions {
   /**
@@ -28,34 +29,30 @@ export interface MarkdownRenderOptions {
 /** Active highlight.js instance for the current render pass (set per-render). */
 let activeHighlightJs: typeof hljs | undefined;
 
-/** Safe default: render code blocks without highlighting when hljs is unavailable. */
-function defaultHighlight(str: string, _lang: string): string {
-  return md.utils.escapeHtml(str);
-}
-
-const md = new MarkdownIt({
-  html: false,
-  linkify: true,
-  typographer: true,
-  highlight(str: string, lang: string): string {
-    const hl = activeHighlightJs;
-    if (hl && lang && hl.getLanguage(lang)) {
-      try {
-        return hl.highlight(str, { language: lang }).value;
-      } catch {
-        // Fall through to escaped fallback on highlight error
+const md = getSharedMd(() => {
+  const instance = new MarkdownIt({
+    html: false,
+    linkify: true,
+    typographer: true,
+    highlight(str: string, lang: string): string {
+      const hl = activeHighlightJs;
+      if (hl && lang && hl.getLanguage(lang)) {
+        try {
+          return hl.highlight(str, { language: lang }).value;
+        } catch {
+          // Fall through to escaped fallback on highlight error
+        }
       }
-    }
-    return defaultHighlight(str, lang);
-  },
+      return instance.utils.escapeHtml(str);
+    },
+  });
+
+  instance.validateLink = () => true;
+  instance.use(progressPlugin);
+  instance.use(collapsiblePlugin);
+
+  return instance;
 });
-
-// Keep protocol filtering in DOMPurify so per-render `allowedLinkProtocols`
-// can enforce either the safe defaults or a host-provided allow list.
-md.validateLink = () => true;
-
-md.use(progressPlugin);
-md.use(collapsiblePlugin);
 
 // ── DOMPurify configuration ──────────────────────────────────────────────────
 // Shared between the outer render pass and the inner details-body sanitisation.

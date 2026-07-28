@@ -10,6 +10,7 @@ import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-reasoning.scss';
 import { chatDetailsStyles } from '../styles/chat-details-result.js';
 import './chat-dots.js';
+import { injectPluginCss } from '../renderers/extension-styles.js';
 
 @customElement('i-chat-reasoning')
 export class ChatReasoning extends LitElement {
@@ -23,9 +24,17 @@ export class ChatReasoning extends LitElement {
   /** Localized header strings; falls back to English when omitted. */
   @property({ attribute: false }) labels?: ReasoningLabels;
 
+  private _extCleanup?: () => void;
+
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    this._extCleanup = injectPluginCss(this.shadowRoot!);
+  }
+
+  override disconnectedCallback(): void {
+    this._extCleanup?.();
+    super.disconnectedCallback();
   }
 
   @state() private _expanded = false;

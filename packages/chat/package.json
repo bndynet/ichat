@@ -27,13 +27,13 @@
     "test": "tsup test/chat.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --out-dir ../../node_modules/.cache/ichat-tests --clean --silent && node ../../node_modules/.cache/ichat-tests/chat.test.js"
   },
   "dependencies": {
-    "@bndynet/ichat-messages": "^2.1.1",
     "@bndynet/ichat-input": "^2.1.1",
+    "@bndynet/ichat-messages": "^2.1.1",
     "lit": "^3.3.0"
   },
   "devDependencies": {
-    "@bndynet/ichat-messages": "file:../chat-messages",
     "@bndynet/ichat-input": "file:../chat-input",
+    "@bndynet/ichat-messages": "file:../chat-messages",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"

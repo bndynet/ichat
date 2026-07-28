@@ -46,6 +46,7 @@ import {
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
+import { injectPluginCss } from '../renderers/extension-styles.js';
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
@@ -169,9 +170,23 @@ export class ChatMessages extends LitElement {
     >;
   };
 
+  private _extCleanup?: () => void;
+  private _globalExtCleanup?: () => void;
+
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    this._extCleanup = injectPluginCss(this.shadowRoot!);
+    this._globalExtCleanup = injectPluginCss(document.head);
+  }
+
+  override disconnectedCallback(): void {
+    this._extCleanup?.();
+    this._globalExtCleanup?.();
+    super.disconnectedCallback();
+    this._resizeObserver?.disconnect();
+    clearTimeout(this._resizeDebounceTimer);
+    clearTimeout(this._errorDismissTimer);
   }
 
   override firstUpdated(changed: PropertyValues): void {
@@ -274,13 +289,6 @@ export class ChatMessages extends LitElement {
       this._resizeObserver?.disconnect();
       this._observedEl = undefined;
     }
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._resizeObserver?.disconnect();
-    clearTimeout(this._resizeDebounceTimer);
-    clearTimeout(this._errorDismissTimer);
   }
 
   /**
