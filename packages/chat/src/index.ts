@@ -28,6 +28,7 @@ export { registerPartRenderer } from './register-part-renderer.js';
 // from the top-level @bndynet/ichat package.
 export {
   registerMarkdownPlugin,
+  freezeMarkdownExtensions,
 } from '@bndynet/ichat-messages';
 export type { MarkdownPlugin } from '@bndynet/ichat-messages';
 

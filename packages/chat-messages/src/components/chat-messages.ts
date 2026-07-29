@@ -47,6 +47,8 @@ import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
 import { injectPluginCss } from '../renderers/extension-styles.js';
+import { freezeMarkdownExtensions } from '../renderers/markdown-extensions.js';
+import { rendererRegistry } from '../renderers/registry.js';
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
@@ -176,6 +178,10 @@ export class ChatMessages extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    // Freeze both registries on first mount — after this point, registering
+    // renderers or markdown plugins will throw a clear error.
+    rendererRegistry.freeze();
+    freezeMarkdownExtensions();
     this._extCleanup = injectPluginCss(this.shadowRoot!);
     this._globalExtCleanup = injectPluginCss(document.head);
   }

@@ -10,6 +10,7 @@ export interface MarkdownPlugin {
 
 const registeredPlugins = new Map<string, MarkdownPlugin>();
 let combinedCss = '';
+let frozen = false;
 
 function recomputeCss(): void {
   combinedCss = Array.from(registeredPlugins.values())
@@ -18,11 +19,25 @@ function recomputeCss(): void {
     .join('\n');
 }
 
+/** Freeze the plugin registry so no new plugins can be registered. Idempotent. */
+export function freezeMarkdownExtensions(): void {
+  frozen = true;
+}
+
 /**
  * Register a markdown-it plugin on the shared instance.
  * Idempotent: calling again with the same name is a no-op.
+ *
+ * @throws If called after the first iChat component has connected to the DOM.
  */
 export function registerMarkdownPlugin(ext: MarkdownPlugin): () => void {
+  if (frozen) {
+    throw new Error(
+      'Markdown extensions must be registered before iChat is mounted. ' +
+      'Call registerCodeRenderer() or registerMarkdownPlugin() at module-init time, ' +
+      'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
+    );
+  }
   if (registeredPlugins.has(ext.name)) return () => {};
 
   ext.plugin(md);
