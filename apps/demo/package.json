@@ -12,11 +12,11 @@
     "@bndynet/ichat": "*",
     "@bndynet/ichat-input": "*",
     "@bndynet/ichat-messages": "*",
+    "@bndynet/ichat-renderer-chart": "*",
     "@bndynet/ichat-renderer-katex": "*",
+    "@bndynet/ichat-renderer-mermaid": "*",
     "@bndynet/ichat-renderers": "*",
     "@bndynet/vue-site": "^0.1.12",
-    "echarts": "^6.0.0",
-    "markdown-it": "^14.1.0",
-    "mermaid": "^11.4.0"
+    "markdown-it": "^14.1.0"
   }
 }

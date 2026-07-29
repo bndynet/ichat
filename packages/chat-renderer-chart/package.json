@@ -1,7 +1,7 @@
 {
-  "name": "@bndynet/ichat-renderers",
+  "name": "@bndynet/ichat-renderer-chart",
   "version": "2.1.1",
-  "description": "Optional peer add-on for @bndynet/ichat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
+  "description": "Chart fenced-code renderer for @bndynet/ichat: bar, line, area, pie, and gauge charts via ECharts.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,10 +24,8 @@
     "@bndynet/ichat-messages": "^2.1.1",
     "markdown-it": ">=14"
   },
-  "peerDependenciesMeta": {
-    "markdown-it": {
-      "optional": true
-    }
+  "dependencies": {
+    "@bndynet/icharts": "^6.0.0"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",

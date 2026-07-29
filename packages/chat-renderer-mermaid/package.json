@@ -1,7 +1,7 @@
 {
-  "name": "@bndynet/ichat-renderers",
+  "name": "@bndynet/ichat-renderer-mermaid",
   "version": "2.1.1",
-  "description": "Optional peer add-on for @bndynet/ichat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
+  "description": "Mermaid diagram fenced-code renderer for @bndynet/ichat: theme-aware diagrams with async rendering.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -22,17 +22,14 @@
   },
   "peerDependencies": {
     "@bndynet/ichat-messages": "^2.1.1",
-    "markdown-it": ">=14"
-  },
-  "peerDependenciesMeta": {
-    "markdown-it": {
-      "optional": true
-    }
+    "markdown-it": ">=14",
+    "mermaid": ">=11"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",
     "@types/markdown-it": "^14.1.2",
     "markdown-it": "^14.1.0",
+    "mermaid": "^11.4.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
