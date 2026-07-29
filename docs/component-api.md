@@ -58,7 +58,8 @@ registerMarkdownPlugin({
   plugin: (md) => {                    // markdown-it plugin function
     md.inline.ruler.before('escape', 'emoji', ...);
   },
-  css: '.emoji { font-size: 1.2em; }', // optional: auto-injected into all Shadow DOMs
+  styles: '.emoji { font-size: 1.2em; }', // optional: auto-injected into all Shadow DOMs
+  // globalStyles: '@font-face { ... }',  // optional: injected into document.head once
 });
 ```
 

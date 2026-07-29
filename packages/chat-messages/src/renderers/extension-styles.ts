@@ -1,4 +1,7 @@
-import { getMarkdownPluginCss } from './markdown-extensions.js';
+import {
+  getMarkdownPluginStyles,
+  getMarkdownPluginGlobalStyles,
+} from './markdown-extensions.js';
 
 const EXT_ATTR = 'data-ichat-ext';
 
@@ -9,7 +12,7 @@ let sharedSheet: CSSStyleSheet | null | undefined;
 function getOrCreateSharedSheet(): CSSStyleSheet | null {
   if (sharedSheet !== undefined) return sharedSheet;
 
-  const css = getMarkdownPluginCss();
+  const css = getMarkdownPluginStyles();
   if (!css) {
     sharedSheet = null;
     return null;
@@ -53,7 +56,7 @@ export function injectPluginCss(parent: ParentNode): () => void {
   }
 
   // ── Fallback: per-root <style> element ──────────────────────────────────
-  const css = getMarkdownPluginCss();
+  const css = getMarkdownPluginStyles();
   if (!css) return () => {};
 
   // Dedup: don't append if already present (e.g. Lit reconnect after DOM move).
@@ -80,7 +83,7 @@ let globalCssInjected = false;
  */
 export function injectGlobalPluginCss(): void {
   if (globalCssInjected) return;
-  const css = getMarkdownPluginCss();
+  const css = getMarkdownPluginGlobalStyles();
   if (!css) return;
 
   const style = document.createElement('style');

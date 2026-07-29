@@ -5,16 +5,24 @@ import { invalidateMarkdownCache } from './markdown-morph.js';
 export interface MarkdownPlugin {
   name: string;
   plugin: (md: MarkdownIt) => void;
-  css?: string;
+  /** CSS injected into every relevant Shadow Root (shared constructable stylesheet). */
+  styles?: string;
+  /** CSS injected into `document.head` once per document (e.g. `@font-face`). */
+  globalStyles?: string;
 }
 
 const registeredPlugins = new Map<string, MarkdownPlugin>();
-let combinedCss = '';
+let combinedStyles = '';
+let combinedGlobalStyles = '';
 let frozen = false;
 
 function recomputeCss(): void {
-  combinedCss = Array.from(registeredPlugins.values())
-    .map((e) => e.css)
+  combinedStyles = Array.from(registeredPlugins.values())
+    .map((e) => e.styles)
+    .filter(Boolean)
+    .join('\n');
+  combinedGlobalStyles = Array.from(registeredPlugins.values())
+    .map((e) => e.globalStyles)
     .filter(Boolean)
     .join('\n');
 }
@@ -50,7 +58,12 @@ export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
   invalidateMarkdownCache();
 }
 
-/** Combined CSS of all registered plugins (internal use). */
-export function getMarkdownPluginCss(): string {
-  return combinedCss;
+/** Combined shadow-root CSS of all registered plugins (internal use). */
+export function getMarkdownPluginStyles(): string {
+  return combinedStyles;
+}
+
+/** Combined global CSS of all registered plugins (internal use). */
+export function getMarkdownPluginGlobalStyles(): string {
+  return combinedGlobalStyles;
 }

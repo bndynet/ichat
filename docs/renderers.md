@@ -66,7 +66,8 @@ registerMarkdownPlugin({
     // Add inline rules, block rules, or modify renderer
     md.inline.ruler.before('escape', 'my_rule', ...);
   },
-  css: '.my-class { color: red; }',  // optional: auto-injected into all components
+  styles: '.my-class { color: red; }',  // optional: auto-injected into all Shadow DOMs
+  // globalStyles: '@font-face { ... }',  // optional: injected into document.head once
 });
 ```
 
