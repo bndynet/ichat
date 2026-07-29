@@ -15,7 +15,12 @@
     "@bndynet/ichat-renderers": "*",
     "@bndynet/vue-site": "^0.1.12",
     "echarts": "^6.0.0",
+    "katex": "^0.18.1",
     "markdown-it": "^14.1.0",
+    "markdown-it-katex": "^2.0.3",
     "mermaid": "^11.4.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8"
   }
 }

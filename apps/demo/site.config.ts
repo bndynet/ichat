@@ -9,7 +9,7 @@ export default defineConfig({
       label: 'Plugins',
       icon: 'plug',
       children: [
-        { label: 'Code Copy', icon: 'clipboard-copy', page: () => import('./src/pages/plugins/CodeCopyPage.vue') },
+        { label: 'LaTeX Math', icon: 'sigma', page: () => import('./src/pages/plugins/LatexPage.vue') },
       ],
     },
     { label: 'Renderers', icon: 'layout-list',  children: [
