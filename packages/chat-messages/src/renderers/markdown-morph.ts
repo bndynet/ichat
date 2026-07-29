@@ -1,4 +1,4 @@
-import { renderMarkdown, type MarkdownRenderOptions, invalidateMarkdownCache } from './markdown-renderer.js';
+import { renderMarkdown, type MarkdownRenderOptions } from './markdown-renderer.js';
 import { morphHtmlInto } from './dom-morph.js';
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
@@ -62,4 +62,11 @@ export function renderMarkdownInto(
   return { changed: true, html };
 }
 
-export { invalidateMarkdownCache };
+/** Invalidate the raw-content cache for a specific part or entirely. */
+export function invalidateMarkdownCache(partId?: string): void {
+  if (partId) {
+    rawContentCache.delete(partId);
+  } else {
+    rawContentCache.clear();
+  }
+}

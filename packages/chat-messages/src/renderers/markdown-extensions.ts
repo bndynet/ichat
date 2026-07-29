@@ -1,5 +1,6 @@
 import type MarkdownIt from 'markdown-it';
-import { md, invalidateMarkdownCache } from './markdown-renderer.js';
+import { md } from './markdown-renderer.js';
+import { invalidateMarkdownCache } from './markdown-morph.js';
 
 export interface MarkdownPlugin {
   name: string;

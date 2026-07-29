@@ -18,12 +18,12 @@ export {
   sanitizeHtml,
   extractReasoning,
   hasUnclosedReasoning,
-  invalidateMarkdownCache,
   resolveAsyncBlocks,
 } from './renderers/markdown-renderer.js';
 export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
 export {
   renderMarkdownInto,
+  invalidateMarkdownCache,
 } from './renderers/markdown-morph.js';
 export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
 export {

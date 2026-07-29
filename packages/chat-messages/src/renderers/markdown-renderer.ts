@@ -250,19 +250,6 @@ export function sanitizeHtml(html: string, options?: MarkdownRenderOptions): str
   return DOMPurify.sanitize(html, domPurifyConfig(options));
 }
 
-// ── Markdown content cache ────────────────────────────────────────────────────
-// Avoid re-rendering unchanged markdown content during streaming updates.
-const markdownContentCache = new Map<string, { rawMd: string; html: string }>();
-
-/** Invalidate the markdown cache for a specific part or entirely. */
-export function invalidateMarkdownCache(partId?: string): void {
-  if (partId) {
-    markdownContentCache.delete(partId);
-  } else {
-    markdownContentCache.clear();
-  }
-}
-
 export function renderMarkdown(content: string, options?: MarkdownRenderOptions): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
