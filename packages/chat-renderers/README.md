@@ -3,7 +3,7 @@
 Lightweight fenced-code renderers for iChat: KPI cards and interactive forms. No heavy third-party dependencies.
 
 For charts and Mermaid diagrams, see the separate packages:
-- [`@bndynet/ichat-renderer-chart`](../chat-renderer-chart) — ECharts charts
+- [`@bndynet/ichat-renderer-chart`](../chat-renderer-chart) — Charts via @bndynet/icharts
 - [`@bndynet/ichat-renderer-mermaid`](../chat-renderer-mermaid) — Mermaid diagrams
 
 ## Install

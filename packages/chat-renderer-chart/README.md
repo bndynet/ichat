@@ -1,6 +1,6 @@
 # @bndynet/ichat-renderer-chart
 
-Chart fenced-code renderer for iChat. Renders ````chart` fence blocks as interactive ECharts visualizations.
+Chart fenced-code renderer for iChat. Renders ````chart` fence blocks as interactive chart visualizations via `@bndynet/icharts`.
 
 ## Install
 
