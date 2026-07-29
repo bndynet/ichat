@@ -61,8 +61,8 @@ For plugins that operate at the **markdown-it** level (inline rules, block rules
 import { registerMarkdownPlugin } from '@bndynet/ichat';
 
 registerMarkdownPlugin({
-  name: 'my-plugin',
-  plugin: (md) => {
+  id: 'my-plugin',
+  install: (md) => {
     // Add inline rules, block rules, or modify renderer
     md.inline.ruler.before('escape', 'my_rule', ...);
   },
@@ -81,7 +81,7 @@ For simple markdown-it plugins that don't need CSS, `registerMarkdownPlugin` is 
 > md.use(chartPlugin);
 > ```
 >
-> This is equivalent to `registerMarkdownPlugin({ name: 'chart', plugin: chartPlugin })`. The new API is preferred for idempotency and cache management.
+> This is equivalent to `registerMarkdownPlugin({ id: 'chart', install: chartPlugin })`. The new API is preferred for idempotency and cache management.
 
 Fenced block in markdown:
 

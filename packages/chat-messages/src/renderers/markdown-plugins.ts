@@ -27,30 +27,30 @@ function recomputeCss(): void {
     .join('\n');
 }
 
-/** Freeze the extension registry so no new extensions can be registered. Idempotent. */
-export function freezeMarkdownExtensions(): void {
+/** Freeze the plugin registry so no new plugins can be registered. Idempotent. */
+export function freezeMarkdownPlugins(): void {
   frozen = true;
 }
 
 /**
- * Register a markdown-it extension on the shared instance.
+ * Register a markdown-it plugin on the shared instance.
  *
  * - Same `id` with the same object reference: silent no-op (idempotent).
  * - Same `id` with a different object: throws — prevents accidental version
  *   conflicts or duplicate registration from separate bundles.
- * - Extensions are installed in registration order; fine-grained markdown-it
- *   rule ordering within a single extension is controlled via
+ * - Plugins are installed in registration order; fine-grained markdown-it
+ *   rule ordering within a single plugin is controlled via
  *   `md.inline.ruler.before()` / `md.block.ruler.after()` etc.
  *
- * Extensions are permanent — once registered they cannot be unregistered.
+ * Plugins are permanent — once registered they cannot be unregistered.
  *
  * @throws If called after the first iChat component has connected to the DOM.
- * @throws If a different extension is already registered under the same `id`.
+ * @throws If a different plugin is already registered under the same `id`.
  */
 export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
   if (frozen) {
     throw new Error(
-      'Markdown extensions must be registered before iChat is mounted. ' +
+      'Markdown plugins must be registered before iChat is mounted. ' +
       'Call registerCodeRenderer() or registerMarkdownPlugin() at module-init time, ' +
       'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
     );
@@ -77,7 +77,7 @@ export function getMarkdownPluginStyles(): string {
   return combinedStyles;
 }
 
-/** Combined global CSS of all registered extensions (internal use). */
+/** Combined global CSS of all registered plugins (internal use). */
 export function getMarkdownPluginGlobalStyles(): string {
   return combinedGlobalStyles;
 }

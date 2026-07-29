@@ -28,9 +28,9 @@ export {
 export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
 export {
   registerMarkdownPlugin,
-  freezeMarkdownExtensions,
-} from './renderers/markdown-extensions.js';
-export type { MarkdownPlugin } from './renderers/markdown-extensions.js';
+  freezeMarkdownPlugins,
+} from './renderers/markdown-plugins.js';
+export type { MarkdownPlugin } from './renderers/markdown-plugins.js';
 export { updateProgressStepStatus } from './renderers/progress-plugin.js';
 export type { ProgressStatus } from './renderers/progress-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';

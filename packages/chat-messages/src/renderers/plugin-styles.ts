@@ -1,9 +1,9 @@
 import {
   getMarkdownPluginStyles,
   getMarkdownPluginGlobalStyles,
-} from './markdown-extensions.js';
+} from './markdown-plugins.js';
 
-const EXT_ATTR = 'data-ichat-ext';
+const PLUGIN_ATTR = 'data-ichat-plugin';
 
 // ── Shared constructable stylesheet ───────────────────────────────────────────
 
@@ -60,10 +60,10 @@ export function injectPluginCss(parent: ParentNode): () => void {
   if (!css) return () => {};
 
   // Dedup: don't append if already present (e.g. Lit reconnect after DOM move).
-  if (parent.querySelector(`style[${EXT_ATTR}]`)) return () => {};
+  if (parent.querySelector(`style[${PLUGIN_ATTR}]`)) return () => {};
 
   const style = document.createElement('style');
-  style.setAttribute(EXT_ATTR, '');
+  style.setAttribute(PLUGIN_ATTR, '');
   style.textContent = css;
   parent.insertBefore(style, parent.firstChild);
 
@@ -87,7 +87,7 @@ export function injectGlobalPluginCss(): void {
   if (!css) return;
 
   const style = document.createElement('style');
-  style.setAttribute('data-ichat-ext-global', '');
+  style.setAttribute('data-ichat-plugin-global', '');
   style.textContent = css;
   document.head.insertBefore(style, document.head.firstChild);
   globalCssInjected = true;

@@ -54,8 +54,8 @@ import { registerMarkdownPlugin } from '@bndynet/ichat';
 // or from '@bndynet/ichat-messages' if using the messages component standalone
 
 registerMarkdownPlugin({
-  name: 'my-emoji',                    // unique id, idempotent registration
-  plugin: (md) => {                    // markdown-it plugin function
+  id: 'my-emoji',                      // unique id
+  install: (md) => {                   // markdown-it plugin function
     md.inline.ruler.before('escape', 'emoji', ...);
   },
   styles: '.emoji { font-size: 1.2em; }', // optional: auto-injected into all Shadow DOMs
@@ -63,8 +63,9 @@ registerMarkdownPlugin({
 });
 ```
 
-- **Idempotent** — calling again with the same `name` is a no-op.
-- **CSS auto-injection** — the `css` string is automatically injected into every `<i-chat-messages>`, `<i-chat-message>`, `<i-chat-reasoning>`, and `<i-chat-tool-call>` shadow root.
+- **Idempotent** — registering the same object reference with the same `id` is a no-op.
+- **Conflict detection** — registering a different object under an already-used `id` throws a clear error.
+- **CSS auto-injection** — the `styles` string is automatically injected into every `<i-chat-messages>`, `<i-chat-message>`, `<i-chat-reasoning>`, and `<i-chat-tool-call>` shadow root via a shared constructable stylesheet.
 - **Cache invalidation** — the markdown render cache is flushed so re-renders pick up the extension.
 - For fenced-code-block renderers (chart, Mermaid, form, etc.), use `registerRenderer` instead. See [Renderers](./renderers.md).
 
