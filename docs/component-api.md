@@ -68,6 +68,8 @@ registerMarkdownPlugin({
 - **Cache invalidation** — the markdown render cache is flushed so re-renders pick up the extension.
 - For fenced-code-block renderers (chart, Mermaid, form, etc.), use `registerRenderer` instead. See [Renderers](./renderers.md).
 
+> **⚠️ Important:** All Markdown extensions — both `registerMarkdownPlugin` and `registerCodeRenderer` — **must** be registered **before** the first `<i-chat>` or `<i-chat-messages>` component connects to the DOM. Extensions registered after a component has already connected and rendered may not take effect on existing content. Always register extensions at module-init time, before any `<i-chat>` element is inserted into the document.
+
 ### Part actions
 
 `part-action` is the unified event for interactions that originate inside a rendered message part. `kind` names the part domain (`'form'`, `'todo'`, or `'tool-call'`), while `action` names the specific intent (`'submit'`, `'change-status'`, `'approve'`, `'reject'`). The original `form-submit`, `todo-action`, and `tool-action` events still fire as deprecated compatibility events and should only be removed in a future major version.
