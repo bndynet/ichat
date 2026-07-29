@@ -1,3 +1,9 @@
+import { rendererRegistry } from '@bndynet/ichat-messages';
+import { mermaidRenderer } from './mermaid-renderer.js';
+
+// Auto-register on import — no manual setup needed.
+rendererRegistry.register(mermaidRenderer);
+
 export {
   ChatMermaid,
   MERMAID_SOURCE_CLASS,

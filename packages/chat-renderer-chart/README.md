@@ -10,13 +10,19 @@ npm install @bndynet/ichat-renderer-chart
 
 ## Usage
 
-Register **before** the first `<i-chat>` element connects to the DOM:
+Import **before** the first `<i-chat>` element connects to the DOM — auto-registers on import:
+
+```typescript
+import '@bndynet/ichat-renderer-chart';
+```
+
+Or register manually with custom options:
 
 ```typescript
 import { registerCodeRenderer } from '@bndynet/ichat';
-import { chartRenderer } from '@bndynet/ichat-renderer-chart';
+import { createChartRenderer } from '@bndynet/ichat-renderer-chart';
 
-registerCodeRenderer(chartRenderer);
+registerCodeRenderer(createChartRenderer({ codeToggle: false }));
 ```
 
 ## Fence format
