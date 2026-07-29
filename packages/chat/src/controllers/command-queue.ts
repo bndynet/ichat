@@ -5,11 +5,13 @@
  * replayed in FIFO order once the component has rendered.
  */
 
+import type { ChatMessage } from '@bndynet/ichat-messages';
+
 /** A command that was queued before the child `<i-chat-messages>` was ready. */
 export type PendingCommand =
   | { kind: 'show-error'; text: string; options?: { duration?: number } }
   | { kind: 'dismiss-error' }
-  | { kind: 'reply-message'; id: string; info?: Partial<import('../types.js').ChatMessage> }
+  | { kind: 'reply-message'; id: string; info?: Partial<ChatMessage> }
   | { kind: 'clear-reply-message'; idOrKey?: string };
 
 export class CommandQueue {

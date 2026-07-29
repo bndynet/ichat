@@ -67,7 +67,6 @@ registerMarkdownPlugin({
     md.inline.ruler.before('escape', 'my_rule', ...);
   },
   css: '.my-class { color: red; }',  // optional: auto-injected into all components
-  cleanup: () => { /* optional teardown */ },
 });
 ```
 
