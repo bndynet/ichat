@@ -14,8 +14,9 @@
     }
   },
   "files": [
-    "dist"
-  ],
+    "dist",
+    "README.md"
+  ],,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
