@@ -1,0 +1,45 @@
+{
+  "name": "@bndynet/ichat-renderer-katex",
+  "version": "2.1.1",
+  "description": "KaTeX math rendering plugin for @bndynet/ichat: $inline$ and $$display$$ LaTeX math via markdown-it-katex.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "@bndynet/ichat-messages": "^2.1.1",
+    "markdown-it": ">=14"
+  },
+  "dependencies": {
+    "katex": "^0.16.11",
+    "markdown-it-katex": "^2.0.3"
+  },
+  "devDependencies": {
+    "@bndynet/ichat-messages": "file:../chat-messages",
+    "markdown-it": "^14.1.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

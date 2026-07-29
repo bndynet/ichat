@@ -1,9 +1,9 @@
 <script setup>
 import '@bndynet/ichat';
+import '@bndynet/ichat-renderer-katex';
 import { nextTick, onMounted, ref } from 'vue';
 import { nextId } from '../../composables/demo-data.js';
-import { registerMarkdownPlugin, textPart } from '@bndynet/ichat';
-import mk from 'markdown-it-katex';
+import { textPart } from '@bndynet/ichat';
 import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
 import latexExample from '../../examples/plugins/latex.md?raw';
 
@@ -16,52 +16,6 @@ async function waitForChatHost(maxTicks = 30) {
   }
   return chatRef.value;
 }
-
-// ── Register LaTeX plugin via markdown-it-katex ──────────────────────────
-
-registerMarkdownPlugin({
-  id: 'latex',
-  install: mk,
-  styles: `
-    .katex { font-size: 1.1em; }
-    .katex .katex-html { max-width: 100%; overflow: hidden; }
-    .katex .hide-tail { overflow: hidden; position: relative; display: inline-block; width: 100%; }
-    .katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
-    .katex-display > .katex { max-width: 100%; display: inline-block; }
-  `,
-  globalStyles: `
-    @font-face {
-      font-family: KaTeX_Main;
-      src: url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2) format('woff2');
-      font-weight: normal;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: KaTeX_Main;
-      src: url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Bold.woff2) format('woff2');
-      font-weight: bold;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: KaTeX_Main;
-      src: url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Italic.woff2) format('woff2');
-      font-weight: normal;
-      font-style: italic;
-    }
-    @font-face {
-      font-family: KaTeX_Math;
-      src: url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-Italic.woff2) format('woff2');
-      font-weight: normal;
-      font-style: italic;
-    }
-    @font-face {
-      font-family: KaTeX_AMS;
-      src: url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_AMS-Regular.woff2) format('woff2');
-      font-weight: normal;
-      font-style: normal;
-    }
-  `,
-});
 
 // ── Demo messages ────────────────────────────────────────────────────────
 

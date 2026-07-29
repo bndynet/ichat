@@ -1,23 +1,14 @@
-# LaTeX Math (markdown-it-katex)
+# LaTeX Math (ichat-renderer-katex)
 
-Use the standard `markdown-it-katex` plugin via `registerMarkdownPlugin`. Keep CSS minimal to avoid conflicts with chat bubble styles.
+Install and import `@bndynet/ichat-renderer-katex`. The package auto-registers `markdown-it-katex` with chat-friendly CSS and KaTeX font declarations.
+
+```bash
+npm install @bndynet/ichat-renderer-katex
+```
 
 ```typescript
-import { registerMarkdownPlugin } from '@bndynet/ichat';
-import mk from 'markdown-it-katex';
-
-registerMarkdownPlugin({
-  id: 'latex',
-  install: mk,
-  styles: `
-    .katex { font-size: 1.1em; }
-    .katex .katex-html { max-width: 100%; overflow: hidden; }
-    .katex .hide-tail { overflow: hidden; position: relative; display: inline-block; width: 100%; }
-    .katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
-    .katex-display > .katex { max-width: 100%; display: inline-block; }
-  `,
-  globalStyles: `
-    @font-face { font-family: KaTeX_Main; src: url(...) format('woff2'); }
-  `,
-});
+// Auto-registers on import — no manual setup needed
+import '@bndynet/ichat-renderer-katex';
 ```
+
+That's it. `$...$` for inline math and `$$...$$` for display math just work inside chat messages.

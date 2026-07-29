@@ -68,6 +68,9 @@ export default defineConfig({
       name: '@bndynet/ichat-renderers',
       entryPath: '../../packages/chat-renderers/src/index.ts',
     }, {
+      name: '@bndynet/ichat-renderer-katex',
+      entryPath: '../../packages/chat-renderer-katex/src/index.ts',
+    }, {
       name: '@bndynet/ichat',
       entryPath: '../../packages/chat/src/index.ts',
     }],
