@@ -33,7 +33,9 @@ Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConf
 
 | Package | Description |
 |---|---|
-| `@bndynet/ichat-renderers` | Chart, KPI, form, and Mermaid fenced-code renderers |
+| `@bndynet/ichat-renderers` | KPI cards and interactive forms |
+| `@bndynet/ichat-renderer-chart` | Charts (bar, line, area, pie, gauge) via @bndynet/icharts |
+| `@bndynet/ichat-renderer-mermaid` | Mermaid diagrams with theme-aware rendering |
 | `@bndynet/ichat-renderer-katex` | KaTeX math rendering ($inline$ and $$display$$) |
 
 ## License
