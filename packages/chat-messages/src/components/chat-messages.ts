@@ -46,7 +46,7 @@ import {
 import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
-import { injectPluginCss } from '../renderers/extension-styles.js';
+import { injectPluginCss, injectGlobalPluginCss } from '../renderers/extension-styles.js';
 import { freezeMarkdownExtensions } from '../renderers/markdown-extensions.js';
 import { rendererRegistry } from '../renderers/registry.js';
 
@@ -173,7 +173,6 @@ export class ChatMessages extends LitElement {
   };
 
   private _extCleanup?: () => void;
-  private _globalExtCleanup?: () => void;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -183,12 +182,12 @@ export class ChatMessages extends LitElement {
     rendererRegistry.freeze();
     freezeMarkdownExtensions();
     this._extCleanup = injectPluginCss(this.shadowRoot!);
-    this._globalExtCleanup = injectPluginCss(document.head);
+    // Global CSS is injected once per document, never removed.
+    injectGlobalPluginCss();
   }
 
   override disconnectedCallback(): void {
     this._extCleanup?.();
-    this._globalExtCleanup?.();
     super.disconnectedCallback();
     this._resizeObserver?.disconnect();
     clearTimeout(this._resizeDebounceTimer);
