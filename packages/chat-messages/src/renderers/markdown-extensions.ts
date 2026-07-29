@@ -49,21 +49,23 @@ export function freezeMarkdownExtensions(): void {
  */
 export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
   if (frozen) {
-    throw new Error(
-      'Markdown extensions must be registered before iChat is mounted. ' +
-      'Call registerCodeRenderer() or registerMarkdownPlugin() at module-init time, ' +
+    console.warn(
+      '[i-chat] Markdown extensions should be registered before iChat is mounted. ' +
+      'Call registerMarkdownPlugin() at module-init time, ' +
       'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
     );
+    // Still install — late registration is better than not at all.
   }
 
   const existing = registeredPlugins.get(ext.id);
   if (existing) {
     if (existing === ext) return; // same object — idempotent
-    throw new Error(
-      `Markdown plugin "${ext.id}" is already registered with a different object. ` +
+    console.warn(
+      `[i-chat] Markdown plugin "${ext.id}" is already registered with a different object. ` +
       'This usually means two copies of the same plugin are loaded from separate bundles. ' +
-      'Ensure only one version is imported.',
+      'Skipping duplicate.',
     );
+    return;
   }
 
   ext.install(md);

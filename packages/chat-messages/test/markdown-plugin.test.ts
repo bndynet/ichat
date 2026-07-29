@@ -135,42 +135,35 @@ test('re-registering the same object does not re-run install', () => {
 // 4. Conflict detection (different object, same id)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('re-registering a different object with the same id throws', () => {
+test('re-registering a different object with the same id is silently ignored', () => {
   const p1 = makePlugin('test-conflict');
   registerMarkdownPlugin(p1);
 
   const p2 = makePlugin('test-conflict'); // different object
-  assert.throws(
-    () => registerMarkdownPlugin(p2),
-    /already registered with a different object/,
-  );
+  assert.doesNotThrow(() => registerMarkdownPlugin(p2));
 });
 
-test('conflict error message includes the plugin id', () => {
-  const id = 'test-conflict-msg';
-  registerMarkdownPlugin(makePlugin(id));
-  assert.throws(
-    () => registerMarkdownPlugin(makePlugin(id)),
-    new RegExp(id),
-  );
+test('duplicate id does not run install twice', () => {
+  const id = 'test-dup-install';
+  let count = 0;
+  registerMarkdownPlugin({ id, install: () => { count++; } });
+  registerMarkdownPlugin({ id, install: () => { count++; } });
+  assert.equal(count, 1, 'install should only run once');
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 5. Registration after freeze throws
+// 5. Registration after freeze is a warning, not an error
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('registerMarkdownPlugin throws after freezeMarkdownPlugins', () => {
+test('registerMarkdownPlugin does not throw after freezeMarkdownPlugins', () => {
   freezeMarkdownPlugins();
-  assert.throws(
-    () => registerMarkdownPlugin(makePlugin('test-after-freeze')),
-    /must be registered before iChat is mounted/,
-  );
+  assert.doesNotThrow(() => registerMarkdownPlugin(makePlugin('test-after-freeze')));
 });
 
-test('rendererRegistry.register throws after freeze', () => {
+test('rendererRegistry.register does not throw after freeze', () => {
   rendererRegistry.freeze();
-  assert.throws(
-    () => rendererRegistry.register({
+  assert.doesNotThrow(() =>
+    rendererRegistry.register({
       name: 'test-after-freeze',
       test: (lang: string) => lang === 'test',
       render: (code: string) => `<pre>${code}</pre>`,
@@ -187,11 +180,8 @@ test('freezeMarkdownPlugins is idempotent', () => {
   freezeMarkdownPlugins();
   freezeMarkdownPlugins();
   freezeMarkdownPlugins();
-  // After multiple freezes, registration should still throw.
-  assert.throws(
-    () => registerMarkdownPlugin(makePlugin('test-multi-freeze')),
-    /must be registered before iChat is mounted/,
-  );
+  // After multiple freezes, registration should not throw (just warn).
+  assert.doesNotThrow(() => registerMarkdownPlugin(makePlugin('test-multi-freeze')));
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

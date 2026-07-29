@@ -11,11 +11,12 @@ class RendererRegistry {
 
   register(renderer: BlockRenderer): void {
     if (this._frozen) {
-      throw new Error(
-        'Markdown plugins and renderers must be registered before iChat is mounted. ' +
-        'Call registerCodeRenderer() or registerMarkdownPlugin() at module-init time, ' +
+      console.warn(
+        '[i-chat] Block renderers should be registered before iChat is mounted. ' +
+        'Call registerCodeRenderer() at module-init time, ' +
         'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
       );
+      return;
     }
     this._renderers.set(renderer.name, renderer);
   }
