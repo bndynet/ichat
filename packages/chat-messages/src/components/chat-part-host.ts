@@ -5,21 +5,13 @@ import { setVersionAttribute } from '../version.js';
 import { ref, createRef } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type {
-  ChatFormSubmitDetail,
   ChatMessage,
   ChatPartActionDetail,
   CustomPart,
   MessagePart,
-  TodoActionDetail,
-  ToolActionDetail,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
-import {
-  createFormSubmitDetail,
-  createPartActionDetail,
-  createTodoActionDetail,
-  createToolActionDetail,
-} from '../message-events.js';
+import { createPartActionDetail } from '../message-events.js';
 import { sanitizeHtml } from '../renderers/markdown-renderer.js';
 import { partRendererRegistry } from '../renderers/part-registry.js';
 import { morphHtmlInto } from '../renderers/dom-morph.js';
@@ -72,15 +64,11 @@ export class ChatPartHost extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
-    this.addEventListener('form-submit', this._onFormSubmit);
-    this.addEventListener('todo-action', this._onTodoAction);
-    this.addEventListener('tool-action', this._onToolAction);
+    this.addEventListener('part-action', this._onPartAction);
   }
 
   override disconnectedCallback(): void {
-    this.removeEventListener('form-submit', this._onFormSubmit);
-    this.removeEventListener('todo-action', this._onTodoAction);
-    this.removeEventListener('tool-action', this._onToolAction);
+    this.removeEventListener('part-action', this._onPartAction);
     super.disconnectedCallback();
   }
 
@@ -98,110 +86,33 @@ export class ChatPartHost extends LitElement {
     };
   }
 
-  private _onFormSubmit = (e: Event): void => {
+  private _onPartAction = (e: Event): void => {
     if (!this.message) return;
-    const ev = e as CustomEvent<Partial<ChatFormSubmitDetail>>;
+    const ev = e as CustomEvent<Record<string, unknown>>;
+    // Already enriched by a parent part-host — skip.
     if (ev.detail?.messageId != null) return;
-    if (!this._isEmbeddedEvent(e, 'I-CHAT-FORM')) return;
+    // Only handle events from our own direct children.
+    if (!this._isEmbeddedEvent(e)) return;
+
+    const detail = ev.detail ?? {};
+    const kind = detail.kind as string | undefined;
+    if (!kind) return;
 
     e.stopPropagation();
-    if (!ev.detail?.formId || !ev.detail.values) return;
-    const detail = createFormSubmitDetail(this.message, {
-      formId: ev.detail.formId,
-      title: ev.detail.title,
-      values: ev.detail.values,
+
+    const enriched = createPartActionDetail({
+      kind: kind as ChatPartActionDetail['kind'],
+      action: (detail.action as string) ?? kind,
+      message: this.message,
+      detail,
+      part: this._partFromEvent(e),
     });
-    this._dispatchPartAction(
-      createPartActionDetail({
-        kind: 'form',
-        action: 'submit',
-        message: this.message,
-        detail,
-        part: this._partFromEvent(e),
-      })
-    );
-    // Deprecated compatibility event. Keep until a future major version so
-    // existing hosts can migrate to `part-action` incrementally.
-    this.dispatchEvent(
-      new CustomEvent<ChatFormSubmitDetail>('form-submit', {
-        detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this._dispatchPartAction(enriched);
   };
 
-  private _onTodoAction = (e: Event): void => {
-    if (!this.message) return;
-    type RequestDetail = Omit<TodoActionDetail, 'messageId' | 'message'> & {
-      messageId?: string;
-      message?: ChatMessage;
-    };
-    const ev = e as CustomEvent<RequestDetail>;
-    if (ev.detail?.messageId != null) return;
-    if (!this._isEmbeddedEvent(e, 'I-CHAT-TODO')) return;
-
-    e.stopPropagation();
-    const detail = createTodoActionDetail(this.message, ev.detail);
-    this._dispatchPartAction(
-      createPartActionDetail({
-        kind: 'todo',
-        action: detail.action,
-        message: this.message,
-        detail,
-        part: detail.part,
-      })
-    );
-    // Deprecated compatibility event. Keep until a future major version so
-    // existing hosts can migrate to `part-action` incrementally.
-    this.dispatchEvent(
-      new CustomEvent<TodoActionDetail>('todo-action', {
-        detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
-  };
-
-  private _onToolAction = (e: Event): void => {
-    if (!this.message) return;
-    type RequestDetail = Omit<ToolActionDetail, 'messageId' | 'message'> & {
-      messageId?: string;
-      message?: ChatMessage;
-    };
-    const ev = e as CustomEvent<RequestDetail>;
-    if (ev.detail?.messageId != null) return;
-    if (!this._isEmbeddedEvent(e, 'I-CHAT-TOOL-CALL')) return;
-
-    e.stopPropagation();
-    if (!ev.detail?.part || !ev.detail.toolCallId) return;
-    const detail = createToolActionDetail(this.message, ev.detail);
-    this._dispatchPartAction(
-      createPartActionDetail({
-        kind: 'tool-call',
-        action: detail.action,
-        message: this.message,
-        detail,
-        part: detail.part,
-      })
-    );
-    // Deprecated compatibility event. Keep until a future major version so
-    // existing hosts can migrate to `part-action` incrementally.
-    this.dispatchEvent(
-      new CustomEvent<ToolActionDetail>('tool-action', {
-        detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
-  };
-
-  private _isEmbeddedEvent(e: Event, tagName: string): boolean {
+  private _isEmbeddedEvent(e: Event): boolean {
     const path = e.composedPath();
-    return (
-      path.includes(this) &&
-      path.some((node) => node instanceof HTMLElement && node.tagName === tagName)
-    );
+    return path.includes(this);
   }
 
   private _partFromEvent(e: Event): MessagePart | undefined {

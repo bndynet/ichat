@@ -171,16 +171,3 @@ export function normalizeTodoItemUpdateEvent(
 
   return { ok: true, update };
 }
-
-/**
- * @deprecated Use `patchTodoItem()` instead. Kept so existing integrations can
- * upgrade without changing imports.
- */
-export function patchTodoItemInPart(
-  part: TodoPart,
-  itemId: string,
-  patch: TodoItemPatch,
-  revision?: number,
-): TodoPatchResult {
-  return patchTodoItem(part, itemId, patch, revision);
-}

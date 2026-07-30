@@ -54,7 +54,6 @@ export type {
   DateSeparatorLabels,
   ChatFormFieldValues,
   ChatFormDateRangeValue,
-  ChatFormSubmitDetail,
   ChatPartActionDetail,
   ChatPartActionKind,
   ChatLinkClickDetail,
@@ -74,8 +73,6 @@ export type {
   TodoItemPatch,
   TodoPart,
   TodoPartOptions,
-  TodoActionDetail,
-  ToolActionDetail,
   CustomPart,
   PartFactoryOptions,
 } from './types.js';
@@ -95,7 +92,6 @@ export {
   isTerminalTodoItem,
   normalizeTodoItemUpdateEvent,
   patchTodoItem,
-  patchTodoItemInPart,
 } from './todo-state.js';
 export type {
   TodoItemUpdate,
@@ -165,15 +161,7 @@ export {
   shouldInitializeTodoExpansion,
 } from './todo-collapse.js';
 export {
-  createFormSubmitDetail,
   createPartActionDetail,
-  createTodoActionDetail,
-  createToolActionDetail,
-} from './message-events.js';
-export type {
-  ChatFormSubmitRequestDetail,
-  TodoActionRequestDetail,
-  ToolActionRequestDetail,
 } from './message-events.js';
 
 export {

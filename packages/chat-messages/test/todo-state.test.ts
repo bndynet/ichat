@@ -4,7 +4,6 @@ import {
   isTerminalTodoItem,
   areTodoItemsTerminal,
   normalizeTodoItemUpdateEvent,
-  patchTodoItemInPart,
 } from '../src/todo-state.js';
 import { type TodoPart } from '../src/types.js';
 
@@ -412,17 +411,5 @@ test('normalizeTodoItemUpdateEvent rejects non-finite sequenceNumber', () => {
   assert.ok(!result.ok);
   if (!result.ok) {
     assert.equal(result.reason, 'invalid-sequence-number');
-  }
-});
-
-// ── patchTodoItemInPart (deprecated alias) ─────────────────────────────
-
-test('patchTodoItemInPart delegates to patchTodoItem', () => {
-  const part = makeTodoPart();
-  const result = patchTodoItemInPart(part, 'item-1', { status: 'done' });
-
-  assert.ok(result.ok);
-  if (result.ok) {
-    assert.equal(result.part.items[0].status, 'done');
   }
 });

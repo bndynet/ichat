@@ -415,15 +415,10 @@ export interface ChatConfig {
    * `locale`. Provide only the sections / keys you want to change.
    */
   labels?: DeepPartial<ChatLabels>;
-  /**
-   * @deprecated Use `labels.dateSeparator` instead. Kept for backward
-   * compatibility; merged into the resolved `labels.dateSeparator`.
-   */
-  dateSeparatorLabels?: Partial<DateSeparatorLabels>;
 }
 
 export const DEFAULT_CONFIG: Required<
-  Omit<ChatConfig, 'labels' | 'dateSeparatorLabels' | 'allowedLinkProtocols' | 'highlightJs'>
+  Omit<ChatConfig, 'labels' | 'allowedLinkProtocols' | 'highlightJs'>
 > = {
   streamingSpeed: 3,
   selfAvatar: '',

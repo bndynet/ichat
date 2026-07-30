@@ -102,12 +102,11 @@ export class ChatMessages extends LitElement {
   private get _labels(): ChatLabels {
     const locale = this.config.locale ?? DEFAULT_CONFIG.locale;
     const labelsRef = this.config.labels;
-    const dateSepRef = this.config.dateSeparatorLabels;
 
     // Memoization: cache key based on locale + label references
     if (
       this.__labelsCache &&
-      this.__labelsCache.key === `${locale}|${!!labelsRef}|${!!dateSepRef}`
+      this.__labelsCache.key === `${locale}|${!!labelsRef}`
     ) {
       return this.__labelsCache.value;
     }
@@ -115,10 +114,9 @@ export class ChatMessages extends LitElement {
     const value = resolveLabels({
       locale,
       labels: labelsRef,
-      dateSeparatorLabels: dateSepRef,
     });
 
-    this.__labelsCache = { key: `${locale}|${!!labelsRef}|${!!dateSepRef}`, value };
+    this.__labelsCache = { key: `${locale}|${!!labelsRef}`, value };
     return value;
   }
   private __labelsCache?: { key: string; value: ChatLabels };
@@ -485,13 +483,6 @@ export class ChatMessages extends LitElement {
   }
 
   /**
-   * Boolean compatibility wrapper around {@link tryUpdateToolCall}.
-   */
-  updateToolCall(messageId: string, partId: string, patch: Partial<ToolCallPart>): boolean {
-    return this.tryUpdateToolCall(messageId, partId, patch).ok;
-  }
-
-  /**
    * Immutably patch one todo item and return a diagnostic result when the
    * update is ignored. Explicit revisions remain monotonic.
    */
@@ -528,19 +519,6 @@ export class ChatMessages extends LitElement {
   }
 
   /**
-   * Boolean compatibility wrapper around {@link tryUpdateTodoItem}.
-   */
-  updateTodoItem(
-    messageId: string,
-    partId: string,
-    itemId: string,
-    patch: TodoItemPatch,
-    revision?: number,
-  ): boolean {
-    return this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision).ok;
-  }
-
-  /**
    * Apply a backend/SSE todo item update and return a diagnostic result when it
    * is ignored. The event is normalized, then routed through
    * {@link tryUpdateTodoItem} so remote updates and UI actions share the same
@@ -561,13 +539,6 @@ export class ChatMessages extends LitElement {
       };
     }
     return { ok: true, update: result.update, part: update.part };
-  }
-
-  /**
-   * Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}.
-   */
-  applyTodoItemUpdateEvent(event: unknown): boolean {
-    return this.tryApplyTodoItemUpdateEvent(event).ok;
   }
 
   /**
@@ -593,13 +564,6 @@ export class ChatMessages extends LitElement {
       };
     }
     return { ok: true, update: result.update, part: update.part };
-  }
-
-  /**
-   * Boolean compatibility wrapper around {@link tryApplyMessagePartUpdateEvent}.
-   */
-  applyMessagePartUpdateEvent(event: unknown): boolean {
-    return this.tryApplyMessagePartUpdateEvent(event).ok;
   }
 
   removeMessage(id: string): void {

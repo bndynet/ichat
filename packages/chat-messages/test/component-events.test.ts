@@ -7,17 +7,13 @@ import { ChatToolCall } from '../src/components/chat-tool-call.js';
 import {
   textPart,
   todoPart,
-  type ChatFormSubmitDetail,
   type ChatMessage,
   type ChatPartActionDetail,
   type MessagePart,
-  type TodoActionDetail,
   type TodoItem,
   type TodoPart,
-  type ToolActionDetail,
   type ToolCallPart,
 } from '../src/types.js';
-import type { TodoActionRequestDetail } from '../src/message-events.js';
 
 function test(name: string, run: () => void): void {
   try {
@@ -44,9 +40,7 @@ type CustomEventLike<TDetail> = Event & {
 };
 
 type HostInternals = ChatPartHost & {
-  _onFormSubmit(event: Event): void;
-  _onTodoAction(event: Event): void;
-  _onToolAction(event: Event): void;
+  _onPartAction(event: Event): void;
   _handleRenderedPartUpdated(event: CustomEvent<{ changed?: boolean }>): void;
 };
 
@@ -125,26 +119,23 @@ function textPartUpdateEvent(changed: boolean): CustomEvent<{ changed: boolean }
   } as CustomEvent<{ changed: boolean }> & { stopped: boolean };
 }
 
-test('part host enriches embedded todo actions and still emits compatibility events', () => {
+test('part host enriches embedded part-action events from child components', () => {
   installHTMLElementShim();
   const { message, todo } = sampleMessage();
   const host = new ChatPartHost() as HostInternals;
   host.message = message;
   host.parts = message.parts;
   const todoElement = new TestElement('I-CHAT-TODO', { partId: todo.id });
-  const partActions: ChatPartActionDetail<TodoActionDetail>[] = [];
-  const compatibilityActions: TodoActionDetail[] = [];
+  const partActions: ChatPartActionDetail[] = [];
 
   host.addEventListener('part-action', (event) => {
-    partActions.push((event as CustomEvent<ChatPartActionDetail<TodoActionDetail>>).detail);
-  });
-  host.addEventListener('todo-action', (event) => {
-    compatibilityActions.push((event as CustomEvent<TodoActionDetail>).detail);
+    partActions.push((event as CustomEvent<ChatPartActionDetail>).detail);
   });
 
-  const event = eventFromPath<TodoActionRequestDetail>(
-    'todo-action',
+  const event = eventFromPath(
+    'part-action',
     {
+      kind: 'todo',
       action: 'change-status',
       itemId: 'task-1',
       previousStatus: 'pending',
@@ -154,30 +145,26 @@ test('part host enriches embedded todo actions and still emits compatibility eve
     [todoElement, host],
   );
 
-  host._onTodoAction(event);
+  host._onPartAction(event);
 
   assert.equal(event.stopped, true);
   assert.equal(partActions.length, 1);
-  assert.equal(compatibilityActions.length, 1);
   assert.equal(partActions[0].kind, 'todo');
   assert.equal(partActions[0].action, 'change-status');
   assert.equal(partActions[0].messageId, message.id);
   assert.equal(partActions[0].message, message);
   assert.equal(partActions[0].partId, todo.id);
   assert.equal(partActions[0].partType, 'todo');
-  assert.equal(partActions[0].detail.messageId, message.id);
-  assert.equal(partActions[0].detail.message, message);
-  assert.equal(compatibilityActions[0], partActions[0].detail);
 
-  const alreadyEnriched = eventFromPath<Partial<TodoActionDetail>>(
-    'todo-action',
-    { messageId: message.id },
+  // Already-enriched events are skipped
+  const alreadyEnriched = eventFromPath(
+    'part-action',
+    { kind: 'todo', messageId: message.id },
     [todoElement, host],
   );
-  host._onTodoAction(alreadyEnriched);
+  host._onPartAction(alreadyEnriched);
   assert.equal(alreadyEnriched.stopped, false);
   assert.equal(partActions.length, 1);
-  assert.equal(compatibilityActions.length, 1);
 });
 
 test('part host forwards extracted rendered part updates as resize notifications', () => {
@@ -213,7 +200,7 @@ test('part host forwards extracted rendered part updates as resize notifications
   assert.equal(replyResizeUpdates, 0);
 });
 
-test('part host enriches form and tool events through the unified part-action event', () => {
+test('part host enriches form and tool part-action events', () => {
   installHTMLElementShim();
   const { message, text, tool } = sampleMessage();
   const host = new ChatPartHost() as HostInternals;
@@ -222,85 +209,74 @@ test('part host enriches form and tool events through the unified part-action ev
   const formElement = new TestElement('I-CHAT-FORM', { partId: text.id });
   const toolElement = new TestElement('I-CHAT-TOOL-CALL', { partId: tool.id });
   const partActions: ChatPartActionDetail[] = [];
-  const formSubmits: ChatFormSubmitDetail[] = [];
-  const toolActions: ToolActionDetail[] = [];
 
   host.addEventListener('part-action', (event) => {
     partActions.push((event as CustomEvent<ChatPartActionDetail>).detail);
   });
-  host.addEventListener('form-submit', (event) => {
-    formSubmits.push((event as CustomEvent<ChatFormSubmitDetail>).detail);
-  });
-  host.addEventListener('tool-action', (event) => {
-    toolActions.push((event as CustomEvent<ToolActionDetail>).detail);
-  });
 
   const formEvent = eventFromPath(
-    'form-submit',
-    { formId: 'search-form', values: { query: 'todo' } },
+    'part-action',
+    { kind: 'form', action: 'submit', formId: 'search-form', values: { query: 'todo' } },
     [formElement, host],
   );
-  host._onFormSubmit(formEvent);
+  host._onPartAction(formEvent);
 
   assert.equal(formEvent.stopped, true);
   assert.equal(partActions[0].kind, 'form');
   assert.equal(partActions[0].partId, text.id);
   assert.equal(partActions[0].partType, 'text');
-  assert.equal((partActions[0].detail as ChatFormSubmitDetail).messageId, message.id);
-  assert.equal(formSubmits[0], partActions[0].detail);
+  assert.equal(partActions[0].messageId, message.id);
 
   const toolEvent = eventFromPath(
-    'tool-action',
-    { action: 'approve' as const, toolCallId: tool.toolCallId, part: tool },
+    'part-action',
+    { kind: 'tool-call', action: 'approve', toolCallId: tool.toolCallId, part: tool },
     [toolElement, host],
   );
-  host._onToolAction(toolEvent);
+  host._onPartAction(toolEvent);
 
   assert.equal(toolEvent.stopped, true);
   assert.equal(partActions[1].kind, 'tool-call');
   assert.equal(partActions[1].action, 'approve');
   assert.equal(partActions[1].partId, tool.id);
   assert.equal(partActions[1].partType, 'tool-call');
-  assert.equal((partActions[1].detail as ToolActionDetail).messageId, message.id);
-  assert.equal(toolActions[0], partActions[1].detail);
+  assert.equal(partActions[1].messageId, message.id);
 });
 
-test('todo and tool components emit deprecated child events for the host bridge', () => {
+test('todo and tool components emit part-action events', () => {
   const { todo, tool } = sampleMessage();
   const todoElement = new ChatTodo() as TodoInternals;
   const toolElement = new ChatToolCall() as ToolInternals;
-  const todoActions: TodoActionRequestDetail[] = [];
-  const toolActions: Array<Pick<ToolActionDetail, 'action' | 'toolCallId' | 'part'>> = [];
+  const partActions: Array<Record<string, unknown>> = [];
 
   todoElement.data = todo;
-  todoElement.addEventListener('todo-action', (event) => {
-    todoActions.push((event as CustomEvent<TodoActionRequestDetail>).detail);
+  todoElement.addEventListener('part-action', (event) => {
+    partActions.push((event as CustomEvent).detail);
   });
   todoElement._requestStatusChange(todo.items[0]);
 
-  assert.equal(todoActions.length, 1);
-  assert.equal(todoActions[0].action, 'change-status');
-  assert.equal(todoActions[0].itemId, todo.items[0].id);
-  assert.equal(todoActions[0].previousStatus, 'pending');
-  assert.equal(todoActions[0].status, 'active');
-  assert.equal(todoActions[0].part, todo);
+  assert.equal(partActions.length, 1);
+  assert.equal(partActions[0].kind, 'todo');
+  assert.equal(partActions[0].action, 'change-status');
+  assert.equal(partActions[0].itemId, todo.items[0].id);
+  assert.equal(partActions[0].previousStatus, 'pending');
+  assert.equal(partActions[0].status, 'active');
+  assert.equal(partActions[0].part, todo);
 
   todoElement.data = { ...todo, interactive: false };
   todoElement._requestStatusChange(todo.items[0]);
-  assert.equal(todoActions.length, 1);
+  assert.equal(partActions.length, 1);
 
   toolElement.data = tool;
-  toolElement.addEventListener('tool-action', (event) => {
-    toolActions.push(
-      (event as CustomEvent<Pick<ToolActionDetail, 'action' | 'toolCallId' | 'part'>>).detail
-    );
+  toolElement.addEventListener('part-action', (event) => {
+    partActions.push((event as CustomEvent).detail);
   });
   toolElement._emit('approve');
 
-  assert.equal(toolActions.length, 1);
-  assert.equal(toolActions[0].action, 'approve');
-  assert.equal(toolActions[0].toolCallId, tool.toolCallId);
-  assert.equal(toolActions[0].part, tool);
+  assert.equal(partActions.length, 2);
+  assert.equal(partActions[1].kind, 'tool-call');
+  assert.equal(partActions[1].action, 'approve');
+  assert.equal(partActions[1].toolCallId, tool.toolCallId);
+  assert.equal(partActions[1].part, tool);
 });
 
 test('chat messages applies valid backend part events and ignores invalid updates', () => {

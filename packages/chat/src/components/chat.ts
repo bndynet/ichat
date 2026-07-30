@@ -2,15 +2,12 @@ import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
 import type {
-  ChatFormSubmitDetail,
   ChatPartActionDetail,
   ChatLinkClickDetail,
   ChatMessage,
   ChatConfig,
   BlockRenderer,
   ConfirmationLabels,
-  TodoActionDetail,
-  ToolActionDetail,
   MessagesChangeDetail,
   MessagesChangeReason,
   MessagePartUpdateResult,
@@ -21,7 +18,6 @@ import type {
 } from '@bndynet/ichat-messages';
 import {
   ChatMessages,
-  StreamingController,
   resolveLabels,
   addMessage,
   patchMessageById,
@@ -63,11 +59,8 @@ export type {
   ChatMessage,
   ChatConfig,
   BlockRenderer,
-  ChatFormSubmitDetail,
   ChatPartActionDetail,
   ChatLinkClickDetail,
-  TodoActionDetail,
-  ToolActionDetail,
 };
 
 export type ChatConfirmationVariant = 'default' | 'danger';
@@ -132,9 +125,6 @@ export interface ChatConfirmationChangeDetail {
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires part-action - `{ detail: ChatPartActionDetail }` unified action from rendered message parts
- * @fires form-submit - Deprecated compatibility event for embedded form submissions; prefer `part-action`
- * @fires todo-action - Deprecated compatibility event for todo status requests; prefer `part-action`
- * @fires tool-action - Deprecated compatibility event for tool-call approval requests; prefer `part-action`
  * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
  * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
  * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
@@ -473,15 +463,6 @@ export class Chat extends LitElement {
     return { ok: true, part: tcResult.part };
   }
 
-  /** Boolean compatibility wrapper around {@link tryUpdateToolCall}. */
-  updateToolCall(
-    messageId: string,
-    partId: string,
-    patch: Parameters<ChatMessages['updateToolCall']>[2]
-  ): boolean {
-    return this.tryUpdateToolCall(messageId, partId, patch).ok;
-  }
-
   /** Immutably patch one todo item and return a diagnostic result. */
   tryUpdateTodoItem(
     messageId: string,
@@ -511,17 +492,6 @@ export class Chat extends LitElement {
     return { ok: true, part: todoResult.part };
   }
 
-  /** Boolean compatibility wrapper around {@link tryUpdateTodoItem}. */
-  updateTodoItem(
-    messageId: string,
-    partId: string,
-    itemId: string,
-    patch: Parameters<ChatMessages['updateTodoItem']>[3],
-    revision?: number,
-  ): boolean {
-    return this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision).ok;
-  }
-
   /** Apply a backend/SSE todo item update and return a diagnostic result. */
   tryApplyTodoItemUpdateEvent(
     event: Parameters<ChatMessages['tryApplyTodoItemUpdateEvent']>[0]
@@ -537,11 +507,6 @@ export class Chat extends LitElement {
     return { ok: true, update: norm.update, part: update.part };
   }
 
-  /** Boolean compatibility wrapper around {@link tryApplyTodoItemUpdateEvent}. */
-  applyTodoItemUpdateEvent(event: Parameters<ChatMessages['applyTodoItemUpdateEvent']>[0]): boolean {
-    return this.tryApplyTodoItemUpdateEvent(event).ok;
-  }
-
   /** Apply a backend/SSE message part update and return a diagnostic result. */
   tryApplyMessagePartUpdateEvent(
     event: Parameters<ChatMessages['tryApplyMessagePartUpdateEvent']>[0]
@@ -554,13 +519,6 @@ export class Chat extends LitElement {
       return { ok: false, reason: update.reason, update: norm.update, part: update.part };
     }
     return { ok: true, update: norm.update, part: update.part };
-  }
-
-  /** Boolean compatibility wrapper around {@link tryApplyMessagePartUpdateEvent}. */
-  applyMessagePartUpdateEvent(
-    event: Parameters<ChatMessages['applyMessagePartUpdateEvent']>[0]
-  ): boolean {
-    return this.tryApplyMessagePartUpdateEvent(event).ok;
   }
 
   // ── Cancellation (CHG-05) ────────────────────────────────────────
@@ -654,24 +612,9 @@ export class Chat extends LitElement {
    * through the top-level message store.  The controller manages the
    * full lifecycle: create the placeholder message, append parts, stream
    * text deltas, and transition to complete / cancel / error.
-   *
-   * Prefer this over the older `createStreamingController()` for
-   * response-level orchestration.
    */
   createRunController(options?: ChatRunOptions): ChatRunController {
     return new ChatRunController(this, options);
-  }
-
-  /**
-   * Create a `StreamingController` bound to the inner `<i-chat-messages>`
-   * list.  The controller manages typewriter animation but has no
-   * understanding of message lifecycles.
-   *
-   * @deprecated Prefer {@link createRunController} for response-level
-   *   orchestration.  This method will be removed in a future major version.
-   */
-  createStreamingController(): StreamingController {
-    return new StreamingController(this._messages);
   }
 
   /** Focus the input textarea. Safe to call before first render (no-op). */
@@ -762,8 +705,6 @@ export class Chat extends LitElement {
   //
   // This handler remains as a compatibility guard for:
   //   - Standalone `<i-chat-messages>` usage (child owns its own state)
-  //   - `createStreamingController()` writes (controller targets child —
-  //     will be addressed by CHG-09)
   //   - Any unexpected child-originated mutation in composed mode
   //
   // Stale mutations (where the child's base array doesn't match the
@@ -904,17 +845,6 @@ export class Chat extends LitElement {
     );
   }
 
-  private _handleFormSubmit(e: CustomEvent<ChatFormSubmitDetail>): void {
-    e.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent<ChatFormSubmitDetail>('form-submit', {
-        detail: e.detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
   private _handlePartAction(e: CustomEvent<ChatPartActionDetail>): void {
     e.stopPropagation();
     this.dispatchEvent(
@@ -936,7 +866,6 @@ export class Chat extends LitElement {
     return resolveLabels({
       locale: this.config.locale,
       labels: this.config.labels,
-      dateSeparatorLabels: this.config.dateSeparatorLabels,
     }).confirmation;
   }
 
@@ -1057,7 +986,6 @@ export class Chat extends LitElement {
           @streaming-change=${this._handleStreamingChange}
           @message-action=${this._handleMessageAction}
           @part-action=${this._handlePartAction}
-          @form-submit=${this._handleFormSubmit}
         >
           <slot name="empty" slot="empty"></slot>
           <slot name="self-avatar" slot="self-avatar"></slot>

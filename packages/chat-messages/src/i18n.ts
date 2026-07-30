@@ -266,20 +266,17 @@ function mergeSection<T>(base: T, override?: DeepPartial<T>): T {
 /**
  * Resolve the final {@link ChatLabels}: pick the built-in dictionary for
  * `locale`, then deep-merge `labels` (one level of sections) on top. Unknown
- * locales fall back to English. `dateSeparatorLabels` is an optional
- * backward-compatible override merged into `dateSeparator`.
+ * locales fall back to English.
  */
 export function resolveLabels(options: {
   locale?: string;
   labels?: DeepPartial<ChatLabels>;
-  /** @deprecated Use `labels.dateSeparator` instead. Merged into `dateSeparator` for compatibility. */
-  dateSeparatorLabels?: Partial<DateSeparatorLabels>;
 }): ChatLabels {
   const base = pickBuiltInLabels(options.locale?.trim() || 'en');
   const o = options.labels;
   const dateSeparatorOverride: DeepPartial<DateSeparatorLabels> | undefined =
-    o?.dateSeparator || options.dateSeparatorLabels
-      ? { ...(options.dateSeparatorLabels ?? {}), ...(o?.dateSeparator ?? {}) }
+    o?.dateSeparator
+      ? { ...(o.dateSeparator ?? {}) }
       : undefined;
 
   return {

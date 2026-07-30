@@ -65,11 +65,7 @@ function formatDuration(ms: number): string {
  * `.data` property (an object, not an attribute) so it updates in place without
  * re-serialisation and preserves its expanded state across streaming updates.
  *
- * @fires part-action - Preferred unified action event (`kind: 'tool-call'`).
- * @fires tool-action - Deprecated compatibility event from the human-in-the-loop
- *        buttons. The owning `i-chat-part-host` enriches it with `messageId` /
- *        `message` and also emits `part-action`. Keep until a future major
- *        version so hosts can migrate incrementally.
+ * @fires part-action - Unified action event (`kind: 'tool-call'`).
  */
 @customElement('i-chat-tool-call')
 export class ChatToolCall extends LitElement {
@@ -101,8 +97,8 @@ export class ChatToolCall extends LitElement {
 
   private _emit(action: 'approve' | 'reject'): void {
     this.dispatchEvent(
-      new CustomEvent('tool-action', {
-        detail: { action, toolCallId: this.data?.toolCallId, part: this.data },
+      new CustomEvent('part-action', {
+        detail: { kind: 'tool-call', action, toolCallId: this.data?.toolCallId, part: this.data },
         bubbles: true,
         composed: true,
       })

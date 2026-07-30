@@ -520,12 +520,16 @@ class ChatFormElement extends HTMLElement {
       }
     }
 
-    const detail: FormSubmitDetail = { formId, title, values };
-
-    this.dispatchEvent(new CustomEvent<FormSubmitDetail>('form-submit', {
+    this.dispatchEvent(new CustomEvent('part-action', {
       bubbles: true,
       composed: true,
-      detail,
+      detail: {
+        kind: 'form',
+        action: 'submit',
+        formId,
+        title,
+        values,
+      },
     }));
 
     this._renderSubmitted(schema, values);

@@ -4,7 +4,6 @@ import { setVersionAttribute } from '../version.js';
 import type { TodoItem, TodoItemStatus, TodoPart } from '../types.js';
 import type { TodoLabels } from '../i18n.js';
 import { CHAT_LABELS_EN } from '../i18n.js';
-import type { TodoActionRequestDetail } from '../message-events.js';
 import { getTodoInitialExpanded, shouldInitializeTodoExpansion } from '../todo-collapse.js';
 import { chatIcons } from '../icons.js';
 import styles from '../styles/chat-todo.scss';
@@ -20,11 +19,7 @@ const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
 /**
  * Compact, collapsible todo panel for a structured {@link TodoPart}.
  *
- * @fires part-action - Preferred unified action event (`kind: 'todo'`).
- * @fires todo-action - Deprecated compatibility event for a requested item
- * status change. The owning `i-chat-part-host` enriches it with `messageId` /
- * `message` and also emits `part-action`. Keep until a future major version so
- * hosts can migrate incrementally.
+ * @fires part-action - Unified action event (`kind: 'todo'`).
  */
 @customElement('i-chat-todo')
 export class ChatTodo extends LitElement {
@@ -63,16 +58,16 @@ export class ChatTodo extends LitElement {
 
   private _requestStatusChange(item: TodoItem): void {
     if (this.data.interactive === false) return;
-    const detail: TodoActionRequestDetail = {
-      action: 'change-status',
-      itemId: item.id,
-      previousStatus: item.status,
-      status: NEXT_STATUS[item.status],
-      part: this.data,
-    };
     this.dispatchEvent(
-      new CustomEvent<TodoActionRequestDetail>('todo-action', {
-        detail,
+      new CustomEvent('part-action', {
+        detail: {
+          kind: 'todo',
+          action: 'change-status',
+          itemId: item.id,
+          previousStatus: item.status,
+          status: NEXT_STATUS[item.status],
+          part: this.data,
+        },
         bubbles: true,
         composed: true,
       })

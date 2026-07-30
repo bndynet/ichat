@@ -14,10 +14,7 @@ import {
 } from '../src/types.js';
 import { resolveLabels } from '../src/i18n.js';
 import {
-  createFormSubmitDetail,
   createPartActionDetail,
-  createTodoActionDetail,
-  createToolActionDetail,
 } from '../src/message-events.js';
 import {
   getTodoInitialExpanded,
@@ -27,7 +24,6 @@ import {
   areTodoItemsTerminal,
   normalizeTodoItemUpdateEvent,
   patchTodoItem,
-  patchTodoItemInPart,
 } from '../src/todo-state.js';
 import {
   isTodoItemStatus,
@@ -503,7 +499,7 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
   assert.equal(reopened.ok, true);
   assert.equal(reopened.part.status, 'streaming');
 
-  const alias = patchTodoItemInPart(reopened.part, 'verify', { status: 'done' }, 5);
+  const alias = patchTodoItem(reopened.part, 'verify', { status: 'done' }, 5);
   assert.equal(alias.ok, true);
 
   const empty = todoPart([], { id: 'empty', revision: 1 });
@@ -679,7 +675,7 @@ test('tool-call patching validates state and preserves stable ids', () => {
   assert.equal(invalid.part, base);
 });
 
-test('event helpers attach message context without changing source payloads', () => {
+test('part-action event helper attaches message context', () => {
   const todo = todoPart([{ id: 'task-1', title: 'Capture', status: 'pending' }], {
     id: 'todo-1',
   });
@@ -693,76 +689,43 @@ test('event helpers attach message context without changing source payloads', ()
   const text = textPart('Form lives here', { id: 'text-1' });
   const message: ChatMessage = { id: 'msg-1', role: 'assistant', parts: [text, todo, tool] };
 
-  const todoDetail = createTodoActionDetail(message, {
-    action: 'change-status',
-    itemId: 'task-1',
-    previousStatus: 'pending',
-    status: 'active',
-    part: todo,
-  });
-
-  assert.equal(todoDetail.messageId, 'msg-1');
-  assert.equal(todoDetail.message, message);
-  assert.equal(todoDetail.part, todo);
-  assert.equal(todoDetail.status, 'active');
-
+  // Simulate what chat-part-host does: enrich a raw part-action from a child
   const todoPartAction = createPartActionDetail({
     kind: 'todo',
-    action: todoDetail.action,
+    action: 'change-status',
     message,
-    detail: todoDetail,
-    part: todoDetail.part,
+    detail: { action: 'change-status', itemId: 'task-1', previousStatus: 'pending', status: 'active', part: todo },
+    part: todo,
   });
   assert.equal(todoPartAction.kind, 'todo');
   assert.equal(todoPartAction.action, 'change-status');
   assert.equal(todoPartAction.messageId, 'msg-1');
   assert.equal(todoPartAction.partId, 'todo-1');
   assert.equal(todoPartAction.partType, 'todo');
-  assert.equal(todoPartAction.detail, todoDetail);
-
-  const values = { query: 'task', confirmed: true };
-  const formDetail = createFormSubmitDetail(message, {
-    formId: 'search-form',
-    values,
-  });
-
-  assert.equal(formDetail.messageId, 'msg-1');
-  assert.equal(formDetail.message, message);
-  assert.equal(formDetail.title, '');
-  assert.equal(formDetail.values, values);
 
   const formPartAction = createPartActionDetail({
     kind: 'form',
     action: 'submit',
     message,
-    detail: formDetail,
+    detail: { formId: 'search-form', title: 'Search', values: { q: 'test' } },
     part: text,
   });
   assert.equal(formPartAction.kind, 'form');
   assert.equal(formPartAction.partId, 'text-1');
   assert.equal(formPartAction.partType, 'text');
-
-  const toolDetail = createToolActionDetail(message, {
-    action: 'approve',
-    toolCallId: tool.toolCallId,
-    part: tool,
-  });
-  assert.equal(toolDetail.messageId, 'msg-1');
-  assert.equal(toolDetail.message, message);
-  assert.equal(toolDetail.part, tool);
-  assert.equal(toolDetail.action, 'approve');
+  assert.equal(formPartAction.messageId, 'msg-1');
 
   const toolPartAction = createPartActionDetail({
     kind: 'tool-call',
-    action: toolDetail.action,
+    action: 'approve',
     message,
-    detail: toolDetail,
-    part: toolDetail.part,
+    detail: { action: 'approve', toolCallId: tool.toolCallId, part: tool },
+    part: tool,
   });
   assert.equal(toolPartAction.kind, 'tool-call');
   assert.equal(toolPartAction.partId, 'tool-1');
   assert.equal(toolPartAction.partType, 'tool-call');
-  assert.equal(toolPartAction.detail, toolDetail);
+  assert.equal(toolPartAction.messageId, 'msg-1');
 });
 
 test('todo expansion defaults only apply when a stable part id first appears', () => {
