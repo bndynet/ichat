@@ -27,11 +27,17 @@ npm install @bndynet/ichat-messages
 - **`registerMarkdownPlugin(plugin)`** — markdown-it plugins with auto CSS injection
 - **`registerPartRenderer(type, renderer)`** — custom `parts[]` type renderers (e.g. `file`, `source`, `x-*`)
 
-## Peer dependencies
+## Dependencies
 
-| Package | Version |
+All runtime dependencies are auto-installed:
+
+| Package | Purpose |
 |---|---|
-| `markdown-it` | `>=14` |
+| `lit` | Web Component framework |
+| `markdown-it` | Markdown rendering |
+| `dompurify` | HTML sanitization |
+| `highlight.js` | Syntax highlighting |
+| `morphdom` | DOM patching for streaming |
 
 ## License
 

@@ -8,6 +8,15 @@ Complete iChat Web Component — bundles messages + input into a single `<i-chat
 npm install @bndynet/ichat
 ```
 
+## Script tag (no bundler)
+
+```html
+<script src="https://unpkg.com/@bndynet/ichat/dist/ichat.global.js"></script>
+<i-chat></i-chat>
+```
+
+The global build (~623KB) is self-contained — no extra `<script>` tags needed.
+
 ## Component
 
 | Tag | Description |

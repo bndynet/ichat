@@ -26,6 +26,7 @@
     "lit": "^3.3.0"
   },
   "devDependencies": {
+    "lit": "^3.3.0",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"

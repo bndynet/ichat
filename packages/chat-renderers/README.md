@@ -14,19 +14,10 @@ npm install @bndynet/ichat-renderers
 
 ## Usage
 
-Register renderers **before** the first `<i-chat>` element connects to the DOM:
+Auto-registers on import — no `registerCodeRenderer` calls needed:
 
 ```typescript
-import { registerCodeRenderer } from '@bndynet/ichat';
-import {
-  kpiRenderer,
-  kpisRenderer,
-  formRenderer,
-} from '@bndynet/ichat-renderers';
-
-registerCodeRenderer(kpiRenderer);
-registerCodeRenderer(kpisRenderer);
-registerCodeRenderer(formRenderer);
+import '@bndynet/ichat-renderers';  // auto-registers kpi, kpis, form
 ```
 
 ## Built-in renderers

@@ -5,8 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig({
   entry: { index: 'src/index.ts' },
-  format: ['esm', 'cjs', 'iife'],
-  globalName: 'iChatRenderers',
+  format: ['esm', 'cjs'],
   dts: true,
   splitting: false,
   sourcemap: true,

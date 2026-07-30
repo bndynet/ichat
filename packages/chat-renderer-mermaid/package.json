@@ -16,15 +16,17 @@
   "files": [
     "dist",
     "README.md"
-  ],,
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
   },
   "peerDependencies": {
     "@bndynet/ichat-messages": "^2.1.1",
-    "markdown-it": ">=14",
-    "mermaid": ">=11"
+    "markdown-it": ">=14"
+  },
+  "dependencies": {
+    "mermaid": "^11.4.0"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",

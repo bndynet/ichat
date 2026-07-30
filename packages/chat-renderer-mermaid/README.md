@@ -41,13 +41,14 @@ registerCodeRenderer(createMermaidRenderer({ codeToggle: false }));
 | `mermaidPlugin` | markdown-it plugin (for `md.use()`) |
 | `ChatMermaid` | `<i-chat-mermaid>` custom element class |
 
-## Peer dependencies
+## Dependencies
+
+All runtime dependencies are auto-installed (`mermaid`, `markdown-it`). `@bndynet/ichat-messages` is a peer dependency.
 
 | Package | Version |
 |---|---|
 | `@bndynet/ichat-messages` | `^2.1.1` |
 | `markdown-it` | `>=14` |
-| `mermaid` | `>=11` |
 
 ## License
 

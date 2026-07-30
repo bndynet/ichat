@@ -14,5 +14,5 @@ export default defineConfig({
   define: {
     __PACKAGE_VERSION__: JSON.stringify(pkg.version),
   },
-  external: ['markdown-it', '@bndynet/ichat-messages', 'mermaid'],
+  external: ['markdown-it', '@bndynet/ichat-messages'],
 });

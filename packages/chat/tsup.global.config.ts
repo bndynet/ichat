@@ -2,10 +2,7 @@ import { defineConfig } from 'tsup';
 import * as sass from 'sass-embedded';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
 import type { Plugin } from 'esbuild';
-
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
 
 const scssPlugin: Plugin = {
   name: 'scss',
@@ -27,18 +24,14 @@ const scssPlugin: Plugin = {
 };
 
 export default defineConfig({
-  entry: {
-    index: 'src/index.ts',
-    'sse/index': 'src/sse/chat-sse-client.ts',
-  },
-  format: ['esm', 'cjs'],
-  dts: true,
+  entry: { ichat: 'src/index.ts' },
+  format: ['iife'],
+  globalName: 'iChat',
+  outDir: 'dist',
+  noExternal: [/.*/],
   splitting: false,
   sourcemap: true,
-  clean: !process.argv.includes('--watch'),
+  clean: false,
   treeshake: true,
-  define: {
-    __PACKAGE_VERSION__: JSON.stringify(pkg.version),
-  },
   esbuildPlugins: [scssPlugin],
 });
