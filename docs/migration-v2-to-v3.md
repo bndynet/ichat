@@ -23,20 +23,6 @@ v3 focuses on reducing bundle size by externalizing heavy third-party dependenci
 
 **Migration:** None required. These packages remain in `dependencies` so npm installs them automatically. Your bundler handles the rest.
 
-### 2. Peer dependency migration (future)
-
-The following will move from `dependencies` → `peerDependencies` in a future v3 release:
-
-| Package | Reason |
-|---------|--------|
-| `markdown-it` | Consumers may already have it for their own markdown |
-| `dompurify` | Consumers may already have it for sanitization |
-| `highlight.js` | Already config-injectable via `config.highlightJs` |
-
-When this lands, consumers will need to explicitly install these packages. Migration notes will be added here.
-
----
-
 ## Deprecated APIs (removal planned for v3)
 
 These surfaces remain in 2.x but will be removed in v3:
