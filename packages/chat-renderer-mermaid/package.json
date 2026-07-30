@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderer-mermaid",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Mermaid diagram fenced-code renderer for @bndynet/ichat: theme-aware diagrams with async rendering.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,7 +22,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^2.1.1",
+    "@bndynet/ichat-messages": "^3.0.0",
     "markdown-it": ">=14"
   },
   "dependencies": {

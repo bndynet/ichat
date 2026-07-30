@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderer-katex",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "KaTeX math rendering plugin for @bndynet/ichat: $inline$ and $$display$$ LaTeX math via markdown-it-katex.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,7 +22,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^2.1.1",
+    "@bndynet/ichat-messages": "^3.0.0",
     "markdown-it": ">=14"
   },
   "dependencies": {
