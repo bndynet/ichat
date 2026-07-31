@@ -71,7 +71,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 >
 🔴 **Immediate** — Phase 2.1 Virtual scroll (performance critical path)
 > 🟡 **Next** — Phase 2.3/6.3 Bundle optimization + Phase 1.1 Component tests + Phase 6.1 Architecture decomposition
-> 🟢 **Later** — Phase 3.3/3.4 Type system + Phase 4.1 Overridable renderers
+> 🟢 **Later** — Phase 4.1 Overridable renderers
 > 🔵 **Pre-release** — Phase 7 Storybook + Playground + Migration guides
 
 ### Performance
@@ -131,8 +131,6 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
   - 保持顺序和 ID 不变，不修改原数组；已是终态的消息返回原引用（fast path）
 
 ### Developer Experience
-
-- [ ] 🟢 **Type system cleanup** — Split public API types from internal diagnostic types. `@bndynet/ichat/messages` re-export path. `docs/public-api.md`. (Phase 3.3)
 
 ### Extensibility
 

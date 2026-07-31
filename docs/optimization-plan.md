@@ -52,14 +52,6 @@
 
 ## Phase 3 — Developer Experience (remaining)
 
-### 3.1 Type system cleanup
-
-- [ ] Split `packages/chat/src/index.ts` into `index.ts` (user-facing) + `internals.ts` (diagnostics)
-  - Keep ~20 core types in main export
-  - Move 40+ diagnostic types (`*FailureReason`, `*Result`) to subpath export
-- [ ] Add `@bndynet/ichat/messages` re-export path for direct messages package access
-- [ ] Document the public API surface in `docs/public-api.md`
-
 ### 3.2 Generic type support
 
 - [x] Make `<i-chat>` generic over custom part types ✅ (completed 2026-07-31)
@@ -181,7 +173,6 @@
 🟡 Phase 2.3 Bundle size            (small change, big impact)
 🟡 Phase 1.1 Component tests        (regression safety net)
 🟡 Phase 6.1 Decomposition          (maintainability)
-🟢 Phase 3.3 Type system cleanup    (nice to have)
 🟢 Phase 4.1 Overridable renderers
 🔵 Phase 6.2 Remove deprecated      (v3 only)
 🔵 Phase 7   Storybook + playground (pre-release)

@@ -72,7 +72,7 @@ Total commits: **5** (one per implemented phase).
 |---|---|---|
 | 3.1 SSE client | ❌ Removed | Removed in v3 — use `ChatRunController` + manual stream handling instead |
 | 3.2 Middleware | ✅ Done | `ChatMiddleware` with `beforeSend`/`afterMessageAdded` hooks |
-| 3.3 Type cleanup | ⏸ Deferred | Needs careful split of public vs internal types |
+| 3.3 Type cleanup | ❌ Dropped | Diagnostic types auto-inferred by TS; splitting adds import friction with no DX gain |
 | 3.4 Generic types | ✅ Done | `Chat<TExtraParts>`, `CustomPartOf<T>`, `PartOf<M, T>`, `ExtendedMessagePart<T>` |
 | 3.5 AbortController | ✅ Done | `ChatRunController.signal` for fetch integration |
 
@@ -186,4 +186,4 @@ import {
 3. **Long-term**
    - Virtual scrolling for large message lists (Phase 2.1)
    - Storybook + interactive playground (Phase 7.2-7.3)
-   - Type system cleanup and generic type support (Phase 3.3-3.4)
+   - Generic type support (Phase 3.4)
