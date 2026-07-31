@@ -11,7 +11,7 @@
     "build": "npm run build -w @bndynet/ichat-messages && npm run build -w @bndynet/ichat-input && npm run build -w @bndynet/ichat-renderers && npm run build -w @bndynet/ichat-renderer-chart && npm run build -w @bndynet/ichat-renderer-katex && npm run build -w @bndynet/ichat-renderer-mermaid && npm run build -w @bndynet/ichat && npm run build -w apps/demo",
     "pretest": "npm run build -w @bndynet/ichat-messages -w @bndynet/ichat-input",
     "test": "npm run test -w @bndynet/ichat-messages && npm run test -w @bndynet/ichat-input && npm run test -w @bndynet/ichat",
-    "test:coverage": "npm run test:coverage -w @bndynet/ichat-messages",
+    "test:coverage": "npm run test:coverage -w @bndynet/ichat-messages && npm run test:coverage -w @bndynet/ichat-input",
     "dev": "concurrently -n messages,input,renderers,chart,katex,mermaid,chat,demo -c cyan,magenta,yellow,green,blue,red,white,gray \"npm run dev -w @bndynet/ichat-messages\" \"npm run dev -w @bndynet/ichat-input\" \"npm run dev -w @bndynet/ichat-renderers\" \"npm run dev -w @bndynet/ichat-renderer-chart\" \"npm run dev -w @bndynet/ichat-renderer-katex\" \"npm run dev -w @bndynet/ichat-renderer-mermaid\" \"npm run dev -w @bndynet/ichat\" \"npm run dev -w chat-demo\"",
     "start": "npm run dev",
     "publish:packages": "npm run build && npm publish -w @bndynet/ichat-messages --access public && npm publish -w @bndynet/ichat-input --access public && npm publish -w @bndynet/ichat-renderers --access public && npm publish -w @bndynet/ichat-renderer-chart --access public && npm publish -w @bndynet/ichat-renderer-katex --access public && npm publish -w @bndynet/ichat-renderer-mermaid --access public && npm publish -w @bndynet/ichat --access public",

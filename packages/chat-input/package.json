@@ -20,7 +20,8 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "test": "tsup test/chat-input.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --out-dir ../../node_modules/.cache/ichat-input-tests --clean --silent && node ../../node_modules/.cache/ichat-input-tests/chat-input.test.js"
+    "test": "tsup test/chat-input.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --out-dir ../../node_modules/.cache/ichat-input-tests --clean --silent && node ../../node_modules/.cache/ichat-input-tests/chat-input.test.js",
+    "test:coverage": "tsup test/chat-input.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --out-dir ../../node_modules/.cache/ichat-input-tests --clean --silent && node --test --experimental-test-coverage ../../node_modules/.cache/ichat-input-tests/chat-input.test.js"
   },
   "dependencies": {
     "lit": "^3.3.0"

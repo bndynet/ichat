@@ -106,7 +106,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. Full integration tests require a browser. (Phase 1.1)
 - [ ] 🟢 **SSE integration tests** — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
 - [ ] 🟢 **ChatRunController integration tests** — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
-- [ ] 🟢 **Coverage thresholds** — Enforce ≥80% on helpers, ≥60% on components in CI. (Phase 1.2)
+- [x] 🟢 **Coverage thresholds** ✅ (completed 2026-07-31) — CI workflow with `--experimental-test-coverage` + `tools/check-coverage.mjs` enforcing ≥85% line coverage on `chat-messages` and `chat-input`. `chat` coverage skipped due to Node 20 compatibility issue. (Phase 1.2)
 
 ### Message Body & Parts
 
