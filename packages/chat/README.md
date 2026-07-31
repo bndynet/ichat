@@ -36,7 +36,9 @@ import {
 } from '@bndynet/ichat';
 ```
 
-Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConfig`, etc.) and the SSE streaming helpers from `@bndynet/ichat/sse`.
+Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConfig`, etc.).
+
+Backend integration is done via `ChatRunController` — see the [streaming integration guide](../../README.md#quick-start-es-modules) in the main README.
 
 ## Optional add-ons
 

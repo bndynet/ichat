@@ -13,7 +13,7 @@ Implemented 5 of 7 phases from the optimization plan, with a focus on the highes
 - **24 passing tests** (up from 8) covering all pure helper functions
 - **CI pipeline** with Node.js 18/20/22 matrix
 - **Performance optimizations**: markdown cache, memoized computed properties, optional highlight.js
-- **SSE client** for backend streaming integration
+- **`ChatRunController`** for backend streaming integration
 - **Middleware & Plugin system** for extensibility
 - **Async BlockRenderer** support
 
@@ -70,19 +70,18 @@ Total commits: **5** (one per implemented phase).
 
 | Item | Status | Details |
 |---|---|---|
-| 3.1 SSE client | ✅ Done | `createChatSSEClient()` with auto event routing + reconnect |
+| 3.1 SSE client | ❌ Removed | Removed in v3 — use `ChatRunController` + manual stream handling instead |
 | 3.2 Middleware | ✅ Done | `ChatMiddleware` with `beforeSend`/`afterMessageAdded` hooks |
 | 3.3 Type cleanup | ⏸ Deferred | Needs careful split of public vs internal types |
 | 3.4 Generic types | ⏸ Deferred | Requires type-level refactoring |
 | 3.5 AbortController | ✅ Done | `ChatRunController.signal` for fetch integration |
 
 **Key files:**
-- `packages/chat/src/sse/chat-sse-client.ts`
 - `packages/chat/src/middleware/chat-middleware.ts`
 - `packages/chat/src/controllers/chat-run-controller.ts`
 
 **Commit:**
-- `2a6151d` feat(chat): add SSE client, middleware chain, and AbortController (Phase 3)
+- `2a6151d` feat(chat): add middleware chain and AbortController (Phase 3)
 
 ---
 
@@ -128,9 +127,6 @@ Total commits: **5** (one per implemented phase).
 ### New exports from `@bndynet/ichat`
 
 ```typescript
-// SSE client
-import { createChatSSEClient } from '@bndynet/ichat/sse';
-
 // Middleware
 import type { ChatMiddleware } from '@bndynet/ichat';
 chat.use({ name: 'logger', beforeSend: (c) => c });

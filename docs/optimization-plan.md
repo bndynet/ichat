@@ -22,7 +22,7 @@
   - `ready` promise contract
   - pending command replay on first render
   - `createRunController()` lifecycle
-- [ ] **Integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end
+- [ ] **Integration tests** — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end
 
 ### 1.2 Coverage thresholds
 

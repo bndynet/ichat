@@ -16,7 +16,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Centralize todo state updates in pure helpers. `patchTodoItem()` owns todo item validation, revision checks, immutable updates, and lifecycle status updates. `updateTodoItem()` and backend event handling route through the same reducer.
 - [x] Centralize tool-call state updates in a pure helper. `patchToolCallPart()` validates tool-call state and preserves stable identity fields.
 - [x] Add runtime guards for structured parts. `isTodoPart()`, `isTodoItemStatus()`, `isToolCallPart()`, and `isToolCallState()` protect update paths that receive external data.
-- [x] Normalize todo backend/SSE updates. `normalizeTodoItemUpdateEvent()` accepts parsed objects, JSON strings, and MessageEvent-like payloads before applying `updateTodoItem()`.
+- [x] Normalize todo backend updates. `normalizeTodoItemUpdateEvent()` accepts parsed objects, JSON strings, and MessageEvent-like payloads before applying `updateTodoItem()`.
 - [x] Document deprecated compatibility surfaces. Legacy event/API surfaces are kept for existing integrations and should only be removed in a future major version.
 - [x] Add diagnostic update results. `tryUpdateTodoItem()`, `tryUpdateToolCall()`, and `tryApplyTodoItemUpdateEvent()` return structured failure reasons while the older boolean methods remain compatible.
 - [x] Extract message part collection updates into pure helpers. `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, and `replaceMessagePart()` now cover collection updates outside the DOM.
@@ -26,7 +26,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Modernize demo action examples. Demo pages now listen to `part-action` and use `tryUpdateTodoItem()` / `tryUpdateToolCall()` for interactive todo and tool-call updates.
 - [x] Extract text part rendering. `i-chat-text-part` now owns markdown rendering, morphdom caching, and typing cursor state while `i-chat-part-host` stays focused on part routing and event enrichment.
 - [x] Share markdown morphing between text and reasoning. `renderMarkdownInto()` now centralizes markdown rendering, morphdom patching, and HTML cache checks for both `i-chat-text-part` and `i-chat-reasoning`.
-- [x] Align SSE envelopes with OpenAI Responses style. Canonical backend events now document `event` + matching `data.type` + `sequence_number`, while normalizers continue accepting legacy payloads without `data.type`.
+- [x] Align backend event envelopes with OpenAI Responses style. Canonical events now document `event` + matching `data.type` + `sequence_number`, while normalizers continue accepting legacy payloads without `data.type`.
 
 ### Performance
 
@@ -34,9 +34,9 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] highlight.js configurable — `ChatConfig.highlightJs` optional injection. When omitted, code blocks fall back to plain escaped `<pre><code>`. Threaded through full component chain. (Phase 2.3)
 - [x] Memoized computed properties — `_messageRenderItems()` cached by collection shape (length + first/last id + timestamp). `_labels` cached by locale + labels reference. (Phase 2.4)
 
-### SSE & Backend Integration
+### Backend Integration
 
-- [x] SSE client — `createChatSSEClient()` with auto event routing for all 8 SSE event types. Supports named events and `data.type` routing, reconnection with exponential backoff + jitter. Exported via `@bndynet/ichat/sse`. (Phase 3.1)
+- [x] SSE client removed — removed in v3. Use `ChatRunController` + manual stream handling. Formerly `createChatSSEClient()` at `@bndynet/ichat/sse`. (Phase 3.1)
 
 ### Developer Experience
 
@@ -59,7 +59,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Component tests for `<i-chat>` ✅ — Module import, registration, constructor, default properties, method signatures, `ready` promise contract. (Phase 1.1)
 ### Documentation
 
-- [x] README updated — SSE client, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
+- [x] README updated — ChatRunController, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
 - [x] `component-api.md` — Syntax highlighting section with usage example. (Phase 7)
 - [x] `implementation-review.md` — Codebase architecture review. (Phase 7)
 
@@ -75,7 +75,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 ### Performance
 
 - [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
-- [ ] 🟡 **Markdown streaming light mode** — Optimise the streaming render path in `i-chat-text-part`: when `message.streaming === true`, skip DOMPurify (trusted SSE source) and skip morphdom diff (use `innerHTML` — every token grows the full text, so incremental diff has zero reuse value). Once streaming stops, run the full pipeline (DOMPurify + morphdom) for the clean terminal render. markdown-it always runs so users see formatted text, never raw markdown.
+- [ ] 🟡 **Markdown streaming light mode** — Optimise the streaming render path in `i-chat-text-part`: when `message.streaming === true`, skip DOMPurify (trusted backend source) and skip morphdom diff (use `innerHTML` — every token grows the full text, so incremental diff has zero reuse value). Once streaming stops, run the full pipeline (DOMPurify + morphdom) for the clean terminal render. markdown-it always runs so users see formatted text, never raw markdown.
 
   No new config — this is a strict improvement over the current path and the default behavior. (Phase 2.2)
 - [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
@@ -105,8 +105,8 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] 🟡 **Component tests for `<i-chat-input>`** ✅ — Module import, element registration, constructor, default property values. Full DOM interaction tests (send/cancel, voice, auto-resize) require a browser. (Phase 1.1)
 - [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. Full integration tests require a browser. (Phase 1.1)
-- [ ] 🟢 **SSE integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
-- [ ] 🟢 **SSE integration tests** — SSE event stream → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
+- [ ] 🟢 **SSE integration tests** — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
+- [ ] 🟢 **ChatRunController integration tests** — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
 - [ ] 🟢 **Coverage thresholds** — Enforce ≥80% on helpers, ≥60% on components in CI. (Phase 1.2)
 
 ### Message Body & Parts

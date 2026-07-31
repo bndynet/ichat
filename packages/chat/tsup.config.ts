@@ -29,7 +29,6 @@ const scssPlugin: Plugin = {
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    'sse/index': 'src/sse/chat-sse-client.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
