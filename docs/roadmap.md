@@ -10,6 +10,9 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] Unit tests for pure helpers — `message-part-state`, `todo-state`, `tool-call-state`, `message-part-events`, `date-separator`, `duration-format`, `update-results`. 24 tests, all passing. (Phase 1.1)
 - [x] CI pipeline — GitHub Actions with Node.js 18/20/22 matrix, test + coverage on push/PR to `main`/`v3`. (Phase 1.2)
+- [x] 🟢 **Coverage thresholds** ✅ (completed 2026-07-31)
+- [x] 🟢 **SSE integration tests** ✅ (completed 2026-07-31) — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
+- [x] 🟢 **ChatRunController integration tests** ✅ (completed 2026-07-31) — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
 
 ### Message Body & Parts
 
@@ -76,9 +79,6 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] 🟡 **Component tests for `<i-chat-input>`** ✅ — Module import, element registration, constructor, default property values. (Phase 1.1)
 - [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. (Phase 1.1)
-- [ ] 🟢 **SSE integration tests** — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
-- [ ] 🟢 **ChatRunController integration tests** — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
-- [x] 🟢 **Coverage thresholds** ✅ (completed 2026-07-31) — CI workflow with `--experimental-test-coverage` + `tools/check-coverage.mjs` enforcing ≥85% line coverage on `chat-messages` and `chat-input`. (Phase 1.2)
 
 ### Architecture (v3)
 
