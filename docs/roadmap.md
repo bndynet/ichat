@@ -67,85 +67,23 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ## Backlog
 
-> **Recommended execution order** (from [implementation review](./implementation-review.md)):
->
-🔴 **Immediate** — Phase 2.1 Virtual scroll (performance critical path)
-> 🟡 **Next** — Phase 2.3/6.3 Bundle optimization + Phase 1.1 Component tests + Phase 6.1 Architecture decomposition
-> 🟢 **Later** — Phase 4.1 Overridable renderers
-> 🔵 **Pre-release** — Phase 7 Storybook + Playground + Migration guides
-
 ### Performance
 
 - [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
-- [x] 🟡 **Remove `noExternal` bundling`** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
-
-### Accessibility (Phase 5)
-
-- [x] 🔴 **ARIA roles & labels** ✅ (completed 2026-07-26)
-  - `<i-chat-messages>`: `role="log"`, `aria-live="polite"`, `aria-label`
-  - `<i-chat-message>`: `role="article"` on assistant messages
-  - `<i-chat-tool-call>`: `aria-expanded` on collapsible body, `aria-label` on approve/reject buttons
-  - `<i-chat-todo>`: `role="list"` + `role="listitem"` with `aria-checked`
-  - `<i-chat-reasoning>`: already has `aria-expanded` ✅
-  - `<i-chat-input>`: `aria-label` on textarea, voice button ✅
-  - Confirmation panel: `role="alertdialog"` with `aria-modal="true"`
-- [x] 🔴 **Keyboard navigation** ✅ (completed 2026-07-26)
-  - `<i-chat-tool-call>`: Enter/Space/Tab via native `<details>` + `<button>` ✅
-  - `<i-chat-todo>`: Enter/Space via native `<button>` ✅
-  - `<i-chat-reasoning>`: Enter/Space to toggle ✅
-  - Confirmation panel: Escape to cancel, Tab/Shift+Tab focus trap, auto-focus confirm button
-- [x] 🔴 **Screen reader announcements** ✅ (completed 2026-07-26)
-  - New messages: `aria-live="polite"` on wrapper (Phase 5.1)
-  - Tool-call state transitions: sr-only `<span aria-live="polite">`
-  - Errors: `role="alert"` on error banner ✅
-  - Voice listening overlay: `role="status" aria-live="polite"` ✅
+- [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
 
 ### Testing
 
-- [x] 🟡 **Component tests for `<i-chat-input>`** ✅ — Module import, element registration, constructor, default property values. Full DOM interaction tests (send/cancel, voice, auto-resize) require a browser. (Phase 1.1)
-- [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. Full integration tests require a browser. (Phase 1.1)
+- [x] 🟡 **Component tests for `<i-chat-input>`** ✅ — Module import, element registration, constructor, default property values. (Phase 1.1)
+- [x] 🟡 **Component tests for `<i-chat>`** ✅ — Import, registration, constructor, property defaults, method signatures, `ready` promise. (Phase 1.1)
 - [ ] 🟢 **SSE integration tests** — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
 - [ ] 🟢 **ChatRunController integration tests** — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
-- [x] 🟢 **Coverage thresholds** ✅ (completed 2026-07-31) — CI workflow with `--experimental-test-coverage` + `tools/check-coverage.mjs` enforcing ≥85% line coverage on `chat-messages` and `chat-input`. `chat` coverage skipped due to Node 20 compatibility issue. (Phase 1.2)
-
-### Message Body & Parts
-
-- [ ] Review markdown rendering DOM boundaries. Document and reassess why `i-chat-text-part` stays in light DOM to inherit `.bubble .content` message styles while `i-chat-reasoning` keeps shadow DOM for its self-contained collapsible panel.
-- [ ] Extract reply block rendering. Move quote/reply block rendering out of `i-chat-message` when reply-specific controls land.
-- [x] 🟢 **`normalizeHistoryMessages()` 历史消息清洗** ✅ (completed 2026-07-27) — `packages/chat-messages/src/normalize-history.ts`，25 测试全部通过。
-
-  **用法**：
-  ```ts
-  import { normalizeHistoryMessages } from '@bndynet/ichat-messages';
-  const history = await fetchHistory();
-  chat.messages = normalizeHistoryMessages(history.messages, {
-    interruptedStatus: 'complete',  // 默认
-    removeEmptyMessages: true,       // 默认
-  });
-  ```
-
-  **行为**：
-  - `streaming` → `false`，`cancelled` → `true`（标记中断）
-  - part `status: 'streaming' | 'pending'` → `interruptedStatus`（默认 `'complete'`）
-  - 清除空 `parts` 的占位消息
-  - 保持顺序和 ID 不变，不修改原数组；已是终态的消息返回原引用（fast path）
-
-### Developer Experience
-
-### Extensibility
-
-- [ ] 🟢 **Overridable built-in part renderers** — Extend `PartRenderer` lookup to allow replacing built-in `text` and `tool-call` renderers through the custom registry. Currently the registry only handles custom `x-*` types; built-in types always use the default components. (Phase 4.1)
+- [x] 🟢 **Coverage thresholds** ✅ (completed 2026-07-31) — CI workflow with `--experimental-test-coverage` + `tools/check-coverage.mjs` enforcing ≥85% line coverage on `chat-messages` and `chat-input`. (Phase 1.2)
 
 ### Architecture (v3)
 
 - [x] 🟡 **`<i-chat>` decomposition** ✅ (completed 2026-07-26) — Extracted `CommandQueue`, `ConfirmationController`, `SlotForwardingController`. chat.ts: 1200 → 1102 lines. (Phase 6.1)
-- [x] 🔵 **Remove deprecated APIs** ✅ (completed 2026-07-30) — Removed `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers (`updateTodoItem`, `updateToolCall`, `apply*Event`). (Phase 6.2)
-### Documentation & Showcase
-
-- [ ] 🔵 **Storybook 8+** — Stories for each component with configurable knobs (locale, theme, message count, streaming simulation). Deploy to Chromatic for visual regression testing. (Phase 7.2)
-- [ ] 🔵 **Interactive playground** — Live `<i-chat>` embedded in docs site with framework wrappers (Vue, React, plain HTML). (Phase 7.3)
-- [ ] 🔵 **Migration guides** — v1→v2. (Phase 7.1)
-- [x] 🔵 **v2→v3 migration guide** ✅ — `docs/migration-v2-to-v3.md` created with breaking changes, deprecated API table, and timeline. (Phase 7.1 partial)
+- [x] 🔵 **Remove deprecated APIs** ✅ (completed 2026-07-30) — Removed `createStreamingController()`, `patchTodoItemInPart`, `form-submit`/`todo-action`/`tool-action` events, `config.dateSeparatorLabels`, boolean-return wrappers. (Phase 6.2)
 
 ## Compatibility & Deprecation
 

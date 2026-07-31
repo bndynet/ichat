@@ -89,7 +89,7 @@ Total commits: **5** (one per implemented phase).
 
 | Item | Status | Details |
 |---|---|---|
-| 4.1 Overridable renderers | ✅ Done | `PartRenderer.test` doc updated for built-in types |
+| 4.1 Overridable renderers | ❌ Dropped | Replacing built-in text/tool-call renderers is a niche use case; `registerMarkdownPlugin()` already covers markdown-it config |
 | 4.2 Async BlockRenderer | ✅ Done | `renderAsync` in `BlockRenderer`, `resolveAsyncBlocks()` |
 | 4.3 Plugin system | ✅ Done | `ChatPlugin` interface, `chat.use()` unified for plugins & middleware |
 
@@ -103,22 +103,17 @@ Total commits: **5** (one per implemented phase).
 
 ---
 
-### ⏸ Phase 5 — Accessibility
+### ✅ Phase 5 — Accessibility
 
-**Status:** Planned, not implemented.
-- ARIA roles, keyboard navigation, screen reader announcements require DOM-level changes
-- Best done with visual/accessibility testing tooling
+**Status:** Completed 2026-07-26. ARIA roles, keyboard navigation, and screen reader announcements implemented across all components.
 
-### ⏸ Phase 6 — Architecture Cleanup
+### ✅ Phase 6 — Architecture Cleanup
 
-**Status:** Partially implemented.
-- `<i-chat>` decomposition, deprecated API removal deferred to v3
+**Status:** Completed 2026-07-30. `<i-chat>` decomposition (CommandQueue, ConfirmationController, SlotForwardingController) and deprecated API removal done.
 
-### ⏸ Phase 7 — Documentation & Showcase
+### ✅ Phase 7 — Documentation & Showcase
 
-**Status:** Partially implemented.
-- Phase summaries created for all phases
-- Migration guides, Storybook, playground deferred
+**Status:** Core docs complete. v2→v3 migration guide written. Storybook, playground, and v1→v2 guide dropped — demo app + README examples are sufficient for a 5-component library.
 
 ---
 
@@ -173,17 +168,7 @@ import {
 
 ---
 
-## Next Steps (Recommended)
+## Next Steps
 
-1. **Short-term (next sprint)**
-   - Add component tests for `<i-chat-input>` and `<i-chat>` (Phase 1 remaining)
-   - Add ARIA roles to key components (Phase 5)
-
-2. **Medium-term (v3 release)**
-   - Remove deprecated APIs (Phase 6.2)
-   - Write v2→v3 migration guide (Phase 7.1)
-
-3. **Long-term**
-   - Virtual scrolling for large message lists (Phase 2.1)
-   - Storybook + interactive playground (Phase 7.2-7.3)
-   - Generic type support (Phase 3.4)
+1. **Virtual scrolling** (Phase 2.1) — Integrate `@lit-labs/virtualizer` for large message lists
+2. **Integration tests** — SSE + ChatRunController end-to-end tests
