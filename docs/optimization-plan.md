@@ -103,13 +103,6 @@
   - Currently the registry only handles custom `x-*` types; built-in types always use the default components
 - [ ] Allow consumers to replace the markdown-based `text` part renderer entirely
 
-### 4.2 Built-in plugins
-
-- [ ] Ship pre-built plugins so consumers don't need to write their own:
-  - `MarkdownPlugin` — markdown-it config (linkify, typographer, custom fences)
-  - `HighlightPlugin` — highlight.js injection with language registration
-- [ ] User-land examples: KaTeX math plugin, link preview plugin, code copy button plugin
-
 ---
 
 ## Phase 5 — Accessibility
@@ -187,7 +180,7 @@
 🟡 Phase 1.1 Component tests        (regression safety net)
 🟡 Phase 6.1 Decomposition          (maintainability)
 🟢 Phase 3.3 Type system cleanup    (nice to have)
-🟢 Phase 4   Overridable renderers + built-in plugins
+🟢 Phase 4.1 Overridable renderers
 🔵 Phase 6.2 Remove deprecated      (v3 only)
 🔵 Phase 7   Storybook + playground (pre-release)
 ```

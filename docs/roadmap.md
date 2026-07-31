@@ -70,7 +70,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 >
 🔴 **Immediate** — Phase 2.1 Virtual scroll (performance critical path)
 > 🟡 **Next** — Phase 2.3/6.3 Bundle optimization + Phase 1.1 Component tests + Phase 6.1 Architecture decomposition
-> 🟢 **Later** — Phase 3.3/3.4 Type system + Phase 4.1 Overridable renderers + Phase 4.3 Built-in plugins
+> 🟢 **Later** — Phase 3.3/3.4 Type system + Phase 4.1 Overridable renderers
 > 🔵 **Pre-release** — Phase 7 Storybook + Playground + Migration guides
 
 ### Performance
@@ -139,7 +139,6 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 ### Extensibility
 
 - [ ] 🟢 **Overridable built-in part renderers** — Extend `PartRenderer` lookup to allow replacing built-in `text` and `tool-call` renderers through the custom registry. Currently the registry only handles custom `x-*` types; built-in types always use the default components. (Phase 4.1)
-- [ ] 🟢 **Built-in plugins** — Ship `MarkdownPlugin` (markdown-it config) and `HighlightPlugin` (highlight.js injection) as pre-built plugins so consumers don't need to write their own. (Phase 4.3)
 
 ### Architecture (v3)
 
