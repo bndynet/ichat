@@ -3,6 +3,7 @@ import { customElement, property, query } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
 import type { TextPart } from '../types.js';
 import { renderMarkdownInto, type RenderMarkdownIntoOptions } from '../renderers/markdown-morph.js';
+import { renderMarkdownLight, type MarkdownRenderOptions } from '../renderers/markdown-renderer.js';
 
 @customElement('i-chat-text-part')
 export class ChatTextPart extends LitElement {
@@ -28,11 +29,36 @@ export class ChatTextPart extends LitElement {
     const el = this._contentEl;
     if (!el || !this.data) return;
 
+    const markdownOptions: MarkdownRenderOptions = {
+      allowedLinkProtocols: this.allowedLinkProtocols,
+      highlightJs: this.highlightJs,
+    };
+
+    // ── Streaming light mode ──────────────────────────────────────────
+    // During streaming every token grows the full text, so morphdom diff
+    // has zero reuse value and DOMPurify is unnecessary (trusted backend
+    // source).  We run markdown-it only and set innerHTML directly.
+    // Once streaming stops we fall through to the full pipeline below for
+    // the clean terminal render.
+    if (this.data.status === 'streaming') {
+      const html = renderMarkdownLight(this.content, markdownOptions);
+      this._htmlCache = html;
+      el.innerHTML = html;
+      this.dispatchEvent(
+        new CustomEvent('chat-text-part-updated', {
+          detail: { changed: true },
+          bubbles: true,
+          composed: true,
+        })
+      );
+      return;
+    }
+
+    // ── Full pipeline (terminal) ─────────────────────────────────────
     const result = renderMarkdownInto(el, this.content, {
       previousHtml: this._htmlCache,
-      allowedLinkProtocols: this.allowedLinkProtocols,
+      ...markdownOptions,
       partId: this.data?.id,
-      highlightJs: this.highlightJs,
     });
     this._htmlCache = result.html;
     if (!result.changed) return;

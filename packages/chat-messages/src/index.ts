@@ -15,6 +15,7 @@ export { partRendererRegistry } from './renderers/part-registry.js';
 export {
   md,
   renderMarkdown,
+  renderMarkdownLight,
   sanitizeHtml,
   extractReasoning,
   hasUnclosedReasoning,

@@ -274,6 +274,44 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
   }
 }
 
+/**
+ * Streaming-optimised markdown rendering: markdown-it + block-renderer splice
+ * **without** DOMPurify sanitisation.  Safe for backend-originated streaming
+ * content where the source is trusted and every token grows the full text
+ * (making morphdom diff a no-op).  Callers should use `innerHTML` directly
+ * instead of `renderMarkdownInto()` morphing.
+ *
+ * Once streaming stops, run the full `renderMarkdown()` + `renderMarkdownInto()`
+ * pipeline for the clean terminal render.
+ *
+ * @internal Not exported as public API — used internally by `i-chat-text-part`.
+ */
+export function renderMarkdownLight(content: string, options?: MarkdownRenderOptions): string {
+  pendingBlockHTML.clear();
+  const previousOptions = activeRenderOptions;
+  activeRenderOptions = options;
+  activeHighlightJs = options?.highlightJs;
+
+  try {
+    const raw = md.render(content);
+
+    // Splice trusted block-renderer HTML back in (same as full path).
+    let result = raw;
+    for (const [id, html] of pendingBlockHTML) {
+      result = result.replace(`<div id="${id}"></div>`, html);
+    }
+
+    // Note: we intentionally skip DOMPurify — streaming content is
+    // from a trusted backend source.  The final terminal render (when
+    // status flips to 'complete') runs the full pipeline.
+    return result;
+  } finally {
+    activeRenderOptions = previousOptions;
+    activeHighlightJs = undefined;
+    pendingBlockHTML.clear();
+  }
+}
+
 /** Allow optional whitespace before `>` and case-insensitive tag names so model output still matches. */
 function reasoningTagToOpenRe(tag: string): RegExp {
   return new RegExp(escapeRegExp(tag).replace(/>$/, '\\s*>'), 'i');

@@ -44,9 +44,11 @@
 
 ### 2.2 Markdown streaming light mode
 
-- [ ] During active streaming, render plain text only; run full markdown-it + DOMPurify pass once streaming stops
-  - Controlled by `config.markdownMode: 'full' | 'streaming-light'`
-  - Reduces jank during high-frequency token delivery
+- [x] During active streaming, skip DOMPurify + morphdom; use `innerHTML` directly ✅ (completed 2026-07-31)
+  - Detected via `TextPart.status === 'streaming'` — no new config needed
+  - Added `renderMarkdownLight()` in `markdown-renderer.ts` for the streaming path
+  - Full pipeline (DOMPurify + `renderMarkdownInto` morphing) runs on terminal render
+  - markdown-it always runs so users see formatted text, never raw markdown
 
 ## Phase 3 — Developer Experience (remaining)
 
