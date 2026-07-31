@@ -267,7 +267,7 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 - **Lit 3 Web Components** — works with any framework or vanilla HTML
 - **Markdown** — `markdown-it` + `highlight.js`, sanitized with DOMPurify
 - **Extensible fenced blocks** — **`registerCodeRenderer`** from **`@bndynet/ichat`**, or **`rendererRegistry`** + **`BlockRenderer`** for lower-level control ([Custom renderers](docs/renderers.md))
-- **Extensible `x-*` parts** — **`registerPartRenderer`** maps custom part types to a Web Component or HTML string ([Parts](docs/parts.md#x--custom-extension-parts))
+- **Extensible `x-*` parts** — **`registerPartRenderer`** maps custom part types to a Web Component or HTML string; pair with generic **`Chat<TExtraParts>`** for full type-checking of custom part data ([Parts](docs/parts.md#x--custom-extension-parts))
 - **Structured `parts[]` body** — every message body is an ordered list of typed parts (`text`, `reasoning`, `tool-call`, `todo`, `file`, `source`, custom `x-*`); parts stream and update independently ([Message model](docs/message-model.md#message-body--parts))
 - **Reasoning parts** — collapsible “thinking” UI + streaming ([Parts](docs/parts.md#reasoning))
 - **Tool calls** — first-class `tool-call` parts with a state machine, rich nested results, and human-in-the-loop approval ([Parts](docs/parts.md#tool-calls))

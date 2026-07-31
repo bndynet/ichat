@@ -73,7 +73,7 @@ Total commits: **5** (one per implemented phase).
 | 3.1 SSE client | ❌ Removed | Removed in v3 — use `ChatRunController` + manual stream handling instead |
 | 3.2 Middleware | ✅ Done | `ChatMiddleware` with `beforeSend`/`afterMessageAdded` hooks |
 | 3.3 Type cleanup | ⏸ Deferred | Needs careful split of public vs internal types |
-| 3.4 Generic types | ⏸ Deferred | Requires type-level refactoring |
+| 3.4 Generic types | ✅ Done | `Chat<TExtraParts>`, `CustomPartOf<T>`, `PartOf<M, T>`, `ExtendedMessagePart<T>` |
 | 3.5 AbortController | ✅ Done | `ChatRunController.signal` for fetch integration |
 
 **Key files:**

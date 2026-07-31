@@ -60,19 +60,29 @@
 
 ### 3.2 Generic type support
 
-- [ ] Make `<i-chat>` generic over custom part types:
+- [x] Make `<i-chat>` generic over custom part types ✅ (completed 2026-07-31)
 
   ```typescript
-  interface ChatMessageExtraParts {
-    [type: `x-${string}`]: unknown;
-  }
+  // Usage:
+  type MyParts = { 'x-weather': { temp: number; humidity: number } };
+  const chat = document.querySelector('i-chat') as Chat<MyParts>;
+  chat.messages[0].parts.forEach(p => {
+    if (p.type === 'x-weather') p.data.temp; // typed as number
+  });
+  ```
 
-  class Chat<TExtraParts extends Record<string, unknown> = {}> extends LitElement {
-    messages: Array<ChatMessage & { parts: Array<MessagePart | CustomPart<TExtraParts>> }>;
+  ```typescript
+  // Internal implementation:
+  class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> extends LitElement {
+    messages: Array<ChatMessage & { parts: ExtendedMessagePart<TExtraParts>[] }>;
   }
   ```
 
-- [ ] Provide type helpers: `CustomPartOf<T>`, `PartOf<M, T>`
+- [x] Provide type helpers: `CustomPartOf<T>`, `PartOf<M, T>`, `ExtendedMessagePart<T>` ✅
+
+  - `CustomPartOf<T>` — Given a mapping `{ 'x-*': DataType }`, produces a typed `CustomPart` discriminated union.
+  - `PartOf<M, T>` — Extract the part(s) matching a given type string from a message's parts array.
+  - `ExtendedMessagePart<T>` — Extends the standard `MessagePart` union with typed custom parts.
 
 ---
 
@@ -176,7 +186,7 @@
 🟡 Phase 2.3 Bundle size            (small change, big impact)
 🟡 Phase 1.1 Component tests        (regression safety net)
 🟡 Phase 6.1 Decomposition          (maintainability)
-🟢 Phase 3   Type system + generics (nice to have)
+🟢 Phase 3.3 Type system cleanup    (nice to have)
 🟢 Phase 4   Overridable renderers + built-in plugins
 🔵 Phase 6.2 Remove deprecated      (v3 only)
 🔵 Phase 7   Storybook + playground (pre-release)

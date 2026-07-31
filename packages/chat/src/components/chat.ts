@@ -8,6 +8,7 @@ import type {
   ChatConfig,
   BlockRenderer,
   ConfirmationLabels,
+  ExtendedMessagePart,
   MessagesChangeDetail,
   MessagesChangeReason,
   MessagePartUpdateResult,
@@ -98,6 +99,19 @@ export interface ChatConfirmationChangeDetail {
 /**
  * `<i-chat>` — A complete, drop-in chat Web Component.
  *
+ * @typeParam TExtraParts — Optional mapping of custom `x-*` part types to their
+ *   data shapes.  When provided, `chat.messages` carries fully typed custom parts,
+ *   enabling autocomplete and type-checking for host-defined extensions.
+ *
+ * @example
+ * ```ts
+ * type MyParts = { 'x-weather': { temp: number; humidity: number } };
+ * const chat = document.querySelector('i-chat') as Chat<MyParts>;
+ * chat.messages[0].parts.forEach(p => {
+ *   if (p.type === 'x-weather') p.data.temp; // typed as number
+ * });
+ * ```
+ *
  * Bundles `<i-chat-messages>` and `<i-chat-input>`. Optional fenced-block
  * renderers (e.g. from `@bndynet/ichat-renderers`) should be registered with
  * `registerRenderer` from `@bndynet/ichat` before messages use those blocks.
@@ -154,10 +168,25 @@ export interface ChatConfirmationChangeDetail {
  * ```
  */
 @customElement('i-chat')
-export class Chat extends LitElement {
+export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> extends LitElement {
   static styles = unsafeCSS(styles);
 
-  @property({ type: Array }) messages: ChatMessage[] = [];
+  /**
+   * Ordered list of chat messages.  When `TExtraParts` is provided, the
+   * `parts` array carries fully typed custom parts so host-defined `x-*`
+   * extensions enjoy autocomplete and type-checking.
+   */
+  @property({ type: Array }) messages: Array<ChatMessage & { parts: ExtendedMessagePart<TExtraParts>[] }> = [];
+
+  /**
+   * @internal Plain `ChatMessage[]` view for interop with pure helpers.
+   * All internal mutation logic reads/writes through this getter so the
+   * generic `TExtraParts` parameter does not force casts at every call site.
+   */
+  private get _msgs(): ChatMessage[] {
+    return this.messages as unknown as ChatMessage[];
+  }
+
   @property({ type: Object }) config: ChatConfig = {};
   @property() emptyText = '';
   /**
@@ -302,8 +331,8 @@ export class Chat extends LitElement {
       itemId?: string;
     },
   ): void {
-    if (next === this.messages) return;
-    const previousMessages = this.messages;
+    if (next === this._msgs) return;
+    const previousMessages = this._msgs;
 
     if (this.messageMode === 'controlled') {
       // Controlled: emit proposal, host must write back.
@@ -329,7 +358,7 @@ export class Chat extends LitElement {
     }
 
     // Uncontrolled (default): component owns the state.
-    this.messages = next;
+    this.messages = next as unknown as typeof this.messages;
     this._syncStreamingFromMessages(next);
     this.dispatchEvent(
       new CustomEvent<MessagesChangeDetail>('messages-change', {
@@ -357,14 +386,14 @@ export class Chat extends LitElement {
   }
 
   addMessage(message: ChatMessage): void {
-    this._commitMessages(addMessage(this.messages, message), {
+    this._commitMessages(addMessage(this._msgs, message), {
       reason: 'message:add',
       messageId: message.id,
     });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this._commitMessages(patchMessageById(this.messages, id, partial), {
+    this._commitMessages(patchMessageById(this._msgs, id, partial), {
       reason: 'message:update',
       messageId: id,
     });
@@ -372,7 +401,7 @@ export class Chat extends LitElement {
 
   /** Append a structured body part to a message. */
   appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
-    this._commitMessages(appendMessagePart(this.messages, messageId, part), {
+    this._commitMessages(appendMessagePart(this._msgs, messageId, part), {
       reason: 'part:append',
       messageId,
       partId: part.id,
@@ -385,7 +414,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['updatePart']>[2]
   ): void {
-    const result = patchMessagePart(this.messages, messageId, partId, patch);
+    const result = patchMessagePart(this._msgs, messageId, partId, patch);
     if (result.ok) {
       this._commitMessages(result.messages, {
         reason: 'part:update',
@@ -396,7 +425,7 @@ export class Chat extends LitElement {
   }
 
   removeMessage(id: string): void {
-    this._commitMessages(removeMessageById(this.messages, id), {
+    this._commitMessages(removeMessageById(this._msgs, id), {
       reason: 'message:remove',
       messageId: id,
     });
@@ -434,7 +463,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['tryUpdatePart']>[2]
   ): MessagePartUpdateResult {
-    const result = applyMessagePartUpdate(this.messages, { messageId, partId, patch });
+    const result = applyMessagePartUpdate(this._msgs, { messageId, partId, patch });
     if (!result.ok) return { ok: false, reason: result.reason, part: result.part };
 
     this._commitMessages(result.messages, { reason: 'part:update', messageId, partId });
@@ -447,7 +476,7 @@ export class Chat extends LitElement {
     partId: string,
     patch: Parameters<ChatMessages['tryUpdateToolCall']>[2]
   ): ToolCallUpdateResult {
-    const lookup = findMessagePart(this.messages, messageId, partId);
+    const lookup = findMessagePart(this._msgs, messageId, partId);
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
@@ -456,7 +485,7 @@ export class Chat extends LitElement {
     const tcResult = patchToolCallPart(part, patch);
     if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, tcResult.part);
+    const replacement = replaceMessagePart(this._msgs, messageId, partId, tcResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, { reason: 'tool-call:update', messageId, partId });
@@ -471,7 +500,7 @@ export class Chat extends LitElement {
     patch: Parameters<ChatMessages['tryUpdateTodoItem']>[3],
     revision?: number,
   ): TodoItemUpdateResult {
-    const lookup = findMessagePart(this.messages, messageId, partId);
+    const lookup = findMessagePart(this._msgs, messageId, partId);
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
@@ -480,7 +509,7 @@ export class Chat extends LitElement {
     const todoResult = patchTodoItem(part, itemId, patch, revision);
     if (!todoResult.ok) return { ok: false, reason: todoResult.reason, part: todoResult.part };
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, todoResult.part);
+    const replacement = replaceMessagePart(this._msgs, messageId, partId, todoResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, {
@@ -538,7 +567,7 @@ export class Chat extends LitElement {
    * its network request.
    */
   cancel(hint?: string): void {
-    const streamingMsg = this.messages.find((m) => m.streaming && !m.error);
+    const streamingMsg = this._msgs.find((m) => m.streaming && !m.error);
     if (streamingMsg) this.cancelMessage(streamingMsg.id, hint);
   }
 
@@ -553,8 +582,8 @@ export class Chat extends LitElement {
     }
 
     // 2. Compute cancelled data in one shot via pure reducer.
-    const next = cancelMessageData(this.messages, id, hint);
-    if (next === this.messages) return; // no-op: id not found or already terminal
+    const next = cancelMessageData(this._msgs, id, hint);
+    if (next === this._msgs) return; // no-op: id not found or already terminal
 
     // 3. Commit through the top-level store.
     this._commitMessages(next, { reason: 'message:cancel', messageId: id });
@@ -725,15 +754,15 @@ export class Chat extends LitElement {
 
     // Reject stale child mutations: if the child's base array doesn't match
     // our current messages, it was operating on stale data.
-    if (detail.previousMessages !== this.messages) {
+    if (detail.previousMessages !== this._msgs) {
       if (this._messages) {
-        this._messages.messages = this.messages;
+        this._messages.messages = this._msgs;
       }
       return;
     }
 
     // Adopt the child's state as our own.
-    this.messages = detail.messages;
+    this.messages = detail.messages as unknown as typeof this.messages;
 
     // Re-emit from <i-chat> as the authoritative source.
     this.dispatchEvent(

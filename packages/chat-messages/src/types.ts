@@ -210,6 +210,68 @@ export function isCustomMessagePartType(type: string): type is `x-${string}` {
   return type.startsWith('x-');
 }
 
+// ── Generic type helpers for custom part types ─────────────────────────────
+
+/**
+ * Given a mapping of custom part type strings to their data shapes, produce
+ * the corresponding typed {@link CustomPart} discriminated union.  Each
+ * key–value pair becomes a narrowed `CustomPart` with the correct `data` type.
+ *
+ * @typeParam T — A record mapping `x-*` type strings to their data types.
+ *
+ * @example
+ * ```ts
+ * type MyParts = {
+ *   'x-weather': { temp: number; humidity: number };
+ *   'x-map': { lat: number; lng: number };
+ * };
+ *
+ * type WeatherPart = CustomPartOf<MyParts>;  // { type: 'x-weather'; data: { temp: number; ... } }
+ *                                             // | { type: 'x-map'; data: { lat: number; ... } }
+ * ```
+ */
+export type CustomPartOf<T extends Record<`x-${string}`, unknown>> = {
+  [K in keyof T & `x-${string}`]: CustomPart & { type: K; data: T[K] };
+}[keyof T & `x-${string}`];
+
+/**
+ * Extract the part(s) matching a given type string from a message's parts array.
+ *
+ * @typeParam M — A message-like type with a `parts` array.
+ * @typeParam T — A part `type` string to extract.
+ *
+ * @example
+ * ```ts
+ * type TextParts = PartOf<ChatMessage, 'text'>;        // TextPart
+ * type ToolParts = PartOf<ChatMessage, 'tool-call'>;   // ToolCallPart
+ * type CustomParts = PartOf<ChatMessage, 'x-weather'>; // CustomPart
+ * ```
+ */
+export type PartOf<
+  M extends { parts: readonly MessagePart[] },
+  T extends MessagePart['type'],
+> = Extract<M['parts'][number], { type: T }>;
+
+/**
+ * Extend the standard {@link MessagePart} union with typed custom parts.
+ *
+ * When `TExtraParts` is the default `{}` (empty mapping), this resolves to
+ * plain `MessagePart` — fully backward-compatible.  When a mapping is
+ * provided, the resulting union includes the narrowed `CustomPart` types.
+ *
+ * @typeParam TExtraParts — A mapping of `x-*` type strings to their data types.
+ *
+ * @example
+ * ```ts
+ * type MyParts = { 'x-weather': { temp: number } };
+ * type AllParts = ExtendedMessagePart<MyParts>;
+ * // TextPart | ReasoningPart | ToolCallPart | ... | CustomPart & { type: 'x-weather'; data: { temp: number } }
+ * ```
+ */
+export type ExtendedMessagePart<
+  TExtraParts extends Record<`x-${string}`, unknown> = {},
+> = MessagePart | CustomPartOf<TExtraParts>;
+
 export interface ChatMessage {
   id: string;
   role: ChatMessageRole;

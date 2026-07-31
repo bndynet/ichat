@@ -74,6 +74,9 @@ export type {
   TodoPart,
   TodoPartOptions,
   CustomPart,
+  CustomPartOf,
+  PartOf,
+  ExtendedMessagePart,
   PartFactoryOptions,
 } from './types.js';
 export {

@@ -42,6 +42,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] AbortController in ChatRunController — `run.signal` for fetch integration. Auto-aborted on `complete()` / `fail()` / `cancel()`. (Phase 3.5)
 - [x] Middleware chain — `ChatMiddleware` with `beforeSend`, `afterMessageAdded`, `beforeAppendPart`, `onError` hooks. FIFO execution, null short-circuits. (Phase 3.2)
+- [x] 🟢 **Generic type support** — Made `<i-chat>` generic over custom part types (`Chat<TExtraArgs>`). Added `CustomPartOf<T>`, `PartOf<M, T>`, and `ExtendedMessagePart<T>` type helpers. (Phase 3.4)
 
 ### Extensibility
 
@@ -134,7 +135,6 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 ### Developer Experience
 
 - [ ] 🟢 **Type system cleanup** — Split public API types from internal diagnostic types. `@bndynet/ichat/messages` re-export path. `docs/public-api.md`. (Phase 3.3)
-- [ ] 🟢 **Generic type support** — Make `<i-chat>` generic over custom part types (`Chat<TExtraParts>`). Type helpers: `CustomPartOf<T>`, `PartOf<M, T>`. (Phase 3.4)
 
 ### Extensibility
 

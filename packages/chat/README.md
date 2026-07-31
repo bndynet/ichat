@@ -38,6 +38,8 @@ import {
 
 Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConfig`, etc.).
 
+For custom `x-*` part types, use the generic `Chat<TExtraParts>` to get full type-checking of your custom part data — see [Generic type support](../../docs/component-api.md#generic-type-support) in the API docs.
+
 Backend integration is done via `ChatRunController` — see the [streaming integration guide](../../README.md#quick-start-es-modules) in the main README.
 
 ## Optional add-ons
