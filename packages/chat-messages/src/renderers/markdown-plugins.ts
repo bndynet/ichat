@@ -15,6 +15,12 @@ const registeredPlugins = new Map<string, MarkdownPlugin>();
 let combinedStyles = '';
 let combinedGlobalStyles = '';
 let frozen = false;
+let onCssChange: (() => void) | null = null;
+
+/** Register a callback invoked whenever the combined plugin CSS changes. */
+export function onPluginCssChange(cb: () => void): void {
+  onCssChange = cb;
+}
 
 function recomputeCss(): void {
   combinedStyles = Array.from(registeredPlugins.values())
@@ -25,6 +31,7 @@ function recomputeCss(): void {
     .map((e) => e.globalStyles)
     .filter(Boolean)
     .join('\n');
+  onCssChange?.();
 }
 
 /** Freeze the plugin registry so no new plugins can be registered. Idempotent. */

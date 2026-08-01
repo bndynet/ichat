@@ -1,95 +1,101 @@
 import {
   getMarkdownPluginStyles,
   getMarkdownPluginGlobalStyles,
+  onPluginCssChange,
 } from './markdown-plugins.js';
 
 const PLUGIN_ATTR = 'data-ichat-plugin';
+const GLOBAL_PLUGIN_ATTR = 'data-ichat-plugin-global';
 
-// ── Shared constructable stylesheet ───────────────────────────────────────────
+// ── Track injected <style> elements so they stay in sync ─────────────────────
 
-let sharedSheet: CSSStyleSheet | null | undefined;
+const trackedStyles = new Set<HTMLStyleElement>();
 
-function getOrCreateSharedSheet(): CSSStyleSheet | null {
-  if (sharedSheet !== undefined) return sharedSheet;
-
+onPluginCssChange(() => {
   const css = getMarkdownPluginStyles();
-  if (!css) {
-    sharedSheet = null;
-    return null;
+  for (const style of trackedStyles) {
+    style.textContent = css;
   }
-
-  try {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(css);
-    sharedSheet = sheet;
-  } catch {
-    // Fallback for environments without constructable stylesheets (SSR, older browsers).
-    sharedSheet = null;
+  // Also refresh global styles
+  const globalCss = getMarkdownPluginGlobalStyles();
+  let globalStyle = document.head.querySelector(`style[${GLOBAL_PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+  if (globalCss) {
+    if (!globalStyle) {
+      globalStyle = document.createElement('style');
+      globalStyle.setAttribute(GLOBAL_PLUGIN_ATTR, '');
+      document.head.insertBefore(globalStyle, document.head.firstChild);
+    }
+    globalStyle.textContent = globalCss;
+  } else {
+    globalStyle?.remove();
   }
-  return sharedSheet;
-}
+});
 
-// ── Per-shadow-root injection (shared sheet with fallback) ────────────────────
+// ── Per-shadow-root injection ────────────────────────────────────────────────
 
 /**
  * Inject plugin CSS into a shadow root.
  *
- * When the environment supports constructable stylesheets, a single shared
- * `CSSStyleSheet` is adopted by every shadow root — no per-instance CSS
- * duplication.  Fallback for environments without `adoptedStyleSheets`:
- * a deduplicated `<style>` element per root.
+ * Uses a per-root `<style>` element.  When new plugins register after the
+ * first injection, all existing `<style>` elements are automatically updated
+ * via the {@link onPluginCssChange} callback.
  *
  * Call once per component instance in `connectedCallback`.
  * Returns a cleanup function for `disconnectedCallback`.
  */
 export function injectPluginCss(parent: ParentNode): () => void {
-  const sheet = getOrCreateSharedSheet();
+  const css = getMarkdownPluginStyles();
 
-  if (sheet && parent instanceof ShadowRoot) {
-    // Shared constructable stylesheet — adopt once per root.
-    const roots = parent.adoptedStyleSheets;
-    if (!roots.includes(sheet)) {
-      parent.adoptedStyleSheets = [...roots, sheet];
+  let style = parent.querySelector(`style[${PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+
+  if (!css) {
+    if (style) {
+      trackedStyles.delete(style);
+      style.remove();
     }
-    // The sheet is shared across all instances; don't remove it on disconnect.
     return () => {};
   }
 
-  // ── Fallback: per-root <style> element ──────────────────────────────────
-  const css = getMarkdownPluginStyles();
-  if (!css) return () => {};
+  if (!style) {
+    style = document.createElement('style');
+    style.setAttribute(PLUGIN_ATTR, '');
+    parent.insertBefore(style, parent.firstChild);
+    trackedStyles.add(style);
+  }
 
-  // Dedup: don't append if already present (e.g. Lit reconnect after DOM move).
-  if (parent.querySelector(`style[${PLUGIN_ATTR}]`)) return () => {};
-
-  const style = document.createElement('style');
-  style.setAttribute(PLUGIN_ATTR, '');
   style.textContent = css;
-  parent.insertBefore(style, parent.firstChild);
-
-  return () => style.remove();
+  return () => {
+    trackedStyles.delete(style!);
+    style!.remove();
+  };
 }
 
-// ── Global injection (document.head, singleton) ───────────────────────────────
-
-let globalCssInjected = false;
+// ── Global injection (document.head) ──────────────────────────────────────────
 
 /**
- * Inject plugin CSS into `document.head` exactly once per document.
- * Safe to call from every component instance — subsequent calls are no-ops.
+ * Inject plugin CSS into `document.head`.  Updates the existing `<style>`
+ * element when plugins register after the first injection (e.g. lazy-loaded
+ * renderer packages).
  *
- * Global CSS is permanent (matches the permanent nature of plugin registration)
- * so there is no cleanup function.
+ * Safe to call from every component instance — idempotent.
+ * Global CSS is permanent so there is no cleanup function.
  */
 export function injectGlobalPluginCss(): void {
-  if (globalCssInjected) return;
   const css = getMarkdownPluginGlobalStyles();
-  if (!css) return;
 
-  const style = document.createElement('style');
-  style.setAttribute('data-ichat-plugin-global', '');
+  let style = document.head.querySelector(`style[${GLOBAL_PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+
+  if (!css) {
+    style?.remove();
+    return;
+  }
+
+  if (!style) {
+    style = document.createElement('style');
+    style.setAttribute(GLOBAL_PLUGIN_ATTR, '');
+    document.head.insertBefore(style, document.head.firstChild);
+  }
+
   style.textContent = css;
-  document.head.insertBefore(style, document.head.firstChild);
-  globalCssInjected = true;
 }
 
