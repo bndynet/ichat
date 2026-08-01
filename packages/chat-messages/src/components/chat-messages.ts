@@ -660,6 +660,40 @@ export class ChatMessages extends LitElement {
     return true;
   }
 
+  /**
+   * Scroll a message into view by its ID.
+   *
+   * Queries the rendered `i-chat-message` element with the matching
+   * `data-message-id` attribute and calls `scrollIntoView` on it.
+   *
+   * @returns `true` if the message element was found and scrolled into view.
+   */
+  scrollToMessage(id: string): boolean {
+    const msgEl = this.shadowRoot?.querySelector(
+      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
+    );
+    if (!msgEl) return false;
+    msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return true;
+  }
+
+  /**
+   * Scroll a message part into view by its part ID.
+   *
+   * Queries any element inside the shadow root with the matching
+   * `data-part-id` attribute and calls `scrollIntoView` on it.
+   *
+   * @returns `true` if the part element was found and scrolled into view.
+   */
+  scrollToPart(partId: string): boolean {
+    const partEl = this.shadowRoot?.querySelector(
+      `[data-part-id="${CSS.escape(partId)}"]`
+    );
+    if (!partEl) return false;
+    partEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return true;
+  }
+
   clear(): void {
     this._commitMessages(clearMessages(), { reason: 'message:clear' });
     this._clearPresentation();

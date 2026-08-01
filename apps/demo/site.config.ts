@@ -25,6 +25,7 @@ export default defineConfig({
       { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },
       { label: 'Confirmation', icon: 'badge-check', page: () => import('./src/pages/renderers/ConfirmationPage.vue') },
       { label: 'Details', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsPage.vue') },
+      { label: 'Scroll To', icon: 'arrow-down', page: () => import('./src/pages/renderers/ScrollToPage.vue') },
     ]},
     {
       label: 'Slots',

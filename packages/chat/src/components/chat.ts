@@ -624,6 +624,28 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
   }
 
+  /**
+   * Scroll a message into view by its ID.
+   *
+   * Proxies to `<i-chat-messages>.scrollToMessage()`.  Returns `false`
+   * when the child element is not yet rendered.
+   */
+  scrollToMessage(id: string): boolean {
+    if (!this._isChildReady()) return false;
+    return this._messages.scrollToMessage(id);
+  }
+
+  /**
+   * Scroll a message part into view by its part ID.
+   *
+   * Proxies to `<i-chat-messages>.scrollToPart()`.  Returns `false`
+   * when the child element is not yet rendered.
+   */
+  scrollToPart(partId: string): boolean {
+    if (!this._isChildReady()) return false;
+    return this._messages.scrollToPart(partId);
+  }
+
   /** Register a fenced-code block renderer at runtime. */
   registerCodeRenderer(renderer: BlockRenderer): void {
     registerCodeRenderer(renderer);
