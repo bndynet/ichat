@@ -1,5 +1,12 @@
 declare module 'markdown-it-katex' {
   import type MarkdownIt from 'markdown-it';
-  const mk: (md: MarkdownIt) => void;
+  interface KatexOptions {
+    output?: 'html' | 'mathml' | 'htmlAndMathml';
+    throwOnError?: boolean;
+    errorColor?: string;
+    displayMode?: boolean;
+    [key: string]: unknown;
+  }
+  const mk: (md: MarkdownIt, options?: KatexOptions) => void;
   export default mk;
 }

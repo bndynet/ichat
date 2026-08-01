@@ -15,9 +15,19 @@
 import { registerMarkdownPlugin } from '@bndynet/ichat-messages';
 import mk from 'markdown-it-katex';
 
-// ── KaTeX font CDN (matches the katex npm dependency version) ────────────
+// ── KaTeX version & CDN ──────────────────────────────────────────────────
+// In production, tsup replaces __KATEX_VERSION__ with the actual version
+// from the installed katex package.  In dev mode we fall back to a CDN URL
+// using the version below — keep this in sync with the katex dependency in
+// package.json.  The next build will automatically pick up the npm version.
 
-const KATEX_CDN = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts';
+declare const __KATEX_VERSION__: string | undefined;
+
+const KATEX_VERSION = typeof __KATEX_VERSION__ !== 'undefined'
+  ? __KATEX_VERSION__
+  : '0.16.45'; // ← update when katex is upgraded
+
+const KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist/fonts`;
 
 const KATEX_FONTS = `
 @font-face {
@@ -130,21 +140,12 @@ const KATEX_FONTS = `
 }
 `;
 
-// ── Chat-friendly KaTeX overrides ────────────────────────────────────────
-
-const KATEX_STYLES = `
-.katex { font-size: 1.1em; }
-.katex .katex-html { max-width: 100%; overflow: hidden; }
-.katex .hide-tail { overflow: hidden; position: relative; display: inline-block; width: 100%; }
-.katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
-.katex-display > .katex { max-width: 100%; display: inline-block; }
-`;
-
-// ── Register ─────────────────────────────────────────────────────────────
+// ── Register (MathML output — browser-native rendering, no CSS table layout) ─
 
 registerMarkdownPlugin({
   id: 'latex',
-  install: mk,
-  styles: KATEX_STYLES,
+  install: (md) => { mk(md, { output: 'mathml' }); },
+  styles: `.katex .katex-html[aria-hidden="true"] { display: none; }`,
   globalStyles: KATEX_FONTS,
 });
+
