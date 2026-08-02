@@ -3,7 +3,7 @@ import type { BlockRenderer } from '@bndynet/ichat-messages';
 import type { ChartData, ChartOptions } from '@bndynet/icharts';
 import { switchTheme } from '@bndynet/icharts';
 import '@bndynet/icharts'; // registers <i-chart>
-import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
+import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,10 +89,13 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
   // colorHub.getCurrentTheme().name, so newly created charts automatically
   // pick up whichever theme is currently active via switchTheme().
   // Only inject options.theme when the caller explicitly requested one.
-  const escapedData = JSON.stringify(input.data).replace(/'/g, '&#39;');
-  const escapedOptions = JSON.stringify(options).replace(/'/g, '&#39;');
+  const serializedData = JSON.stringify(input.data);
+  if (serializedData === undefined) return renderCodeFallback('chart', code);
+  const escapedType = escapeHtml(String(input.type ?? ''));
+  const escapedData = escapeHtml(serializedData);
+  const escapedOptions = escapeHtml(JSON.stringify(options));
 
-  const html = `<i-chart type="${input.type}" data='${escapedData}' options='${escapedOptions}' style="display:block;width:100%;height:320px"></i-chart>`;
+  const html = `<i-chart type="${escapedType}" data='${escapedData}' options='${escapedOptions}' style="display:block;width:100%;height:320px"></i-chart>`;
 
   return opts.codeToggle !== false
     ? wrapWithCodeToggle('chart', code, html)
@@ -117,6 +120,7 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
 export function createChartRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'chart',
+    trusted: true,
     test: (lang: string) => lang === 'chart',
     render: (code: string, _lang: string) => renderChart(code, options),
   };

@@ -313,6 +313,7 @@ const FORM_STYLES = `
 // ── Field HTML builders ───────────────────────────────────────────────────────
 
 function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): string {
+  const id = escapeHtml(fieldId);
   const label = escapeHtml(field.label ?? field.name);
   const name = escapeHtml(field.name);
   const placeholder = escapeHtml(field.placeholder ?? '');
@@ -323,8 +324,8 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
     case 'textarea':
       return `
         <div class="chat-form__field">
-          <label class="chat-form__label" for="${fieldId}">${label}${requiredMark}</label>
-          <textarea class="chat-form__textarea" id="${fieldId}" name="${name}" placeholder="${placeholder}"${required}></textarea>
+          <label class="chat-form__label" for="${id}">${label}${requiredMark}</label>
+          <textarea class="chat-form__textarea" id="${id}" name="${name}" placeholder="${placeholder}"${required}></textarea>
         </div>`;
 
     case 'select': {
@@ -336,8 +337,8 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
         .join('');
       return `
         <div class="chat-form__field">
-          <label class="chat-form__label" for="${fieldId}">${label}${requiredMark}</label>
-          <select class="chat-form__select" id="${fieldId}" name="${name}"${required}>
+          <label class="chat-form__label" for="${id}">${label}${requiredMark}</label>
+          <select class="chat-form__select" id="${id}" name="${name}"${required}>
             ${placeholder}
             ${options}
           </select>
@@ -348,8 +349,8 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
       return `
         <div class="chat-form__field">
           <div class="chat-form__checkbox-row">
-            <input class="chat-form__checkbox" type="checkbox" id="${fieldId}" name="${name}" />
-            <label class="chat-form__label" for="${fieldId}">${label}</label>
+            <input class="chat-form__checkbox" type="checkbox" id="${id}" name="${name}" />
+            <label class="chat-form__label" for="${id}">${label}</label>
           </div>
         </div>`;
 
@@ -376,8 +377,8 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
       const rangeLabels = field.rangeLabels ?? i18n.dateRangeLabels;
       const startLabel = rangeLabels ? escapeHtml(rangeLabels[0]) : '';
       const endLabel   = rangeLabels ? escapeHtml(rangeLabels[1]) : '';
-      const startSubLabel = startLabel ? `<label class="chat-form__date-range-sublabel" for="${fieldId}-start">${startLabel}</label>` : '';
-      const endSubLabel   = endLabel   ? `<label class="chat-form__date-range-sublabel" for="${fieldId}-end">${endLabel}</label>` : '';
+      const startSubLabel = startLabel ? `<label class="chat-form__date-range-sublabel" for="${id}-start">${startLabel}</label>` : '';
+      const endSubLabel   = endLabel   ? `<label class="chat-form__date-range-sublabel" for="${id}-end">${endLabel}</label>` : '';
       const minAttr = field.min ? ` min="${escapeHtml(field.min)}"` : '';
       const maxAttr = field.max ? ` max="${escapeHtml(field.max)}"` : '';
       const errorHtml = i18n.dateRangeError != null
@@ -389,13 +390,13 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
           <div class="chat-form__date-range" data-range-field="${name}">
             <div class="chat-form__date-range-part">
               ${startSubLabel}
-              <input class="chat-form__input" type="date" id="${fieldId}-start"
+              <input class="chat-form__input" type="date" id="${id}-start"
                 name="${name}__start"${minAttr}${maxAttr}${required} />
             </div>
             <span class="chat-form__date-range-sep" aria-hidden="true">→</span>
             <div class="chat-form__date-range-part">
               ${endSubLabel}
-              <input class="chat-form__input" type="date" id="${fieldId}-end"
+              <input class="chat-form__input" type="date" id="${id}-end"
                 name="${name}__end"${minAttr}${maxAttr}${required} />
             </div>
           </div>
@@ -407,8 +408,8 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
       const type = escapeHtml(field.type);
       return `
         <div class="chat-form__field">
-          <label class="chat-form__label" for="${fieldId}">${label}${requiredMark}</label>
-          <input class="chat-form__input" type="${type}" id="${fieldId}" name="${name}" placeholder="${placeholder}"${required} />
+          <label class="chat-form__label" for="${id}">${label}${requiredMark}</label>
+          <input class="chat-form__input" type="${type}" id="${id}" name="${name}" placeholder="${placeholder}"${required} />
         </div>`;
     }
   }
@@ -611,6 +612,7 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
 export function createFormRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'form',
+    trusted: true,
     test: (lang: string) => lang === 'form',
     render: (code: string, _lang: string) => renderForm(code, options),
   };

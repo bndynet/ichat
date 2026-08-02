@@ -6,6 +6,16 @@ export interface BlockRenderer {
   /** Return true if this renderer handles the given fenced code block language */
   test: (lang: string) => boolean;
   /**
+   * Allow this renderer's HTML to bypass DOMPurify and render while content is
+   * still streaming. Defaults to `false`.
+   *
+   * Set this only when the renderer treats `code`, `lang`, and `info` as
+   * untrusted input and escapes every value before inserting it into HTML.
+   * Untrusted renderers show an escaped code block while streaming and their
+   * terminal output is sanitised before insertion.
+   */
+  trusted?: boolean;
+  /**
    * Render the code block content to an HTML string.
    * @param code - The raw text content of the fenced block.
    * @param lang - The first word of the info string (e.g. `"details"`).

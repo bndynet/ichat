@@ -1,4 +1,4 @@
-import { renderMarkdownLight } from '../src/renderers/markdown-renderer.js';
+import { md, renderMarkdownLight } from '../src/renderers/markdown-renderer.js';
 
 interface BenchmarkScenario {
   kind: 'plain' | 'markdown';
@@ -12,6 +12,14 @@ interface BenchmarkResult extends BenchmarkScenario {
   p95BatchMs: number;
   medianRenderMs: number;
   rendersWithinFramePct: number;
+}
+
+interface ValidationComparison {
+  sizeKiB: BenchmarkScenario['sizeKiB'];
+  updatesPerSecond: BenchmarkScenario['updatesPerSecond'];
+  legacyMedianMs: number;
+  secureMedianMs: number;
+  overheadPct: number;
 }
 
 const WARMUP_RUNS = 2;
@@ -87,6 +95,52 @@ function measureScenario(scenario: BenchmarkScenario): BenchmarkResult {
   };
 }
 
+function measureValidationComparison(scenario: BenchmarkScenario): ValidationComparison {
+  const content = contentOfSize(scenario.kind, scenario.sizeKiB);
+  const secureValidator = md.validateLink;
+  const legacyValidator = () => true;
+  const secureSamples: number[] = [];
+  const legacySamples: number[] = [];
+
+  const batchTotal = () =>
+    renderBatch(content, scenario.updatesPerSecond)
+      .reduce((total, value) => total + value, 0);
+
+  try {
+    for (let run = 0; run < WARMUP_RUNS; run += 1) {
+      md.validateLink = legacyValidator;
+      batchTotal();
+      md.validateLink = secureValidator;
+      batchTotal();
+    }
+
+    // Alternate execution order to reduce JIT/thermal bias between the secure
+    // implementation and the legacy `validateLink = () => true` baseline.
+    for (let run = 0; run < MEASURED_RUNS; run += 1) {
+      const order = run % 2 === 0
+        ? (['legacy', 'secure'] as const)
+        : (['secure', 'legacy'] as const);
+
+      for (const mode of order) {
+        md.validateLink = mode === 'secure' ? secureValidator : legacyValidator;
+        (mode === 'secure' ? secureSamples : legacySamples).push(batchTotal());
+      }
+    }
+  } finally {
+    md.validateLink = secureValidator;
+  }
+
+  const legacyMedianMs = percentile(legacySamples, 0.5);
+  const secureMedianMs = percentile(secureSamples, 0.5);
+  return {
+    sizeKiB: scenario.sizeKiB,
+    updatesPerSecond: scenario.updatesPerSecond,
+    legacyMedianMs,
+    secureMedianMs,
+    overheadPct: ((secureMedianMs - legacyMedianMs) / legacyMedianMs) * 100,
+  };
+}
+
 const scenarios: BenchmarkScenario[] = [];
 for (const kind of ['plain', 'markdown'] as const) {
   for (const sizeKiB of [2, 10, 50] as const) {
@@ -97,6 +151,9 @@ for (const kind of ['plain', 'markdown'] as const) {
 }
 
 const results = scenarios.map(measureScenario);
+const validationComparisons = ([10, 50] as const).map((sizeKiB) =>
+  measureValidationComparison({ kind: 'markdown', sizeKiB, updatesPerSecond: 60 }),
+);
 const runtimeProcess = (globalThis as typeof globalThis & {
   process?: { version: string; platform: string; arch: string };
 }).process;
@@ -118,5 +175,15 @@ console.table(
     'p95 batch (ms)': result.p95BatchMs.toFixed(2),
     'median render (ms)': result.medianRenderMs.toFixed(3),
     '<=16.7ms': `${result.rendersWithinFramePct.toFixed(1)}%`,
+  })),
+);
+console.log('URI validation overhead vs legacy unsafe validateLink = () => true:');
+console.table(
+  validationComparisons.map((comparison) => ({
+    size: `${comparison.sizeKiB} KiB`,
+    'updates/s': comparison.updatesPerSecond,
+    'legacy batch (ms)': comparison.legacyMedianMs.toFixed(2),
+    'secure batch (ms)': comparison.secureMedianMs.toFixed(2),
+    overhead: `${comparison.overheadPct >= 0 ? '+' : ''}${comparison.overheadPct.toFixed(2)}%`,
   })),
 );

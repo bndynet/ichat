@@ -36,8 +36,9 @@ export class ChatTextPart extends LitElement {
 
     // ── Streaming light mode ──────────────────────────────────────────
     // During streaming every token grows the full text, so morphdom diff
-    // has zero reuse value and DOMPurify is unnecessary (trusted backend
-    // source).  We run markdown-it only and set innerHTML directly.
+    // has zero reuse value. The light pipeline keeps raw HTML disabled,
+    // rejects unsafe URI protocols, and defers untrusted renderer HTML, so it
+    // can avoid DOMPurify here. We run markdown-it and set innerHTML directly.
     // Once streaming stops we fall through to the full pipeline below for
     // the clean terminal render.
     if (this.data.status === 'streaming') {

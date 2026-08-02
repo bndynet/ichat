@@ -23,7 +23,9 @@ npm install @bndynet/ichat-messages
 
 ## Extension APIs
 
-- **`registerCodeRenderer(renderer)`** — custom fenced-code-block renderers
+- **`registerCodeRenderer(renderer)`** — custom fenced-code-block renderers;
+  output is sanitised by default, with `trusted: true` as an explicit opt-in for
+  audited renderers that need rich output during streaming
 - **`registerMarkdownPlugin(plugin)`** — markdown-it plugins with auto CSS injection
 - **`registerPartRenderer(type, renderer)`** — custom `parts[]` type renderers (e.g. `file`, `source`, `x-*`)
 

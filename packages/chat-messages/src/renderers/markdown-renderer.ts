@@ -4,7 +4,11 @@ import DOMPurify from 'dompurify';
 import { rendererRegistry } from './registry.js';
 import { progressPlugin } from './progress-plugin.js';
 import { collapsiblePlugin } from './collapsible-plugin.js';
-import { normalizeAllowedLinkProtocols, uriRegexpForAllowedLinkProtocols } from '../link-protocols.js';
+import {
+  isAllowedLinkHref,
+  normalizeAllowedLinkProtocols,
+  uriRegexpForAllowedLinkProtocols,
+} from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
 import { getSharedMd } from './md-instance.js';
 
@@ -28,6 +32,8 @@ export interface MarkdownRenderOptions {
 
 /** Active highlight.js instance for the current render pass (set per-render). */
 let activeHighlightJs: typeof hljs | undefined;
+let activeRenderOptions: MarkdownRenderOptions | undefined;
+let activeRenderMode: 'full' | 'streaming' = 'full';
 
 const md = getSharedMd(() => {
   const instance = new MarkdownIt({
@@ -47,7 +53,11 @@ const md = getSharedMd(() => {
     },
   });
 
-  instance.validateLink = () => true;
+  // Keep unsafe protocols out of the generated HTML in both full and light
+  // rendering. This is substantially cheaper than running DOMPurify for every
+  // streaming update and still allows host-defined schemes through options.
+  instance.validateLink = (href: string) =>
+    isAllowedLinkHref(href, activeRenderOptions?.allowedLinkProtocols);
   instance.use(progressPlugin);
   instance.use(collapsiblePlugin);
 
@@ -76,7 +86,6 @@ const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
 };
 
 const domPurifyConfigCache = new Map<string, DOMPurifyConfig>();
-let activeRenderOptions: MarkdownRenderOptions | undefined;
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -97,10 +106,15 @@ function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
 }
 
 // ── Fence block renderer ──────────────────────────────────────────────────────
-// Block renderer outputs are trusted (registered code, not user content).
-// We stash them here and splice them back in after DOMPurify runs so that
-// custom elements / arbitrary HTML from renderers are never stripped.
-const pendingBlockHTML = new Map<string, string>();
+// Trusted renderer output is spliced back after DOMPurify. Untrusted output is
+// inserted before the single terminal sanitisation pass; while streaming it is
+// replaced with the escaped default code-block rendering.
+interface PendingBlockHTML {
+  html: string;
+  trusted: boolean;
+}
+
+const pendingBlockHTML = new Map<string, PendingBlockHTML>();
 
 // ── Built-in fence renderer: ```details Title … ``` ──────────────────────────
 // Supports an optional title extracted from the info string.
@@ -112,6 +126,7 @@ const pendingBlockHTML = new Map<string, string>();
 // based renderers (e.g. the progress ordered-list syntax) work fine.
 rendererRegistry.register({
   name: 'chat-details',
+  trusted: true,
   test: (lang: string) => /^details\b/i.test(lang),
   render: (content: string, _lang: string, info = ''): string => {
     // Extract title: everything after the first word ("details")
@@ -149,6 +164,15 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const customRenderer = rendererRegistry.getRenderer(lang);
 
   if (customRenderer) {
+    const trusted = customRenderer.trusted === true;
+
+    // DOMPurify is intentionally absent from the hot streaming path. Defer
+    // untrusted rich output until the terminal render rather than injecting it
+    // unsanitised or paying a full DOM sanitisation cost for every token.
+    if (activeRenderMode === 'streaming' && !trusted) {
+      return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
+    }
+
     // Async renderer: show placeholder, replace when promise resolves
     if (customRenderer.renderAsync) {
       const id = `_br_${idx}_${pendingBlockHTML.size}`;
@@ -158,13 +182,15 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
           : `<div class="chat-block-loading" aria-label="Loading...">
               <span class="chat-block-loading__spinner"></span>
             </div>`;
-      pendingBlockHTML.set(id, placeholderHtml);
+      pendingBlockHTML.set(id, { html: placeholderHtml, trusted });
 
       // Kick off async render — the promise resolves later
       const asyncId = `_async_${idx}_${Date.now()}`;
       pendingAsyncBlocks.set(asyncId, {
         placeholderId: id,
         promise: customRenderer.renderAsync(token.content, lang, info),
+        trusted,
+        renderOptions: activeRenderOptions,
       });
 
       return `<div id="${id}"></div>`;
@@ -174,7 +200,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     if (customRenderer.render) {
       const html = customRenderer.render(token.content, lang, info);
       const id = `_br_${idx}_${pendingBlockHTML.size}`;
-      pendingBlockHTML.set(id, html);
+      pendingBlockHTML.set(id, { html, trusted });
       return `<div id="${id}"></div>`;
     }
 
@@ -212,16 +238,24 @@ function wrapCodeBlock(highlighted: string, rawCode: string, lang: string): stri
 }
 
 /** Pending async block renderers that will resolve after the initial render. */
-const pendingAsyncBlocks = new Map<string, { placeholderId: string; promise: Promise<string> }>();
+interface PendingAsyncBlock {
+  placeholderId: string;
+  promise: Promise<string>;
+  trusted: boolean;
+  renderOptions?: MarkdownRenderOptions;
+}
+
+const pendingAsyncBlocks = new Map<string, PendingAsyncBlock>();
 
 /**
  * Resolve all pending async block renderers and replace their placeholders.
  * Call this after `renderMarkdown` to swap loading spinners with final content.
  */
 export async function resolveAsyncBlocks(container: HTMLElement): Promise<void> {
-  for (const [, { placeholderId, promise }] of pendingAsyncBlocks) {
+  for (const [, { placeholderId, promise, trusted, renderOptions }] of pendingAsyncBlocks) {
     try {
-      const html = await promise;
+      const resolvedHtml = await promise;
+      const html = trusted ? resolvedHtml : sanitizeHtml(resolvedHtml, renderOptions);
       const placeholder = container.querySelector(`#${CSS.escape(placeholderId)}`);
       if (placeholder) {
         placeholder.outerHTML = html;
@@ -253,22 +287,36 @@ export function sanitizeHtml(html: string, options?: MarkdownRenderOptions): str
 export function renderMarkdown(content: string, options?: MarkdownRenderOptions): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
+  const previousMode = activeRenderMode;
   activeRenderOptions = options;
+  activeRenderMode = 'full';
   activeHighlightJs = options?.highlightJs;
 
   try {
-    const raw = md.render(content);
+    let raw = md.render(content);
+
+    // Untrusted renderer HTML joins the regular markdown output before the one
+    // terminal DOMPurify pass. This keeps sanitisation safe and avoids one pass
+    // per block.
+    for (const [id, block] of pendingBlockHTML) {
+      if (!block.trusted) {
+        raw = raw.replace(`<div id="${id}"></div>`, block.html);
+      }
+    }
 
     let sanitized = sanitizeHtml(raw, options);
 
-    // Splice trusted block-renderer HTML back in, bypassing DOMPurify.
-    for (const [id, html] of pendingBlockHTML) {
-      sanitized = sanitized.replace(`<div id="${id}"></div>`, html);
+    // Only explicitly trusted renderer output bypasses DOMPurify.
+    for (const [id, block] of pendingBlockHTML) {
+      if (block.trusted) {
+        sanitized = sanitized.replace(`<div id="${id}"></div>`, block.html);
+      }
     }
 
     return sanitized;
   } finally {
     activeRenderOptions = previousOptions;
+    activeRenderMode = previousMode;
     activeHighlightJs = undefined;
     pendingBlockHTML.clear();
   }
@@ -276,9 +324,10 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
 
 /**
  * Streaming-optimised markdown rendering: markdown-it + block-renderer splice
- * **without** DOMPurify sanitisation.  Safe for backend-originated streaming
- * content where the source is trusted and every token grows the full text
- * (making morphdom diff a no-op).  Callers should use `innerHTML` directly
+ * **without** DOMPurify sanitisation. Unsafe URI protocols are rejected by
+ * markdown-it, raw HTML stays disabled, and untrusted block renderers fall back
+ * to escaped code until the terminal render. Explicitly trusted renderers may
+ * render rich HTML during streaming. Callers should use `innerHTML` directly
  * instead of `renderMarkdownInto()` morphing.
  *
  * Once streaming stops, run the full `renderMarkdown()` + `renderMarkdownInto()`
@@ -289,7 +338,9 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
 export function renderMarkdownLight(content: string, options?: MarkdownRenderOptions): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
+  const previousMode = activeRenderMode;
   activeRenderOptions = options;
+  activeRenderMode = 'streaming';
   activeHighlightJs = options?.highlightJs;
 
   try {
@@ -297,16 +348,17 @@ export function renderMarkdownLight(content: string, options?: MarkdownRenderOpt
 
     // Splice trusted block-renderer HTML back in (same as full path).
     let result = raw;
-    for (const [id, html] of pendingBlockHTML) {
-      result = result.replace(`<div id="${id}"></div>`, html);
+    for (const [id, block] of pendingBlockHTML) {
+      result = result.replace(`<div id="${id}"></div>`, block.html);
     }
 
-    // Note: we intentionally skip DOMPurify — streaming content is
-    // from a trusted backend source.  The final terminal render (when
-    // status flips to 'complete') runs the full pipeline.
+    // DOMPurify remains terminal-only. The light path is safe because raw HTML
+    // is disabled, links are protocol-filtered, and only trusted renderer HTML
+    // reaches this splice step.
     return result;
   } finally {
     activeRenderOptions = previousOptions;
+    activeRenderMode = previousMode;
     activeHighlightJs = undefined;
     pendingBlockHTML.clear();
   }
