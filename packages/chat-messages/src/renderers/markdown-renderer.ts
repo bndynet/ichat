@@ -11,6 +11,7 @@ import {
 } from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
 import { getSharedMd } from './md-instance.js';
+import type { RendererErrorDetail } from '../types.js';
 
 export interface MarkdownRenderOptions {
   /**
@@ -28,6 +29,16 @@ export interface MarkdownRenderOptions {
    * to keep bundle size small.
    */
   highlightJs?: typeof hljs;
+
+  /**
+   * Optional lifecycle signal forwarded to async block renderers. The built-in
+   * text component supplies this automatically and aborts it on re-render or
+   * disconnect.
+   */
+  rendererSignal?: AbortSignal;
+
+  /** Optional observer for isolated renderer failures. */
+  onRendererError?: (detail: RendererErrorDetail) => void;
 }
 
 /** Active highlight.js instance for the current render pass (set per-render). */
@@ -115,6 +126,31 @@ interface PendingBlockHTML {
 }
 
 const pendingBlockHTML = new Map<string, PendingBlockHTML>();
+let blockPlaceholderCounter = 0;
+
+function reportBlockRendererError(
+  renderer: string,
+  phase: RendererErrorDetail['phase'],
+  error: unknown,
+  code: string,
+  language: string,
+  info: string,
+  options = activeRenderOptions,
+): void {
+  try {
+    options?.onRendererError?.({
+      kind: 'block',
+      renderer,
+      phase,
+      error,
+      code,
+      language,
+      info,
+    });
+  } catch {
+    // Error observers must never break message rendering.
+  }
+}
 
 // ── Built-in fence renderer: ```details Title … ``` ──────────────────────────
 // Supports an optional title extracted from the info string.
@@ -161,7 +197,9 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx];
   const info = token.info.trim();
   const lang = info.split(/\s+/)[0];
-  const customRenderer = rendererRegistry.getRenderer(lang);
+  const customRenderer = rendererRegistry.getRenderer(lang, (renderer, error) => {
+    reportBlockRendererError(renderer.name, 'match', error, token.content, lang, info);
+  });
 
   if (customRenderer) {
     const trusted = customRenderer.trusted === true;
@@ -173,24 +211,87 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
       return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
     }
 
-    // Async renderer: show placeholder, replace when promise resolves
+    // Async work is terminal-only. Starting promises on every trusted
+    // streaming snapshot creates request storms and stale-result races. A
+    // trusted synchronous placeholder may still render during streaming.
     if (customRenderer.renderAsync) {
-      const id = `_br_${idx}_${pendingBlockHTML.size}`;
-      const placeholderHtml =
-        customRenderer.render
-          ? customRenderer.render(token.content, lang, info)
-          : `<div class="chat-block-loading" aria-label="Loading...">
+      if (activeRenderMode === 'streaming') {
+        if (!customRenderer.render) {
+          return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
+        }
+        try {
+          const html = customRenderer.render(token.content, lang, info);
+          const id = `_br_${++blockPlaceholderCounter}_${idx}`;
+          pendingBlockHTML.set(id, { html, trusted });
+          return `<div id="${id}"></div>`;
+        } catch (error) {
+          reportBlockRendererError(
+            customRenderer.name,
+            'render',
+            error,
+            token.content,
+            lang,
+            info,
+          );
+          return safeRendererFallback(token.content, lang);
+        }
+      }
+
+      const id = `_br_${++blockPlaceholderCounter}_${idx}`;
+      const loadingHtml = `<div class="chat-block-loading" aria-label="Loading...">
               <span class="chat-block-loading__spinner"></span>
             </div>`;
-      pendingBlockHTML.set(id, { html: placeholderHtml, trusted });
+      let placeholderHtml = loadingHtml;
+      if (customRenderer.render) {
+        try {
+          placeholderHtml = customRenderer.render(token.content, lang, info);
+        } catch (error) {
+          reportBlockRendererError(
+            customRenderer.name,
+            'render',
+            error,
+            token.content,
+            lang,
+            info,
+          );
+        }
+      }
 
-      // Kick off async render — the promise resolves later
-      const asyncId = `_async_${idx}_${Date.now()}`;
-      pendingAsyncBlocks.set(asyncId, {
-        placeholderId: id,
-        promise: customRenderer.renderAsync(token.content, lang, info),
+      let promise: Promise<string>;
+      try {
+        promise = Promise.resolve(
+          customRenderer.renderAsync(token.content, lang, info, {
+            signal: activeRenderOptions?.rendererSignal,
+          }),
+        );
+      } catch (error) {
+        reportBlockRendererError(
+          customRenderer.name,
+          'render-async',
+          error,
+          token.content,
+          lang,
+          info,
+        );
+        return safeRendererFallback(token.content, lang);
+      }
+
+      const fallbackHtml = safeRendererFallback(token.content, lang);
+      pendingBlockHTML.set(id, {
+        html: `<div id="${id}" data-chat-async-block="true">${placeholderHtml}</div>`,
         trusted,
+      });
+      enqueueAsyncBlock({
+        placeholderId: id,
+        promise,
+        trusted,
+        fallbackHtml,
+        renderer: customRenderer.name,
+        code: token.content,
+        language: lang,
+        info,
         renderOptions: activeRenderOptions,
+        signal: activeRenderOptions?.rendererSignal,
       });
 
       return `<div id="${id}"></div>`;
@@ -198,10 +299,22 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 
     // Sync renderer
     if (customRenderer.render) {
-      const html = customRenderer.render(token.content, lang, info);
-      const id = `_br_${idx}_${pendingBlockHTML.size}`;
-      pendingBlockHTML.set(id, { html, trusted });
-      return `<div id="${id}"></div>`;
+      try {
+        const html = customRenderer.render(token.content, lang, info);
+        const id = `_br_${++blockPlaceholderCounter}_${idx}`;
+        pendingBlockHTML.set(id, { html, trusted });
+        return `<div id="${id}"></div>`;
+      } catch (error) {
+        reportBlockRendererError(
+          customRenderer.name,
+          'render',
+          error,
+          token.content,
+          lang,
+          info,
+        );
+        return safeRendererFallback(token.content, lang);
+      }
     }
 
     // No render method — fallback to default
@@ -237,37 +350,117 @@ function wrapCodeBlock(highlighted: string, rawCode: string, lang: string): stri
   );
 }
 
+function safeRendererFallback(rawCode: string, lang: string): string {
+  const safeLanguage = md.utils.escapeHtml(lang);
+  const languageClass = safeLanguage ? ` class="language-${safeLanguage}"` : '';
+  return wrapCodeBlock(
+    `<pre><code${languageClass}>${md.utils.escapeHtml(rawCode)}</code></pre>`,
+    rawCode,
+    lang,
+  );
+}
+
 /** Pending async block renderers that will resolve after the initial render. */
 interface PendingAsyncBlock {
   placeholderId: string;
   promise: Promise<string>;
   trusted: boolean;
+  fallbackHtml: string;
+  renderer: string;
+  code: string;
+  language: string;
+  info: string;
   renderOptions?: MarkdownRenderOptions;
+  signal?: AbortSignal;
 }
 
-const pendingAsyncBlocks = new Map<string, PendingAsyncBlock>();
+const pendingAsyncBlocks = new Map<number, PendingAsyncBlock>();
+let asyncBlockCounter = 0;
+const MAX_PENDING_ASYNC_BLOCKS = 256;
+
+function enqueueAsyncBlock(block: PendingAsyncBlock): void {
+  const id = ++asyncBlockCounter;
+  pendingAsyncBlocks.set(id, block);
+
+  // Prevent an unhandled rejection when a caller renders to a string and never
+  // invokes resolveAsyncBlocks(). The original promise remains awaitable below.
+  void block.promise.catch(() => undefined);
+
+  if (block.signal) {
+    const remove = () => pendingAsyncBlocks.delete(id);
+    if (block.signal.aborted) remove();
+    else block.signal.addEventListener('abort', remove, { once: true });
+  }
+
+  while (pendingAsyncBlocks.size > MAX_PENDING_ASYNC_BLOCKS) {
+    const oldest = pendingAsyncBlocks.keys().next().value as number | undefined;
+    if (oldest === undefined) break;
+    pendingAsyncBlocks.delete(oldest);
+  }
+}
+
+export interface ResolveAsyncBlocksOptions {
+  /** Prevent placeholder mutation after a component re-render or disconnect. */
+  signal?: AbortSignal;
+}
+
+export interface ResolveAsyncBlocksResult {
+  changed: boolean;
+  resolved: number;
+  failed: number;
+}
 
 /**
- * Resolve all pending async block renderers and replace their placeholders.
- * Call this after `renderMarkdown` to swap loading spinners with final content.
+ * Resolve pending async renderers owned by `container`. Unique placeholder ids
+ * prevent an older render pass from overwriting newer content.
  */
-export async function resolveAsyncBlocks(container: HTMLElement): Promise<void> {
-  for (const [, { placeholderId, promise, trusted, renderOptions }] of pendingAsyncBlocks) {
-    try {
-      const resolvedHtml = await promise;
-      const html = trusted ? resolvedHtml : sanitizeHtml(resolvedHtml, renderOptions);
-      const placeholder = container.querySelector(`#${CSS.escape(placeholderId)}`);
-      if (placeholder) {
-        placeholder.outerHTML = html;
-      }
-    } catch {
-      const placeholder = container.querySelector(`#${CSS.escape(placeholderId)}`);
-      if (placeholder) {
-        placeholder.outerHTML = '<div class="chat-block-error">Render failed</div>';
-      }
+export async function resolveAsyncBlocks(
+  container: HTMLElement,
+  options: ResolveAsyncBlocksOptions = {},
+): Promise<ResolveAsyncBlocksResult> {
+  const owned: PendingAsyncBlock[] = [];
+  for (const [id, block] of pendingAsyncBlocks) {
+    if (block.signal?.aborted) {
+      pendingAsyncBlocks.delete(id);
+      continue;
+    }
+    if (container.querySelector(`#${block.placeholderId}`)) {
+      pendingAsyncBlocks.delete(id);
+      owned.push(block);
     }
   }
-  pendingAsyncBlocks.clear();
+
+  let resolved = 0;
+  let failed = 0;
+  await Promise.all(owned.map(async (block) => {
+    try {
+      const resolvedHtml = await block.promise;
+      if (options.signal?.aborted || block.signal?.aborted) return;
+      const placeholder = container.querySelector(`#${block.placeholderId}`);
+      if (!placeholder) return;
+      placeholder.outerHTML = block.trusted
+        ? resolvedHtml
+        : sanitizeHtml(resolvedHtml, block.renderOptions);
+      resolved += 1;
+    } catch (error) {
+      if (options.signal?.aborted || block.signal?.aborted) return;
+      reportBlockRendererError(
+        block.renderer,
+        'render-async',
+        error,
+        block.code,
+        block.language,
+        block.info,
+        block.renderOptions,
+      );
+      const placeholder = container.querySelector(`#${block.placeholderId}`);
+      if (!placeholder) return;
+      placeholder.outerHTML = block.fallbackHtml;
+      failed += 1;
+    }
+  }));
+
+  return { changed: resolved + failed > 0, resolved, failed };
 }
 
 /**

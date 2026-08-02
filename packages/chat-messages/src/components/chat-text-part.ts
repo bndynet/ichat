@@ -1,9 +1,13 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
-import type { TextPart } from '../types.js';
+import type { RendererErrorDetail, TextPart } from '../types.js';
 import { renderMarkdownInto, type RenderMarkdownIntoOptions } from '../renderers/markdown-morph.js';
-import { renderMarkdownLight, type MarkdownRenderOptions } from '../renderers/markdown-renderer.js';
+import {
+  renderMarkdownLight,
+  resolveAsyncBlocks,
+  type MarkdownRenderOptions,
+} from '../renderers/markdown-renderer.js';
 import { streamingRenderDelayMs } from '../streaming-render-policy.js';
 
 @customElement('i-chat-text-part')
@@ -19,6 +23,7 @@ export class ChatTextPart extends LitElement {
   private _streamingPartId?: string;
   private _lastStreamingRenderAt = Number.NEGATIVE_INFINITY;
   private _streamingRenderTimer?: number;
+  private _asyncRendererController?: AbortController;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -27,6 +32,7 @@ export class ChatTextPart extends LitElement {
 
   override disconnectedCallback(): void {
     this._clearStreamingRenderTimer();
+    this._cancelAsyncRender();
     super.disconnectedCallback();
   }
 
@@ -38,9 +44,11 @@ export class ChatTextPart extends LitElement {
     const el = this._contentEl;
     if (!el || !this.data) return;
 
+    const partId = this.data.id;
     const markdownOptions: MarkdownRenderOptions = {
       allowedLinkProtocols: this.allowedLinkProtocols,
       highlightJs: this.highlightJs,
+      onRendererError: (detail) => this._dispatchRendererError({ ...detail, partId }),
     };
 
     // ── Streaming light mode ──────────────────────────────────────────
@@ -51,6 +59,7 @@ export class ChatTextPart extends LitElement {
     // Once streaming stops we fall through to the full pipeline below for
     // the clean terminal render.
     if (this.data.status === 'streaming') {
+      this._cancelAsyncRender();
       if (this._streamingPartId !== this.data.id) {
         this._resetStreamingRenderSchedule(this.data.id);
       }
@@ -83,12 +92,28 @@ export class ChatTextPart extends LitElement {
 
     // ── Full pipeline (terminal) ─────────────────────────────────────
     this._resetStreamingRenderSchedule();
-    const result = renderMarkdownInto(el, this.content, {
-      previousHtml: this._htmlCache,
-      ...markdownOptions,
-      partId: this.data?.id,
-    });
+    const candidateController = new AbortController();
+    let result: ReturnType<typeof renderMarkdownInto>;
+    try {
+      result = renderMarkdownInto(el, this.content, {
+        previousHtml: this._htmlCache,
+        ...markdownOptions,
+        rendererSignal: candidateController.signal,
+        partId,
+      });
+    } catch (error) {
+      candidateController.abort();
+      throw error;
+    }
     this._htmlCache = result.html;
+    if (result.rendered) {
+      this._asyncRendererController?.abort();
+      this._asyncRendererController = candidateController;
+      void this._resolveAsyncRenderers(el, candidateController);
+    } else {
+      candidateController.abort();
+    }
+
     if (!result.changed) return;
 
     this.dispatchEvent(
@@ -120,6 +145,47 @@ export class ChatTextPart extends LitElement {
     this._clearStreamingRenderTimer();
     this._streamingPartId = partId;
     this._lastStreamingRenderAt = Number.NEGATIVE_INFINITY;
+  }
+
+  private _cancelAsyncRender(): void {
+    this._asyncRendererController?.abort();
+    this._asyncRendererController = undefined;
+  }
+
+  private async _resolveAsyncRenderers(
+    el: HTMLDivElement,
+    controller: AbortController,
+  ): Promise<void> {
+    const result = await resolveAsyncBlocks(el, { signal: controller.signal });
+    if (
+      controller.signal.aborted ||
+      this._asyncRendererController !== controller ||
+      !this.isConnected ||
+      this._contentEl !== el
+    ) {
+      return;
+    }
+    this._asyncRendererController = undefined;
+    if (!result.changed) return;
+
+    this._htmlCache = el.innerHTML;
+    this.dispatchEvent(
+      new CustomEvent('chat-text-part-updated', {
+        detail: { changed: true },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _dispatchRendererError(detail: RendererErrorDetail): void {
+    this.dispatchEvent(
+      new CustomEvent<RendererErrorDetail>('chat-renderer-error', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   render() {

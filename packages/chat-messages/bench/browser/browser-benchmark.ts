@@ -3,9 +3,16 @@ import {
   renderMarkdownInto,
 } from '../../src/renderers/markdown-morph.js';
 import { renderMarkdownLight } from '../../src/renderers/markdown-renderer.js';
+import { rendererRegistry } from '../../src/renderers/registry.js';
+import { partRendererRegistry } from '../../src/renderers/part-registry.js';
 import { streamingRenderDelayMs } from '../../src/streaming-render-policy.js';
 import '../../src/components/chat-text-part.js';
-import type { TextPart } from '../../src/types.js';
+import '../../src/components/chat-part-host.js';
+import type {
+  CustomPart,
+  RendererErrorDetail,
+  TextPart,
+} from '../../src/types.js';
 
 type ContentKind = 'plain' | 'markdown';
 type SizeKiB = 2 | 10 | 50;
@@ -40,6 +47,7 @@ interface BrowserBenchmarkReport {
   userAgent: string;
   budgets: typeof BUDGETS;
   componentValidation: ComponentValidation;
+  rendererRuntimeValidation: RendererRuntimeValidation;
   results: ScenarioResult[];
 }
 
@@ -47,6 +55,12 @@ interface ComponentValidation {
   passed: boolean;
   trailingFlushMs: number;
   terminalTransitionMs: number;
+  failures: string[];
+}
+
+interface RendererRuntimeValidation {
+  passed: boolean;
+  errorEvents: number;
   failures: string[];
 }
 
@@ -131,6 +145,27 @@ function nextFrame(): Promise<number> {
   return new Promise((resolve) => requestAnimationFrame(resolve));
 }
 
+function deferredValue<T>(): {
+  promise: Promise<T>;
+  resolve(value: T): void;
+} {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((onResolve) => {
+    resolve = onResolve;
+  });
+  return { promise, resolve };
+}
+
+function nextUpdatedEvent(element: HTMLElement): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error('Renderer update timed out')), 500);
+    element.addEventListener('chat-text-part-updated', () => {
+      window.clearTimeout(timeout);
+      resolve();
+    }, { once: true });
+  });
+}
+
 async function warmUpScenario(
   content: string,
   partId: string,
@@ -205,6 +240,145 @@ async function validateComponentScheduling(): Promise<ComponentValidation> {
     passed: failures.length === 0,
     trailingFlushMs,
     terminalTransitionMs,
+    failures,
+  };
+}
+
+async function validateRendererRuntime(): Promise<RendererRuntimeValidation> {
+  const syncName = 'browser-runtime-sync-error';
+  const asyncName = 'browser-runtime-async';
+  const partName = 'browser-runtime-part-error';
+  const partType = 'x-browser-runtime-error';
+  const errors: RendererErrorDetail[] = [];
+  const failures: string[] = [];
+  const first = deferredValue<string>();
+  const second = deferredValue<string>();
+  const detached = deferredValue<string>();
+  const unsafe = deferredValue<string>();
+  const signals: AbortSignal[] = [];
+
+  rendererRegistry.register({
+    name: syncName,
+    trusted: true,
+    test: (language) => language === syncName,
+    render: () => {
+      throw new Error('browser sync renderer failure');
+    },
+  });
+  rendererRegistry.register({
+    name: asyncName,
+    test: (language) => language === asyncName,
+    renderAsync: (code, _language, _info, context) => {
+      if (context?.signal) signals.push(context.signal);
+      if (code.includes('first')) return first.promise;
+      if (code.includes('second')) return second.promise;
+      if (code.includes('detached')) return detached.promise;
+      return unsafe.promise;
+    },
+  });
+  partRendererRegistry.register({
+    name: partName,
+    test: (type) => type === partType,
+    render: () => {
+      throw new Error('browser part renderer failure');
+    },
+  });
+
+  try {
+    const syncElement = document.createElement('i-chat-text-part');
+    syncElement.addEventListener('chat-renderer-error', (event) => {
+      errors.push((event as CustomEvent<RendererErrorDetail>).detail);
+    });
+    syncElement.data = {
+      id: 'browser-runtime-sync-part',
+      type: 'text',
+      text: '',
+      status: 'complete',
+    };
+    syncElement.content = `\`\`\`${syncName}\nsync fallback source\n\`\`\``;
+    stage.replaceChildren(syncElement);
+    await syncElement.updateComplete;
+    if (!syncElement.textContent?.includes('sync fallback source')) failures.push('sync fallback');
+
+    const asyncElement = document.createElement('i-chat-text-part');
+    asyncElement.addEventListener('chat-renderer-error', (event) => {
+      errors.push((event as CustomEvent<RendererErrorDetail>).detail);
+    });
+    asyncElement.data = {
+      id: 'browser-runtime-async-part',
+      type: 'text',
+      text: '',
+      status: 'complete',
+    };
+    asyncElement.content = `\`\`\`${asyncName}\nunsafe\n\`\`\``;
+    stage.replaceChildren(asyncElement);
+    await asyncElement.updateComplete;
+    const safeUpdate = nextUpdatedEvent(asyncElement);
+    unsafe.resolve('<img src="x" onerror="alert(1)"><div class="safe-async">safe</div>');
+    await safeUpdate;
+    if (asyncElement.querySelector('[onerror], script')) failures.push('async sanitisation');
+    if (!asyncElement.querySelector('.safe-async')) failures.push('async resolution');
+
+    asyncElement.content = `\`\`\`${asyncName}\nfirst\n\`\`\``;
+    asyncElement.data = { ...asyncElement.data, text: asyncElement.content };
+    await asyncElement.updateComplete;
+    asyncElement.content = `\`\`\`${asyncName}\nsecond\n\`\`\``;
+    asyncElement.data = { ...asyncElement.data, text: asyncElement.content };
+    await asyncElement.updateComplete;
+    const freshUpdate = nextUpdatedEvent(asyncElement);
+    first.resolve('<div class="stale-async">stale</div>');
+    second.resolve('<div class="fresh-async">fresh</div>');
+    await freshUpdate;
+    if (asyncElement.querySelector('.stale-async')) failures.push('stale async result');
+    if (!asyncElement.querySelector('.fresh-async')) failures.push('fresh async result');
+    if (!signals.at(-2)?.aborted || signals.at(-1)?.aborted) failures.push('async abort signal');
+
+    asyncElement.content = `\`\`\`${asyncName}\ndetached\n\`\`\``;
+    asyncElement.data = { ...asyncElement.data, text: asyncElement.content };
+    await asyncElement.updateComplete;
+    const detachedSignal = signals.at(-1);
+    asyncElement.remove();
+    detached.resolve('<div class="detached-async">detached</div>');
+    await nextFrame();
+    if (!detachedSignal?.aborted) failures.push('disconnect abort signal');
+    if (asyncElement.querySelector('.detached-async')) failures.push('disconnected DOM mutation');
+
+    const partElement = document.createElement('i-chat-part-host');
+    partElement.addEventListener('chat-renderer-error', (event) => {
+      errors.push((event as CustomEvent<RendererErrorDetail>).detail);
+    });
+    const customPart: CustomPart = {
+      id: 'browser-runtime-custom-part',
+      type: partType,
+      data: { unsafe: '<script>source</script>' },
+      status: 'complete',
+    };
+    partElement.parts = [customPart];
+    stage.replaceChildren(partElement);
+    await partElement.updateComplete;
+    if (!partElement.textContent?.includes('<script>source</script>')) failures.push('part fallback');
+    if (partElement.querySelector('script')) failures.push('part fallback escaping');
+
+    const syncError = errors.some((detail) =>
+      detail.kind === 'block' && detail.renderer === syncName && detail.phase === 'render');
+    const partError = errors.some((detail) =>
+      detail.kind === 'part' && detail.renderer === partName && detail.phase === 'render');
+    if (!syncError) failures.push('sync error event');
+    if (!partError) failures.push('part error event');
+  } finally {
+    first.resolve('');
+    second.resolve('');
+    detached.resolve('');
+    unsafe.resolve('');
+    rendererRegistry.unregister(syncName);
+    rendererRegistry.unregister(asyncName);
+    partRendererRegistry.unregister(partName);
+    stage.replaceChildren();
+  }
+
+  return {
+    passed: failures.length === 0,
+    errorEvents: errors.length,
     failures,
   };
 }
@@ -365,14 +539,19 @@ async function runBenchmark(): Promise<void> {
     // Run the full component smoke check after the isolated matrix so its
     // intentionally large DOM allocation cannot affect scenario GC metrics.
     const componentValidation = await validateComponentScheduling();
+    const rendererRuntimeValidation = await validateRendererRuntime();
 
     const report: BrowserBenchmarkReport = {
       status: 'complete',
-      passed: componentValidation.passed && results.every((result) => result.passed),
+      passed:
+        componentValidation.passed &&
+        rendererRuntimeValidation.passed &&
+        results.every((result) => result.passed),
       generatedAt: new Date().toISOString(),
       userAgent: navigator.userAgent,
       budgets: BUDGETS,
       componentValidation,
+      rendererRuntimeValidation,
       results,
     };
     window.__ICHAT_BENCHMARK__ = report;

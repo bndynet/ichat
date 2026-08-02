@@ -41,10 +41,14 @@ large pre-measurement GC burst. It applies the production adaptive cadence,
 so the report also shows rendered updates versus source updates. The page exposes its JSON report as
 `window.__ICHAT_BENCHMARK__` and renders it under “JSON report”.
 
-Before the matrix, a real `i-chat-text-part` smoke check verifies that a
+After the matrix, a real `i-chat-text-part` smoke check verifies that a
 coalesced update is flushed within 150 ms and that the terminal Markdown render
 is immediate. This protects the timer/lifecycle integration in addition to the
 pure cadence policy.
+
+After the isolated performance matrix, renderer runtime checks verify sync and
+string-part error fallbacks, `chat-renderer-error` events, async sanitisation,
+stale-result rejection, and disconnect cancellation in a real browser.
 
 Budgets are intentionally user-visible and hardware-tolerant:
 

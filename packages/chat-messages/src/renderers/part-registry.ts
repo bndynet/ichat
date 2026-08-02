@@ -16,9 +16,20 @@ class PartRendererRegistry {
     this._renderers.delete(name);
   }
 
-  getRenderer(type: string): PartRenderer | undefined {
+  getRenderer(
+    type: string,
+    onMatchError?: (renderer: PartRenderer, error: unknown) => void,
+  ): PartRenderer | undefined {
     for (const renderer of this._renderers.values()) {
-      if (renderer.test(type)) return renderer;
+      try {
+        if (renderer.test(type)) return renderer;
+      } catch (error) {
+        try {
+          onMatchError?.(renderer, error);
+        } catch {
+          // Diagnostics must not break matching the remaining renderers.
+        }
+      }
     }
     return undefined;
   }

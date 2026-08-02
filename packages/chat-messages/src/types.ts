@@ -1,5 +1,10 @@
 import type { ChatLabels, DeepPartial } from './i18n.js';
 
+export interface BlockRendererContext {
+  /** Aborted when the owning message part is re-rendered or disconnected. */
+  signal?: AbortSignal;
+}
+
 export interface BlockRenderer {
   /** Unique name for this renderer */
   name: string;
@@ -27,7 +32,28 @@ export interface BlockRenderer {
    * (loading indicator) and replaces it when the promise resolves.
    * Use this for renderers that need to fetch external resources.
    */
-  renderAsync?: (code: string, lang: string, info?: string) => Promise<string>;
+  renderAsync?: (
+    code: string,
+    lang: string,
+    info?: string,
+    context?: BlockRendererContext,
+  ) => Promise<string>;
+}
+
+export type RendererErrorKind = 'block' | 'part';
+export type RendererErrorPhase = 'match' | 'render' | 'render-async';
+
+/** Detail carried by the bubbling `chat-renderer-error` event. */
+export interface RendererErrorDetail {
+  kind: RendererErrorKind;
+  renderer: string;
+  phase: RendererErrorPhase;
+  error: unknown;
+  partId?: string;
+  partType?: string;
+  language?: string;
+  info?: string;
+  code?: string;
 }
 
 /**

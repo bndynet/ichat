@@ -25,9 +25,20 @@ class RendererRegistry {
     this._renderers.delete(name);
   }
 
-  getRenderer(lang: string): BlockRenderer | undefined {
+  getRenderer(
+    lang: string,
+    onMatchError?: (renderer: BlockRenderer, error: unknown) => void,
+  ): BlockRenderer | undefined {
     for (const renderer of this._renderers.values()) {
-      if (renderer.test(lang)) return renderer;
+      try {
+        if (renderer.test(lang)) return renderer;
+      } catch (error) {
+        try {
+          onMatchError?.(renderer, error);
+        } catch {
+          // Diagnostics must not break matching the remaining renderers.
+        }
+      }
     }
     return undefined;
   }

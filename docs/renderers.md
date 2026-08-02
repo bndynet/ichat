@@ -54,6 +54,39 @@ internally, so they continue to render live without user configuration. An
 untrusted async renderer is not started repeatedly during streaming; it starts
 on the terminal render and its resolved HTML is sanitised.
 
+Async renderers are resolved automatically by `<i-chat-text-part>`. They receive
+an optional lifecycle signal that is aborted when the part is rendered again or
+removed, so network work can stop without additional host bookkeeping:
+
+```typescript
+const remoteRenderer: BlockRenderer = {
+  name: 'remote-card',
+  test: (lang) => lang === 'remote-card',
+  renderAsync: async (code, _lang, _info, context) => {
+    const response = await fetch(`/api/cards/${encodeURIComponent(code.trim())}`, {
+      signal: context?.signal,
+    });
+    return response.text();
+  },
+};
+```
+
+Renderer failures never fail the whole message. Sync failures, rejected async
+work, and throwing `test()` functions fall back to the escaped fenced source.
+Older async results cannot replace a newer render pass. For diagnostics, listen
+for the bubbling `chat-renderer-error` event on `<i-chat>` or
+`<i-chat-messages>`:
+
+```typescript
+chat.addEventListener('chat-renderer-error', (event) => {
+  const { renderer, phase, error, partId } = event.detail;
+  reportToObservability({ renderer, phase, error, partId });
+});
+```
+
+The event is observational; consumers do not need to handle it for the fallback
+behavior to work.
+
 For **`unregister`**, **`list`**, or other registry methods, import **`rendererRegistry`** from **`@bndynet/ichat`** (re-exported from **`@bndynet/ichat-messages`**).
 
 ## Charts, KPI, form, and Mermaid

@@ -10,6 +10,8 @@ export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
 export interface RenderMarkdownIntoResult {
   changed: boolean;
   html: string;
+  /** Whether this call executed the Markdown pipeline instead of using raw-content cache. */
+  rendered: boolean;
 }
 
 /** Raw markdown → rendered HTML cache (skips expensive md.render when content is identical). */
@@ -43,7 +45,7 @@ export function renderMarkdownInto(
       // after a history prepend), creating a new empty DOM that needs patching.
       if (previousHtml) {
         morphHtmlInto(el, previousHtml);
-        return { changed: false, html: previousHtml };
+        return { changed: false, html: previousHtml, rendered: false };
       }
       // New element instance with no previous HTML — fall through to render.
     }
@@ -56,10 +58,10 @@ export function renderMarkdownInto(
     rawContentCache.set(partId, content);
   }
 
-  if (html === previousHtml) return { changed: false, html };
+  if (html === previousHtml) return { changed: false, html, rendered: true };
 
   morphHtmlInto(el, html);
-  return { changed: true, html };
+  return { changed: true, html, rendered: true };
 }
 
 /** Invalidate the raw-content cache for a specific part or entirely. */

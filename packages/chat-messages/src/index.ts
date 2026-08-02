@@ -21,7 +21,11 @@ export {
   hasUnclosedReasoning,
   resolveAsyncBlocks,
 } from './renderers/markdown-renderer.js';
-export type { MarkdownRenderOptions } from './renderers/markdown-renderer.js';
+export type {
+  MarkdownRenderOptions,
+  ResolveAsyncBlocksOptions,
+  ResolveAsyncBlocksResult,
+} from './renderers/markdown-renderer.js';
 export {
   renderMarkdownInto,
   invalidateMarkdownCache,
@@ -50,6 +54,10 @@ export type {
   ChatMessage,
   ChatMessageRole,
   BlockRenderer,
+  BlockRendererContext,
+  RendererErrorDetail,
+  RendererErrorKind,
+  RendererErrorPhase,
   PartRenderer,
   ChatConfig,
   DateSeparatorLabels,

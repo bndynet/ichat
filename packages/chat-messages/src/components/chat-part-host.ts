@@ -9,6 +9,7 @@ import type {
   ChatPartActionDetail,
   CustomPart,
   MessagePart,
+  RendererErrorDetail,
 } from '../types.js';
 import type { ChatLabels } from '../i18n.js';
 import { createPartActionDetail } from '../message-events.js';
@@ -161,6 +162,41 @@ export class ChatPartHost extends LitElement {
     return r;
   }
 
+  private _partRenderer(part: MessagePart) {
+    return partRendererRegistry.getRenderer(part.type, (renderer, error) => {
+      this._dispatchRendererError({
+        kind: 'part',
+        renderer: renderer.name,
+        phase: 'match',
+        error,
+        partId: part.id,
+        partType: part.type,
+      });
+    });
+  }
+
+  private _dispatchRendererError(detail: RendererErrorDetail): void {
+    this.dispatchEvent(
+      new CustomEvent<RendererErrorDetail>('chat-renderer-error', {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _customPartFallback(part: MessagePart): string {
+    const value = JSON.stringify(part, null, 2) ?? String(part);
+    const escaped = value.replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[character] ?? character);
+    return `<pre class="part-custom">${escaped}</pre>`;
+  }
+
   private _renderPart(part: MessagePart) {
     switch (part.type) {
       case 'reasoning':
@@ -255,7 +291,7 @@ export class ChatPartHost extends LitElement {
         ></i-chat-text-part>`;
       }
       default: {
-        const renderer = partRendererRegistry.getRenderer(part.type);
+        const renderer = this._partRenderer(part);
         if (renderer?.element) {
           const tag = unsafeStatic(renderer.element);
           return staticHtml`<div class="bubble">
@@ -290,12 +326,26 @@ export class ChatPartHost extends LitElement {
     const liveCustomIds = new Set<string>();
     for (const p of this.parts ?? []) {
       if (!p.type.startsWith('x-')) continue;
-      const renderer = partRendererRegistry.getRenderer(p.type);
+      const renderer = this._partRenderer(p);
       if (!renderer || renderer.element || !renderer.render) continue;
       liveCustomIds.add(p.id);
       const el = this._customRefs.get(p.id)?.value;
       if (!el) continue;
-      const newHtml = sanitizeHtml(renderer.render(p as CustomPart), {
+      let rawHtml: string;
+      try {
+        rawHtml = renderer.render(p as CustomPart);
+      } catch (error) {
+        this._dispatchRendererError({
+          kind: 'part',
+          renderer: renderer.name,
+          phase: 'render',
+          error,
+          partId: p.id,
+          partType: p.type,
+        });
+        rawHtml = this._customPartFallback(p);
+      }
+      const newHtml = sanitizeHtml(rawHtml, {
         allowedLinkProtocols: this.allowedLinkProtocols,
       });
       if (newHtml === this._customCache.get(p.id)) continue;
