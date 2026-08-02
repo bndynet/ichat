@@ -4,6 +4,7 @@ import { setVersionAttribute } from '../version.js';
 import type { TextPart } from '../types.js';
 import { renderMarkdownInto, type RenderMarkdownIntoOptions } from '../renderers/markdown-morph.js';
 import { renderMarkdownLight, type MarkdownRenderOptions } from '../renderers/markdown-renderer.js';
+import { streamingRenderDelayMs } from '../streaming-render-policy.js';
 
 @customElement('i-chat-text-part')
 export class ChatTextPart extends LitElement {
@@ -15,10 +16,18 @@ export class ChatTextPart extends LitElement {
 
   @query('.content') private _contentEl?: HTMLDivElement;
   private _htmlCache = '';
+  private _streamingPartId?: string;
+  private _lastStreamingRenderAt = Number.NEGATIVE_INFINITY;
+  private _streamingRenderTimer?: number;
 
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+  }
+
+  override disconnectedCallback(): void {
+    this._clearStreamingRenderTimer();
+    super.disconnectedCallback();
   }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -42,6 +51,23 @@ export class ChatTextPart extends LitElement {
     // Once streaming stops we fall through to the full pipeline below for
     // the clean terminal render.
     if (this.data.status === 'streaming') {
+      if (this._streamingPartId !== this.data.id) {
+        this._resetStreamingRenderSchedule(this.data.id);
+      }
+
+      const now = performance.now();
+      const delay = streamingRenderDelayMs(
+        this.content.length,
+        now,
+        this._lastStreamingRenderAt,
+      );
+      if (delay > 0) {
+        this._scheduleStreamingRender(delay);
+        return;
+      }
+
+      this._clearStreamingRenderTimer();
+      this._lastStreamingRenderAt = now;
       const html = renderMarkdownLight(this.content, markdownOptions);
       this._htmlCache = html;
       el.innerHTML = html;
@@ -56,6 +82,7 @@ export class ChatTextPart extends LitElement {
     }
 
     // ── Full pipeline (terminal) ─────────────────────────────────────
+    this._resetStreamingRenderSchedule();
     const result = renderMarkdownInto(el, this.content, {
       previousHtml: this._htmlCache,
       ...markdownOptions,
@@ -71,6 +98,28 @@ export class ChatTextPart extends LitElement {
         composed: true,
       })
     );
+  }
+
+  private _scheduleStreamingRender(delay: number): void {
+    if (this._streamingRenderTimer !== undefined) return;
+    this._streamingRenderTimer = window.setTimeout(() => {
+      this._streamingRenderTimer = undefined;
+      if (this.isConnected && this.data?.status === 'streaming') {
+        this.requestUpdate();
+      }
+    }, Math.ceil(delay));
+  }
+
+  private _clearStreamingRenderTimer(): void {
+    if (this._streamingRenderTimer === undefined) return;
+    window.clearTimeout(this._streamingRenderTimer);
+    this._streamingRenderTimer = undefined;
+  }
+
+  private _resetStreamingRenderSchedule(partId?: string): void {
+    this._clearStreamingRenderTimer();
+    this._streamingPartId = partId;
+    this._lastStreamingRenderAt = Number.NEGATIVE_INFINITY;
   }
 
   render() {

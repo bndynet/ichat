@@ -22,7 +22,9 @@
     "build": "tsup",
     "test": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test ../../node_modules/.cache/ichat-messages-tests/*.mjs",
     "test:coverage": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test --experimental-test-coverage ../../node_modules/.cache/ichat-messages-tests/*.mjs",
-    "benchmark:streaming": "tsup bench/streaming-markdown.bench.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-bench --clean --silent && node ../../node_modules/.cache/ichat-messages-bench/streaming-markdown.bench.mjs"
+    "benchmark:streaming": "tsup bench/streaming-markdown.bench.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-bench --clean --silent && node ../../node_modules/.cache/ichat-messages-bench/streaming-markdown.bench.mjs",
+    "benchmark:streaming:browser": "vite --config bench/browser/vite.config.ts --host 127.0.0.1 --port 4178 --strictPort",
+    "benchmark:streaming:browser:build": "vite build --config bench/browser/vite.config.ts"
   },
   "dependencies": {
     "dompurify": "^3.2.4",
@@ -37,7 +39,8 @@
     "lit": "^3.3.0",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite": "^6.4.2"
   },
   "license": "MIT",
   "repository": {
