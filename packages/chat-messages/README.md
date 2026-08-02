@@ -2,6 +2,17 @@
 
 Core chat message UI as Lit Web Components. Markdown rendering with syntax highlighting, pluggable fenced-block renderers, collapsible reasoning, streaming previews, and tool-call / to-do support.
 
+For long histories, virtual scrolling defaults to `'auto'` — it automatically
+engages when the message count exceeds 500. Set `config.virtualScroll = true`
+for always-on or `false` for always-off. The regular keyed list is the automatic
+fallback when the virtualizer cannot load.
+
+While virtual scrolling is active, off-screen rows are not in the DOM. Browser
+find-in-page, selection spanning the whole history, and printing therefore cover
+only the rendered range, and custom parts must keep durable state in message data
+rather than in private DOM state. Set `config.virtualScroll = false` if those
+matter more than large-history performance.
+
 ## Install
 
 ```bash

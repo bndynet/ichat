@@ -86,8 +86,5 @@ onMounted(async () => {
 
 <template>
   <i-chat-messages ref="chatRef" />
-  <ExampleCodeDrawer
-    title="File and source code example"
-    :content="fileSourceExample"
-  />
+  <ExampleCodeDrawer title="File and source code example" :content="fileSourceExample" />
 </template>

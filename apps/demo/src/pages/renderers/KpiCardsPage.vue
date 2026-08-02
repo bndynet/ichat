@@ -22,8 +22,5 @@ onMounted(async () => {
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
-  <ExampleCodeDrawer
-    title="KPI cards code example"
-    :content="kpiCardsExample"
-  />
+  <ExampleCodeDrawer title="KPI cards code example" :content="kpiCardsExample" />
 </template>

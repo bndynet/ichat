@@ -1,6 +1,6 @@
-import type MarkdownIt from "markdown-it";
-import { md } from "./markdown-renderer.js";
-import { invalidateMarkdownCache } from "./markdown-morph.js";
+import type MarkdownIt from 'markdown-it';
+import { md } from './markdown-renderer.js';
+import { invalidateMarkdownCache } from './markdown-morph.js';
 
 export interface MarkdownPlugin {
   id: string;
@@ -12,9 +12,10 @@ export interface MarkdownPlugin {
 }
 
 const registeredPlugins = new Map<string, MarkdownPlugin>();
-let combinedStyles = "";
-let combinedGlobalStyles = "";
+let combinedStyles = '';
+let combinedGlobalStyles = '';
 let onCssChange: (() => void) | null = null;
+let frozen = false;
 
 /** Register a callback invoked whenever the combined plugin CSS changes. */
 export function onPluginCssChange(cb: () => void): void {
@@ -25,11 +26,11 @@ function recomputeCss(): void {
   combinedStyles = Array.from(registeredPlugins.values())
     .map((e) => e.styles)
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
   combinedGlobalStyles = Array.from(registeredPlugins.values())
     .map((e) => e.globalStyles)
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
   onCssChange?.();
 }
 
@@ -46,12 +47,19 @@ function recomputeCss(): void {
  * Registration is allowed at runtime and affects subsequent markdown renders.
  */
 export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
+  if (frozen) {
+    throw new Error(
+      `[i-chat] Cannot register markdown plugin "${ext.id}" after i-chat-messages has mounted. ` +
+        'Register all plugins before the first render.',
+    );
+  }
+
   const existing = registeredPlugins.get(ext.id);
   if (existing) {
     if (existing === ext) return;
     console.warn(
       `[i-chat] Markdown plugin "${ext.id}" is already registered with a different object. ` +
-        "Keeping the first registration.",
+        'Keeping the first registration.',
     );
     return;
   }
@@ -70,4 +78,13 @@ export function getMarkdownPluginStyles(): string {
 /** Combined global CSS of all registered plugins (internal use). */
 export function getMarkdownPluginGlobalStyles(): string {
   return combinedGlobalStyles;
+}
+
+/**
+ * Freeze the plugin registry so no further plugins can be registered.
+ * Called once after the first `<i-chat-messages>` mount. After this point,
+ * `registerMarkdownPlugin` will throw.
+ */
+export function freezeMarkdownPlugins(): void {
+  frozen = true;
 }

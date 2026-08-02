@@ -21,6 +21,12 @@ All notable changes to this project are documented here. This project follows
 - `ChatMutationOutcome` reports whether a message-array mutation `changed`
   anything and whether a controlled host `accepted` the proposal. Every
   `ChatRunController` lifecycle method returns it.
+- Virtual scrolling for long histories through `config.virtualScroll`
+  (`true` / `false` / `'auto'`). `@lit-labs/virtualizer` is loaded lazily the
+  first time it is needed, so short conversations never pay for it, and the
+  regular keyed list remains the automatic fallback if the import fails.
+  `scrollToMessage()` / `scrollToPart()` reach rows that are not mounted. See
+  [Optional virtual scrolling](docs/component-api.md#optional-virtual-scrolling).
 
 ### Changed
 
@@ -75,6 +81,12 @@ All notable changes to this project are documented here. This project follows
 
 ### Compatibility
 
+- Virtual scrolling defaults to `'auto'`, automatically enabling when messages
+  exceed 500. Consumers can override with `true` (always on) or `false`
+  (always off). While it is active, off-screen rows are not in the DOM, so
+  browser find-in-page, selection spanning the whole history, and printing only
+  cover the rendered range. Set `virtualScroll: false` if those matter more than
+  large-history performance.
 - Existing three-argument `renderAsync(code, language, info)` implementations
   remain source compatible; handling `context.signal` is optional.
 - The official Chart and Mermaid renderers already declare `trusted: true` and

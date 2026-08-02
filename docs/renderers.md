@@ -3,7 +3,7 @@
 Extend the markdown pipeline with custom fenced-code-block renderers, including the built-in chart / KPI / form / Mermaid renderers from `@bndynet/ichat-renderers`.
 
 - [Custom renderers](#custom-renderers)
-- [Charts, KPI, form, and Mermaid (`@bndynet/ichat-renderers`)](#charts-kpi-form-and-mermaid-bndynetichat-renderers)
+- [Charts, KPI, form, and Mermaid (`@bndynet/ichat-renderers`)](#charts-kpi-form-and-mermaid)
 
 > Looking for top-level `parts[]` types (`file`, `source`, `x-*`) instead of markdown fences? See [Parts](./parts.md#vs-registercoderenderer-markdown-fences) for the difference between the two extension points.
 

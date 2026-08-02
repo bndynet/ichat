@@ -6,11 +6,7 @@ interface RendererIconOptions {
 
 function strokeIcon(
   paths: string,
-  {
-    size = 13,
-    strokeWidth = 2.2,
-    viewBox = "0 0 24 24",
-  }: RendererIconOptions = {},
+  { size = 13, strokeWidth = 2.2, viewBox = '0 0 24 24' }: RendererIconOptions = {},
 ): string {
   return (
     `<svg width="${size}" height="${size}" viewBox="${viewBox}" fill="none" ` +

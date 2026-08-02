@@ -172,8 +172,5 @@ function handlePartAction(e) {
 
 <template>
   <i-chat ref="chatRef" @part-action="handlePartAction"></i-chat>
-  <ExampleCodeDrawer
-    title="Tool calls code example"
-    :content="toolCallsExample"
-  />
+  <ExampleCodeDrawer title="Tool calls code example" :content="toolCallsExample" />
 </template>

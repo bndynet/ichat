@@ -1,9 +1,7 @@
-import type { TodoPart } from "./types.js";
+import type { TodoPart } from './types.js';
 
 /** Initial expanded state for a todo part. Later updates preserve local state. */
-export function getTodoInitialExpanded(
-  part: Pick<TodoPart, "defaultCollapsed">,
-): boolean {
+export function getTodoInitialExpanded(part: Pick<TodoPart, 'defaultCollapsed'>): boolean {
   return !part.defaultCollapsed;
 }
 

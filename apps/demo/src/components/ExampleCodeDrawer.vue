@@ -103,10 +103,7 @@ onBeforeUnmount(() => {
             </button>
           </header>
 
-          <div
-            class="example-code-drawer-content markdown-body"
-            v-html="renderedContent"
-          ></div>
+          <div class="example-code-drawer-content markdown-body" v-html="renderedContent"></div>
         </aside>
       </div>
     </Transition>

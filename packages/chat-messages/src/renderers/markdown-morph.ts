@@ -1,9 +1,6 @@
-import {
-  renderMarkdown,
-  type MarkdownRenderOptions,
-} from "./markdown-renderer.js";
-import { morphHtmlInto } from "./dom-morph.js";
-import { onRendererRegistryChange } from "./registry.js";
+import { renderMarkdown, type MarkdownRenderOptions } from './markdown-renderer.js';
+import { morphHtmlInto } from './dom-morph.js';
+import { onRendererRegistryChange } from './registry.js';
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
   /**
@@ -42,7 +39,7 @@ export function renderMarkdownInto(
   content: string,
   options: RenderMarkdownIntoOptions = {},
 ): RenderMarkdownIntoResult {
-  const { previousHtml = "", partId, ...renderOptions } = options;
+  const { previousHtml = '', partId, ...renderOptions } = options;
 
   // Level 1: raw content cache — skip full pipeline when content unchanged
   let html: string;

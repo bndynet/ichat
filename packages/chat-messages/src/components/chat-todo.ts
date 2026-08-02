@@ -1,22 +1,19 @@
-import { LitElement, html, unsafeCSS, nothing } from "lit";
-import { customElement, property, query, state } from "lit/decorators.js";
-import { setVersionAttribute } from "../version.js";
-import type { TodoItem, TodoItemStatus, TodoPart } from "../types.js";
-import type { TodoLabels } from "../i18n.js";
-import { CHAT_LABELS_EN } from "../i18n.js";
-import {
-  getTodoInitialExpanded,
-  shouldInitializeTodoExpansion,
-} from "../todo-collapse.js";
-import { chatIcons } from "../icons.js";
-import styles from "../styles/chat-todo.scss";
+import { LitElement, html, unsafeCSS, nothing } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import { setVersionAttribute } from '../version.js';
+import type { TodoItem, TodoItemStatus, TodoPart } from '../types.js';
+import type { TodoLabels } from '../i18n.js';
+import { CHAT_LABELS_EN } from '../i18n.js';
+import { getTodoInitialExpanded, shouldInitializeTodoExpansion } from '../todo-collapse.js';
+import { chatIcons } from '../icons.js';
+import styles from '../styles/chat-todo.scss';
 
 const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
-  pending: "active",
-  active: "done",
-  done: "pending",
-  error: "pending",
-  skipped: "pending",
+  pending: 'active',
+  active: 'done',
+  done: 'pending',
+  error: 'pending',
+  skipped: 'pending',
 };
 
 /**
@@ -24,14 +21,14 @@ const NEXT_STATUS: Record<TodoItemStatus, TodoItemStatus> = {
  *
  * @fires part-action - Unified action event (`kind: 'todo'`).
  */
-@customElement("i-chat-todo")
+@customElement('i-chat-todo')
 export class ChatTodo extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ attribute: false }) data!: TodoPart;
   @property({ attribute: false }) labels?: TodoLabels;
 
-  @query("details") private _details!: HTMLDetailsElement;
+  @query('details') private _details!: HTMLDetailsElement;
   @state() private _expanded = true;
   private _initializedPartId?: string;
 
@@ -50,9 +47,7 @@ export class ChatTodo extends LitElement {
 
   private _handleToggle(event: Event): void {
     this._expanded = (event.currentTarget as HTMLDetailsElement).open;
-    this.dispatchEvent(
-      new CustomEvent("chat-content-resize", { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
   }
 
   private _statusLabel(status: TodoItemStatus, labels: TodoLabels): string {
@@ -62,10 +57,10 @@ export class ChatTodo extends LitElement {
   private _requestStatusChange(item: TodoItem): void {
     if (this.data.interactive === false) return;
     this.dispatchEvent(
-      new CustomEvent("part-action", {
+      new CustomEvent('part-action', {
         detail: {
-          kind: "todo",
-          action: "change-status",
+          kind: 'todo',
+          action: 'change-status',
           itemId: item.id,
           previousStatus: item.status,
           status: NEXT_STATUS[item.status],
@@ -79,15 +74,15 @@ export class ChatTodo extends LitElement {
 
   private _renderStatusIcon(status: TodoItemStatus) {
     switch (status) {
-      case "active":
+      case 'active':
         return chatIcons.todoActive();
-      case "done":
+      case 'done':
         return chatIcons.todoDone();
-      case "error":
+      case 'error':
         return chatIcons.todoError();
-      case "skipped":
+      case 'skipped':
         return chatIcons.todoSkipped();
-      case "pending":
+      case 'pending':
       default:
         return chatIcons.todoPending();
     }
@@ -98,9 +93,7 @@ export class ChatTodo extends LitElement {
     if (!part) return nothing;
 
     const labels = this.labels ?? CHAT_LABELS_EN.todo;
-    const completed = part.items.filter(
-      (item) => item.status === "done",
-    ).length;
+    const completed = part.items.filter((item) => item.status === 'done').length;
     const interactive = part.interactive !== false;
 
     return html`
@@ -122,7 +115,7 @@ export class ChatTodo extends LitElement {
             class="todo__toggle"
             title=${this._expanded ? labels.collapse : labels.expand}
           >
-            ${chatIcons.chevronRight({ className: "todo__chevron", size: 18, strokeWidth: 2.2 })}
+            ${chatIcons.chevronRight({ className: 'todo__chevron', size: 18, strokeWidth: 2.2 })}
           </span>
         </summary>
 
@@ -138,7 +131,7 @@ export class ChatTodo extends LitElement {
                   class="todo__status"
                   type="button"
                   ?disabled=${!interactive}
-                  aria-checked=${item.status === "done" ? "true" : "false"}
+                  aria-checked=${item.status === 'done' ? 'true' : 'false'}
                   aria-label=${`${item.title}: ${this._statusLabel(item.status, labels)}. ${labels.changeStatus}`}
                   title=${interactive ? labels.changeStatus : this._statusLabel(item.status, labels)}
                   @click=${() => this._requestStatusChange(item)}
@@ -165,6 +158,6 @@ export class ChatTodo extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "i-chat-todo": ChatTodo;
+    'i-chat-todo': ChatTodo;
   }
 }

@@ -1,22 +1,22 @@
-import type MarkdownIt from "markdown-it";
-import type { BlockRenderer } from "@bndynet/ichat-messages";
+import type MarkdownIt from 'markdown-it';
+import type { BlockRenderer } from '@bndynet/ichat-messages';
 import {
   renderCodeFallback,
   wrapWithCodeToggle,
   escapeHtml,
   type RendererOptions,
-} from "@bndynet/ichat-messages";
-import { DEFAULT_MERMAID_CONFIG } from "./mermaid-config.js";
-import { buildMermaidThemeVariables } from "./mermaid-theme-tokens.js";
-import { setVersionAttribute } from "./version.js";
+} from '@bndynet/ichat-messages';
+import { DEFAULT_MERMAID_CONFIG } from './mermaid-config.js';
+import { buildMermaidThemeVariables } from './mermaid-theme-tokens.js';
+import { setVersionAttribute } from './version.js';
 
 // ── Theme (same contract as chart-renderer — documented in repo README § Host theme contract) ──
 
 function isDarkTheme(): boolean {
-  if (typeof document === "undefined") return false;
+  if (typeof document === 'undefined') return false;
   const html = document.documentElement;
-  if (html.classList.contains("dark")) return true;
-  return (html.getAttribute("data-theme") ?? "").includes("dark");
+  if (html.classList.contains('dark')) return true;
+  return (html.getAttribute('data-theme') ?? '').includes('dark');
 }
 
 /**
@@ -27,10 +27,10 @@ function collectAllMermaidHosts(): ChatMermaid[] {
   const out: ChatMermaid[] = [];
 
   function walk(root: Document | ShadowRoot): void {
-    root.querySelectorAll("i-chat-mermaid").forEach((el) => {
+    root.querySelectorAll('i-chat-mermaid').forEach((el) => {
       out.push(el as ChatMermaid);
     });
-    root.querySelectorAll("*").forEach((node) => {
+    root.querySelectorAll('*').forEach((node) => {
       if (node instanceof Element && node.shadowRoot) {
         walk(node.shadowRoot);
       }
@@ -44,11 +44,7 @@ function collectAllMermaidHosts(): ChatMermaid[] {
 let themeObserverAttached = false;
 
 function setupMermaidThemeObserver(): void {
-  if (
-    typeof MutationObserver === "undefined" ||
-    typeof document === "undefined"
-  )
-    return;
+  if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return;
   if (themeObserverAttached) return;
   themeObserverAttached = true;
   new MutationObserver(() => {
@@ -57,7 +53,7 @@ function setupMermaidThemeObserver(): void {
     });
   }).observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-theme", "class"],
+    attributeFilter: ['data-theme', 'class'],
   });
 }
 
@@ -82,7 +78,7 @@ const MERMAID_STYLES = `
 let idCounter = 0;
 
 /** Light-DOM node holding raw diagram text (attributes are unsafe for long/multiline Mermaid). */
-export const MERMAID_SOURCE_CLASS = "i-chat-mermaid__src";
+export const MERMAID_SOURCE_CLASS = 'i-chat-mermaid__src';
 
 /** Stable short fingerprint so morphdom / attribute diffs see source changes. */
 function fingerprintMermaidCode(code: string): string {
@@ -100,7 +96,7 @@ export class ChatMermaid extends HTMLElement {
   private _mutationFlush = false;
 
   static get observedAttributes(): string[] {
-    return ["data-mm-fp"];
+    return ['data-mm-fp'];
   }
 
   connectedCallback(): void {
@@ -121,10 +117,8 @@ export class ChatMermaid extends HTMLElement {
 
   /** Watch <pre> text updates when morphdom patches streaming markdown (connectedCallback does not re-run). */
   private _ensureSourceObserver(): void {
-    if (this._srcObserver || typeof MutationObserver === "undefined") return;
-    this._srcObserver = new MutationObserver(() =>
-      this._scheduleRenderFromDom(),
-    );
+    if (this._srcObserver || typeof MutationObserver === 'undefined') return;
+    this._srcObserver = new MutationObserver(() => this._scheduleRenderFromDom());
     this._srcObserver.observe(this, {
       childList: true,
       subtree: true,
@@ -148,11 +142,9 @@ export class ChatMermaid extends HTMLElement {
 
   /** Prefer `<pre class="...">` text; fall back to legacy `data-definition` attribute. */
   private _definitionText(): string {
-    const fromPre = this.querySelector(
-      `pre.${MERMAID_SOURCE_CLASS}`,
-    )?.textContent;
+    const fromPre = this.querySelector(`pre.${MERMAID_SOURCE_CLASS}`)?.textContent;
     if (fromPre != null && fromPre.length > 0) return fromPre;
-    return this.getAttribute("data-definition") ?? "";
+    return this.getAttribute('data-definition') ?? '';
   }
 
   private async _render(): Promise<void> {
@@ -160,16 +152,16 @@ export class ChatMermaid extends HTMLElement {
     const def = this._definitionText().trim();
 
     if (!this.shadowRoot) {
-      const shadow = this.attachShadow({ mode: "open" });
-      const style = document.createElement("style");
+      const shadow = this.attachShadow({ mode: 'open' });
+      const style = document.createElement('style');
       style.textContent = MERMAID_STYLES;
-      const slot = document.createElement("div");
-      slot.className = "mm-root";
+      const slot = document.createElement('div');
+      slot.className = 'mm-root';
       shadow.appendChild(style);
       shadow.appendChild(slot);
     }
 
-    const root = this.shadowRoot?.querySelector(".mm-root");
+    const root = this.shadowRoot?.querySelector('.mm-root');
     if (!root) return;
 
     if (!def) {
@@ -178,10 +170,10 @@ export class ChatMermaid extends HTMLElement {
     }
 
     try {
-      const mermaid = (await import("mermaid")).default;
+      const mermaid = (await import('mermaid')).default;
       mermaid.initialize({
         ...DEFAULT_MERMAID_CONFIG,
-        theme: "base",
+        theme: 'base',
         darkMode: isDarkTheme(),
         themeVariables: {
           ...DEFAULT_MERMAID_CONFIG.themeVariables,
@@ -193,7 +185,7 @@ export class ChatMermaid extends HTMLElement {
       const parsed = await mermaid.parse(def, { suppressErrors: true });
       if (parsed === false) {
         if (gen !== this._renderGen) return;
-        root.innerHTML = renderCodeFallback("mermaid", this._definitionText());
+        root.innerHTML = renderCodeFallback('mermaid', this._definitionText());
         return;
       }
 
@@ -202,24 +194,21 @@ export class ChatMermaid extends HTMLElement {
 
       if (gen !== this._renderGen) return;
 
-      const wrap = document.createElement("div");
-      wrap.className = "mm-wrap";
+      const wrap = document.createElement('div');
+      wrap.className = 'mm-wrap';
       wrap.innerHTML = svg;
       root.replaceChildren(wrap);
     } catch {
       if (gen !== this._renderGen) return;
       // Incomplete streaming text or invalid syntax: show source instead of Mermaid error text.
       const source = this._definitionText();
-      root.innerHTML = renderCodeFallback("mermaid", source);
+      root.innerHTML = renderCodeFallback('mermaid', source);
     }
   }
 }
 
-if (
-  typeof customElements !== "undefined" &&
-  !customElements.get("i-chat-mermaid")
-) {
-  customElements.define("i-chat-mermaid", ChatMermaid);
+if (typeof customElements !== 'undefined' && !customElements.get('i-chat-mermaid')) {
+  customElements.define('i-chat-mermaid', ChatMermaid);
 }
 
 // ── Fence renderer (sync HTML only) ─────────────────────────────────────────
@@ -227,16 +216,14 @@ if (
 function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
   const trimmed = code.trim();
   if (!trimmed) {
-    return renderCodeFallback("mermaid", code);
+    return renderCodeFallback('mermaid', code);
   }
 
   // Multiline / long diagrams must not live in an attribute — browsers normalize or truncate.
   const fp = fingerprintMermaidCode(code);
   const html = `<i-chat-mermaid data-mm-fp="${escapeHtml(fp)}"><pre class="${MERMAID_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre></i-chat-mermaid>`;
 
-  return opts.codeToggle !== false
-    ? wrapWithCodeToggle("mermaid", code, html)
-    : html;
+  return opts.codeToggle !== false ? wrapWithCodeToggle('mermaid', code, html) : html;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -251,14 +238,12 @@ function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
  * registry.register(createMermaidRenderer())
  * registry.register(createMermaidRenderer({ codeToggle: false }))
  */
-export function createMermaidRenderer(
-  options: RendererOptions = {},
-): BlockRenderer {
+export function createMermaidRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
-    name: "mermaid",
-    mode: "trusted",
+    name: 'mermaid',
+    mode: 'trusted',
     trusted: true,
-    test: (lang: string) => lang === "mermaid",
+    test: (lang: string) => lang === 'mermaid',
     render: (code: string) => renderMermaidBlock(code, options),
   };
 }
@@ -269,10 +254,7 @@ export const mermaidRenderer: BlockRenderer = createMermaidRenderer();
 /**
  * markdown-it plugin: handles ```mermaid fences (same behaviour as `createMermaidRenderer`).
  */
-export function mermaidPlugin(
-  mdInstance: MarkdownIt,
-  options: RendererOptions = {},
-): void {
+export function mermaidPlugin(mdInstance: MarkdownIt, options: RendererOptions = {}): void {
   const originalFence =
     mdInstance.renderer.rules.fence ||
     function (tokens, idx, opts, _env, self) {
@@ -281,7 +263,7 @@ export function mermaidPlugin(
 
   mdInstance.renderer.rules.fence = (tokens, idx, opts, env, self) => {
     const token = tokens[idx];
-    if (token.info.trim() === "mermaid") {
+    if (token.info.trim() === 'mermaid') {
       return renderMermaidBlock(token.content, options);
     }
     return originalFence(tokens, idx, opts, env, self);

@@ -9,7 +9,7 @@ import type {
   MessagePartUpdateEventResult,
   TodoItemUpdateEventResult,
   TodoItemPatch,
-} from "@bndynet/ichat-messages";
+} from '@bndynet/ichat-messages';
 import {
   addMessage,
   patchMessageById,
@@ -25,8 +25,8 @@ import {
   normalizeMessagePartUpdateEvent,
   normalizeTodoItemUpdateEvent,
   cancelMessageData,
-} from "@bndynet/ichat-messages";
-import { acceptedNoOp, type ChatMutationOutcome } from "./mutation-outcome.js";
+} from '@bndynet/ichat-messages';
+import { acceptedNoOp, type ChatMutationOutcome } from './mutation-outcome.js';
 
 export interface ChatMessageStoreChangeContext {
   reason: MessagesChangeReason;
@@ -45,7 +45,7 @@ export interface ChatMessageStoreOptions {
   /** Read the host's current authoritative message array. */
   getMessages: () => ChatMessage[];
   /** Read the host's current ownership mode. */
-  getMode: () => "controlled" | "uncontrolled";
+  getMode: () => 'controlled' | 'uncontrolled';
   /** Submit a computed change to the host for controlled/uncontrolled handling. */
   commit: (change: ChatMessageStoreChange) => boolean | void;
 }
@@ -71,7 +71,7 @@ interface PendingProposal extends ProposalTag {
  */
 export class ChatMessageStore {
   private readonly _getMessages: () => ChatMessage[];
-  private readonly _getMode: () => "controlled" | "uncontrolled";
+  private readonly _getMode: () => 'controlled' | 'uncontrolled';
   private readonly _commit: (change: ChatMessageStoreChange) => boolean | void;
 
   private _pendingProposal?: PendingProposal;
@@ -96,7 +96,7 @@ export class ChatMessageStore {
    */
   get messages(): ChatMessage[] {
     const hostMessages = this._getMessages();
-    const controlled = this._getMode() === "controlled";
+    const controlled = this._getMode() === 'controlled';
 
     if (!controlled) {
       if (this._wasControlled) this._invalidateProposalChain();
@@ -139,11 +139,7 @@ export class ChatMessageStore {
     if (!pending) return;
 
     const accepted = this._proposalTags.get(hostMessages);
-    if (
-      !accepted ||
-      accepted.epoch !== pending.epoch ||
-      accepted.revision > pending.revision
-    ) {
+    if (!accepted || accepted.epoch !== pending.epoch || accepted.revision > pending.revision) {
       // An unrelated external replacement supersedes all pending proposals.
       this._invalidateProposalChain();
       return;
@@ -165,7 +161,7 @@ export class ChatMessageStore {
     context: ChatMessageStoreChangeContext,
   ): ChatMutationOutcome {
     if (next === previousMessages) return acceptedNoOp();
-    const controlled = this._getMode() === "controlled";
+    const controlled = this._getMode() === 'controlled';
 
     if (!controlled) {
       this._commit({
@@ -208,29 +204,18 @@ export class ChatMessageStore {
 
   addMessage(message: ChatMessage): ChatMutationOutcome {
     const previousMessages = this.messages;
-    return this._commitMessages(
-      previousMessages,
-      addMessage(previousMessages, message),
-      {
-        reason: "message:add",
-        messageId: message.id,
-      },
-    );
+    return this._commitMessages(previousMessages, addMessage(previousMessages, message), {
+      reason: 'message:add',
+      messageId: message.id,
+    });
   }
 
-  updateMessage(
-    id: string,
-    partial: Partial<ChatMessage>,
-  ): ChatMutationOutcome {
+  updateMessage(id: string, partial: Partial<ChatMessage>): ChatMutationOutcome {
     const previousMessages = this.messages;
-    return this._commitMessages(
-      previousMessages,
-      patchMessageById(previousMessages, id, partial),
-      {
-        reason: "message:update",
-        messageId: id,
-      },
-    );
+    return this._commitMessages(previousMessages, patchMessageById(previousMessages, id, partial), {
+      reason: 'message:update',
+      messageId: id,
+    });
   }
 
   appendPart(messageId: string, part: MessagePart): ChatMutationOutcome {
@@ -239,34 +224,30 @@ export class ChatMessageStore {
       previousMessages,
       appendMessagePart(previousMessages, messageId, part),
       {
-        reason: "part:append",
+        reason: 'part:append',
         messageId,
         partId: part.id,
       },
     );
   }
 
-  updatePart(
-    messageId: string,
-    partId: string,
-    patch: Partial<MessagePart>,
-  ): ChatMutationOutcome {
+  updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): ChatMutationOutcome {
     const previousMessages = this.messages;
     const result = patchMessagePart(previousMessages, messageId, partId, patch);
     if (!result.ok) return acceptedNoOp();
 
     return this._commitMessages(previousMessages, result.messages, {
-      reason: "part:update",
+      reason: 'part:update',
       messageId,
       partId,
     });
   }
 
-  addErrorMessage(error: string, text = ""): ChatMutationOutcome {
+  addErrorMessage(error: string, text = ''): ChatMutationOutcome {
     return this.addMessage({
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      role: "assistant",
-      parts: text ? [{ type: "text", id: `err-text-${Date.now()}`, text }] : [],
+      role: 'assistant',
+      parts: text ? [{ type: 'text', id: `err-text-${Date.now()}`, text }] : [],
       error,
       timestamp: Date.now(),
     });
@@ -285,11 +266,10 @@ export class ChatMessageStore {
       partId,
       patch,
     });
-    if (!result.ok)
-      return { ok: false, reason: result.reason, part: result.part };
+    if (!result.ok) return { ok: false, reason: result.reason, part: result.part };
 
     this._commitMessages(previousMessages, result.messages, {
-      reason: "part:update",
+      reason: 'part:update',
       messageId,
       partId,
     });
@@ -306,23 +286,16 @@ export class ChatMessageStore {
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
-    if (!isToolCallPart(part))
-      return { ok: false, reason: "part-type-mismatch", part };
+    if (!isToolCallPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
 
     const tcResult = patchToolCallPart(part, patch as Partial<ToolCallPart>);
-    if (!tcResult.ok)
-      return { ok: false, reason: tcResult.reason, part: tcResult.part };
+    if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
 
-    const replacement = replaceMessagePart(
-      previousMessages,
-      messageId,
-      partId,
-      tcResult.part,
-    );
+    const replacement = replaceMessagePart(previousMessages, messageId, partId, tcResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(previousMessages, replacement.messages, {
-      reason: "tool-call:update",
+      reason: 'tool-call:update',
       messageId,
       partId,
     });
@@ -341,23 +314,16 @@ export class ChatMessageStore {
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
-    if (!isTodoPart(part))
-      return { ok: false, reason: "part-type-mismatch", part };
+    if (!isTodoPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
 
     const todoResult = patchTodoItem(part, itemId, patch, revision);
-    if (!todoResult.ok)
-      return { ok: false, reason: todoResult.reason, part: todoResult.part };
+    if (!todoResult.ok) return { ok: false, reason: todoResult.reason, part: todoResult.part };
 
-    const replacement = replaceMessagePart(
-      previousMessages,
-      messageId,
-      partId,
-      todoResult.part,
-    );
+    const replacement = replaceMessagePart(previousMessages, messageId, partId, todoResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(previousMessages, replacement.messages, {
-      reason: "todo-item:update",
+      reason: 'todo-item:update',
       messageId,
       partId,
       itemId,
@@ -370,13 +336,7 @@ export class ChatMessageStore {
     if (!norm.ok) return { ok: false, reason: norm.reason };
 
     const { messageId, partId, itemId, patch, revision } = norm.update;
-    const update = this.tryUpdateTodoItem(
-      messageId,
-      partId,
-      itemId,
-      patch,
-      revision,
-    );
+    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
     if (!update.ok) {
       return {
         ok: false,
@@ -392,11 +352,7 @@ export class ChatMessageStore {
     const norm = normalizeMessagePartUpdateEvent(event);
     if (!norm.ok) return { ok: false, reason: norm.reason };
 
-    const update = this.tryUpdatePart(
-      norm.update.messageId,
-      norm.update.partId,
-      norm.update.patch,
-    );
+    const update = this.tryUpdatePart(norm.update.messageId, norm.update.partId, norm.update.patch);
     if (!update.ok) {
       return {
         ok: false,
@@ -411,10 +367,7 @@ export class ChatMessageStore {
   // ── Cancellation (pure data only, no DOM) ───────────────────────
 
   /** Commit any pre-computed message array (used by host for remove/clear). */
-  commitMessages(
-    next: ChatMessage[],
-    context: ChatMessageStoreChangeContext,
-  ): ChatMutationOutcome {
+  commitMessages(next: ChatMessage[], context: ChatMessageStoreChangeContext): ChatMutationOutcome {
     return this._commitMessages(this.messages, next, context);
   }
 
@@ -427,13 +380,9 @@ export class ChatMessageStore {
 
   cancelMessage(id: string, hint?: string): ChatMutationOutcome {
     const previousMessages = this.messages;
-    return this._commitMessages(
-      previousMessages,
-      cancelMessageData(previousMessages, id, hint),
-      {
-        reason: "message:cancel",
-        messageId: id,
-      },
-    );
+    return this._commitMessages(previousMessages, cancelMessageData(previousMessages, id, hint), {
+      reason: 'message:cancel',
+      messageId: id,
+    });
   }
 }

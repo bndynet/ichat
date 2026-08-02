@@ -35,17 +35,10 @@ function handleSend(e) {
 </script>
 
 <template>
-  <i-chat
-    ref="chatRef"
-    @send="handleSend"
-    @message-action="handleMessageAction"
-  >
+  <i-chat ref="chatRef" @send="handleSend" @message-action="handleMessageAction">
     <div slot="message-actions" style="position: relative; top: -1px">
       <span data-action="like">Like</span> <span data-action="copy">Copy</span>
     </div>
   </i-chat>
-  <ExampleCodeDrawer
-    title="Message actions code example"
-    :content="actionsExample"
-  />
+  <ExampleCodeDrawer title="Message actions code example" :content="actionsExample" />
 </template>

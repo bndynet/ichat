@@ -1,6 +1,6 @@
-@use "variables" as *;
-@use "chat-progress" as progress;
-@use "chat-kpi" as kpi;
+@use 'variables' as *;
+@use 'chat-progress' as progress;
+@use 'chat-kpi' as kpi;
 @mixin styles {
   // ── Markdown content styles ─────────────────────────────────────────────
 
@@ -21,8 +21,7 @@
     h4,
     h5,
     h6 {
-      margin: var(--chat-spacing-md, #{$spacing-md}) 0
-        var(--chat-spacing-sm, #{$spacing-sm});
+      margin: var(--chat-spacing-md, #{$spacing-md}) 0 var(--chat-spacing-sm, #{$spacing-sm});
       line-height: 1.3;
 
       &:first-child {
@@ -49,18 +48,14 @@
       }
 
       .message--self & {
-        color: var(
-          --chat-self-text,
-          var(--chat-user-text, #{$color-user-text})
-        );
+        color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
         text-decoration: underline;
       }
     }
 
     blockquote {
       margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-      padding: var(--chat-spacing-sm, #{$spacing-sm})
-        var(--chat-spacing-md, #{$spacing-md});
+      padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
       border-inline-start: 3px solid var(--chat-border, #{$color-border});
       color: var(--chat-text-secondary, #{$color-text-secondary});
       background: var(--chat-blockquote-bg, #{$color-blockquote-bg});
@@ -133,8 +128,7 @@
 
       th,
       td {
-        padding: var(--chat-spacing-sm, #{$spacing-sm})
-          var(--chat-spacing-md, #{$spacing-md});
+        padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
         border: 1px solid var(--chat-border, #{$color-border});
         text-align: start;
       }
@@ -257,8 +251,7 @@
           var(--chat-surface, #{$color-surface})
         )
       );
-      padding: var(--chat-spacing-sm, #{$spacing-sm})
-        var(--chat-spacing-md, #{$spacing-md});
+      padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
       border-radius: var(--chat-radius-sm, #{$radius-sm});
       font-size: var(--chat-font-size-sm, #{$font-size-sm});
     }

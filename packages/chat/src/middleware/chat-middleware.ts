@@ -1,4 +1,4 @@
-import type { ChatMessage, MessagePart } from "@bndynet/ichat-messages";
+import type { ChatMessage, MessagePart } from '@bndynet/ichat-messages';
 
 /**
  * Middleware hook for intercepting and transforming messages flowing through
@@ -16,9 +16,7 @@ export interface ChatMiddleware {
    * Transform or validate the outgoing content.
    * Return a string to replace the content, or `null`/`undefined` to block the send.
    */
-  beforeSend?: (
-    content: string,
-  ) => string | null | undefined | Promise<string | null | undefined>;
+  beforeSend?: (content: string) => string | null | undefined | Promise<string | null | undefined>;
 
   /**
    * Called after a new message is added to the collection.
@@ -30,10 +28,7 @@ export interface ChatMiddleware {
    * Called before a part is appended to a message.
    * Return the part to include, or `null` to drop it.
    */
-  beforeAppendPart?: (
-    messageId: string,
-    part: MessagePart,
-  ) => MessagePart | null;
+  beforeAppendPart?: (messageId: string, part: MessagePart) => MessagePart | null;
 
   /**
    * Called when an error is reported (via `showError`, `addErrorMessage`, or SSE errors).
@@ -48,10 +43,7 @@ export interface MiddlewareChain {
   remove(name: string): boolean;
   executeBeforeSend(content: string): Promise<string | null>;
   executeAfterMessageAdded(message: ChatMessage): ChatMessage | null;
-  executeBeforeAppendPart(
-    messageId: string,
-    part: MessagePart,
-  ): MessagePart | null;
+  executeBeforeAppendPart(messageId: string, part: MessagePart): MessagePart | null;
   executeOnError(error: string, messageId?: string): void;
 }
 
@@ -100,10 +92,7 @@ export function createMiddlewareChain(): MiddlewareChain {
       return result;
     },
 
-    executeBeforeAppendPart(
-      messageId: string,
-      part: MessagePart,
-    ): MessagePart | null {
+    executeBeforeAppendPart(messageId: string, part: MessagePart): MessagePart | null {
       let result: MessagePart | null = part;
       for (const mw of middlewares) {
         if (!mw.beforeAppendPart) continue;
