@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup && tsup --config tsup.global.config.ts",
-    "test": "tsup test/*.test.ts --no-config --format esm --platform node --target node18 --loader .scss=text --external node:assert/strict --out-dir ../../node_modules/.cache/ichat-tests --clean --silent && node --test ../../node_modules/.cache/ichat-tests/*.js"
+    "test": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-tests --clean --silent && node --test ../../node_modules/.cache/ichat-tests/*.mjs"
   },
   "dependencies": {
     "@bndynet/ichat-input": "^3.1.0",
