@@ -78,8 +78,11 @@ for the bubbling `chat-renderer-error` event on `<i-chat>` or
 `<i-chat-messages>`:
 
 ```typescript
+import type { RendererErrorDetail } from '@bndynet/ichat';
+
 chat.addEventListener('chat-renderer-error', (event) => {
-  const { renderer, phase, error, partId } = event.detail;
+  const { renderer, phase, error, partId } =
+    (event as CustomEvent<RendererErrorDetail>).detail;
   reportToObservability({ renderer, phase, error, partId });
 });
 ```

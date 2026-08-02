@@ -48,6 +48,7 @@ interface BrowserBenchmarkReport {
   budgets: typeof BUDGETS;
   componentValidation: ComponentValidation;
   rendererRuntimeValidation: RendererRuntimeValidation;
+  officialRendererValidation: OfficialRendererValidation;
   results: ScenarioResult[];
 }
 
@@ -61,6 +62,13 @@ interface ComponentValidation {
 interface RendererRuntimeValidation {
   passed: boolean;
   errorEvents: number;
+  failures: string[];
+}
+
+interface OfficialRendererValidation {
+  passed: boolean;
+  chartRendered: boolean;
+  mermaidRendered: boolean;
   failures: string[];
 }
 
@@ -143,6 +151,18 @@ function percentile(values: readonly number[], fraction: number): number {
 
 function nextFrame(): Promise<number> {
   return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+async function waitForCondition(
+  predicate: () => boolean,
+  timeoutMs = 5000,
+): Promise<boolean> {
+  const deadline = performance.now() + timeoutMs;
+  while (performance.now() < deadline) {
+    if (predicate()) return true;
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 25));
+  }
+  return predicate();
 }
 
 function deferredValue<T>(): {
@@ -383,6 +403,87 @@ async function validateRendererRuntime(): Promise<RendererRuntimeValidation> {
   };
 }
 
+async function validateOfficialRenderers(): Promise<OfficialRendererValidation> {
+  // Load these after the performance matrix. Their charting runtimes are
+  // intentionally excluded from the streaming performance measurements.
+  const [chartModule, mermaidModule] = await Promise.all([
+    import('../../../chat-renderer-chart/src/chart-renderer.js'),
+    import('../../../chat-renderer-mermaid/src/mermaid-renderer.js'),
+  ]);
+  const chartRenderer = chartModule.createChartRenderer({ codeToggle: false });
+  const mermaidRenderer = mermaidModule.createMermaidRenderer({ codeToggle: false });
+  const failures: string[] = [];
+  let chartRendered = false;
+  let mermaidRendered = false;
+
+  if (chartRenderer.trusted !== true) failures.push('chart trusted contract');
+  if (mermaidRenderer.trusted !== true) failures.push('mermaid trusted contract');
+
+  rendererRegistry.register(chartRenderer);
+  rendererRegistry.register(mermaidRenderer);
+
+  try {
+    const chartElement = document.createElement('i-chat-text-part');
+    const chartSource = JSON.stringify({
+      type: 'bar',
+      data: {
+        categories: ['Q1', 'Q2'],
+        series: [{ name: 'Sales', data: [10, 20] }],
+      },
+      options: { title: 'Renderer compatibility' },
+    });
+    chartElement.data = {
+      id: 'browser-official-chart',
+      type: 'text',
+      text: '',
+      status: 'complete',
+    };
+    chartElement.content = `\`\`\`chart\n${chartSource}\n\`\`\``;
+    stage.replaceChildren(chartElement);
+    await chartElement.updateComplete;
+    await nextFrame();
+
+    const chartHost = chartElement.querySelector('i-chart');
+    chartRendered =
+      chartHost?.getAttribute('type') === 'bar' &&
+      chartHost.getAttribute('data')?.includes('Sales') === true;
+    if (!chartRendered) failures.push('chart custom element');
+
+    const mermaidElement = document.createElement('i-chat-text-part');
+    const mermaidSource = 'graph TD\n  A[Start] --> B[Done]';
+    mermaidElement.data = {
+      id: 'browser-official-mermaid',
+      type: 'text',
+      text: '',
+      status: 'complete',
+    };
+    mermaidElement.content = `\`\`\`mermaid\n${mermaidSource}\n\`\`\``;
+    stage.replaceChildren(mermaidElement);
+    await mermaidElement.updateComplete;
+
+    const mermaidHost = mermaidElement.querySelector('i-chat-mermaid');
+    const sourcePreserved = mermaidHost
+      ?.querySelector(`pre.${mermaidModule.MERMAID_SOURCE_CLASS}`)
+      ?.textContent?.includes('A[Start]') === true;
+    mermaidRendered = Boolean(mermaidHost) && sourcePreserved && await waitForCondition(
+      () => Boolean(mermaidHost?.shadowRoot?.querySelector('svg')),
+    );
+    if (!sourcePreserved) failures.push('mermaid source preservation');
+    if (!mermaidRendered) failures.push('mermaid SVG');
+  } finally {
+    rendererRegistry.unregister(chartRenderer.name);
+    rendererRegistry.unregister(mermaidRenderer.name);
+    stage.replaceChildren();
+  }
+
+  return {
+    passed: failures.length === 0,
+    chartRendered,
+    mermaidRendered,
+    failures,
+  };
+}
+
 async function runScenario(scenario: Scenario, index: number): Promise<ScenarioResult> {
   const content = contentOfSize(scenario.kind, scenario.sizeKiB);
   const partId = `browser-benchmark-${index}`;
@@ -540,18 +641,21 @@ async function runBenchmark(): Promise<void> {
     // intentionally large DOM allocation cannot affect scenario GC metrics.
     const componentValidation = await validateComponentScheduling();
     const rendererRuntimeValidation = await validateRendererRuntime();
+    const officialRendererValidation = await validateOfficialRenderers();
 
     const report: BrowserBenchmarkReport = {
       status: 'complete',
       passed:
         componentValidation.passed &&
         rendererRuntimeValidation.passed &&
+        officialRendererValidation.passed &&
         results.every((result) => result.passed),
       generatedAt: new Date().toISOString(),
       userAgent: navigator.userAgent,
       budgets: BUDGETS,
       componentValidation,
       rendererRuntimeValidation,
+      officialRendererValidation,
       results,
     };
     window.__ICHAT_BENCHMARK__ = report;

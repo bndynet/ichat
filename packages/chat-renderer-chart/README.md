@@ -39,7 +39,7 @@ Supported chart types: `bar`, `line`, `area`, `pie`, `gauge`.
 
 | Export | Description |
 |---|---|
-| `chartRenderer` | Pre-built `BlockRenderer` (code toggle off) |
+| `chartRenderer` | Pre-built `BlockRenderer` (code toggle on) |
 | `createChartRenderer(opts?)` | Factory with customizable `RendererOptions` |
 | `chartPlugin` | markdown-it plugin (for `md.use()`) |
 | `ChartInput` | TypeScript type for chart JSON shape |
@@ -48,8 +48,12 @@ Supported chart types: `bar`, `line`, `area`, `pie`, `gauge`.
 
 | Package | Version |
 |---|---|
-| `@bndynet/ichat-messages` | `^2.1.1` |
+| `@bndynet/ichat-messages` | `^3.1.0` |
 | `markdown-it` | `>=14` |
+
+The renderer uses the library's audited `trusted: true` path so the `<i-chart>`
+custom element is preserved. JSON values are escaped before they are written to
+HTML attributes; consumers do not need to change the renderer security config.
 
 ## License
 

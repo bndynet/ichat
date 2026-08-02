@@ -48,7 +48,8 @@ pure cadence policy.
 
 After the isolated performance matrix, renderer runtime checks verify sync and
 string-part error fallbacks, `chat-renderer-error` events, async sanitisation,
-stale-result rejection, and disconnect cancellation in a real browser.
+official Chart/Mermaid trusted-renderer compatibility, stale-result rejection,
+and disconnect cancellation in a real browser.
 
 Budgets are intentionally user-visible and hardware-tolerant:
 
