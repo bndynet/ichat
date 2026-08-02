@@ -673,7 +673,8 @@ export class ChatMessages extends LitElement {
       `i-chat-message[data-message-id="${CSS.escape(id)}"]`
     );
     if (!msgEl) return false;
-    msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this._highlightElement(msgEl);
     return true;
   }
 
@@ -691,7 +692,24 @@ export class ChatMessages extends LitElement {
     );
     if (!partEl) return false;
     partEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    this._highlightElement(partEl);
     return true;
+  }
+
+  /**
+   * Apply a brief background highlight to the target element so the user
+   * can immediately identify the scrolled-to content.
+   *
+   * The animation is driven by the `.scroll-highlight` CSS class (see
+   * `chat-messages.scss`).  The class self-removes on `animationend`.
+   */
+  private _highlightElement(el: Element): void {
+    el.classList.add('scroll-highlight');
+    el.addEventListener(
+      'animationend',
+      () => el.classList.remove('scroll-highlight'),
+      { once: true },
+    );
   }
 
   clear(): void {
