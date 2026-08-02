@@ -38,6 +38,11 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] highlight.js configurable — `ChatConfig.highlightJs` optional injection. When omitted, code blocks fall back to plain escaped `<pre><code>`. Threaded through full component chain. (Phase 2.3)
 - [x] Memoized computed properties — `_messageRenderItems()` cached by collection shape (length + first/last id + timestamp). `_labels` cached by locale + labels reference. (Phase 2.4)
 - [x] 🟡 **Markdown streaming light mode** — During active streaming in `i-chat-text-part`, skip DOMPurify and morphdom diff (use `innerHTML` — every token grows the full text, so incremental diff has zero reuse value). The light path disables raw HTML, validates URI protocols, and defers untrusted renderer output; the full pipeline (DOMPurify + morphdom) runs on terminal render. No user config is required. (Phase 2.2)
+- [x] 🟡 **Virtual scrolling foundation** — Opt-in `config.virtualScroll`
+  lazily loads `@lit-labs/virtualizer`, preserves the regular keyed-list
+  fallback, supports variable heights and off-screen message/part navigation,
+  and includes 100/1,000/10,000-message browser benchmarks. Default activation
+  remains a separate rollout decision. (Phase 2.1 foundation)
 
 ### Backend Integration
 
@@ -79,7 +84,10 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Performance
 
-- [ ] 🔴 **Virtual scrolling** — Integrate `@lit-labs/virtualizer` into `<i-chat-messages>`. Replace `repeat` with `<lit-virtualizer>`, keep date separators outside the virtual range, and ensure `scrollToBottom()` + `ResizeObserver` auto-scroll still work. Add `virtualScroll` config toggle (default on) and perf benchmarks for 100/1000/10000 messages. (Phase 2.1)
+- [ ] 🟡 **Virtual scrolling automatic rollout** — After opt-in field usage,
+  accessibility, and custom-part state retention are validated, introduce an
+  automatic threshold strategy without changing short-list behaviour. (Phase
+  2.1 rollout)
 - [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party deps now externalized; consumers' bundlers handle tree-shaking. Peer dependency migration deferred to v3. (Phase 2.3 step 1)
 
 ### Testing

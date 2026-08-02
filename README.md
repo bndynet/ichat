@@ -16,7 +16,7 @@ Monorepo of npm packages for a **Lit 3** chat UI: markdown, optional fenced-bloc
 | [`@bndynet/ichat-renderer-katex`](packages/chat-renderer-katex) | LaTeX math: `$inline$` and `$$display$$` via KaTeX. |
 | [`@bndynet/ichat-renderer-mermaid`](packages/chat-renderer-mermaid) | Mermaid diagram fences with theme-aware dark/light mode. |
 
-> **Zero-config install:** all third-party deps (`lit`, `markdown-it`, `dompurify`, `highlight.js`, `morphdom`, `katex`, `mermaid`, `@bndynet/icharts`) are auto-installed by npm — no manual peer-dependency hunting.
+> **Zero-config install:** all third-party deps (`lit`, `markdown-it`, `dompurify`, `highlight.js`, `morphdom`, `@lit-labs/virtualizer`, `katex`, `mermaid`, `@bndynet/icharts`) are auto-installed by npm — no manual peer-dependency hunting.
 
 ---
 

@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
+import * as sass from 'sass-embedded';
 import { defineConfig } from 'vite';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
@@ -20,8 +20,12 @@ export default defineConfig({
         const prefix = '\0ichat-scss-text:';
         if (!id.startsWith(prefix)) return undefined;
         const encodedPath = id.slice(prefix.length, -'.js'.length);
-        const source = readFileSync(decodeURIComponent(encodedPath), 'utf8');
-        return `export default ${JSON.stringify(source)};`;
+        const path = decodeURIComponent(encodedPath);
+        const result = sass.compile(path, { loadPaths: [dirname(path)] });
+        for (const loadedUrl of result.loadedUrls) {
+          if (loadedUrl.protocol === 'file:') this.addWatchFile(fileURLToPath(loadedUrl));
+        }
+        return `export default ${JSON.stringify(result.css)};`;
       },
     },
   ],
@@ -36,5 +40,11 @@ export default defineConfig({
       new URL('../../../../node_modules/.cache/ichat-browser-benchmark', import.meta.url),
     ),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        streaming: resolve(root, 'index.html'),
+        virtual: resolve(root, 'virtual-list.html'),
+      },
+    },
   },
 });

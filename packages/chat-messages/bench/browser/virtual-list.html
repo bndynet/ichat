@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iChat Virtual List Benchmark</title>
+    <style>
+      :root {
+        color: #172033;
+        background: #f5f7fb;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      body { margin: 0; padding: 24px; }
+      main { max-width: 900px; margin: 0 auto; }
+      h1 { margin: 0 0 8px; font-size: 24px; }
+      .meta { margin: 0 0 16px; color: #5c667a; }
+      #status { display: block; margin-bottom: 16px; font-weight: 600; }
+      #status[data-state="passed"] { color: #08783e; }
+      #status[data-state="failed"] { color: #b42318; }
+      table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+      th, td { padding: 9px 10px; border: 1px solid #e7eaf0; text-align: right; }
+      th:first-child, td:first-child { text-align: left; }
+      tr[data-passed="false"] { background: #fff3f1; }
+      #json { max-height: 360px; overflow: auto; padding: 12px; background: #111827; color: #d1fae5; }
+      #stage {
+        position: fixed;
+        inset: 0 auto auto 0;
+        width: 760px;
+        height: 540px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #stage > i-chat-messages { display: flex; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>iChat Virtual List Benchmark</h1>
+      <p class="meta">Real Chromium validation for long lists, virtual DOM bounds, scrolling APIs, and variable-height updates.</p>
+      <span id="status" data-testid="virtual-status" data-state="running">Running…</span>
+      <table>
+        <thead>
+          <tr><th>Messages</th><th>Initial render</th><th>Rendered rows</th><th>Budget</th></tr>
+        </thead>
+        <tbody id="results"></tbody>
+      </table>
+      <details>
+        <summary>JSON report</summary>
+        <pre id="json" data-testid="virtual-json">Running…</pre>
+      </details>
+    </main>
+    <div id="stage" aria-hidden="true"></div>
+    <script type="module" src="./virtual-list-benchmark.ts"></script>
+  </body>
+</html>

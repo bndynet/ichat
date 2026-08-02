@@ -24,9 +24,12 @@
     "test:coverage": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test --experimental-test-coverage ../../node_modules/.cache/ichat-messages-tests/*.mjs",
     "benchmark:streaming": "tsup bench/streaming-markdown.bench.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-bench --clean --silent && node ../../node_modules/.cache/ichat-messages-bench/streaming-markdown.bench.mjs",
     "benchmark:streaming:browser": "vite --config bench/browser/vite.config.ts --host 127.0.0.1 --port 4178 --strictPort",
-    "benchmark:streaming:browser:build": "vite build --config bench/browser/vite.config.ts"
+    "benchmark:streaming:browser:build": "vite build --config bench/browser/vite.config.ts",
+    "benchmark:virtual:browser": "vite --config bench/browser/vite.config.ts --host 127.0.0.1 --port 4178 --strictPort",
+    "benchmark:virtual:browser:build": "vite build --config bench/browser/vite.config.ts"
   },
   "dependencies": {
+    "@lit-labs/virtualizer": "^2.1.1",
     "dompurify": "^3.2.4",
     "highlight.js": "^11.11.1",
     "lit": "^3.3.0",

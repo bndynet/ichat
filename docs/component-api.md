@@ -3,6 +3,7 @@
 Properties, methods, and events of the `<i-chat>` shell, plus slots and per-message avatars.
 
 - [Properties, methods, events](#i-chat--properties-methods-events)
+- [Optional virtual scrolling](#optional-virtual-scrolling)
 - [Markdown extension API](#markdown-extension-api)
 - [Composer confirmations](#composer-confirmations)
 - [Slots on `<i-chat>`](#slots-on-i-chat)
@@ -13,7 +14,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `messages` | `ChatMessage[]` | `[]` | The authoritative message array. Write directly (`chat.messages = [...]`) to replace all messages, or use imperative methods (`addMessage`, etc.) for incremental updates. When using the generic `Chat<TExtraParts>` type (see [Generic type support](#generic-type-support)), `parts` carry fully typed custom `x-*` extensions. |
-| `config` | `ChatConfig` | `{}` | Avatars, `locale`, `labels` (all UI strings — see [Localization](./localization.md)), date separators, etc. |
+| `config` | `ChatConfig` | `{}` | Avatars, `locale`, `labels`, optional `virtualScroll`, date separators, etc. |
 | `emptyText` | `string` | `''` | Plain text when there are no messages and no `empty` slot |
 | `placeholder` | `string` | `''` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`). Empty → localized default from `config.locale` / `config.labels.composer.placeholder` |
 | `disabled` | `boolean` | `false` | Disables the default composer |
@@ -42,6 +43,30 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `confirmation-decision` | `ChatConfirmationResult` | User confirmed or cancelled the active composer confirmation |
 
 Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message>`) use `bubbles` + `composed` so you can listen on `<i-chat>` or `document`.
+
+### Optional virtual scrolling
+
+Long histories can opt into viewport-based rendering without changing message
+data or the scrolling APIs:
+
+```typescript
+chat.config = {
+  ...chat.config,
+  virtualScroll: true,
+};
+```
+
+The default is `false`, so existing applications keep the regular keyed DOM
+list. When enabled, `@lit-labs/virtualizer` is loaded on demand and only the
+visible window plus a buffer remains mounted. `scrollToMessage()` and
+`scrollToPart()` continue to work for targets that are currently outside the
+DOM, and variable-height streaming content remains anchored when the user is at
+the bottom.
+
+Off-screen message elements are disconnected and recreated as they move back
+into view. Custom parts should therefore keep durable UI state in their part
+data instead of relying only on private DOM state. If the virtualizer cannot be
+loaded, the component automatically falls back to the regular list.
 
 ## Markdown Extension API
 

@@ -2,6 +2,10 @@
 
 Core chat message UI as Lit Web Components. Markdown rendering with syntax highlighting, pluggable fenced-block renderers, collapsible reasoning, streaming previews, and tool-call / to-do support.
 
+For long histories, set `config.virtualScroll = true` to lazily enable
+viewport-based rendering. It is opt-in and the regular keyed list remains the
+default and automatic fallback.
+
 ## Install
 
 ```bash
@@ -40,6 +44,7 @@ All runtime dependencies are auto-installed:
 | `dompurify` | HTML sanitization |
 | `highlight.js` | Syntax highlighting |
 | `morphdom` | DOM patching for streaming |
+| `@lit-labs/virtualizer` | Opt-in long-list virtualization (loaded on demand) |
 
 ## License
 

@@ -185,6 +185,38 @@
   padding-bottom: var(--chat-spacing-lg, #{$spacing-lg});
 }
 
+.chat-messages-loading {
+  min-height: 0;
+}
+
+/* Lit Virtualizer positions direct children itself, so spacing must live on
+   each measured child rather than on the regular flex `gap`. */
+.chat-messages-inner--virtual {
+  display: block;
+  gap: 0;
+  min-height: 0;
+  /* Virtualizer continuously corrects estimated item positions while scrolling.
+     CSS smooth scrolling makes those internal corrections animate and fight
+     scrollbar dragging on long lists. Explicit smooth navigation remains
+     available through scrollToMessage() / scrollToPart(). */
+  scroll-behavior: auto;
+
+  > i-chat-message,
+  > .chat-date-separator {
+    width: calc(
+      100% - var(--chat-spacing-lg, #{$spacing-lg}) - var(--chat-spacing-lg, #{$spacing-lg})
+    );
+  }
+
+  > i-chat-message {
+    margin-bottom: var(--chat-spacing-md, #{$spacing-md});
+  }
+
+  > .chat-date-separator {
+    margin-bottom: var(--chat-spacing-md, #{$spacing-md});
+  }
+}
+
 .chat-date-separator {
   display: flex;
   align-items: center;

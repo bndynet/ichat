@@ -457,6 +457,13 @@ export interface DateSeparatorLabels {
 }
 
 export interface ChatConfig {
+  /**
+   * Virtualize long message lists with `@lit-labs/virtualizer`.
+   * Disabled by default in the first rollout so existing scroll and
+   * state-retention behaviour remains unchanged. When enabled, off-screen
+   * message elements are removed from the DOM and recreated on demand.
+   */
+  virtualScroll?: boolean;
   /** Characters revealed per animation frame (default: 3) */
   streamingSpeed?: number;
   /** Default avatar for `role: 'self'` (text, emoji, or image URL) */
@@ -518,6 +525,7 @@ export interface ChatConfig {
 export const DEFAULT_CONFIG: Required<
   Omit<ChatConfig, 'labels' | 'allowedLinkProtocols' | 'highlightJs'>
 > = {
+  virtualScroll: false,
   streamingSpeed: 3,
   selfAvatar: '',
   peerAvatar: '',

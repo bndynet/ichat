@@ -26,6 +26,7 @@ export default defineConfig({
       { label: 'Confirmation', icon: 'badge-check', page: () => import('./src/pages/renderers/ConfirmationPage.vue') },
       { label: 'Details', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsPage.vue') },
       { label: 'Scroll To', icon: 'arrow-down', page: () => import('./src/pages/renderers/ScrollToPage.vue') },
+      { label: 'Virtual Scrolling', icon: 'gallery-vertical-end', page: () => import('./src/pages/renderers/VirtualScrollingPage.vue') },
     ]},
     {
       label: 'Slots',

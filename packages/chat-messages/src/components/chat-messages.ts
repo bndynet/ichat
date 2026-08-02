@@ -1,6 +1,7 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
+import type { LitVirtualizer } from '@lit-labs/virtualizer/LitVirtualizer.js';
 import { setVersionAttribute } from '../version.js';
 import type {
   ChatMessage,
@@ -21,7 +22,6 @@ import {
   replaceMessagePart,
 } from '../message-part-state.js';
 import { normalizeMessagePartUpdateEvent } from '../message-part-events.js';
-import { getDateSeparatorInfo } from '../date-separator.js';
 import { resolveLabels, type ChatLabels } from '../i18n.js';
 import type { ProgressStatus } from '../renderers/progress-plugin.js';
 import type {
@@ -49,6 +49,19 @@ import type { ChatMessageElement } from './chat-message.js';
 import { injectPluginCss, injectGlobalPluginCss } from '../renderers/plugin-styles.js';
 import { freezeMarkdownPlugins } from '../renderers/markdown-plugins.js';
 import { rendererRegistry } from '../renderers/registry.js';
+import {
+  buildMessageRenderItems,
+  findMessageRenderIndex,
+  findPartRenderIndex,
+  type MessageRenderItem,
+} from '../message-render-items.js';
+
+interface MessageListScrollAnchor {
+  atBottom: boolean;
+  messageId?: string;
+  offsetPx: number;
+  scrollTop: number;
+}
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
@@ -80,11 +93,14 @@ export class ChatMessages extends LitElement {
   @state() private _assistantAvatarHtml = '';
   @state() private _messageActionsHtml = '';
   @state() private _reasoningHeaderHtml = '';
+  @state() private _virtualizerReady = false;
+  @state() private _virtualizerFailed = false;
   /** Active reply blocks. Multiple blocks may share the same `id` (stacked under one message). */
   @state() private _replies: Array<{ key: string; id: string; data: Partial<ChatMessage> }> = [];
   /** Monotonic counter for unique reply-block keys. */
   private _replyKeySeq = 0;
   @query('.chat-messages') private _scrollContainer!: HTMLElement;
+  @query('lit-virtualizer') private _virtualizer?: LitVirtualizer<MessageRenderItem>;
   private _resizeObserver?: ResizeObserver;
   private _observedEl?: Element;
   /** While true, ignore scroll events so CSS transitions don't flip _autoScroll. */
@@ -93,6 +109,12 @@ export class ChatMessages extends LitElement {
   private _errorDismissTimer?: ReturnType<typeof setTimeout>;
   /** Invalidates in-flight multi-pass scroll when a newer scroll is requested. */
   private _scrollToBottomSeq = 0;
+  /** Preserves the visible message when the renderer switches in either direction. */
+  private _pendingModeScrollAnchor?: MessageListScrollAnchor;
+  private _modeScrollRestoreSeq = 0;
+  private _modeScrollRestoreLock = false;
+  private _modeScrollRestorePromise?: Promise<void>;
+  private _virtualizerLoadPromise?: Promise<void>;
 
   private get _config() {
     return { ...DEFAULT_CONFIG, ...this.config };
@@ -103,10 +125,11 @@ export class ChatMessages extends LitElement {
     const locale = this.config.locale ?? DEFAULT_CONFIG.locale;
     const labelsRef = this.config.labels;
 
-    // Memoization: cache key based on locale + label references
+    // Memoization: cache key based on locale + the actual overrides reference.
     if (
       this.__labelsCache &&
-      this.__labelsCache.key === `${locale}|${!!labelsRef}`
+      this.__labelsCache.locale === locale &&
+      this.__labelsCache.labels === labelsRef
     ) {
       return this.__labelsCache.value;
     }
@@ -116,58 +139,86 @@ export class ChatMessages extends LitElement {
       labels: labelsRef,
     });
 
-    this.__labelsCache = { key: `${locale}|${!!labelsRef}`, value };
+    this.__labelsCache = { locale, labels: labelsRef, value };
     return value;
   }
-  private __labelsCache?: { key: string; value: ChatLabels };
+  private __labelsCache?: {
+    locale: string;
+    labels: ChatConfig['labels'];
+    value: ChatLabels;
+  };
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
-  private _messageRenderItems(): Array<
-    | { kind: 'sep'; key: string; label: string }
-    | { kind: 'msg'; key: string; message: ChatMessage }
-  > {
+  private _messageRenderItems(): MessageRenderItem[] {
     const msgs = this.messages;
+    const separatorLabels = this._labels.dateSeparator;
 
     // Memoization: use the messages array reference as cache key.
     // Since every mutation produces a new array (immutability), part-level
     // changes inside a message (e.g. todo status updates) also invalidate.
-    if (this.__renderItemsCache && this.__renderItemsCache.ref === msgs) {
+    if (
+      this.__renderItemsCache &&
+      this.__renderItemsCache.ref === msgs &&
+      this.__renderItemsCache.labels === separatorLabels
+    ) {
       return this.__renderItemsCache.value;
     }
 
-    const items: Array<
-      | { kind: 'sep'; key: string; label: string }
-      | { kind: 'msg'; key: string; message: ChatMessage }
-    > = [];
-    const sepLabels = this._labels.dateSeparator;
-    const onlyToday =
-      msgs.length > 0 &&
-      msgs.every((m) => {
-        const ts = m.timestamp ?? Date.now();
-        return getDateSeparatorInfo(ts, sepLabels).key === 'today';
-      });
-    let prevKey: string | undefined;
-    for (const m of msgs) {
-      const ts = m.timestamp ?? Date.now();
-      const { key, label } = getDateSeparatorInfo(ts, sepLabels);
-      if (prevKey === undefined || key !== prevKey) {
-        if (!(onlyToday && key === 'today')) {
-          items.push({ kind: 'sep', key: `sep-${m.id}`, label });
-        }
-        prevKey = key;
-      }
-      items.push({ kind: 'msg', key: m.id, message: m });
-    }
-
-    this.__renderItemsCache = { ref: msgs, value: items };
+    const items = buildMessageRenderItems(msgs, separatorLabels);
+    this.__renderItemsCache = { ref: msgs, labels: separatorLabels, value: items };
     return items;
   }
   private __renderItemsCache?: {
     ref: readonly ChatMessage[];
-    value: Array<
-      | { kind: 'sep'; key: string; label: string }
-      | { kind: 'msg'; key: string; message: ChatMessage }
-    >;
+    labels: ChatLabels['dateSeparator'];
+    value: MessageRenderItem[];
+  };
+
+  private _renderConfig: ChatConfig & typeof DEFAULT_CONFIG = { ...DEFAULT_CONFIG };
+  private _renderLabels = resolveLabels({ locale: DEFAULT_CONFIG.locale });
+  private _renderReplyBlocks = new Map<
+    string,
+    Array<{ key: string; data: Partial<ChatMessage> }>
+  >();
+  private readonly _messageItemKey = (item: MessageRenderItem): string => item.key;
+
+  private readonly _renderMessageItem = (item: MessageRenderItem) => {
+    if (item.kind === 'sep') {
+      return html`
+        <div class="chat-date-separator" role="separator" aria-label=${item.label}>
+          <span class="chat-date-separator-line"></span>
+          <span class="chat-date-separator-label">${item.label}</span>
+          <span class="chat-date-separator-line"></span>
+        </div>
+      `;
+    }
+
+    const cfg = this._renderConfig;
+    const labels = this._renderLabels;
+    return html`
+      <i-chat-message
+        data-message-id=${item.message.id}
+        .message=${item.message}
+        .locale=${cfg.locale}
+        .labels=${labels}
+        .allowedLinkProtocols=${cfg.allowedLinkProtocols}
+        .highlightJs=${cfg.highlightJs}
+        .speed=${cfg.streamingSpeed}
+        .selfAvatar=${cfg.selfAvatar}
+        .peerAvatar=${cfg.peerAvatar}
+        .assistantAvatar=${cfg.assistantAvatar}
+        .selfAvatarHtml=${this._selfAvatarHtml}
+        .peerAvatarHtml=${this._peerAvatarHtml}
+        .assistantAvatarHtml=${this._assistantAvatarHtml}
+        .actionsHtml=${this._messageActionsHtml}
+        .reasoningHeaderHtml=${this._reasoningHeaderHtml}
+        .pendingIndicator=${cfg.pendingIndicator}
+        .pendingDelay=${cfg.pendingDelay}
+        .replyTargets=${this._renderReplyBlocks.get(item.message.id)}
+        @message-cancel=${(event: CustomEvent<{ id: string }>) =>
+          this.updateMessage(event.detail.id, { streaming: false, cancelled: true })}
+      ></i-chat-message>
+    `;
   };
 
   private _pluginCleanup?: () => void;
@@ -175,6 +226,7 @@ export class ChatMessages extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    if (this.config.virtualScroll) void this._ensureVirtualizerLoaded();
     // Freeze both registries on first mount — after this point, registering
     // renderers or markdown plugins will throw a clear error.
     rendererRegistry.freeze();
@@ -182,6 +234,39 @@ export class ChatMessages extends LitElement {
     this._pluginCleanup = injectPluginCss(this.shadowRoot!);
     // Global CSS is injected once per document, never removed.
     injectGlobalPluginCss();
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if (changed.has('config')) {
+      const previousConfig = changed.get('config');
+      if (
+        previousConfig !== undefined &&
+        Boolean(previousConfig.virtualScroll) !== Boolean(this.config.virtualScroll)
+      ) {
+        const anchor = this._captureModeScrollAnchor();
+        if (anchor) this._pendingModeScrollAnchor = anchor;
+        this._modeScrollRestoreSeq += 1;
+      }
+      if (this.config.virtualScroll) void this._ensureVirtualizerLoaded();
+    }
+  }
+
+  private _ensureVirtualizerLoaded(): Promise<void> {
+    if (this._virtualizerReady || this._virtualizerFailed) {
+      return Promise.resolve();
+    }
+    if (!this._virtualizerLoadPromise) {
+      this._virtualizerLoadPromise = import('@lit-labs/virtualizer')
+        .then(() => {
+          this._virtualizerReady = true;
+        })
+        .catch((error: unknown) => {
+          this._virtualizerFailed = true;
+          // The regular keyed list remains available as a no-config fallback.
+          console.warn('[i-chat] Virtual scrolling could not be loaded; using the regular list.', error);
+        });
+    }
+    return this._virtualizerLoadPromise;
   }
 
   override disconnectedCallback(): void {
@@ -238,7 +323,7 @@ export class ChatMessages extends LitElement {
     }
   }
 
-  updated(changed: Map<string, unknown>): void {
+  override updated(changed: PropertyValues<this>): void {
     if (changed.has('messages')) {
       const nowStreaming = this.messages.some((m) => m.streaming && !m.error);
       if (nowStreaming !== this.streaming) {
@@ -256,9 +341,162 @@ export class ChatMessages extends LitElement {
       }
       if (this._autoScroll) {
         this._scrollToBottom();
+      } else if (this.config.virtualScroll && this._virtualizerReady) {
+        // The regular list gets this signal from its ResizeObserver. Virtual
+        // rows have no stable inner element to observe, so mirror it here.
+        this._hasNewContent = true;
       }
     }
     this._ensureResizeObserver();
+    this._scheduleModeScrollRestore();
+  }
+
+  private _scheduleModeScrollRestore(): void {
+    if (!this._pendingModeScrollAnchor || this._modeScrollRestorePromise) return;
+    const restore = this._restoreModeScrollAnchor();
+    this._modeScrollRestorePromise = restore;
+    const complete = (): void => {
+      if (this._modeScrollRestorePromise !== restore) return;
+      this._modeScrollRestorePromise = undefined;
+      // A second config change may have arrived while the first anchor was
+      // restoring. Process it serially so the two scroll operations cannot race.
+      this._scheduleModeScrollRestore();
+    };
+    void restore.then(complete, complete);
+  }
+
+  private _captureModeScrollAnchor(): MessageListScrollAnchor | undefined {
+    const scroller = this._scrollContainer;
+    if (!scroller) return undefined;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const firstVisible = Array.from(
+      this.renderRoot.querySelectorAll<HTMLElement>('i-chat-message[data-message-id]'),
+    ).find((message) => {
+      const rect = message.getBoundingClientRect();
+      return rect.bottom > scrollerRect.top && rect.top < scrollerRect.bottom;
+    });
+    const messageId = firstVisible?.dataset.messageId;
+    const offsetPx = firstVisible
+      ? firstVisible.getBoundingClientRect().top - scrollerRect.top
+      : 0;
+
+    return {
+      atBottom: scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 60,
+      messageId,
+      offsetPx,
+      scrollTop: scroller.scrollTop,
+    };
+  }
+
+  private async _restoreModeScrollAnchor(): Promise<void> {
+    const anchor = this._pendingModeScrollAnchor;
+    if (!anchor) return;
+    const seq = this._modeScrollRestoreSeq;
+
+    if (this.config.virtualScroll && !this._virtualizerFailed) {
+      await this._ensureVirtualizerLoaded();
+    }
+    await this.updateComplete;
+    if (seq !== this._modeScrollRestoreSeq || this._pendingModeScrollAnchor !== anchor) return;
+
+    const scroller = this._scrollContainer;
+    if (!scroller) return;
+    this._pendingModeScrollAnchor = undefined;
+
+    if (anchor.atBottom) {
+      this._autoScroll = true;
+      this._scrollToBottom();
+      return;
+    }
+
+    this._modeScrollRestoreLock = true;
+    const previousScrollBehavior = scroller.style.scrollBehavior;
+    scroller.style.scrollBehavior = 'auto';
+
+    try {
+      let target: HTMLElement | null = null;
+      if (anchor.messageId) {
+        const selector = `i-chat-message[data-message-id="${CSS.escape(anchor.messageId)}"]`;
+        target = this.renderRoot.querySelector<HTMLElement>(selector);
+
+        if (!target && this.config.virtualScroll && this._virtualizerReady) {
+          const index = findMessageRenderIndex(this._messageRenderItems(), anchor.messageId);
+          const virtualizer = this._virtualizer;
+          if (index >= 0 && virtualizer) {
+            // The parent update only creates `<lit-virtualizer>`; its own
+            // controller and item proxy become available on the child update.
+            await virtualizer.updateComplete;
+            for (let attempt = 0; attempt < 60; attempt += 1) {
+              if (
+                virtualizer.clientHeight > 0 &&
+                this.renderRoot.querySelector('i-chat-message[data-message-id]')
+              ) {
+                break;
+              }
+              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              if (seq !== this._modeScrollRestoreSeq) return;
+            }
+            let proxy = virtualizer.element(index);
+            for (let attempt = 0; attempt < 60 && !proxy; attempt += 1) {
+              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              if (seq !== this._modeScrollRestoreSeq) return;
+              proxy = virtualizer.element(index);
+            }
+            proxy?.scrollIntoView({ behavior: 'auto', block: 'start' });
+            const layoutComplete = virtualizer.layoutComplete;
+            if (layoutComplete) {
+              await Promise.race([
+                layoutComplete.catch(() => undefined),
+                new Promise<void>((resolve) => setTimeout(resolve, 1000)),
+              ]);
+            }
+            for (let attempt = 0; attempt < 24 && !target; attempt += 1) {
+              if (attempt > 0 && attempt % 4 === 0) {
+                virtualizer.element(index)?.scrollIntoView({ behavior: 'auto', block: 'start' });
+              }
+              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              if (seq !== this._modeScrollRestoreSeq) return;
+              target = this.renderRoot.querySelector<HTMLElement>(selector);
+            }
+          }
+        }
+      }
+
+      if (target) {
+        // Re-apply the pixel offset while the virtualizer replaces estimates
+        // with measured row heights. One correction is not enough for a large
+        // jump with variable-height content.
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const delta =
+            target.getBoundingClientRect().top -
+            scroller.getBoundingClientRect().top -
+            anchor.offsetPx;
+          scroller.scrollTop += delta;
+          const layoutComplete = this._virtualizer?.layoutComplete;
+          if (layoutComplete) {
+            await Promise.race([
+              layoutComplete.catch(() => undefined),
+              new Promise<void>((resolve) => setTimeout(resolve, 250)),
+            ]);
+          }
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        }
+      } else {
+        // Message IDs can disappear during the same update. Absolute position
+        // is the least surprising fallback in that edge case.
+        scroller.scrollTop = anchor.scrollTop;
+      }
+      this._autoScroll = false;
+      this._hasNewContent = false;
+    } finally {
+      requestAnimationFrame(() => {
+        if (scroller.isConnected) scroller.style.scrollBehavior = previousScrollBehavior;
+        requestAnimationFrame(() => {
+          this._modeScrollRestoreLock = false;
+        });
+      });
+    }
   }
 
   private _handleSlotChange(name: string, e: Event): void {
@@ -305,7 +543,15 @@ export class ChatMessages extends LitElement {
     const apply = (): void => {
       if (seq !== this._scrollToBottomSeq || !this.isConnected) return;
       const el = this._scrollContainer;
-      if (el) el.scrollTop = el.scrollHeight;
+      if (!el) return;
+
+      if (this._virtualizerReady && this.config.virtualScroll) {
+        const lastIndex = this._messageRenderItems().length - 1;
+        if (lastIndex >= 0) {
+          this._virtualizer?.element(lastIndex)?.scrollIntoView({ block: 'end' });
+        }
+      }
+      el.scrollTop = el.scrollHeight;
     };
 
     requestAnimationFrame(() => {
@@ -320,6 +566,11 @@ export class ChatMessages extends LitElement {
         });
       });
     });
+
+    const layoutComplete = this._virtualizer?.layoutComplete;
+    if (layoutComplete) {
+      void layoutComplete.then(() => requestAnimationFrame(apply)).catch(() => undefined);
+    }
     this._hasNewContent = false;
   }
 
@@ -336,7 +587,7 @@ export class ChatMessages extends LitElement {
   }
 
   private _handleScroll(): void {
-    if (this._resizeScrollLock) return;
+    if (this._resizeScrollLock || this._modeScrollRestoreLock) return;
     const el = this._scrollContainer;
     if (!el) return;
     const threshold = 60;
@@ -666,15 +917,27 @@ export class ChatMessages extends LitElement {
    * Queries the rendered `i-chat-message` element with the matching
    * `data-message-id` attribute and calls `scrollIntoView` on it.
    *
-   * @returns `true` if the message element was found and scrolled into view.
+   * With virtual scrolling, the data item may not be mounted yet; in that case
+   * the scroll is scheduled through the virtualizer and the method still
+   * returns `true` synchronously.
+   *
+   * @returns `true` if the message exists and scrolling was performed or scheduled.
    */
   scrollToMessage(id: string): boolean {
-    const msgEl = this.shadowRoot?.querySelector(
-      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
-    );
-    if (!msgEl) return false;
-    msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    this._highlightElement(msgEl);
+    const selector = `i-chat-message[data-message-id="${CSS.escape(id)}"]`;
+    const messageElement = this.shadowRoot?.querySelector(selector);
+    if (messageElement) {
+      this._beginProgrammaticNavigation();
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this._highlightElement(messageElement);
+      return true;
+    }
+
+    const index = findMessageRenderIndex(this._messageRenderItems(), id);
+    if (index < 0 || !this.config.virtualScroll || this._virtualizerFailed) return false;
+    this._beginProgrammaticNavigation();
+    void this._scrollVirtualItem(index, 'start', () =>
+      this.shadowRoot?.querySelector(selector) ?? null);
     return true;
   }
 
@@ -684,16 +947,125 @@ export class ChatMessages extends LitElement {
    * Queries any element inside the shadow root with the matching
    * `data-part-id` attribute and calls `scrollIntoView` on it.
    *
-   * @returns `true` if the part element was found and scrolled into view.
+   * @returns `true` if the part exists and scrolling was performed or scheduled.
    */
   scrollToPart(partId: string): boolean {
-    const partEl = this.shadowRoot?.querySelector(
-      `[data-part-id="${CSS.escape(partId)}"]`
+    const partElement = this._findRenderedPart(partId);
+    if (partElement) {
+      this._beginProgrammaticNavigation();
+      partElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      this._highlightElement(partElement);
+      return true;
+    }
+
+    const index = findPartRenderIndex(this._messageRenderItems(), partId);
+    if (index < 0 || !this.config.virtualScroll || this._virtualizerFailed) return false;
+    this._beginProgrammaticNavigation();
+    void this._scrollVirtualItem(
+      index,
+      'nearest',
+      () => this._findRenderedPart(partId),
+      true,
     );
-    if (!partEl) return false;
-    partEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    this._highlightElement(partEl);
     return true;
+  }
+
+  private _beginProgrammaticNavigation(): void {
+    // Cancel delayed passes from a previous automatic bottom anchor. Without
+    // this, a late virtualizer layout can undo an explicit navigation request.
+    this._scrollToBottomSeq += 1;
+    this._autoScroll = false;
+  }
+
+  private async _scrollVirtualItem(
+    index: number,
+    block: ScrollLogicalPosition,
+    findTarget: () => Element | null,
+    alignMountedTarget = false,
+  ): Promise<void> {
+    await this._ensureVirtualizerLoaded();
+    await this.updateComplete;
+
+    if (!this._virtualizerReady) {
+      const fallbackTarget = findTarget();
+      fallbackTarget?.scrollIntoView({ behavior: 'smooth', block });
+      if (fallbackTarget) this._highlightElement(fallbackTarget);
+      return;
+    }
+
+    const virtualizer = this._virtualizer;
+    const proxy = virtualizer?.element(index);
+    if (!virtualizer || !proxy) return;
+    // Large jumps with variable-height estimates can leave a smooth native
+    // scroll short of the requested virtual item. Materialise deterministically;
+    // already-rendered targets still use the smooth path above.
+    proxy.scrollIntoView({ behavior: 'auto', block });
+
+    const layoutComplete = virtualizer.layoutComplete;
+    if (layoutComplete) {
+      await Promise.race([
+        layoutComplete.catch(() => undefined),
+        new Promise<void>((resolve) => setTimeout(resolve, 1000)),
+      ]);
+    }
+
+    // Smooth scrolling and estimated variable heights can require a few frames
+    // before the requested child is materialised.
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+      if (attempt > 0 && attempt % 4 === 0) {
+        virtualizer.element(index)?.scrollIntoView({ behavior: 'auto', block });
+      }
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      let target = findTarget();
+      if (target) {
+        if (alignMountedTarget) {
+          const targetUpdateComplete = (
+            target as Element & { updateComplete?: Promise<unknown> }
+          ).updateComplete;
+          if (targetUpdateComplete) await targetUpdateComplete.catch(() => undefined);
+          target = findTarget() ?? target;
+
+          // The part may be created before its markdown establishes the final
+          // row height. Re-align through the virtualizer's measurement passes.
+          for (let alignAttempt = 0; alignAttempt < 4; alignAttempt += 1) {
+            target.scrollIntoView({ behavior: 'auto', block });
+            const targetLayoutComplete = virtualizer.layoutComplete;
+            if (targetLayoutComplete) {
+              await Promise.race([
+                targetLayoutComplete.catch(() => undefined),
+                new Promise<void>((resolve) => setTimeout(resolve, 250)),
+              ]);
+            }
+            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          }
+        }
+        this._highlightElement(target);
+        return;
+      }
+    }
+  }
+
+  private _findRenderedPart(partId: string): Element | null {
+    if (!this.shadowRoot) return null;
+    const selector = `[data-part-id="${CSS.escape(partId)}"]`;
+    return this._queryOpenShadowRoots(this.shadowRoot, selector);
+  }
+
+  private _queryOpenShadowRoots(root: ParentNode, selector: string): Element | null {
+    const directMatches = Array.from(root.querySelectorAll(selector));
+    const measurable = directMatches.find((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 || rect.height > 0;
+    });
+    if (measurable) return measurable;
+    if (directMatches[0]) return directMatches[0];
+    for (const element of root.querySelectorAll('*')) {
+      if (element.shadowRoot) {
+        const nested = this._queryOpenShadowRoots(element.shadowRoot, selector);
+        if (nested) return nested;
+      }
+    }
+    return null;
   }
 
   /**
@@ -704,10 +1076,19 @@ export class ChatMessages extends LitElement {
    * `chat-messages.scss`).  The class self-removes on `animationend`.
    */
   private _highlightElement(el: Element): void {
-    el.classList.add('scroll-highlight');
-    el.addEventListener(
+    let highlighted = el;
+    let root = el.getRootNode();
+    while (root instanceof ShadowRoot) {
+      if (root.host.tagName === 'I-CHAT-MESSAGE') {
+        highlighted = root.host;
+        break;
+      }
+      root = root.host.getRootNode();
+    }
+    highlighted.classList.add('scroll-highlight');
+    highlighted.addEventListener(
       'animationend',
-      () => el.classList.remove('scroll-highlight'),
+      () => highlighted.classList.remove('scroll-highlight'),
       { once: true },
     );
   }
@@ -793,6 +1174,7 @@ export class ChatMessages extends LitElement {
   render() {
     const cfg = this._config;
     const labels = this._labels;
+    const renderItems = this._messageRenderItems();
 
     const replyBlocks = new Map<string, Array<{ key: string; data: Partial<ChatMessage> }>>();
     for (const r of this._replies) {
@@ -800,6 +1182,12 @@ export class ChatMessages extends LitElement {
       if (list) list.push({ key: r.key, data: r.data });
       else replyBlocks.set(r.id, [{ key: r.key, data: r.data }]);
     }
+    this._renderConfig = cfg;
+    this._renderLabels = labels;
+    this._renderReplyBlocks = replyBlocks;
+
+    const virtualRequested = cfg.virtualScroll && !this._virtualizerFailed;
+    const virtualEnabled = virtualRequested && this._virtualizerReady;
 
     return html`
       <div class="template-slots" hidden>
@@ -823,58 +1211,53 @@ export class ChatMessages extends LitElement {
               </button>
             </div>`
           : ''}
-        <div class="chat-messages" @scroll=${this._handleScroll}>
-          ${this.messages.length === 0
-            ? html`<div class="chat-empty">
-                <slot name="empty">
-                  ${this.emptyText || labels.messages.empty}
-                </slot>
-              </div>`
-            : html`
-                <div
-                  class="chat-messages-inner"
-                  @chat-content-resize=${this._onChatContentResize}
-                >
-                  ${repeat(
-                    this._messageRenderItems(),
-                    (item) => item.key,
-                    (item) =>
-                      item.kind === 'sep'
-                        ? html`
-                            <div class="chat-date-separator" role="separator" aria-label=${item.label}>
-                              <span class="chat-date-separator-line"></span>
-                              <span class="chat-date-separator-label">${item.label}</span>
-                              <span class="chat-date-separator-line"></span>
-                            </div>
-                          `
-                        : html`
-                            <i-chat-message
-                              data-message-id=${item.message.id}
-                              .message=${item.message}
-                              .locale=${cfg.locale}
-                              .labels=${labels}
-                              .allowedLinkProtocols=${cfg.allowedLinkProtocols}
-                              .highlightJs=${cfg.highlightJs}
-                              .speed=${cfg.streamingSpeed}
-                              .selfAvatar=${cfg.selfAvatar}
-                              .peerAvatar=${cfg.peerAvatar}
-                              .assistantAvatar=${cfg.assistantAvatar}
-                              .selfAvatarHtml=${this._selfAvatarHtml}
-                              .peerAvatarHtml=${this._peerAvatarHtml}
-                              .assistantAvatarHtml=${this._assistantAvatarHtml}
-                              .actionsHtml=${this._messageActionsHtml}
-                              .reasoningHeaderHtml=${this._reasoningHeaderHtml}
-                              .pendingIndicator=${cfg.pendingIndicator}
-                              .pendingDelay=${cfg.pendingDelay}
-                              .replyTargets=${replyBlocks.get(item.message.id)}
-                              @message-cancel=${(e: CustomEvent<{ id: string }>) =>
-                                this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
-                            ></i-chat-message>
-                          `
-                  )}
+        ${this.messages.length === 0
+          ? html`
+              <div class="chat-messages" @scroll=${this._handleScroll}>
+                <div class="chat-empty">
+                  <slot name="empty">
+                    ${this.emptyText || labels.messages.empty}
+                  </slot>
                 </div>
-              `}
-        </div>
+              </div>
+            `
+          : virtualRequested && !virtualEnabled
+            ? html`
+                <div
+                  class="chat-messages chat-messages-loading"
+                  aria-busy="true"
+                  aria-label=${labels.messages.chatMessages}
+                  @scroll=${this._handleScroll}
+                ></div>
+              `
+            : virtualEnabled
+              ? html`
+                  <lit-virtualizer
+                    class="chat-messages chat-messages-inner--virtual"
+                    data-virtualized="true"
+                    style="min-height: 0"
+                    scroller
+                    .items=${renderItems}
+                    .renderItem=${this._renderMessageItem}
+                    .keyFunction=${this._messageItemKey}
+                    @scroll=${this._handleScroll}
+                    @chat-content-resize=${this._onChatContentResize}
+                  ></lit-virtualizer>
+                `
+              : html`
+                  <div class="chat-messages" @scroll=${this._handleScroll}>
+                    <div
+                      class="chat-messages-inner"
+                      @chat-content-resize=${this._onChatContentResize}
+                    >
+                      ${repeat(
+                        renderItems,
+                        this._messageItemKey,
+                        this._renderMessageItem,
+                      )}
+                    </div>
+                  </div>
+                `}
         ${this._hasNewContent
           ? html`
               <button

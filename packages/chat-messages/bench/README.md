@@ -66,3 +66,15 @@ Build the standalone benchmark page with:
 ```sh
 npm run benchmark:streaming:browser:build
 ```
+
+## Virtual list browser benchmark
+
+```sh
+npm run benchmark:virtual:browser
+```
+
+Open `http://127.0.0.1:4178/virtual-list.html`. The report measures initial
+rendering for 100, 1,000, and 10,000 messages and verifies that the mounted DOM
+window stays bounded. It also exercises the default non-virtual path,
+off-screen `scrollToMessage()` / `scrollToPart()` navigation, and bottom
+anchoring after a variable-height update.
