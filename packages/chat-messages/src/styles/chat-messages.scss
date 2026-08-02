@@ -227,18 +227,18 @@
 .scroll-highlight {
   position: relative;
   --_line-color: var(--chat-primary, #{$color-primary});
-  --_gap: var(--chat-scroll-highlight-gap, 16px);
+  --_gap: var(--chat-scroll-highlight-gap, 20px);
 }
 
 .scroll-highlight::before {
   content: '';
   position: absolute;
-  left: calc(-3px - var(--_gap));
+  left: calc(-4px - var(--_gap));
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 4px;
   background: var(--_line-color);
-  border-radius: 2px;
+  border-radius: 0;
   animation: scrollHighlightLine 5s ease-out forwards;
 }
 
