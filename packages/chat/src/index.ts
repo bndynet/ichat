@@ -21,8 +21,23 @@ export type {
   MessagesChangeReason,
   MessagesChangeSource,
 } from '@bndynet/ichat-messages';
-export { registerCodeRenderer, registerRenderer } from './register-renderer.js';
-export { registerPartRenderer } from './register-part-renderer.js';
+import type { BlockRenderer, PartRenderer } from '@bndynet/ichat-messages';
+import { rendererRegistry, partRendererRegistry } from '@bndynet/ichat-messages';
+
+/** Register a fenced-code block renderer for `<i-chat>` / `<i-chat-messages>`. */
+export function registerCodeRenderer(renderer: BlockRenderer): void {
+  rendererRegistry.register(renderer);
+}
+
+/**
+ * @deprecated Use {@link registerCodeRenderer} instead.
+ */
+export const registerRenderer = registerCodeRenderer;
+
+/** Register a renderer for host-defined `x-*` custom parts. */
+export function registerPartRenderer(renderer: PartRenderer): void {
+  partRendererRegistry.register(renderer);
+}
 
 // Re-export markdown plugin API so consumers can register plugins
 // from the top-level @bndynet/ichat package.

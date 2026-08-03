@@ -38,7 +38,7 @@ import {
   cancelMessageData,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
-import { registerCodeRenderer } from '../register-renderer.js';
+import { rendererRegistry } from '@bndynet/ichat-messages';
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
@@ -648,7 +648,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
 
   /** Register a fenced-code block renderer at runtime. */
   registerCodeRenderer(renderer: BlockRenderer): void {
-    registerCodeRenderer(renderer);
+    rendererRegistry.register(renderer);
   }
 
   /**
