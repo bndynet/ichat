@@ -907,11 +907,6 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     this.requestUpdate();
   }
 
-  private _handleConfirmationSettle(e: CustomEvent<{ action: 'confirm' | 'cancel' }>): void {
-    e.stopPropagation();
-    this._confirmCtrl.settle(e.detail.action);
-  }
-
   // ── Render ────────────────────────────────────────────────────────
   //
   // `.messages` is bound one-way; <i-chat> is the sole owner.
