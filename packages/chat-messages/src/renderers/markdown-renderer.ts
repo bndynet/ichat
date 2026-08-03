@@ -1,5 +1,4 @@
 import MarkdownIt from 'markdown-it';
-import type hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import { rendererRegistry } from './registry.js';
 import { progressPlugin } from './progress-plugin.js';
@@ -11,7 +10,7 @@ import {
 } from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
 import { getSharedMd } from './md-instance.js';
-import type { RendererErrorDetail } from '../types.js';
+import type { RendererErrorDetail, HighlightJs } from '../types.js';
 
 export interface MarkdownRenderOptions {
   /**
@@ -28,7 +27,7 @@ export interface MarkdownRenderOptions {
    * Pass your own `highlight.js` import (possibly with only the languages you need)
    * to keep bundle size small.
    */
-  highlightJs?: typeof hljs;
+  highlightJs?: HighlightJs;
 
   /**
    * Optional lifecycle signal forwarded to async block renderers. The built-in
@@ -42,7 +41,7 @@ export interface MarkdownRenderOptions {
 }
 
 /** Active highlight.js instance for the current render pass (set per-render). */
-let activeHighlightJs: typeof hljs | undefined;
+let activeHighlightJs: HighlightJs | undefined;
 let activeRenderOptions: MarkdownRenderOptions | undefined;
 let activeRenderMode: 'full' | 'streaming' = 'full';
 

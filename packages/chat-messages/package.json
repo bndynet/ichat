@@ -28,14 +28,20 @@
   },
   "dependencies": {
     "dompurify": "^3.2.4",
-    "highlight.js": "^11.11.1",
     "lit": "^3.3.0",
     "markdown-it": "^14.1.0",
     "morphdom": "^2.7.8"
   },
+  "peerDependencies": {
+    "highlight.js": ">=11"
+  },
+  "peerDependenciesMeta": {
+    "highlight.js": { "optional": true }
+  },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
     "@types/morphdom": "^2.3.0",
+    "highlight.js": "^11.11.1",
     "lit": "^3.3.0",
     "sass-embedded": "^1.86.0",
     "tsup": "^8.4.0",

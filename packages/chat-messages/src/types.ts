@@ -456,6 +456,16 @@ export interface DateSeparatorLabels {
   older: string;
 }
 
+/**
+ * Minimal interface for a highlight.js instance.
+ * Self-contained so consumers don't need to install highlight.js
+ * unless they want syntax highlighting.
+ */
+export interface HighlightJs {
+  getLanguage(name: string): { name: string } | undefined;
+  highlight(code: string, options: { language: string }): { value: string };
+}
+
 export interface ChatConfig {
   /** Characters revealed per animation frame (default: 3) */
   streamingSpeed?: number;
@@ -499,7 +509,7 @@ export interface ChatConfig {
    * chat.config = { ...chat.config, highlightJs: hljs };
    * ```
    */
-  highlightJs?: typeof import('highlight.js').default;
+  highlightJs?: HighlightJs;
   /**
    * BCP 47 locale for built-in UI: all text strings (see {@link ChatLabels}),
    * per-message timestamps, and assistant **duration**
