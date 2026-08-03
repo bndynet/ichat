@@ -1,0 +1,211 @@
+@use 'variables' as *;
+
+// ── Error message ─────────────────────────────────────────────────────
+@mixin styles {
+
+.message--error {
+  .bubble--error {
+    background: var(--chat-error-bg, #{$color-error-bg});
+    border: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 25%, transparent));
+    border-radius: var(--chat-radius-lg, #{$radius-lg});
+    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+    color: var(--chat-error-color, var(--chat-error, #{$color-error}));
+    word-break: break-word;
+    overflow-wrap: break-word;
+    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
+  }
+
+  .error-indicator {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--chat-spacing-sm, #{$spacing-sm});
+  }
+
+  .error-icon {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .error-text {
+    font-size: var(--chat-font-size, #{$font-size-base});
+    line-height: var(--chat-line-height, #{$line-height-base});
+  }
+
+  .content {
+    margin-top: var(--chat-spacing-sm, #{$spacing-sm});
+    padding-top: var(--chat-spacing-sm, #{$spacing-sm});
+    border-top: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 15%, transparent));
+    color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
+    font-size: var(--chat-font-size-sm, #{$font-size-sm});
+    opacity: 0.85;
+  }
+}
+
+// ── Typing cursor ─────────────────────────────────────────────────────
+
+.typing-cursor::after {
+  content: '▊';
+  display: inline;
+  animation: blink 0.7s step-end infinite;
+  color: var(--chat-primary, #{$color-primary});
+  font-weight: 400;
+  margin-inline-start: 1px;
+
+  .message--self & {
+    color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
+  }
+}
+
+// ── Message footer ────────────────────────────────────────────────────
+
+.message-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-spacing-sm, #{$spacing-sm});
+
+  &:empty {
+    display: none;
+  }
+
+  .message--self & {
+    flex-direction: row-reverse;
+  }
+
+  // Replies are left-aligned: keep footer left-to-right (overrides `--self`).
+  .message--reply & {
+    flex-direction: row;
+  }
+}
+
+.message-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  .message:hover & {
+    opacity: 1;
+  }
+
+  button, [data-action] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+    border: none;
+    border-radius: var(--chat-radius-sm, #{$radius-sm});
+    background: transparent;
+    color: var(--chat-text-muted, #{$color-text-muted});
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--chat-transition-fast, #{$transition-fast});
+    line-height: 1;
+
+    &:hover {
+      background: var(--chat-surface-alt, #{$color-surface-alt});
+      color: var(--chat-text, #{$color-text});
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+// ── Reply blocks ──────────────────────────────────────────────────────
+
+.message-replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-spacing-xs, #{$spacing-xs});
+  max-width: 100%;
+  margin-top: var(--chat-spacing-xs, #{$spacing-xs});
+  padding: var(--chat-spacing-xs, #{$spacing-xs});
+  border-inline-start: 3px solid var(--chat-primary, #{$color-primary});
+  animation: messageIn var(--chat-transition-fast, #{$transition-fast}) forwards;
+
+  .message--self & {
+    border-inline-start: none;
+    border-inline-end: 3px solid var(--chat-primary, #{$color-primary});
+  }
+}
+
+.message-reply {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--chat-spacing-xs, #{$spacing-xs});
+
+  // Nested quote message fills the row; the dismiss button keeps its own space.
+  > i-chat-message {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// ── Timestamp & duration ──────────────────────────────────────────────
+
+.timestamp {
+  font-size: 0.6875rem;
+  color: var(--chat-text-muted, #{$color-text-muted});
+  white-space: nowrap;
+}
+
+.duration {
+  font-size: 0.6875rem;
+  color: var(--chat-text-muted, #{$color-text-muted});
+  white-space: nowrap;
+  opacity: 0.75;
+
+  &::before {
+    content: '·';
+    margin-inline-end: var(--chat-spacing-xs, #{$spacing-xs});
+    opacity: 0.6;
+  }
+}
+
+// ── Pending indicator ─────────────────────────────────────────────────
+
+.pending-indicator {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--chat-spacing-md, #{$spacing-md});
+  min-height: 24px;
+
+  .message--self & {
+    justify-content: flex-end;
+  }
+
+  .message--reply & {
+    justify-content: flex-start;
+  }
+}
+
+// ── Keyframes ─────────────────────────────────────────────────────────
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+}

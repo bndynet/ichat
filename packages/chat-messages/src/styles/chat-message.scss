@@ -1,14 +1,15 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'chat-message-content' as content;
+@use 'chat-message-meta' as meta;
 @use 'chat-progress' as progress;
 @use 'chat-kpi' as kpi;
-@use 'chat-details' as dt;
 
 :host {
   display: block;
 
-  // Avatar: two-level cascade only — per-role token, then shared `--chat-avatar-bg|text`, then SCSS.
-  // Override `--chat-avatar-bg` to tint every role; override `--chat-avatar-user-bg` etc. for one role.
+  // Avatar: two-level cascade only — per-role token, then shared --chat-avatar-bg|text, then SCSS.
+  // Override --chat-avatar-bg to tint every role; override --chat-avatar-user-bg etc. for one role.
   --_chat-avatar-self-bg: var(--chat-avatar-user-bg, var(--chat-avatar-bg, #{$color-avatar-user-bg}));
   --_chat-avatar-self-color: var(--chat-avatar-user-text, var(--chat-avatar-text, #{$color-avatar-user-text}));
 
@@ -45,7 +46,7 @@
   }
 }
 
-// Replies are always start-aligned regardless of role (overrides `--self`).
+// Replies are always start-aligned regardless of role (overrides --self).
 .message--reply {
   max-width: 100%;
   margin-inline-start: 0;
@@ -86,22 +87,10 @@
   }
 
   &--img {
-    // Same surface as letter avatars so image sits on a themed ring (not flat transparent).
-    .message--self & {
-      background: var(--_chat-avatar-self-bg);
-    }
-
-    .message--peer & {
-      background: var(--_chat-avatar-peer-bg);
-    }
-
-    .message--assistant & {
-      background: var(--_chat-avatar-assistant-bg);
-    }
-
-    .message--system & {
-      background: var(--_chat-avatar-system-bg);
-    }
+    .message--self & { background: var(--_chat-avatar-self-bg); }
+    .message--peer & { background: var(--_chat-avatar-peer-bg); }
+    .message--assistant & { background: var(--_chat-avatar-assistant-bg); }
+    .message--system & { background: var(--_chat-avatar-system-bg); }
 
     img {
       width: 100%;
@@ -112,13 +101,11 @@
   }
 
   &--custom {
-    background: transparent !important;
+    background: transparent \!important;
     display: flex;
     align-items: center;
     justify-content: center;
 
-    // Constrain any direct child (div, img, svg, span …) to the avatar box.
-    // Slots commonly inject a wrapper <div> so this must cover all element types.
     > * {
       flex-shrink: 0;
       width: 100%;
@@ -181,8 +168,6 @@ i-chat-text-part {
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
 
-  // Replies are start-aligned regardless of role: flip the rounded "tail" to the
-  // block-end/inline-start corner (overrides the `--self` end-end tail).
   .message--reply & {
     border-end-end-radius: var(--chat-radius-lg, #{$radius-lg});
     border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
@@ -257,451 +242,11 @@ i-chat-text-part {
   color: var(--chat-text-muted, #{$color-text-muted});
 }
 
-.content {
-  font-size: var(--chat-font-size, #{$font-size-base});
+// Markdown content rendering
+@include content.styles;
 
-  p {
-    margin: 0 0 var(--chat-spacing-sm, #{$spacing-sm});
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    margin: var(--chat-spacing-md, #{$spacing-md}) 0 var(--chat-spacing-sm, #{$spacing-sm});
-    line-height: 1.3;
-
-    &:first-child {
-      margin-top: 0;
-    }
-  }
-
-  ul, ol {
-    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    padding-inline-start: var(--chat-spacing-lg, #{$spacing-lg});
-  }
-
-  li {
-    margin-bottom: var(--chat-spacing-xs, #{$spacing-xs});
-  }
-
-  a {
-    color: var(--chat-primary, #{$color-primary});
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    .message--self & {
-      color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
-      text-decoration: underline;
-    }
-  }
-
-  blockquote {
-    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    border-inline-start: 3px solid var(--chat-border, #{$color-border});
-    color: var(--chat-text-secondary, #{$color-text-secondary});
-    background: var(--chat-blockquote-bg, #{$color-blockquote-bg});
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-    border-start-end-radius: var(--chat-radius-sm, #{$radius-sm});
-    border-end-end-radius: var(--chat-radius-sm, #{$radius-sm});
-  }
-
-  code {
-    font-family: var(--chat-font-mono, #{$font-mono});
-    font-size: 0.875em;
-    padding: 1px 5px;
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-    background: var(--chat-code-inline-bg, #{$color-code-inline-bg});
-
-    .message--self & {
-      background: var(--chat-self-code-inline-bg, var(--chat-user-code-inline-bg, #{$color-user-code-inline-bg}));
-    }
-
-    .message--peer & {
-      background: var(--chat-peer-code-inline-bg, var(--chat-code-inline-bg, #{$color-code-inline-bg}));
-    }
-  }
-
-  pre {
-    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    border-radius: var(--chat-radius, #{$radius-md});
-    overflow-x: auto;
-    background: var(--chat-code-bg, #{$color-code-bg}) !important;
-
-    code {
-      display: block;
-      padding: var(--chat-spacing-md, #{$spacing-md});
-      background: transparent;
-      color: var(--chat-code-text, #{$color-code-text});
-      font-size: var(--chat-font-size-sm, #{$font-size-sm});
-      line-height: 1.5;
-    }
-  }
-
-  // ── Code copy button ──────────────────────────────────────────────
-  .ichat-code-block pre {
-    margin-top: 1.2em;
-  }
-  .ichat-code-block:hover .ichat-code-copy-btn,
-  .ichat-code-copy-btn:focus-visible {
-    opacity: 1 !important;
-  }
-  .ichat-code-copy-btn:hover {
-    color: var(--chat-primary, #2563eb) !important;
-    background: var(--chat-surface-alt, #f0f2f5) !important;
-  }
-  .ichat-code-copy-btn.copied {
-    color: var(--chat-success, #16a34a) !important;
-    opacity: 1 !important;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-
-    th, td {
-      padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-      border: 1px solid var(--chat-border, #{$color-border});
-      text-align: start;
-    }
-
-    th {
-      background: var(--chat-surface-alt, #{$color-surface-alt});
-      font-weight: 600;
-    }
-  }
-
-  img {
-    max-width: 100%;
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid var(--chat-border, #{$color-border});
-    margin: var(--chat-spacing-md, #{$spacing-md}) 0;
-  }
-}
-
-// Chart styles
-.content {
-  .chat-chart {
-    padding: var(--chat-spacing-md, #{$spacing-md});
-    border-radius: var(--chat-radius, #{$radius-md});
-    background: var(--chat-surface-alt, #{$color-surface-alt});
-    margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-  }
-
-  .chart-title {
-    font-weight: 600;
-    margin-bottom: var(--chat-spacing-md, #{$spacing-md});
-    font-size: var(--chat-font-size, #{$font-size-base});
-  }
-
-  .chart-bar-row {
-    display: flex;
-    align-items: center;
-    gap: var(--chat-spacing-sm, #{$spacing-sm});
-    margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .chart-bar-label {
-    width: 80px;
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-    text-align: end;
-    flex-shrink: 0;
-    color: var(--chat-text-secondary, #{$color-text-secondary});
-  }
-
-  .chart-bar-track {
-    flex: 1;
-    height: 24px;
-    background: var(--chat-chart-bar-track-bg, #{$color-chart-bar-track-bg});
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-    overflow: hidden;
-  }
-
-  .chart-bar-fill {
-    height: 100%;
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-    transition: width 0.6s ease;
-    min-width: 2px;
-  }
-
-  .chart-bar-value {
-    width: 50px;
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-    font-weight: 600;
-    color: var(--chat-text, #{$color-text});
-  }
-
-  .chart-pie-container {
-    display: flex;
-    align-items: center;
-    gap: var(--chat-spacing-lg, #{$spacing-lg});
-    flex-wrap: wrap;
-  }
-
-  .chart-pie {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .chart-legend {
-    display: flex;
-    flex-direction: column;
-    gap: var(--chat-spacing-xs, #{$spacing-xs});
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-  }
-
-  .chart-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--chat-spacing-sm, #{$spacing-sm});
-  }
-
-  .chart-legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .chart-error {
-    color: var(--chat-error-color, var(--chat-error, #{$color-error}));
-    background: var(--chat-error-bg, color-mix(in srgb, var(--chat-error, #{$color-error}) 6%, var(--chat-surface, #{$color-surface})));
-    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-  }
-}
-
-// Progress styles
-.content {
-  @include progress.styles;
-}
-
-// KPI card styles
-.content {
-  @include kpi.styles;
-}
+// Error, footer, timestamp, replies, pending, keyframes
+@include meta.styles;
 
 // Details / collapsible styles are injected via the shared chatDetailsStyles
 // CSSResult imported in chat-message.ts — no duplicate CSS here.
-
-@include progress.keyframes;
-
-// Error message
-.message--error {
-  .bubble--error {
-    background: var(--chat-error-bg, #{$color-error-bg});
-    border: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 25%, transparent));
-    border-radius: var(--chat-radius-lg, #{$radius-lg});
-    padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
-    color: var(--chat-error-color, var(--chat-error, #{$color-error}));
-    word-break: break-word;
-    overflow-wrap: break-word;
-    border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
-  }
-
-  .error-indicator {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--chat-spacing-sm, #{$spacing-sm});
-  }
-
-  .error-icon {
-    flex-shrink: 0;
-    margin-top: 3px;
-  }
-
-  .error-text {
-    font-size: var(--chat-font-size, #{$font-size-base});
-    line-height: var(--chat-line-height, #{$line-height-base});
-  }
-
-  .content {
-    margin-top: var(--chat-spacing-sm, #{$spacing-sm});
-    padding-top: var(--chat-spacing-sm, #{$spacing-sm});
-    border-top: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 15%, transparent));
-    color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
-    font-size: var(--chat-font-size-sm, #{$font-size-sm});
-    opacity: 0.85;
-  }
-}
-
-// Typing cursor
-.typing-cursor::after {
-  content: '▊';
-  display: inline;
-  animation: blink 0.7s step-end infinite;
-  color: var(--chat-primary, #{$color-primary});
-  font-weight: 400;
-  margin-inline-start: 1px;
-
-  .message--self & {
-    color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
-  }
-}
-
-.message-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--chat-spacing-sm, #{$spacing-sm});
-
-  &:empty {
-    display: none;
-  }
-
-  .message--self & {
-    flex-direction: row-reverse;
-  }
-
-  // Replies are left-aligned: keep footer left-to-right (overrides `--self`).
-  .message--reply & {
-    flex-direction: row;
-  }
-}
-
-.message-actions {
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-
-  .message:hover & {
-    opacity: 1;
-  }
-
-  button, [data-action] {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
-    border: none;
-    border-radius: var(--chat-radius-sm, #{$radius-sm});
-    background: transparent;
-    color: var(--chat-text-muted, #{$color-text-muted});
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all var(--chat-transition-fast, #{$transition-fast});
-    line-height: 1;
-
-    &:hover {
-      background: var(--chat-surface-alt, #{$color-surface-alt});
-      color: var(--chat-text, #{$color-text});
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-}
-
-// Reply blocks — all wrapped in one container beneath the message, styled as a
-// grouped quote. Each block reuses <i-chat-message quote> to render its content
-// so any content type (charts, forms, mermaid, …) renders identically.
-.message-replies {
-  display: flex;
-  flex-direction: column;
-  gap: var(--chat-spacing-xs, #{$spacing-xs});
-  max-width: 100%;
-  margin-top: var(--chat-spacing-xs, #{$spacing-xs});
-  padding: var(--chat-spacing-xs, #{$spacing-xs});
-  border-inline-start: 3px solid var(--chat-primary, #{$color-primary});
-  animation: messageIn var(--chat-transition-fast, #{$transition-fast}) forwards;
-
-  .message--self & {
-    border-inline-start: none;
-    border-inline-end: 3px solid var(--chat-primary, #{$color-primary});
-  }
-}
-
-.message-reply {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--chat-spacing-xs, #{$spacing-xs});
-
-  // Nested quote message fills the row; the dismiss button keeps its own space.
-  > i-chat-message {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.timestamp {
-  font-size: 0.6875rem;
-  color: var(--chat-text-muted, #{$color-text-muted});
-  white-space: nowrap;
-}
-
-.duration {
-  font-size: 0.6875rem;
-  color: var(--chat-text-muted, #{$color-text-muted});
-  white-space: nowrap;
-  opacity: 0.75;
-
-  &::before {
-    content: '·';
-    margin-inline-end: var(--chat-spacing-xs, #{$spacing-xs});
-    opacity: 0.6;
-  }
-}
-
-@keyframes messageIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-// ── Pending indicator (shown before first substantive part arrives) ──
-
-.pending-indicator {
-  display: flex;
-  align-items: center;
-  padding: 0 var(--chat-spacing-md, #{$spacing-md});
-  min-height: 24px;
-
-  .message--self & {
-    justify-content: flex-end;
-  }
-
-  .message--reply & {
-    justify-content: flex-start;
-  }
-}
