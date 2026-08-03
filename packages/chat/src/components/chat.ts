@@ -35,6 +35,7 @@ import {
   normalizeMessagePartUpdateEvent,
   normalizeTodoItemUpdateEvent,
   cancelMessageData,
+  buildMessagesChangeDetail,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { rendererRegistry } from '@bndynet/ichat-messages';
@@ -340,13 +341,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
       this.dispatchEvent(
         new CustomEvent<MessagesChangeDetail>('messages-change', {
           detail: {
-            messages: next,
-            previousMessages,
-            reason: context.reason,
-            source: 'i-chat',
-            messageId: context.messageId,
-            partId: context.partId,
-            itemId: context.itemId,
+            ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
             controlled: true,
             committed: false,
           },
@@ -363,13 +358,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     this.dispatchEvent(
       new CustomEvent<MessagesChangeDetail>('messages-change', {
         detail: {
-          messages: next,
-          previousMessages,
-          reason: context.reason,
-          source: 'i-chat',
-          messageId: context.messageId,
-          partId: context.partId,
-          itemId: context.itemId,
+          ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
           controlled: false,
           committed: true,
         },

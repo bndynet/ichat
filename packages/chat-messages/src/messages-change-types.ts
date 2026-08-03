@@ -54,3 +54,29 @@ export interface MessagesChangeDetail {
   /** `true` when the component committed the change to its own property. */
   committed?: boolean;
 }
+
+/**
+ * Build a {@link MessagesChangeDetail} from the common parameters used by
+ * both `<i-chat>` and `<i-chat-messages>` commit paths.
+ */
+export function buildMessagesChangeDetail(
+  next: ChatMessage[],
+  previousMessages: ChatMessage[],
+  context: {
+    reason: MessagesChangeReason;
+    source: MessagesChangeSource;
+    messageId?: string;
+    partId?: string;
+    itemId?: string;
+  },
+): MessagesChangeDetail {
+  return {
+    messages: next,
+    previousMessages,
+    reason: context.reason,
+    source: context.source,
+    messageId: context.messageId,
+    partId: context.partId,
+    itemId: context.itemId,
+  };
+}

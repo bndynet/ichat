@@ -57,6 +57,7 @@ export type {
   MessagesChangeReason,
   MessagesChangeSource,
 } from './messages-change-types.js';
+export { buildMessagesChangeDetail } from './messages-change-types.js';
 
 export type {
   ChatMessage,

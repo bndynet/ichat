@@ -36,6 +36,7 @@ import type {
   MessagesChangeDetail,
   MessagesChangeReason,
 } from '../messages-change-types.js';
+import { buildMessagesChangeDetail } from '../messages-change-types.js';
 import {
   addMessage,
   patchMessageById,
@@ -367,18 +368,12 @@ export class ChatMessages extends LitElement {
     if (next === this.messages) return;
     const previousMessages = this.messages;
     this.messages = next;
-    const detail: MessagesChangeDetail = {
-      messages: next,
-      previousMessages,
-      reason: context.reason,
-      source: 'i-chat-messages',
-      messageId: context.messageId,
-      partId: context.partId,
-      itemId: context.itemId,
-    };
     this.dispatchEvent(
       new CustomEvent<MessagesChangeDetail>('messages-change', {
-        detail,
+        detail: buildMessagesChangeDetail(next, previousMessages, {
+          ...context,
+          source: 'i-chat-messages',
+        }),
         bubbles: true,
         composed: true,
       }),
