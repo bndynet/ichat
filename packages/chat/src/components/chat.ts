@@ -7,7 +7,6 @@ import type {
   ChatMessage,
   ChatConfig,
   BlockRenderer,
-  ConfirmationLabels,
   ExtendedMessagePart,
   MessagesChangeDetail,
   MessagesChangeReason,
@@ -44,6 +43,7 @@ import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
 import { ConfirmationController } from '../controllers/confirmation-controller.js';
 import { SlotForwardingController } from '../controllers/slot-forwarding-controller.js';
+import './chat-confirmation.js';
 import {
   createMiddlewareChain,
   type ChatMiddleware,
@@ -825,15 +825,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
 
   // ── Lifecycle ──────────────────────────────────────────────────────
 
-  override updated(_changed: PropertyValues): void {
-    // Auto-focus the confirmation dialog when it appears
-    if (this._confirmCtrl.active) {
-      requestAnimationFrame(() => {
-        this.renderRoot.querySelector<HTMLElement>(
-          '.chat-confirmation__btn--confirm'
-        )?.focus();
-      });
-    }
+  private _handleConfirmationSettle(e: CustomEvent<{ action: 'confirm' | 'cancel' }>): void {
+    e.stopPropagation();
+    this._confirmCtrl.settle(e.detail.action);
   }
 
   // ── Events ────────────────────────────────────────────────────────
@@ -913,109 +907,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     this.requestUpdate();
   }
 
-  private get _confirmationLabels(): ConfirmationLabels {
-    return resolveLabels({
-      locale: this.config.locale,
-      labels: this.config.labels,
-    }).confirmation;
-  }
-
-  private _handleConfirmationKeydown(e: KeyboardEvent): void {
-    const section = e.currentTarget as HTMLElement;
-
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this._confirmCtrl.settle('cancel');
-      return;
-    }
-
-    // Focus trap: wrap Tab / Shift+Tab within the dialog
-    if (e.key === 'Tab') {
-      const focusable = section.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  }
-
-  private _formatConfirmationDetails(details: unknown): string {
-    if (details == null) return '';
-    if (typeof details === 'string') return details;
-    try {
-      return JSON.stringify(details, null, 2);
-    } catch {
-      return String(details);
-    }
-  }
-
-  private _renderConfirmationDetails(request: ChatConfirmationResolvedRequest) {
-    const details = this._formatConfirmationDetails(request.details);
-    if (!details) return nothing;
-    const labels = this._confirmationLabels;
-
-    if (typeof request.details === 'string') {
-      return html`<div class="chat-confirmation__details-text">${details}</div>`;
-    }
-
-    return html`
-      <details class="chat-confirmation__details">
-        <summary>${labels.details}</summary>
-        <pre>${details}</pre>
-      </details>
-    `;
-  }
-
-  private _renderConfirmation(request: ChatConfirmationResolvedRequest) {
-    const labels = this._confirmationLabels;
-    const variant = request.variant ?? 'default';
-    const requiredLabel = (request.requiredLabel ?? labels.required).trim();
-
-    return html`
-      <section
-        class="chat-confirmation chat-confirmation--${variant}"
-        role="alertdialog"
-        aria-modal="true"
-        aria-label=${request.title}
-        @keydown=${this._handleConfirmationKeydown}
-      >
-        <div class="chat-confirmation__body">
-          ${requiredLabel
-            ? html`<div class="chat-confirmation__eyebrow">${requiredLabel}</div>`
-            : nothing}
-          <div class="chat-confirmation__title">${request.title}</div>
-          ${request.description
-            ? html`<div class="chat-confirmation__description">${request.description}</div>`
-            : nothing}
-          ${this._renderConfirmationDetails(request)}
-        </div>
-        <div class="chat-confirmation__actions">
-          <button
-            type="button"
-            class="chat-confirmation__btn chat-confirmation__btn--cancel"
-            @click=${() => this._confirmCtrl.settle('cancel')}
-          >
-            ${request.cancelLabel || labels.cancel}
-          </button>
-          <button
-            type="button"
-            class="chat-confirmation__btn chat-confirmation__btn--confirm"
-            @click=${() => this._confirmCtrl.settle('confirm')}
-          >
-            ${request.confirmLabel || labels.confirm}
-          </button>
-        </div>
-      </section>
-    `;
+  private _handleConfirmationSettle(e: CustomEvent<{ action: 'confirm' | 'cancel' }>): void {
+    e.stopPropagation();
+    this._confirmCtrl.settle(e.detail.action);
   }
 
   // ── Render ────────────────────────────────────────────────────────
@@ -1048,7 +942,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
       </div>
       <div class="chat-footer">
         ${confirmation
-          ? this._renderConfirmation(confirmation)
+          ? html`<i-chat-confirmation .request=${confirmation} .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation} @confirmation-settle=${this._handleConfirmationSettle}></i-chat-confirmation>`
           : html`
               <slot
                 name="input"

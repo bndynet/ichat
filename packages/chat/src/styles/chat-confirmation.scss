@@ -1,0 +1,166 @@
+// Confirmation dialog styles — extracted from chat.scss into its own component.
+// All tokens use `var(--chat-*)` so they inherit from the host theme.
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.chat-confirmation {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--chat-spacing-md, 16px);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--chat-spacing-md, 16px);
+  border: 1px solid color-mix(in srgb, var(--chat-confirmation-border, var(--chat-panel-border, var(--chat-border, #e1e4e8))) 72%, transparent);
+  border-radius: var(--chat-confirmation-radius, var(--chat-panel-radius, var(--chat-radius, 0.5rem)));
+  background: var(--chat-confirmation-bg, var(--chat-panel-bg, var(--chat-input-bg, var(--chat-surface, #ffffff))));
+  color: var(--chat-text, #1a1a2e);
+  box-shadow:
+    var(--chat-confirmation-shadow, var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))),
+    inset 0 1px 0 color-mix(in srgb, var(--chat-text, #1a1a2e) 8%, transparent);
+}
+
+.chat-confirmation--danger {
+  border-color: color-mix(in srgb, var(--chat-error, #e53e3e) 35%, var(--chat-border, #e1e4e8));
+  box-shadow:
+    var(--chat-confirmation-shadow, var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))),
+    inset 0 1px 0 color-mix(in srgb, var(--chat-error, #e53e3e) 12%, transparent);
+}
+
+.chat-confirmation__body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chat-confirmation__eyebrow {
+  margin-bottom: 0.25rem;
+  color: var(--chat-text-secondary, #6b7280);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.chat-confirmation__title {
+  color: var(--chat-text, #1a1a2e);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.chat-confirmation__description,
+.chat-confirmation__details-text {
+  margin-top: 0.35rem;
+  color: var(--chat-text-secondary, #6b7280);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.chat-confirmation__details {
+  margin-top: 0.55rem;
+  color: var(--chat-text-secondary, #6b7280);
+  font-size: 0.8125rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  pre {
+    box-sizing: border-box;
+    max-height: 9rem;
+    margin: 0.45rem 0 0;
+    padding: 0.65rem 0.75rem;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--chat-border, #e1e4e8) 72%, transparent);
+    border-radius: 0.375rem;
+    background: var(--chat-code-bg, color-mix(in srgb, var(--chat-bg, #f7f7f8) 78%, #000 4%));
+    color: var(--chat-code-text, var(--chat-text, #1a1a2e));
+    font-family: var(--chat-code-font-family, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+    font-size: 0.75rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+.chat-confirmation__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--chat-spacing-sm, 8px);
+}
+
+.chat-confirmation__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background var(--chat-transition-fast, 0.12s ease),
+    border-color var(--chat-transition-fast, 0.12s ease),
+    color var(--chat-transition-fast, 0.12s ease),
+    box-shadow var(--chat-transition-fast, 0.12s ease);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--chat-primary, #2563eb) 22%, transparent);
+  }
+}
+
+.chat-confirmation__btn--cancel {
+  border-color: color-mix(in srgb, var(--chat-border, #e1e4e8) 76%, transparent);
+  background: color-mix(in srgb, var(--chat-surface, #ffffff) 88%, var(--chat-border, #e1e4e8));
+  color: var(--chat-text, #1a1a2e);
+
+  &:hover {
+    background: color-mix(in srgb, var(--chat-border, #e1e4e8) 22%, var(--chat-surface, #ffffff));
+  }
+}
+
+.chat-confirmation__btn--confirm {
+  background: var(--chat-primary, #2563eb);
+  color: var(--chat-primary-text, #ffffff);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--chat-primary, #2563eb) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--chat-primary-text, #ffffff) 18%, transparent);
+
+  &:hover {
+    background: var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #2563eb) 85%, black));
+  }
+
+  .chat-confirmation--danger & {
+    background: var(--chat-error, #e53e3e);
+    color: var(--chat-error-text, #ffffff);
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--chat-error, #e53e3e) 28%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--chat-error-text, #ffffff) 18%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, var(--chat-error, #e53e3e) 88%, #000 12%);
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-confirmation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chat-confirmation__actions {
+    justify-content: flex-end;
+  }
+}
