@@ -1,10 +1,48 @@
 /**
- * Escapes HTML special characters to prevent XSS when inserting raw strings
- * into HTML attributes or text nodes.
+ * Shared utilities for fenced-code renderers: HTML escaping, code-toggle
+ * custom element, and code-fallback rendering.
+ *
+ * Originally duplicated in three renderer packages; centralized here so
+ * `@bndynet/ichat-renderers`, `@bndynet/ichat-renderer-chart`, and
+ * `@bndynet/ichat-renderer-mermaid` all share a single copy.
  */
-import { rendererIcons } from './icons.js';
-import { setVersionAttribute } from './version.js';
+import { setVersionAttribute } from '../version.js';
 
+// ── SVG icon strings (inline so renderer packages don't need their own icons module) ──
+
+interface RendererIconOptions {
+  size?: number | string;
+  strokeWidth?: number | string;
+  viewBox?: string;
+}
+
+function strokeIcon(
+  paths: string,
+  {
+    size = 13,
+    strokeWidth = 2.2,
+    viewBox = '0 0 24 24',
+  }: RendererIconOptions = {},
+): string {
+  return (
+    `<svg width="${size}" height="${size}" viewBox="${viewBox}" fill="none" ` +
+    `stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" ` +
+    `stroke-linejoin="round" aria-hidden="true">${paths}</svg>`
+  );
+}
+
+const rendererIcons = {
+  code: strokeIcon('<path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" />'),
+  eye: strokeIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />'),
+  check: strokeIcon('<path d="m20 6-11 11-5-5" />', {
+    size: 11,
+    strokeWidth: 3,
+  }),
+} as const;
+
+// ── HTML escaping ─────────────────────────────────────────────────────────────
+
+/** Escapes HTML special characters to prevent XSS when inserting raw strings into HTML attributes or text nodes. */
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -29,7 +67,7 @@ export interface RendererOptions {
   codeToggle?: boolean;
 }
 
-// ── <i-chat-code-toggle> custom element ─────────────────────────────────────────
+// ── <i-chat-code-toggle> custom element ──────────────────────────────────────
 
 /** Light-DOM holder for fence source (attributes cannot hold long / multiline code reliably). */
 export const CHAT_TOGGLE_SOURCE_CLASS = 'i-chat-toggle__src';
@@ -105,6 +143,15 @@ const TOGGLE_STYLES = `
   :host([data-view="code"]) .rendered-view { display: none; }
   :host([data-view="code"]) .code-view     { display: block; }
 `;
+
+// ── <i-chat-code-toggle> custom element (browser-only) ──────────────────────
+
+// Class definition and registration are guarded so the module is safe to
+// import in Node.js test environments where HTMLElement is not defined.
+// `wrapWithCodeToggle` and `renderCodeFallback` produce HTML strings that
+// reference the tag name — they work in all environments.
+
+if (typeof HTMLElement !== 'undefined') {
 
 class ChatCodeToggle extends HTMLElement {
   private _shadowCodeEl: HTMLElement | null = null;
@@ -203,6 +250,8 @@ class ChatCodeToggle extends HTMLElement {
 if (!customElements.get('i-chat-code-toggle')) {
   customElements.define('i-chat-code-toggle', ChatCodeToggle);
 }
+
+} // typeof HTMLElement !== 'undefined'
 
 // ── Public helpers ────────────────────────────────────────────────────────────
 

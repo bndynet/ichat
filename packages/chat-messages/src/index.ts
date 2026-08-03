@@ -40,6 +40,14 @@ export { updateProgressStepStatus } from './renderers/progress-plugin.js';
 export type { ProgressStatus } from './renderers/progress-plugin.js';
 export { collapsiblePlugin } from './renderers/collapsible-plugin.js';
 
+export {
+  escapeHtml,
+  CHAT_TOGGLE_SOURCE_CLASS,
+  renderCodeFallback,
+  wrapWithCodeToggle,
+} from './renderers/renderer-utils.js';
+export type { RendererOptions } from './renderers/renderer-utils.js';
+
 export type {
   ChatPartRenderContext,
 } from './components/chat-part-host.js';

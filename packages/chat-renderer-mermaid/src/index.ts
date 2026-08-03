@@ -15,5 +15,6 @@ export {
 export { CHAT_MERMAID_TOKEN_NAMES } from './mermaid-theme-tokens.js';
 export type { ChatMermaidTokenName } from './mermaid-theme-tokens.js';
 
-export type { RendererOptions } from './utils.js';
-export { CHAT_TOGGLE_SOURCE_CLASS, renderCodeFallback, wrapWithCodeToggle } from './utils.js';
+// Re-export shared renderer utilities from @bndynet/ichat-messages
+export type { RendererOptions } from '@bndynet/ichat-messages';
+export { CHAT_TOGGLE_SOURCE_CLASS, renderCodeFallback, wrapWithCodeToggle } from '@bndynet/ichat-messages';

@@ -3,7 +3,7 @@ import type { BlockRenderer } from '@bndynet/ichat-messages';
 import type { ChartData, ChartOptions } from '@bndynet/icharts';
 import { switchTheme } from '@bndynet/icharts';
 import '@bndynet/icharts'; // registers <i-chart>
-import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
+import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from '@bndynet/ichat-messages';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

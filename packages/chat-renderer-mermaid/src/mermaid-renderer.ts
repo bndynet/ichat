@@ -1,6 +1,6 @@
 import type MarkdownIt from 'markdown-it';
 import type { BlockRenderer } from '@bndynet/ichat-messages';
-import { renderCodeFallback, wrapWithCodeToggle, escapeHtml, type RendererOptions } from './utils.js';
+import { renderCodeFallback, wrapWithCodeToggle, escapeHtml, type RendererOptions } from '@bndynet/ichat-messages';
 import { DEFAULT_MERMAID_CONFIG } from './mermaid-config.js';
 import { buildMermaidThemeVariables } from './mermaid-theme-tokens.js';
 import { setVersionAttribute } from './version.js';

@@ -1,5 +1,5 @@
 import type { BlockRenderer } from '@bndynet/ichat-messages';
-import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from './utils.js';
+import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from '@bndynet/ichat-messages';
 import { rendererIcons } from './icons.js';
 import { setVersionAttribute } from './version.js';
 
