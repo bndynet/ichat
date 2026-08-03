@@ -7,6 +7,17 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   root,
+  resolve: {
+    // The renderer sources only need the shared renderer utilities here. If
+    // their package import resolves to dist/index.js, it loads a second copy of
+    // every chat component and re-registers their custom elements.
+    alias: [
+      {
+        find: /^@bndynet\/ichat-messages$/,
+        replacement: resolve(root, '../../src/renderers/renderer-utils.ts'),
+      },
+    ],
+  },
   plugins: [
     {
       name: 'ichat-benchmark-scss-as-text',
