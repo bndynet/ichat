@@ -214,6 +214,7 @@ onMounted(async () => {
       timestamp: Date.now(),
     });
 
+    reply(chatRef, 'all');
     loading.value = false;
   }, 3000);
 });
