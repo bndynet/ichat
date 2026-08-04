@@ -39,6 +39,8 @@ export interface FormSchema {
   submitLabel?: string;
   i18n?: FormI18n;
   fields: FormField[];
+  /** Pre-filled submitted values — renders the submitted summary instead of the interactive form. */
+  submittedValues?: Record<string, unknown>;
 }
 
 export interface DateRangeValue {
@@ -77,7 +79,13 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
 
   const formId = schema.id ?? nextFormId();
   const safeData = escapeAttr(JSON.stringify(schema));
-  const html = `<i-chat-form data="${safeData}" data-form-id="${escapeAttr(formId)}"></i-chat-form>`;
+
+  let attrs = `data="${safeData}" data-form-id="${escapeAttr(formId)}"`;
+  if (schema.submittedValues) {
+    attrs += ` submitted-values="${escapeAttr(JSON.stringify(schema.submittedValues))}"`;
+  }
+
+  const html = `<i-chat-form ${attrs}></i-chat-form>`;
   return opts.codeToggle !== false ? wrapWithCodeToggle('form', code, html) : html;
 }
 

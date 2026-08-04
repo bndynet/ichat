@@ -389,6 +389,21 @@ class ChatFormElement extends HTMLElement {
   }
 
   private _render() {
+    // If submitted-values attribute is present, render the submitted summary
+    // instead of the interactive form (for history records).
+    const submittedRaw = this.getAttribute('submitted-values');
+    if (submittedRaw) {
+      const parsed = this._parse();
+      if (!parsed) return;
+      try {
+        const values = JSON.parse(submittedRaw);
+        this._renderSubmitted(parsed.schema, values);
+      } catch {
+        // Fall through to normal form rendering
+      }
+      return;
+    }
+
     const parsed = this._parse();
     if (!parsed) {
       const raw = this.getAttribute('data') ?? '';
