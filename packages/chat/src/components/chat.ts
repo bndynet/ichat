@@ -9,7 +9,6 @@ import type {
   BlockRenderer,
   ExtendedMessagePart,
   MessagesChangeDetail,
-  MessagesChangeReason,
   MessagePartUpdateResult,
   ToolCallUpdateResult,
   TodoItemUpdateResult,
@@ -19,23 +18,8 @@ import type {
 import {
   ChatMessages,
   resolveLabels,
-  addMessage,
-  patchMessageById,
   removeMessageById,
   clearMessages,
-  appendMessagePart,
-  patchMessagePart,
-  applyMessagePartUpdate,
-  findMessagePart,
-  replaceMessagePart,
-  patchToolCallPart,
-  patchTodoItem,
-  isToolCallPart,
-  isTodoPart,
-  normalizeMessagePartUpdateEvent,
-  normalizeTodoItemUpdateEvent,
-  cancelMessageData,
-  buildMessagesChangeDetail,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
 import { rendererRegistry } from '@bndynet/ichat-messages';
@@ -44,6 +28,7 @@ import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
 import { ConfirmationController } from '../controllers/confirmation-controller.js';
 import { SlotForwardingController } from '../controllers/slot-forwarding-controller.js';
+import { ChatMessageStore } from '../controllers/chat-message-store.js';
 import './chat-confirmation.js';
 import {
   createMiddlewareChain,
@@ -179,15 +164,6 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
    */
   @property({ type: Array }) messages: Array<ChatMessage & { parts: ExtendedMessagePart<TExtraParts>[] }> = [];
 
-  /**
-   * @internal Plain `ChatMessage[]` view for interop with pure helpers.
-   * All internal mutation logic reads/writes through this getter so the
-   * generic `TExtraParts` parameter does not force casts at every call site.
-   */
-  private get _msgs(): ChatMessage[] {
-    return this.messages as unknown as ChatMessage[];
-  }
-
   @property({ type: Object }) config: ChatConfig = {};
   @property() emptyText = '';
   /**
@@ -244,6 +220,18 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   // ── Controllers ──────────────────────────────────────────────────
 
   private _confirmCtrl = new ConfirmationController(this);
+
+  private _store = new ChatMessageStore({
+    dispatchEvent: (e) => this.dispatchEvent(e),
+    onStreamingChange: (streaming) => this._setStreamingState(streaming),
+    setMessages: (msgs) => { this.messages = msgs as unknown as typeof this.messages; },
+    mode: undefined, // set in constructor after property assignments
+  });
+
+  /** @internal Plain `ChatMessage[]` view for interop with pure helpers and child component. */
+  private get _msgs(): ChatMessage[] {
+    return this._store.messages;
+  }
 
   // ── Ready contract (CHG-06) ───────────────────────────────────────
 
@@ -312,118 +300,42 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     });
   }
 
-  // ── Top-level message-state owner (CHG-03) ────────────────────────
+  // ── Message-state delegation ─────────────────────────────────────
   //
-  // Methods below write directly to `this.messages` using shared pure
-  // reducers and commit through `_commitMessages`.  The child receives
-  // the array via one-way `.messages` template binding.
-
-  /**
-   * Central commit point for every top-level message-collection mutation.
-   * Synchronously updates `this.messages`, derives streaming state, and
-   * emits exactly one `messages-change` from `<i-chat>`.
-   */
-  private _commitMessages(
-    next: ChatMessage[],
-    context: {
-      reason: MessagesChangeReason;
-      messageId?: string;
-      partId?: string;
-      itemId?: string;
-    },
-  ): void {
-    if (next === this._msgs) return;
-    const previousMessages = this._msgs;
-
-    if (this.messageMode === 'controlled') {
-      // Controlled: emit proposal, host must write back.
-      this._syncStreamingFromMessages(next);
-      this.dispatchEvent(
-        new CustomEvent<MessagesChangeDetail>('messages-change', {
-          detail: {
-            ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
-            controlled: true,
-            committed: false,
-          },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      return;
-    }
-
-    // Uncontrolled (default): component owns the state.
-    this.messages = next as unknown as typeof this.messages;
-    this._syncStreamingFromMessages(next);
-    this.dispatchEvent(
-      new CustomEvent<MessagesChangeDetail>('messages-change', {
-        detail: {
-          ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
-          controlled: false,
-          committed: true,
-        },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-
-  /** Derive aggregate streaming state from the current message array. */
-  private _syncStreamingFromMessages(msgs: ChatMessage[]): void {
-    const active = msgs.some((m) => m.streaming && !m.error);
-    this._setStreamingState(active);
-  }
+  // All pure data mutations are delegated to ChatMessageStore.
+  // Only DOM-touching methods (cancel, removeMessage, clear) and
+  // presentation proxy methods stay in this component.
 
   addMessage(message: ChatMessage): void {
-    this._commitMessages(addMessage(this._msgs, message), {
-      reason: 'message:add',
-      messageId: message.id,
-    });
+    this._store.addMessage(message);
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this._commitMessages(patchMessageById(this._msgs, id, partial), {
-      reason: 'message:update',
-      messageId: id,
-    });
+    this._store.updateMessage(id, partial);
   }
 
-  /** Append a structured body part to a message. */
   appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
-    this._commitMessages(appendMessagePart(this._msgs, messageId, part), {
-      reason: 'part:append',
-      messageId,
-      partId: part.id,
-    });
+    this._store.appendPart(messageId, part);
   }
 
-  /** Patch a single body part by its `id`. */
   updatePart(
     messageId: string,
     partId: string,
-    patch: Parameters<ChatMessages['updatePart']>[2]
+    patch: Parameters<ChatMessages['updatePart']>[2],
   ): void {
-    const result = patchMessagePart(this._msgs, messageId, partId, patch);
-    if (result.ok) {
-      this._commitMessages(result.messages, {
-        reason: 'part:update',
-        messageId,
-        partId,
-      });
-    }
+    this._store.updatePart(messageId, partId, patch);
   }
 
   removeMessage(id: string): void {
-    this._commitMessages(removeMessageById(this._msgs, id), {
+    this._store.commitMessages(removeMessageById(this._msgs, id), {
       reason: 'message:remove',
       messageId: id,
     });
-    // Reply blocks live in the child — clear them there.
     if (this._messages) this._messages.clearReplyMessage(id);
   }
 
   clear(): void {
-    this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    this._store.commitMessages(clearMessages(), { reason: 'message:clear' });
     this._pendingCommands.clear();
     if (this._messages) {
       this._messages._clearPresentation();
@@ -431,57 +343,27 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   addErrorMessage(error: string, text = ''): void {
-    this.addMessage({
-      id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      role: 'assistant',
-      parts: text ? [{ type: 'text', id: `err-text-${Date.now()}`, text }] : [],
-      error,
-      timestamp: Date.now(),
-    });
+    this._store.addErrorMessage(error, text);
   }
 
   // ── Diagnostic / tool / todo / SSE (CHG-04) ──────────────────────
-  //
-  // Methods below now read `this.messages`, call the same pure helpers
-  // the child uses, and commit through `_commitMessages`.  Diagnostic
-  // results are identical to the pre-migration child implementations.
 
-  /** Patch any message part and return a diagnostic result. */
   tryUpdatePart(
     messageId: string,
     partId: string,
-    patch: Parameters<ChatMessages['tryUpdatePart']>[2]
+    patch: Parameters<ChatMessages['tryUpdatePart']>[2],
   ): MessagePartUpdateResult {
-    const result = applyMessagePartUpdate(this._msgs, { messageId, partId, patch });
-    if (!result.ok) return { ok: false, reason: result.reason, part: result.part };
-
-    this._commitMessages(result.messages, { reason: 'part:update', messageId, partId });
-    return { ok: true, part: result.part };
+    return this._store.tryUpdatePart(messageId, partId, patch);
   }
 
-  /** Patch a `tool-call` part and return a diagnostic result. */
   tryUpdateToolCall(
     messageId: string,
     partId: string,
-    patch: Parameters<ChatMessages['tryUpdateToolCall']>[2]
+    patch: Parameters<ChatMessages['tryUpdateToolCall']>[2],
   ): ToolCallUpdateResult {
-    const lookup = findMessagePart(this._msgs, messageId, partId);
-    if (!lookup.ok) return { ok: false, reason: lookup.reason };
-
-    const { part } = lookup;
-    if (!isToolCallPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
-
-    const tcResult = patchToolCallPart(part, patch);
-    if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
-
-    const replacement = replaceMessagePart(this._msgs, messageId, partId, tcResult.part);
-    if (!replacement.ok) return { ok: false, reason: replacement.reason };
-
-    this._commitMessages(replacement.messages, { reason: 'tool-call:update', messageId, partId });
-    return { ok: true, part: tcResult.part };
+    return this._store.tryUpdateToolCall(messageId, partId, patch);
   }
 
-  /** Immutably patch one todo item and return a diagnostic result. */
   tryUpdateTodoItem(
     messageId: string,
     partId: string,
@@ -489,93 +371,33 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     patch: Parameters<ChatMessages['tryUpdateTodoItem']>[3],
     revision?: number,
   ): TodoItemUpdateResult {
-    const lookup = findMessagePart(this._msgs, messageId, partId);
-    if (!lookup.ok) return { ok: false, reason: lookup.reason };
-
-    const { part } = lookup;
-    if (!isTodoPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
-
-    const todoResult = patchTodoItem(part, itemId, patch, revision);
-    if (!todoResult.ok) return { ok: false, reason: todoResult.reason, part: todoResult.part };
-
-    const replacement = replaceMessagePart(this._msgs, messageId, partId, todoResult.part);
-    if (!replacement.ok) return { ok: false, reason: replacement.reason };
-
-    this._commitMessages(replacement.messages, {
-      reason: 'todo-item:update',
-      messageId,
-      partId,
-      itemId,
-    });
-    return { ok: true, part: todoResult.part };
+    return this._store.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
   }
 
-  /** Apply a backend/SSE todo item update and return a diagnostic result. */
   tryApplyTodoItemUpdateEvent(
-    event: Parameters<ChatMessages['tryApplyTodoItemUpdateEvent']>[0]
+    event: Parameters<ChatMessages['tryApplyTodoItemUpdateEvent']>[0],
   ): TodoItemUpdateEventResult {
-    const norm = normalizeTodoItemUpdateEvent(event);
-    if (!norm.ok) return { ok: false, reason: norm.reason };
-
-    const { messageId, partId, itemId, patch, revision } = norm.update;
-    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
-    if (!update.ok) {
-      return { ok: false, reason: update.reason, update: norm.update, part: update.part };
-    }
-    return { ok: true, update: norm.update, part: update.part };
+    return this._store.tryApplyTodoItemUpdateEvent(event);
   }
 
-  /** Apply a backend/SSE message part update and return a diagnostic result. */
   tryApplyMessagePartUpdateEvent(
-    event: Parameters<ChatMessages['tryApplyMessagePartUpdateEvent']>[0]
+    event: Parameters<ChatMessages['tryApplyMessagePartUpdateEvent']>[0],
   ): MessagePartUpdateEventResult {
-    const norm = normalizeMessagePartUpdateEvent(event);
-    if (!norm.ok) return { ok: false, reason: norm.reason };
-
-    const update = this.tryUpdatePart(norm.update.messageId, norm.update.partId, norm.update.patch);
-    if (!update.ok) {
-      return { ok: false, reason: update.reason, update: norm.update, part: update.part };
-    }
-    return { ok: true, update: norm.update, part: update.part };
+    return this._store.tryApplyMessagePartUpdateEvent(event);
   }
 
   // ── Cancellation (CHG-05) ────────────────────────────────────────
-  //
-  // cancel / cancelMessage now own the full lifecycle:
-  //   1. Freeze the typewriter animation (non-event, via child)
-  //   2. Compute cancelled data via pure reducer (one shot: hint + streaming:false + cancelled:true)
-  //   3. Commit through _commitMessages with reason 'message:cancel'
-  //
-  // The CHG-01 bridge (_handleMessagesChange) is no longer needed for
-  // these paths — it remains registered for standalone child events only.
 
-  /**
-   * Cancel the first streaming message (if any).
-   * Animation is frozen; received content is preserved.  Does NOT emit
-   * `message-complete`.  The consumer remains responsible for aborting
-   * its network request.
-   */
-  cancel(hint?: string): void {
-    const streamingMsg = this._msgs.find((m) => m.streaming && !m.error);
-    if (streamingMsg) this.cancelMessage(streamingMsg.id, hint);
-  }
-
-  /**
-   * Cancel a streaming message by id.  No-op when the id does not exist
-   * or the message is not in a streaming state.
-   */
   cancelMessage(id: string, hint?: string): void {
-    // 1. Freeze the typewriter animation if the row is rendered.
     if (this._messages) {
       this._messages.freezeMessageAnimation(id);
     }
+    this._store.cancelMessage(id, hint);
+  }
 
-    // 2. Compute cancelled data in one shot via pure reducer.
-    const next = cancelMessageData(this._msgs, id, hint);
-    if (next === this._msgs) return; // no-op: id not found or already terminal
-
-    // 3. Commit through the top-level store.
-    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
+  cancel(hint?: string): void {
+    const streamingMsg = this._msgs.find((m) => m.streaming && !m.error);
+    if (streamingMsg) this.cancelMessage(streamingMsg.id, hint);
   }
 
   // ── Presentation proxy methods (CHG-06) ───────────────────────────
@@ -773,6 +595,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     }
 
     // Adopt the child's state as our own.
+    this._store.writeMessages(detail.messages as unknown as ChatMessage[]);
     this.messages = detail.messages as unknown as typeof this.messages;
 
     // Re-emit from <i-chat> as the authoritative source.
@@ -808,6 +631,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   override firstUpdated(_changed: PropertyValues): void {
     super.firstUpdated(_changed);
     // Properties are bound in the template — no manual push needed.
+    this._store.mode = this.messageMode;
     this._readyResolver();
     this._replayPendingCommands();
   }
