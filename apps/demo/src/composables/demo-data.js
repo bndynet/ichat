@@ -149,7 +149,28 @@ export const demoData = {
       '  ]\n' +
       '}\n' +
       '```',
-
+  formSubmitted:
+    'Previously submitted form (history replay):\n\n' +
+      '```form\n' +
+      '{\n' +
+      '  "id": "feedback-123",\n' +
+      '  "title": "User Feedback",\n' +
+      '  "fields": [\n' +
+      '    {"name": "name", "label": "Your Name", "type": "text"},\n' +
+      '    {"name": "satisfaction", "label": "Satisfaction", "type": "select", "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied"]},\n' +
+      '    {"name": "source", "label": "How did you find us?", "type": "radio", "options": ["Search", "Social media", "Word of mouth", "Other"]},\n' +
+      '    {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},\n' +
+      '    {"name": "comments", "label": "Additional Comments", "type": "textarea"}\n' +
+      '  ],\n' +
+      '  "submittedValues": {\n' +
+      '    "name": "Alice",\n' +
+      '    "satisfaction": "Very Satisfied",\n' +
+      '    "source": "Social media",\n' +
+      '    "subscribe": true,\n' +
+      '    "comments": "Great product! Love the new features."\n' +
+      '  }\n' +
+      '}\n' +
+      '```',
   detailsFence:
     'The following use the **fence syntax** (` ```details Title `) to collapse content.\n\n' +
       '```details 📋 Project Overview\n' +
@@ -197,6 +218,7 @@ const thinkingDemoEvents = [
   { content: demoData.kpis + '\n\n' },
   { content: demoData.progress + '\n\n' },
   { content: demoData.form + '\n\n' },
+  { content: '## Form with submitted values\n\n' + demoData.formSubmitted + '\n\n' },
   { content: demoData.detailsFence + '\n\n' },
   { content: demoData.detailsContainer + '\n\n' },
   {
