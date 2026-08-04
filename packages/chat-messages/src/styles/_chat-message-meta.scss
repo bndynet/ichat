@@ -5,7 +5,7 @@
 
 .message--error {
   .bubble--error {
-    background: var(--chat-error-bg, #{$color-error-bg});
+    background: var(--chat-error-bg, color-mix(in srgb, var(--chat-error, #{$color-error}) 6%, var(--chat-surface, #{$color-surface})));
     border: 1px solid var(--chat-error-border, color-mix(in srgb, var(--chat-error, #{$color-error}) 25%, transparent));
     border-radius: var(--chat-radius-lg, #{$radius-lg});
     padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
