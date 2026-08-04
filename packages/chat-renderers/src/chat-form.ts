@@ -33,6 +33,7 @@ const FORM_STYLES = `
   :host {
     display: block;
     font-family: inherit;
+    margin-bottom: var(--chat-spacing-sm, 0.5em);
     --_form-bg:           var(--chat-form-bg,            var(--chat-panel-bg,     var(--chat-surface)));
     --_form-border:       var(--chat-form-border,        var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)));
     --_form-radius:       var(--chat-form-radius,        var(--chat-panel-radius, var(--chat-radius,      10px)));
