@@ -281,7 +281,8 @@ function handleVoiceInput(e) {
 function handlePartAction(e) {
   if (e.detail?.kind !== 'form') return;
   console.log('part action:', e.detail);
-  const { formId, title, values, messageId, message } = e.detail.detail;
+  const { messageId, message } = e.detail;
+  const { formId, title, values } = e.detail.payload;
   const chat = chatRef.value;
   const preview = JSON.stringify(values, null, 2);
   const msgMeta =

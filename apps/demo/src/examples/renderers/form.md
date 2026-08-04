@@ -46,7 +46,7 @@ Form submission is emitted as a `part-action`; validate and persist its data in 
 chat.addEventListener('part-action', (event) => {
   if (event.detail?.kind !== 'form') return
 
-  const submission = event.detail.detail
+  const submission = event.detail.payload
   console.log('Submitted form:', submission)
 })
 ```

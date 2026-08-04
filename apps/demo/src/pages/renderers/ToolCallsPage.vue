@@ -127,7 +127,8 @@ onUnmounted(() => timers.forEach(clearTimeout))
 /** `part-action` from the approval buttons bubbles up to <i-chat>. */
 function handlePartAction(e) {
   if (e.detail?.kind !== 'tool-call') return
-  const { action, part, messageId } = e.detail.detail
+  const { action, part } = e.detail.payload
+  const messageId = e.detail.messageId
   console.log('[ToolCallsPage part-action]', e.detail)
   const chat = chatRef.value
   const msgId = messageId || approvalMsgId.value

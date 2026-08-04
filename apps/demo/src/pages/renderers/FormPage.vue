@@ -20,7 +20,7 @@ onMounted(async () => {
 
 function onPartAction(e) {
   if (e.detail?.kind !== 'form') return
-  const md = `Form submitted via part-action: \n\`\`\`json\n${JSON.stringify(e.detail.detail, null, 2)}\n\`\`\``;
+  const md = `Form submitted via part-action: \n\`\`\`json\n${JSON.stringify(e.detail.payload, null, 2)}\n\`\`\``;
   console.log(md);
   chatRef.value.addMessage({
     id: nextId(),

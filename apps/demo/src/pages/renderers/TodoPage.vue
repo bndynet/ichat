@@ -59,7 +59,8 @@ onUnmounted(() => timers.forEach(clearTimeout))
 /** Status-button requests are authoritative only after the host applies them. */
 function handlePartAction(event) {
   if (event.detail?.kind !== 'todo') return
-  const { messageId, part, itemId, status } = event.detail.detail
+  const messageId = event.detail.messageId
+  const { part, itemId, status } = event.detail.payload
   const chat = chatRef.value
   if (!chat) return
   applyTodoUpdate(chat, messageId, part.id, itemId, { status })

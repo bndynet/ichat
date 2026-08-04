@@ -60,7 +60,7 @@ updateTodo('events', { status: 'active' }, 2)
 chat.addEventListener('part-action', (event) => {
   if (event.detail?.kind !== 'todo') return
 
-  const { messageId, part, itemId, status } = event.detail.detail
+  const { messageId, part, itemId, status } = event.detail.payload
   const result = chat.tryUpdateTodoItem(
     messageId,
     part.id,

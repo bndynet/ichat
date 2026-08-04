@@ -10,7 +10,7 @@ export function createPartActionDetail<TDetail>(params: {
   kind: ChatPartActionKind;
   action: string;
   message: ChatMessage;
-  detail: TDetail;
+  payload: TDetail;
   part?: MessagePart;
 }): ChatPartActionDetail<TDetail> {
   return {
@@ -21,6 +21,6 @@ export function createPartActionDetail<TDetail>(params: {
     partId: params.part?.id,
     partType: params.part?.type,
     part: params.part,
-    detail: params.detail,
+    payload: params.payload,
   };
 }

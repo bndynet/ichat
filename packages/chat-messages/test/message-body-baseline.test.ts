@@ -694,7 +694,7 @@ test('part-action event helper attaches message context', () => {
     kind: 'todo',
     action: 'change-status',
     message,
-    detail: { action: 'change-status', itemId: 'task-1', previousStatus: 'pending', status: 'active', part: todo },
+    payload: { action: 'change-status', itemId: 'task-1', previousStatus: 'pending', status: 'active', part: todo },
     part: todo,
   });
   assert.equal(todoPartAction.kind, 'todo');
@@ -707,7 +707,7 @@ test('part-action event helper attaches message context', () => {
     kind: 'form',
     action: 'submit',
     message,
-    detail: { formId: 'search-form', title: 'Search', values: { q: 'test' } },
+    payload: { formId: 'search-form', title: 'Search', values: { q: 'test' } },
     part: text,
   });
   assert.equal(formPartAction.kind, 'form');
@@ -719,7 +719,7 @@ test('part-action event helper attaches message context', () => {
     kind: 'tool-call',
     action: 'approve',
     message,
-    detail: { action: 'approve', toolCallId: tool.toolCallId, part: tool },
+    payload: { action: 'approve', toolCallId: tool.toolCallId, part: tool },
     part: tool,
   });
   assert.equal(toolPartAction.kind, 'tool-call');

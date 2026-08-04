@@ -427,7 +427,7 @@ export interface ChatPartActionDetail<TDetail = unknown> {
   partId?: string;
   partType?: MessagePart['type'];
   part?: MessagePart;
-  detail: TDetail;
+  payload: TDetail;
 }
 
 /**

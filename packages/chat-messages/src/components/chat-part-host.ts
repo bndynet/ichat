@@ -105,7 +105,7 @@ export class ChatPartHost extends LitElement {
       kind: kind as ChatPartActionDetail['kind'],
       action: (detail.action as string) ?? kind,
       message: this.message,
-      detail,
+      payload: detail,
       part: this._partFromEvent(e),
     });
     this._dispatchPartAction(enriched);

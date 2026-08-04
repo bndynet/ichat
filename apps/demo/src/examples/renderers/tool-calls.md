@@ -102,7 +102,8 @@ chat.addMessage({
 chat.addEventListener('part-action', (event) => {
   if (event.detail?.kind !== 'tool-call') return
 
-  const { action, messageId, part } = event.detail.detail
+  const { action, part } = event.detail.payload
+  const messageId = event.detail.messageId
   if (action === 'approve') {
     chat.tryUpdateToolCall(messageId, part.id, { approval: 'approved', state: 'executing' })
   } else if (action === 'reject') {
