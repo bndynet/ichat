@@ -1,5 +1,5 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
-import { customElement, property, state, query } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { setVersionAttribute } from '../version.js';
 import type {
@@ -50,6 +50,8 @@ import type { ChatMessageElement } from './chat-message.js';
 import { injectPluginCss, injectGlobalPluginCss } from '../renderers/plugin-styles.js';
 import { freezeMarkdownPlugins } from '../renderers/markdown-plugins.js';
 import { rendererRegistry } from '../renderers/registry.js';
+import { ScrollController } from '../controllers/scroll-controller.js';
+import { ErrorBannerController } from '../controllers/error-banner-controller.js';
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
@@ -73,9 +75,6 @@ export class ChatMessages extends LitElement {
   @property({ type: Boolean, reflect: true, attribute: 'streaming' })
   readonly streaming = false;
 
-  @state() private _autoScroll = true;
-  @state() private _hasNewContent = false;
-  @state() private _errorBanner = '';
   @state() private _selfAvatarHtml = '';
   @state() private _peerAvatarHtml = '';
   @state() private _assistantAvatarHtml = '';
@@ -85,15 +84,11 @@ export class ChatMessages extends LitElement {
   @state() private _replies: Array<{ key: string; id: string; data: Partial<ChatMessage> }> = [];
   /** Monotonic counter for unique reply-block keys. */
   private _replyKeySeq = 0;
-  @query('.chat-messages') private _scrollContainer!: HTMLElement;
-  private _resizeObserver?: ResizeObserver;
-  private _observedEl?: Element;
-  /** While true, ignore scroll events so CSS transitions don't flip _autoScroll. */
-  private _resizeScrollLock = false;
-  private _resizeDebounceTimer?: ReturnType<typeof setTimeout>;
-  private _errorDismissTimer?: ReturnType<typeof setTimeout>;
-  /** Invalidates in-flight multi-pass scroll when a newer scroll is requested. */
-  private _scrollToBottomSeq = 0;
+
+  // ── Controllers ──────────────────────────────────────────────────
+
+  private _scrollCtrl = new ScrollController(this, '.chat-messages');
+  private _errorCtrl = new ErrorBannerController(this);
 
   private get _config() {
     return { ...DEFAULT_CONFIG, ...this.config };
@@ -188,9 +183,6 @@ export class ChatMessages extends LitElement {
   override disconnectedCallback(): void {
     this._pluginCleanup?.();
     super.disconnectedCallback();
-    this._resizeObserver?.disconnect();
-    clearTimeout(this._resizeDebounceTimer);
-    clearTimeout(this._errorDismissTimer);
   }
 
   override firstUpdated(changed: PropertyValues): void {
@@ -244,8 +236,8 @@ export class ChatMessages extends LitElement {
       const nowStreaming = this.messages.some((m) => m.streaming && !m.error);
       if (nowStreaming !== this.streaming) {
         (this as Record<string, unknown>).streaming = nowStreaming;
-        if (nowStreaming && this._errorBanner) {
-          this.dismissError();
+        if (nowStreaming) {
+          this._errorCtrl.dismissOnStreamingStart();
         }
         this.dispatchEvent(
           new CustomEvent('streaming-change', {
@@ -255,11 +247,11 @@ export class ChatMessages extends LitElement {
           })
         );
       }
-      if (this._autoScroll) {
-        this._scrollToBottom();
+      if (this._scrollCtrl.autoScroll) {
+        this._scrollCtrl.scrollToBottom();
       }
     }
-    this._ensureResizeObserver();
+    this._scrollCtrl.hostUpdate();
   }
 
   private _handleSlotChange(name: string, e: Event): void {
@@ -269,83 +261,17 @@ export class ChatMessages extends LitElement {
     this._applySlotTemplateHtml(name, content);
   }
 
-  private _ensureResizeObserver(): void {
-    const inner = this.renderRoot.querySelector('.chat-messages-inner');
-    if (inner && inner !== this._observedEl) {
-      this._resizeObserver?.disconnect();
-      this._resizeObserver = new ResizeObserver(() => {
-        if (this._autoScroll) {
-          this._resizeScrollLock = true;
-          this._scrollToBottom();
-          clearTimeout(this._resizeDebounceTimer);
-          this._resizeDebounceTimer = setTimeout(() => {
-            this._resizeScrollLock = false;
-            this._scrollToBottom();
-          }, 150);
-        } else {
-          this._hasNewContent = true;
-        }
-      });
-      this._resizeObserver.observe(inner);
-      this._observedEl = inner;
-    }
-    if (!inner && this._observedEl) {
-      this._resizeObserver?.disconnect();
-      this._observedEl = undefined;
-    }
-  }
-
-  /**
-   * Scroll the message list to the latest content. Uses several passes because
-   * nested shadow/custom elements (e.g. `i-chat-form`, mermaid) often finish
-   * layout after the first frame — a single rAF can leave `_autoScroll` true
-   * while the viewport is still above new content (scroll-down button hidden).
-   */
-  private _scrollToBottom(): void {
-    const seq = ++this._scrollToBottomSeq;
-    const apply = (): void => {
-      if (seq !== this._scrollToBottomSeq || !this.isConnected) return;
-      const el = this._scrollContainer;
-      if (el) el.scrollTop = el.scrollHeight;
-    };
-
-    requestAnimationFrame(() => {
-      apply();
-      requestAnimationFrame(() => {
-        apply();
-        queueMicrotask(apply);
-        requestAnimationFrame(() => {
-          apply();
-          if (seq !== this._scrollToBottomSeq) return;
-          setTimeout(apply, 0);
-        });
-      });
-    });
-    this._hasNewContent = false;
-  }
-
   /** `i-chat-message` morphdom / embedded widgets may resize without `messages` changing. */
   private _onChatContentResize = (): void => {
-    if (this._autoScroll) {
-      this._scrollToBottom();
-    }
+    this._scrollCtrl.handleContentResize();
   };
 
   private _handleScrollToBottom(): void {
-    this._autoScroll = true;
-    this._scrollToBottom();
+    this._scrollCtrl.handleScrollToBottom();
   }
 
   private _handleScroll(): void {
-    if (this._resizeScrollLock) return;
-    const el = this._scrollContainer;
-    if (!el) return;
-    const threshold = 60;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    this._autoScroll = atBottom;
-    if (atBottom) {
-      this._hasNewContent = false;
-    }
+    this._scrollCtrl.handleScroll();
   }
 
   /**
@@ -721,41 +647,21 @@ export class ChatMessages extends LitElement {
    * @internal — not part of the public standalone API.
    */
   _clearPresentation(): void {
-    this._autoScroll = true;
-    this._hasNewContent = false;
+    this._scrollCtrl.reset();
     this._replies = [];
-    this.dismissError();
+    this._errorCtrl.dismiss();
   }
 
-  /**
-   * Display a transient error banner at the top of the chat area.
-   * @param text    The message to display.
-   * @param options.duration  Auto-dismiss after this many milliseconds. 0 = manual only (default).
-   */
   showError(text: string, options?: { duration?: number }): void {
-    clearTimeout(this._errorDismissTimer);
-    this._errorBanner = text;
-    const duration = options?.duration;
-    if (duration && duration > 0) {
-      this._errorDismissTimer = setTimeout(() => this.dismissError(), duration);
-    }
-    this.dispatchEvent(
-      new CustomEvent('error', {
-        detail: { message: text },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this._errorCtrl.show(text, options);
+  }
+
+  dismissError(): void {
+    this._errorCtrl.dismiss();
   }
 
   /**
    * Update a progress step's status within a specific message.
-   * @param messageId - The message `id` that contains the progress block.
-   * @param step      - One-based step number.
-   * @param status    - The new status to apply.
-   * @param bid       - Optional block id to target a specific progress block when
-   *                    the message contains more than one.
-   * @returns `true` if the step was found and updated.
    */
   updateProgressStep(messageId: string, step: number, status: ProgressStatus, bid?: string): boolean {
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
@@ -763,12 +669,6 @@ export class ChatMessages extends LitElement {
     );
     if (!msgEl) return false;
     return msgEl.updateProgressStep(step, status, bid);
-  }
-
-  /** Dismiss the error banner. */
-  dismissError(): void {
-    clearTimeout(this._errorDismissTimer);
-    this._errorBanner = '';
   }
 
   /**
@@ -805,10 +705,10 @@ export class ChatMessages extends LitElement {
         <slot name="reasoning-header" @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}></slot>
       </div>
       <div class="chat-messages-wrapper" role="log" aria-live="polite" aria-label=${labels.messages.chatMessages}>
-        ${this._errorBanner
+        ${this._errorCtrl.text
           ? html`<div class="error-banner" role="alert">
               ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}
-              <span class="error-banner-text">${this._errorBanner}</span>
+              <span class="error-banner-text">${this._errorCtrl.text}</span>
               <button
                 class="error-banner-dismiss"
                 @click=${() => this.dismissError()}
@@ -870,7 +770,7 @@ export class ChatMessages extends LitElement {
                 </div>
               `}
         </div>
-        ${this._hasNewContent
+        ${this._scrollCtrl.hasNewContent
           ? html`
               <button
                 class="scroll-down-btn"

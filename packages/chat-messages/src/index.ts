@@ -9,6 +9,8 @@ export { ChatToolCall } from './components/chat-tool-call.js';
 export { ChatTodo } from './components/chat-todo.js';
 
 export { StreamingController } from './controllers/streaming-controller.js';
+export { ScrollController } from './controllers/scroll-controller.js';
+export { ErrorBannerController } from './controllers/error-banner-controller.js';
 
 export { rendererRegistry } from './renderers/registry.js';
 export { partRendererRegistry } from './renderers/part-registry.js';
