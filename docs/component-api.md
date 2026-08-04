@@ -17,6 +17,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `emptyText` | `string` | `''` | Plain text when there are no messages and no `empty` slot |
 | `placeholder` | `string` | `''` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`). Empty → localized default from `config.locale` / `config.labels.composer.placeholder` |
 | `disabled` | `boolean` | `false` | Disables the default composer |
+| `busy` | `boolean` (readonly) | `false` | `true` while a submission is passing through `beforeSend` middleware or an assistant message is streaming. Reflected as the `busy` and `aria-busy` host attributes; new sends are blocked while the textarea remains available for the next draft. |
 | `ready` | `Promise<void>` (readonly) | — | Resolves after the first render when child elements are queryable. Data methods are safe before `ready`; DOM methods may `await chat.ready`. |
 | `messageMode` | `'uncontrolled'` \| `'controlled'` | `'uncontrolled'` | Message ownership mode. `uncontrolled`: component owns messages (default). `controlled`: host owns messages — imperative methods emit `messages-change` with `committed: false`; host must synchronously write `event.detail.messages` back. |
 | `showVoiceInput` | `boolean` | `true` | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition |
@@ -34,6 +35,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `cancel` | — | User cancelled during streaming (default input) |
 | `messages-change` | `MessagesChangeDetail` | Emitted after any imperative message-collection mutation commits. Direct external `messages = […]` does **not** emit this event. |
 | `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
+| `busy-change` | `{ busy: boolean }` | Effective busy state changed. Useful for disabling a custom `slot="input"` composer. |
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
 | `part-action` | `{ kind, action, messageId, message, partId?, partType?, part?, payload }` | Unified event for rendered part interactions. `kind` is `'form'`, `'todo'`, or `'tool-call'`. |
 | `link-click` | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself |
@@ -238,7 +240,7 @@ Message-related slots are **forwarded** with declarative `<slot name="…" slot=
 | `reasoning-header` | Custom header for reasoning / “thinking” blocks |
 | `empty` | Content when there are no messages |
 | `actions` | Bottom-left toolbar **inside** the default `<i-chat-input>` (attach, model picker, etc.) |
-| `input` | **Replaces** the entire default `<i-chat-input>` — supply your own footer; dispatch `send` / handle streaming as needed |
+| `input` | **Replaces** the entire default `<i-chat-input>` — supply your own footer; dispatch `send` and mirror `busy-change` / `streaming-change` as needed |
 
 When a composer confirmation is active, the confirmation panel temporarily replaces both the default composer and any custom `slot="input"` content.
 

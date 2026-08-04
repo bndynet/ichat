@@ -22,4 +22,4 @@ In-depth design and reference docs. For installation and a runnable quick start,
 
 - [Theming](./theming.md) — the 12 base CSS tokens, derivation, host light/dark contract, Mermaid tokens, and the full CSS custom properties reference.
 - [Localization (i18n)](./localization.md) — `config.locale` / `config.labels`, plurals (`makeDaysAgo`), and RTL.
-- [Composer & interaction](./composer.md) — streaming state, reply (quote) blocks, and the default composer's voice input.
+- [Composer & interaction](./composer.md) — busy/streaming state, draft editing, reply blocks, and the default composer's voice input.

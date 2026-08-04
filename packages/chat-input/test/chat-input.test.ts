@@ -22,6 +22,27 @@ const el = new Ctor() as HTMLElement & Record<string, unknown>;
 assert.equal(el.placeholder, '');
 assert.equal(el.locale, '');
 assert.equal(el.streaming, false);
+assert.equal(el.busy, false);
 assert.equal(el.disabled, false);
 assert.equal(el.showVoiceInput, true);
 assert.equal(el.voiceDiagnostics, false);
+
+// Busy blocks programmatic submission at the same guard used by click/Enter.
+{
+  const input = new Ctor() as HTMLElement & {
+    busy: boolean;
+    setValue(value: string): void;
+    _submit(): void;
+  };
+  let sends = 0;
+  input.addEventListener('send', () => { sends += 1; });
+
+  input.setValue('hello');
+  input.busy = true;
+  input._submit();
+  assert.equal(sends, 0);
+
+  input.busy = false;
+  input._submit();
+  assert.equal(sends, 1);
+}

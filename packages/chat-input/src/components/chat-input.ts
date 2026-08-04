@@ -1,4 +1,4 @@
-import { LitElement, html, nothing, unsafeCSS } from 'lit';
+import { LitElement, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
 import { resolveComposerLabels, type ComposerLabels } from '../i18n.js';
@@ -66,6 +66,7 @@ interface SpeechRecognition extends EventTarget {
  *   `showVoiceInput` is true and the browser supports speech recognition
  *   (while listening, the textarea is read-only for the user and a clear overlay shows status)
  * - Send / Cancel buttons depending on streaming state
+ * - Busy state locks the composer while the host preprocesses or streams a request
  * - Fires `send` and `cancel` custom events
  *
  * Slot `actions` — bottom-left toolbar (attach / model / tools, etc.).
@@ -98,6 +99,9 @@ export class ChatInput extends LitElement {
 
   /** When true the cancel button is shown instead of the send button. */
   @property({ type: Boolean, reflect: true }) streaming = false;
+
+  /** Block submission and voice input while still allowing the next draft to be edited. */
+  @property({ type: Boolean, reflect: true }) busy = false;
 
   /** Disable the input (greyed-out, non-interactive). */
   @property({ type: Boolean, reflect: true }) disabled = false;
@@ -152,6 +156,17 @@ export class ChatInput extends LitElement {
 
   override firstUpdated(): void {
     this._autoResize();
+  }
+
+  override updated(changed: PropertyValues): void {
+    super.updated(changed);
+    if (
+      this._listening &&
+      (this.disabled || this.busy || this.streaming) &&
+      (changed.has('disabled') || changed.has('busy') || changed.has('streaming'))
+    ) {
+      this._stopVoiceRecognition(true);
+    }
   }
 
   override disconnectedCallback(): void {
@@ -288,7 +303,7 @@ export class ChatInput extends LitElement {
   }
 
   private _toggleVoice(): void {
-    if (this.disabled || this.streaming) return;
+    if (this.disabled || this.busy || this.streaming) return;
     if (this._listening) {
       this._stopVoiceRecognition(false);
       return;
@@ -355,7 +370,7 @@ export class ChatInput extends LitElement {
 
   private _submit(): void {
     const content = this._value.trim();
-    if (!content || this.streaming || this.disabled || this._listening) return;
+    if (!content || this.busy || this.streaming || this.disabled || this._listening) return;
 
     this.dispatchEvent(
       new CustomEvent('send', {
@@ -390,13 +405,17 @@ export class ChatInput extends LitElement {
 
   render() {
     const canSend =
-      this._value.trim().length > 0 && !this.streaming && !this.disabled && !this._listening;
+      this._value.trim().length > 0 &&
+      !this.busy &&
+      !this.streaming &&
+      !this.disabled &&
+      !this._listening;
     const showVoiceButton = this.showVoiceInput && ChatInput.isVoiceInputSupported();
     const fieldLocked = this.disabled || this._listening;
     const L = this._labels;
 
     return html`
-      <div class="chat-input-wrapper">
+      <div class="chat-input-wrapper ${fieldLocked ? 'chat-input-wrapper--locked' : ''}">
         <div class="chat-input-field ${this._listening ? 'chat-input-field--listening' : ''}">
           <textarea
             class="chat-input-textarea"
@@ -416,7 +435,11 @@ export class ChatInput extends LitElement {
             : nothing}
         </div>
         <div class="chat-input-toolbar">
-          <div class="chat-input-toolbar-start">
+          <div
+            class="chat-input-toolbar-start"
+            ?inert=${this.disabled || this.busy || this.streaming}
+            aria-disabled=${this.disabled || this.busy || this.streaming ? 'true' : 'false'}
+          >
             <slot name="actions"></slot>
           </div>
           <div class="chat-input-toolbar-end">
@@ -438,7 +461,7 @@ export class ChatInput extends LitElement {
                           type="button"
                           class="chat-input-btn chat-input-voice ${this._listening ? 'chat-input-voice--active' : ''}"
                           @click=${this._toggleVoice}
-                          ?disabled=${this.disabled}
+                          ?disabled=${this.disabled || this.busy}
                           aria-label=${this._listening ? L.voiceStop : L.voiceStart}
                           aria-pressed=${this._listening}
                           title=${this._listening ? L.voiceStopTitle : L.voiceStartTitle}

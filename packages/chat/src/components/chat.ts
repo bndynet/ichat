@@ -123,6 +123,7 @@ export interface ChatConfirmationChangeDetail {
  * @fires messages-change - `{ detail: MessagesChangeDetail }` after a message-collection mutation commits.
  *   Direct external `messages = […]` assignments do **not** emit this event.
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
+ * @fires busy-change - `{ detail: { busy: boolean } }` when send preprocessing or streaming starts/stops
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
  * @fires part-action - `{ detail: ChatPartActionDetail }` unified action from rendered message parts
  * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
@@ -213,6 +214,16 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   @query('i-chat-messages') private _messages!: ChatMessages;
   @query('i-chat-input') private _input!: ChatInput;
 
+  /**
+   * True while a user submission is being preprocessed or an assistant message
+   * is streaming. This is derived state: consumers should observe it rather
+   * than assign it.
+   */
+  get busy(): boolean {
+    return this._submitting || this._streaming;
+  }
+
+  @state() private _submitting = false;
   @state() private _streaming = false;
 
   private _slotCtrl = new SlotForwardingController(this);
@@ -620,6 +631,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
+    this._reflectBusyState();
   }
 
   override disconnectedCallback(): void {
@@ -645,22 +657,35 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
 
   // ── Events ────────────────────────────────────────────────────────
 
+  private get _sendBlocked(): boolean {
+    return this.disabled || this.busy || !!this._confirmCtrl.active;
+  }
+
   private async _handleSend(e: CustomEvent<{ content: string }>): Promise<void> {
     e.stopPropagation();
-    if (this.disabled || this._streaming || this._confirmCtrl.active) return;
+    if (this._sendBlocked) return;
 
-    let content = e.detail.content;
-    // Run through beforeSend middleware chain
-    const processed = await this._middlewareChain.executeBeforeSend(content);
-    if (processed == null) return; // Dropped by middleware
+    this._setSubmittingState(true);
+    try {
+      // Run through beforeSend middleware chain. `_submitting` closes the
+      // duplicate-send window while an async middleware is pending.
+      const processed = await this._middlewareChain.executeBeforeSend(e.detail.content);
+      if (processed == null) return; // Dropped by middleware
 
-    this.dispatchEvent(
-      new CustomEvent('send', {
-        detail: { content: processed },
-        bubbles: true,
-        composed: true,
-      })
-    );
+      // State may have changed while middleware was awaiting. Ignore this
+      // submission if the chat became unavailable for any other reason.
+      if (this.disabled || this._streaming || this._confirmCtrl.active) return;
+
+      this.dispatchEvent(
+        new CustomEvent('send', {
+          detail: { content: processed },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    } finally {
+      this._setSubmittingState(false);
+    }
   }
 
   private _handleCancel(e: Event): void {
@@ -674,10 +699,36 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   private _setStreamingState(streaming: boolean): void {
+    const wasBusy = this.busy;
     this._streaming = streaming;
     if (this._input) {
       this._input.streaming = streaming;
     }
+    this._syncBusyState(wasBusy);
+  }
+
+  private _setSubmittingState(submitting: boolean): void {
+    if (submitting === this._submitting) return;
+    const wasBusy = this.busy;
+    this._submitting = submitting;
+    this._syncBusyState(wasBusy);
+  }
+
+  private _reflectBusyState(): void {
+    this.toggleAttribute('busy', this.busy);
+    this.setAttribute('aria-busy', String(this.busy));
+  }
+
+  private _syncBusyState(wasBusy: boolean): void {
+    this._reflectBusyState();
+    if (this.busy === wasBusy) return;
+    this.dispatchEvent(
+      new CustomEvent('busy-change', {
+        detail: { busy: this.busy },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private _handleStreamingChange(e: CustomEvent<{ streaming: boolean }>): void {
@@ -765,6 +816,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
                       .placeholder=${this.placeholder}
                       .locale=${this.config.locale ?? ''}
                       .labels=${this.config.labels?.composer}
+                      .busy=${this.busy}
                       .streaming=${this._streaming}
                       .showVoiceInput=${this.showVoiceInput}
                       .voiceLang=${this.voiceLang}

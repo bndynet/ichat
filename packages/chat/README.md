@@ -42,6 +42,8 @@ For custom `x-*` part types, use the generic `Chat<TExtraParts>` to get full typ
 
 Backend integration is done via `ChatRunController` — see the [streaming integration guide](../../README.md#quick-start-es-modules) in the main README.
 
+`chat.busy` is a read-only UI state covering submission preprocessing and assistant streaming. New sends are blocked while busy, but the default textarea remains editable for the next draft; custom composers can mirror the state with the bubbling `busy-change` event.
+
 ## Optional add-ons
 
 | Package | Description |

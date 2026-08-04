@@ -23,14 +23,22 @@ input.innerHTML = `
 `
 
 const textarea = input.querySelector('textarea')
+const sendButton = input.querySelector('[data-action="send"]')
+let busy = chat.busy
+
+chat.addEventListener('busy-change', (event) => {
+  busy = event.detail.busy
+  sendButton.disabled = busy
+})
+
 input.querySelector('[data-action="attach"]').addEventListener('click', () => {
   textarea.value += `${textarea.value ? '\n' : ''}[attachment placeholder]`
   textarea.focus()
 })
 
-input.querySelector('[data-action="send"]').addEventListener('click', () => {
+sendButton.addEventListener('click', () => {
   const content = textarea.value.trim()
-  if (!content) return
+  if (!content || busy) return
 
   input.dispatchEvent(new CustomEvent('send', {
     detail: { content },

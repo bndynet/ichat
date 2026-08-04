@@ -92,10 +92,10 @@ extra security or performance configuration is required for normal use.
       timestamp: Date.now(),
     });
 
-    // Important: create the assistant placeholder before starting fetch/SSE,
-    // not after the first token arrives. The built-in composer uses
-    // `streaming: true` to switch Send -> Cancel and block duplicate sends
-    // while the network request is waiting for the first chunk.
+    // Important: create the assistant placeholder before the first network
+    // await, not after the first token arrives. `chat.busy` starts while the
+    // submission is preprocessed, then `streaming: true` keeps the composer
+    // locked and switches Send -> Cancel until the response finishes.
     chat.addMessage({
       id: assistantId,
       role: 'assistant',
@@ -135,7 +135,7 @@ extra security or performance configuration is required for normal use.
       }
     } finally {
       // Important: always release streaming, including success, error, and
-      // cancellation. If this is skipped, the composer will remain locked.
+      // cancellation. If this is skipped, new submissions remain blocked.
       chat.updateMessage(assistantId, { streaming: false });
       if (activeStream === stream) {
         activeStream = null;
@@ -152,6 +152,10 @@ extra security or performance configuration is required for normal use.
 
   chat.addEventListener('streaming-change', (e) => {
     // Optional: e.detail.streaming mirrors assistant streaming state
+  });
+
+  chat.addEventListener('busy-change', (e) => {
+    // Optional: e.detail.busy mirrors the default composer's submission lock
   });
 </script>
 ```
@@ -281,7 +285,7 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 - **Structured `parts[]` body** — every message body is an ordered list of typed parts (`text`, `reasoning`, `tool-call`, `todo`, `file`, `source`, custom `x-*`); parts stream and update independently ([Message model](docs/message-model.md#message-body--parts))
 - **Reasoning parts** — collapsible “thinking” UI + streaming ([Parts](docs/parts.md#reasoning))
 - **Tool calls** — first-class `tool-call` parts with a state machine, rich nested results, and human-in-the-loop approval ([Parts](docs/parts.md#tool-calls))
-- **Streaming typewriter** — progressive reveal and cursor state on streaming `text` parts ([Composer & interaction](docs/composer.md#streaming))
+- **Streaming typewriter** — progressive reveal and cursor state on streaming `text` parts ([Composer & interaction](docs/composer.md#busy-and-streaming))
 - **Reply blocks** — quote previews under a message via **`replyMessage`** / **`clearReplyMessage`** ([Composer & interaction](docs/composer.md#reply-blocks))
 - **Slots** — avatars, actions, empty state ([`<i-chat>` API](docs/component-api.md#slots-on-i-chat))
 - **Progress** — `[status]` markdown lists rendered as vertical progress blocks ([Progress](docs/progress.md))

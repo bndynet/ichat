@@ -30,6 +30,11 @@
       0 0 0 3px color-mix(in srgb, var(--_input-primary) 18%, transparent),
       inset 0 1px 0 color-mix(in srgb, var(--_input-text) 8%, transparent);
   }
+
+  &--locked {
+    border-color: color-mix(in srgb, var(--_input-border) 82%, transparent);
+    background: color-mix(in srgb, var(--_input-bg) 92%, var(--_input-border));
+  }
 }
 
 .chat-input-field {
@@ -118,6 +123,13 @@
 
   &::placeholder {
     color: var(--_input-placeholder);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: color-mix(in srgb, var(--_input-text) 72%, var(--_input-placeholder));
+    -webkit-text-fill-color: color-mix(in srgb, var(--_input-text) 72%, var(--_input-placeholder));
+    opacity: 0.82;
   }
 
   &::-webkit-scrollbar {

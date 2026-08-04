@@ -4,7 +4,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 > **For cross-cutting architecture, performance, and DX improvements see the [Optimization Plan](./optimization-plan.md).**
 >
-> **Current focus (2026-08-04): professional-library hardening without feature expansion.** Do not add new message types, renderers, or interaction features until the P0 contract and state-architecture work below is complete.
+> **Current focus (2026-08-05): professional-library hardening without feature expansion.** Do not add new message types, renderers, or interaction features until the P0 contract and state-architecture work below is complete.
 
 ## Completed
 
@@ -87,14 +87,17 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ## Professional Library Readiness Backlog
 
-Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibility 6.8, usability 7.3. The target is **8.5/10** after P0 and the core P1 items. Work is grouped by category; within each category, items are ordered **P0 → P1 → P2 → Deferred**. Priorities are based on consumer impact and public-contract risk, not source-file length.
+Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (2026-08-05): **6.9/10 current release readiness** — the structural decomposition improved, but `messages` / `messageMode` synchronization regressions keep the state architecture incomplete. The target is **8.5/10** after P0 and the core P1 items. Work is grouped by category; within each category, items are ordered **P0 → P1 → P2 → Deferred**. Priorities are based on consumer impact and public-contract risk, not source-file length.
 
 ### Architecture & State Management
 
-- [x] 🔴 **[P0] Create one authoritative `ChatMessageStore`** ✅ (completed 2026-08-04) — Extracted `ChatMessageStore` class (303 lines) encapsulating messages array, commit logic (controlled/uncontrolled modes), streaming-state derivation, and all pure data-mutation methods. Implements `ChatMessageStorePort` so `ChatRunController` works unchanged. `chat.ts`: 966 → 790 lines (-176).
-- [ ] 🔴 **[P0] Make controlled ownership framework-safe** — Remove the requirement that hosts synchronously write `messages-change.detail.messages` back during the event handler. Define a deterministic snapshot/acceptance contract so sequential run-controller updates cannot read stale state in React-style asynchronous hosts. Preserve uncontrolled mode as the simple default and document any major-version migration required.
-  - **Done when:** sequential controlled updates remain correct with asynchronous host state propagation, and controlled/uncontrolled behavior shares the same store tests.
+- [ ] 🔴 **[P0] Complete one authoritative `ChatMessageStore`** — The class extraction is complete, but the public `chat.messages` property and the store's internal `_messages` array are currently independent sources of truth. External history assignment followed by `updateMessage()` is ignored, while `addMessage()` can replace the externally assigned history. Make the public property delegate to the store or make the store operate on a host-provided snapshot/commit port; do not rely only on an asynchronous Lit `updated()` synchronization bridge.
+  - **Done when:** initial and runtime external `messages` assignments are immediately visible to every imperative method and `ChatRunController`; adding/updating/removing after an external assignment preserves the full history; parent and standalone child share the same mutation/commit rules; the state core emits plain change data and does not construct DOM `CustomEvent`s.
+- [ ] 🔴 **[P0] Make controlled ownership and mode transitions framework-safe** — Remove the requirement that hosts synchronously write `messages-change.detail.messages` back during the event handler. Keep `ChatMessageStore.mode` synchronized with `messageMode` before connection and after every runtime change. Define a deterministic snapshot/acceptance contract so sequential run-controller updates cannot read stale state in React-style asynchronous hosts. Preserve uncontrolled mode as the simple default and document any major-version migration required.
+  - **Done when:** setting controlled mode before connection affects pre-`ready` data methods; runtime mode changes take effect on the next mutation; controlled write-back updates the store snapshot; sequential controlled updates remain correct with asynchronous host state propagation; controlled/uncontrolled behavior shares the same store tests.
 - [x] 🟡 **[P1] Decompose components by responsibility** ✅ (completed 2026-08-04) — All three targets extracted: `ChatMessageStore` (state ownership), `ChatFormElement` (521 lines from `form-renderer.ts`, which shrank 622→93), `ScrollController` (160 lines) + `ErrorBannerController` (67 lines) as Lit ReactiveControllers from `chat-messages.ts` (893→793).
+- [ ] 🟡 **[P1] Make extracted ReactiveController state observable** — `ScrollController` changes `autoScroll` / `hasNewContent` without always requesting a host update, so the scroll-to-latest affordance can remain stale until an unrelated render. Request updates only when observable controller state changes, and keep timers/animation-frame work lifecycle-safe.
+  - **Done when:** scrolling back to the bottom, clicking the scroll button, clearing, and content-resize transitions update the button immediately; controller behavior is covered by browser/component tests rather than private-field assertions.
 
 ### Extensibility
 
@@ -109,6 +112,8 @@ Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibi
 
 ### Testing & Release Quality
 
+- [ ] 🔴 **[P0] Add a Store × ownership × lifecycle behavior matrix** — Add real component tests for initial external history, runtime history replacement, every imperative mutation, pre-connect calls, controlled/uncontrolled transitions, synchronous and asynchronous host acceptance, and `ChatRunController` streaming over both modes. Existing API-surface tests that only assert method presence are not sufficient for the extracted state boundary.
+  - **Done when:** the verified history-loss and pre-connect mode regressions fail before the fix and pass after it; tests exercise rendered `<i-chat>` behavior in a browser-capable environment.
 - [ ] 🔴 **[P0] Add repository-local CI and release gates** — Run build, type generation/checks, unit/component tests, official renderer tests, browser streaming/security smoke tests, and package-validation checks on pull requests and before publish. Use supported Node.js LTS versions and enforce coverage/API thresholds in CI rather than only exposing local scripts.
   - **Done when:** required PR checks block regressions; release cannot publish when tests, browser smoke tests, type exports, or `npm pack` validation fail; documentation no longer references a missing workflow.
 - [ ] 🟢 **[P2] Complete distribution metadata** — Include the repository license in published packages and add supported engines, security policy, contribution guidance, package smoke tests, and API compatibility reporting.
@@ -117,6 +122,8 @@ Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibi
 
 - [ ] 🟡 **[P1] Define intentional package and API boundaries** — Separate side-effect-free types/utilities from custom-element registration where practical; add explicit subpath exports/define entry points, accurate `sideEffects` metadata, a Custom Elements Manifest and framework typings, and automated public API/package checks. Reduce the top-level barrel to supported consumer APIs and mark internals clearly.
   - **Done when:** consumers can import types/core helpers without registering every element; bundlers and framework tooling can discover the components and events; accidental public API changes are detected.
+- [ ] 🟢 **[P2] Fix labels-cache reference invalidation** — Cache resolved labels by locale and the actual `config.labels` object reference, not by a boolean indicating whether labels exist. Replacing one truthy labels object with another must invalidate the cache and update rendered localized text.
+  - **Done when:** replacing `{ empty: 'A' }` with `{ empty: 'B' }` under the same locale renders `B`, with a regression test covering the reference change.
 - [ ] 🟢 **[P2] Make documentation reflect runtime behavior** — Reconcile warning-vs-throw semantics, extension registration timing, current test counts, controlled-mode behavior, and CI status. Generate API tables from declarations/Custom Elements Manifest where possible so roadmap, README, and implementation review do not drift independently.
 
 ### Performance & Security
@@ -133,7 +140,7 @@ Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibi
 
 - [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party dependencies are externalized for consumer bundlers. (Phase 2.3 step 1)
 - [x] 🟡 **`<i-chat>` decomposition** ✅ (completed 2026-07-26) — Extracted `CommandQueue`, `ConfirmationController`, and `SlotForwardingController`. (Phase 6.1)
-- [x] 🟡 **Further decomposition** ✅ (completed 2026-08-04) — Extracted `ChatMessageStore` (state ownership, commit semantics, streaming derivation), `ScrollController` and `ErrorBannerController` (Lit ReactiveControllers from `chat-messages.ts`), `ChatFormElement` (521-line custom element from `form-renderer.ts`), plus earlier `ChatConfirmation`, inlined registration wrappers, and deduplicated renderer utilities.
+- [x] 🟡 **Further structural decomposition** ✅ (completed 2026-08-04) — Extracted the initial `ChatMessageStore` class, `ScrollController` and `ErrorBannerController` ReactiveControllers, and `ChatFormElement`, plus earlier `ChatConfirmation`, inlined registration wrappers, and deduplicated renderer utilities. State synchronization and controller behavior remain open items above; this completion records file/responsibility extraction only.
 - [x] 🔵 **Remove deprecated APIs** ✅ (completed 2026-07-30) — Removed v2 compatibility APIs scheduled for the v3 major release. (Phase 6.2)
 
 ## Compatibility & Deprecation

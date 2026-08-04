@@ -1,6 +1,6 @@
 <script setup>
-import { computed, ref, nextTick, onMounted } from 'vue';
-import { Link, Paperclip, Promotion } from '@element-plus/icons-vue';
+import { ref, nextTick, onMounted } from 'vue';
+import { Paperclip, Promotion } from '@element-plus/icons-vue';
 import '@bndynet/ichat';
 import { cancelPendingStreamPlayback, reply } from '../../composables/demo-data.js';
 import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
@@ -10,22 +10,23 @@ const draft = ref('');
 const model = ref('');
 const inputRootRef = ref(null);
 const textareaRef = ref(null);
+const busyUi = ref(false);
 const streamingUi = ref(false);
-const requestPending = ref(false);
 const chatRef = ref(null);
-const composerBusy = computed(() => streamingUi.value || requestPending.value);
+
+function onBusyChange(e) {
+  busyUi.value = e.detail.busy;
+}
 
 function onStreamingChange(e) {
   streamingUi.value = e.detail.streaming;
-  requestPending.value = false;
 }
 
 function emitSendToHost() {
   const content = draft.value.trim();
-  if (!content || composerBusy.value) return;
+  if (!content || busyUi.value) return;
   const inputRoot = inputRootRef.value;
   if (!inputRoot) return;
-  requestPending.value = true;
   inputRoot.dispatchEvent(
     new CustomEvent('send', {
       bubbles: true,
@@ -49,8 +50,7 @@ function onAttachDemo() {
 
 function handleSend(e) {
   const content = e.detail.content;
-  const willStream = reply(chatRef, content);
-  if (!willStream) requestPending.value = false;
+  reply(chatRef, content);
 }
 
 function onModelChange(e) {
@@ -65,6 +65,7 @@ onMounted(async () => {
 <template>
   <i-chat
     ref="chatRef"
+    @busy-change="onBusyChange"
     @streaming-change="onStreamingChange"
     @send="handleSend"
   >
@@ -76,7 +77,6 @@ onMounted(async () => {
         class="slots-input-textarea"
         placeholder="Say hi…"
         rows="1"
-        :disabled="composerBusy"
         @keydown.enter.exact.prevent="emitSendToHost"
       />
       <div class="slots-input-toolbar">
@@ -87,6 +87,7 @@ onMounted(async () => {
               :icon="Paperclip"
               text
               bg
+              :disabled="busyUi"
               @click="onAttachDemo"
               >Attach</el-button
             >
@@ -96,6 +97,7 @@ onMounted(async () => {
               v-model="model"
               size="small"
               placeholder="Select Model"
+              :disabled="busyUi"
               @change="onModelChange"
             >
               <el-option value="gpt-4o" label="GPT-4o" />
@@ -111,7 +113,7 @@ onMounted(async () => {
         </div>
         <div class="slots-input-end">
           <el-button
-            v-if="composerBusy"
+            v-if="streamingUi"
             size="small"
             type="warning"
             @click="handleCancel"
@@ -123,7 +125,7 @@ onMounted(async () => {
             size="small"
             type="primary"
             :icon="Promotion"
-            :disabled="!draft.trim()"
+            :disabled="busyUi || !draft.trim()"
             @click="emitSendToHost"
           >
             Send
