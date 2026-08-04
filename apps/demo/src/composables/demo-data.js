@@ -192,15 +192,15 @@ export const demoData = {
       ':::',
 };
 
-/** Streaming thinking demo — reuses `demoData` markdown so one stream shows charts, KPI, form, details, and progress. */
-const thinkingDemoEvents = [
+/** Streaming all-in-one demo — shows charts, KPI, form, details, and progress in a single stream. */
+const allDemoEvents = [
   {
     reasoning:
-      '**Summary:** The user asked for the `thinking` demo, so I will keep the thought stream compact and use the answer body for the heavy markdown/rendering examples.\n\n',
+      '**Summary:** The user asked for the all-in-one demo, so I will keep the thought stream compact and use the answer body for the heavy markdown/rendering examples.\n\n',
   },
   {
     reasoning:
-      '<!-- bid:plan -->\n1. [done] **Classify** — Treat `thinking` as a showcase request.\n2. [active] **Prepare** — Stream a short thought summary while the answer gathers charts, KPI, form, details, and progress examples.\n3. [pending] **Answer** — Put the user-facing result in the main bubble.\n4. [pending] **Finish** — Collapse the summary when generation completes.\n\n',
+      '<!-- bid:plan -->\n1. [done] **Classify** — Treat this as a showcase request.\n2. [active] **Prepare** — Stream a short thought summary while the answer gathers charts, KPI, form, details, and progress examples.\n3. [pending] **Answer** — Put the user-facing result in the main bubble.\n4. [pending] **Finish** — Collapse the summary when generation completes.\n\n',
   },
   {
     reasoning:
@@ -314,7 +314,7 @@ function playEvents(chatRef, messageId, events) {
   step();
 }
 
-function responseThinking(chatRef) {
+function responseAll(chatRef) {
   const chat = chatRef.value;
   const aiId = nextId();
   chat.addMessage({
@@ -328,7 +328,7 @@ function responseThinking(chatRef) {
   const startTimer = setTimeout(() => {
     if (cancelStream !== cancelBeforeStart) return;
     cancelStream = null;
-    playEvents(chatRef, aiId, thinkingDemoEvents);
+    playEvents(chatRef, aiId, allDemoEvents);
   }, 3000);
 
   const cancelBeforeStart = () => {
@@ -347,7 +347,7 @@ export function addMessage(chatRef, partial) {
   });
 }
 
-/** Stop the synthetic `playEvents` timer (thinking / streaming demo). Call before `i-chat` / `i-chat-messages` `.cancel()`. */
+/** Stop the synthetic `playEvents` timer (all-in-one/streaming demo). Call before `i-chat` / `i-chat-messages` `.cancel()`. */
 export function cancelPendingStreamPlayback() {
   if (cancelStream) cancelStream();
 }
@@ -386,6 +386,6 @@ export function reply(chatRef, question) {
     return false;
   }
 
-  responseThinking(chatRef);
+  responseAll(chatRef);
   return true;
 }

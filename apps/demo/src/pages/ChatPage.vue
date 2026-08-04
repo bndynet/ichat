@@ -153,7 +153,7 @@ onMounted(async () => {
           { status: 'complete' },
         ),
         textPart(
-          '结论会放在正文里；上面的 **思考摘要** 默认收起，点开后可以看到简短步骤和备注。输入 `thinking` 还能看流式状态。',
+          'The conclusion goes in the main bubble; the **thought summary** above stays collapsed by default — expand it to see the brief steps and notes. Type `all` to see the full streaming demo.',
         ),
       ],
       timestamp: Date.now(),
