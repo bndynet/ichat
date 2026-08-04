@@ -60,8 +60,9 @@ function onErrorBanner() {
 }
 
 function onCancelStream() {
-  cancelPendingStreamPlayback()
-  chatEl.value?.cancel(CANCEL_HINT)
+  if (!cancelPendingStreamPlayback(CANCEL_HINT)) {
+    chatEl.value?.cancel(CANCEL_HINT)
+  }
 }
 
 function onClear() {

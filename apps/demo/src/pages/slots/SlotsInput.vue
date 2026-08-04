@@ -38,8 +38,8 @@ function emitSendToHost() {
 }
 
 function handleCancel() {
-  cancelPendingStreamPlayback();
-  chatRef.value.cancel('*— Response stopped —*');
+  const hint = '*— Response stopped —*';
+  if (!cancelPendingStreamPlayback(hint)) chatRef.value.cancel(hint);
 }
 
 /** Left “actions” area: plain Vue, same role as the default i-chat-input left column */

@@ -54,6 +54,26 @@ chatEl.addEventListener('send', async (e) => {
 });
 ```
 
+Use the same lifecycle for a backend that returns one complete response. `start()` does not require initial parts; it keeps the chat busy while the request is pending, and `complete()` supplies the final message in one update:
+
+```javascript
+chatEl.addEventListener('send', async (e) => {
+  const run = chatEl.createRunController();
+  run.start();
+
+  try {
+    const answer = await fetchReply(e.detail.content);
+    run.complete({
+      parts: [textPart(answer, { id: 'body', status: 'complete' })],
+    });
+  } catch {
+    run.fail('Request failed');
+  }
+});
+```
+
+The demo uses these same `ChatRunController` paths for complete and simulated streaming responses, so its busy, completion, and cancellation behavior exercises the public integration API.
+
 ## Reply blocks
 
 Show quoted content **under** an existing message (e.g. after the user taps Reply in `message-actions`). The component only **renders** these blocks; you still own the composer (`<i-chat-input>` or `slot="input"`).

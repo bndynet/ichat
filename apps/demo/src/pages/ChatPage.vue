@@ -225,8 +225,8 @@ function handleSend(e) {
 }
 
 function handleCancel() {
-  cancelPendingStreamPlayback();
-  chatRef.value.cancel('*— Response stopped —*');
+  const hint = '*— Response stopped —*';
+  if (!cancelPendingStreamPlayback(hint)) chatRef.value.cancel(hint);
 }
 
 function openReplyDialog(message) {

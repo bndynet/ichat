@@ -244,8 +244,8 @@ const allDemoEvents = [
 const STREAM_STEP_MS = { min: 280, max: 520 };
 
 let msgId = 0;
-/** @type {null | (() => void)} */
-let cancelStream = null;
+/** @type {import('@bndynet/ichat').ChatRunController | null} */
+let activeRun = null;
 
 export const nextId = () => 'msg-' + ++msgId;
 
@@ -253,20 +253,11 @@ export const nextId = () => 'msg-' + ++msgId;
 const REASONING_PART_ID = 'reasoning';
 const CONTENT_PART_ID = 'content';
 
-function playEvents(chatRef, messageId, events) {
-  const chat = chatRef.value;
+function playEvents(run, events, playback) {
   let reasoningText = '';
   let contentText = '';
   let hasContentPart = false;
   let i = 0;
-  let cancelled = false;
-  let timer = null;
-
-  cancelStream = () => {
-    cancelled = true;
-    clearTimeout(timer);
-    cancelStream = null;
-  };
 
   function nextDelay(ev) {
     return (
@@ -277,19 +268,20 @@ function playEvents(chatRef, messageId, events) {
   }
 
   function step() {
-    if (cancelled) return;
+    if (playback.cancelled) return;
     if (i >= events.length) {
-      chat.updatePart(messageId, REASONING_PART_ID, { status: 'complete' });
+      run.updatePart(REASONING_PART_ID, { status: 'complete' });
       if (hasContentPart)
-        chat.updatePart(messageId, CONTENT_PART_ID, { status: 'complete' });
-      chat.updateMessage(messageId, { streaming: false });
-      cancelStream = null;
+        run.updatePart(CONTENT_PART_ID, { status: 'complete' });
+      run.complete();
+      playback.timer = null;
+      if (activeRun === run) activeRun = null;
       return;
     }
     const ev = events[i++];
     if (typeof ev.reasoning === 'string') {
       reasoningText += ev.reasoning;
-      chat.updatePart(messageId, REASONING_PART_ID, {
+      run.updatePart(REASONING_PART_ID, {
         text: reasoningText,
         status: 'streaming',
       });
@@ -297,45 +289,43 @@ function playEvents(chatRef, messageId, events) {
     if (typeof ev.content === 'string') {
       contentText += ev.content;
       if (!hasContentPart) {
-        chat.appendPart(
-          messageId,
+        run.appendPart(
           textPart(contentText, { id: CONTENT_PART_ID, status: 'streaming' }),
         );
         hasContentPart = true;
       } else {
-        chat.updatePart(messageId, CONTENT_PART_ID, {
+        run.updatePart(CONTENT_PART_ID, {
           text: contentText,
           status: 'streaming',
         });
       }
     }
-    timer = setTimeout(step, nextDelay(ev));
+    playback.timer = setTimeout(step, nextDelay(ev));
   }
   step();
 }
 
 function responseAll(chatRef) {
   const chat = chatRef.value;
-  const aiId = nextId();
-  chat.addMessage({
-    id: aiId,
-    role: 'assistant',
-    parts: [reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' })],
-    streaming: true,
-    timestamp: Date.now(),
+  const playback = { cancelled: false, timer: null };
+  const run = chat.createRunController({
+    onCancel: () => {
+      playback.cancelled = true;
+      if (playback.timer !== null) clearTimeout(playback.timer);
+      playback.timer = null;
+      if (activeRun === run) activeRun = null;
+    },
   });
+  activeRun = run;
+  run.start([
+    reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' }),
+  ]);
 
-  const startTimer = setTimeout(() => {
-    if (cancelStream !== cancelBeforeStart) return;
-    cancelStream = null;
-    playEvents(chatRef, aiId, allDemoEvents);
+  playback.timer = setTimeout(() => {
+    playback.timer = null;
+    if (playback.cancelled) return;
+    playEvents(run, allDemoEvents, playback);
   }, 3000);
-
-  const cancelBeforeStart = () => {
-    clearTimeout(startTimer);
-    if (cancelStream === cancelBeforeStart) cancelStream = null;
-  };
-  cancelStream = cancelBeforeStart;
 }
 
 /** Add any message (self / peer / assistant / reasoning / streaming flags). */
@@ -347,9 +337,11 @@ export function addMessage(chatRef, partial) {
   });
 }
 
-/** Stop the synthetic `playEvents` timer (all-in-one/streaming demo). Call before `i-chat` / `i-chat-messages` `.cancel()`. */
-export function cancelPendingStreamPlayback() {
-  if (cancelStream) cancelStream();
+/** Cancel the active demo run. Returns false when another caller owns the streaming message. */
+export function cancelPendingStreamPlayback(hint) {
+  if (!activeRun) return false;
+  activeRun.cancel(hint);
+  return true;
 }
 
 export function setStreamingFromDetail(streamingRef, e) {
@@ -376,12 +368,10 @@ export function reply(chatRef, question) {
     label.toLowerCase().includes(q),
   )?.[1];
   if (result) {
-    chat.addMessage({
-      id: nextId(),
-      role: 'assistant',
+    const run = chat.createRunController();
+    run.start();
+    run.complete({
       parts: [textPart(result)],
-      timestamp: Date.now(),
-      streaming: false,
     });
     return false;
   }
