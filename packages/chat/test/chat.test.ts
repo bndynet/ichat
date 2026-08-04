@@ -12,24 +12,34 @@
 import assert from 'node:assert/strict';
 import '../src/components/chat.js';
 
+type TestMessage = {
+  id: string;
+  role: 'assistant';
+  parts: [];
+  streaming?: boolean;
+};
+
+type TestMessagesChangeDetail = {
+  messages: TestMessage[];
+  previousMessages: TestMessage[];
+  controlled: boolean;
+  committed: boolean;
+};
+
 type TestChatElement = HTMLElement & {
   busy: boolean;
   disabled: boolean;
   messageMode: string;
   showVoiceInput: boolean;
+  messages: TestMessage[];
   config: Record<string, unknown>;
   ready: Promise<void>;
   use(middleware: {
     name: string;
     beforeSend: (content: string) => string | null | Promise<string | null>;
   }): () => void;
-  addMessage(message: {
-    id: string;
-    role: 'assistant';
-    parts: [];
-    streaming: boolean;
-  }): void;
-  updateMessage(id: string, patch: { streaming: boolean }): void;
+  addMessage(message: TestMessage): void;
+  updateMessage(id: string, patch: Partial<TestMessage>): void;
   _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
 };
 
@@ -95,6 +105,81 @@ assert.equal(typeof el.use, 'function');
 
 // ready returns a Promise
 assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
+
+// Public `messages` is the single source of truth for Store mutations.
+{
+  const chat = createChat();
+  const initial: TestMessage[] = [{
+    id: 'existing',
+    role: 'assistant',
+    parts: [],
+    streaming: false,
+  }];
+
+  chat.messages = initial;
+  chat.updateMessage('existing', { streaming: true });
+
+  assert.equal(chat.messages.length, 1);
+  assert.equal(chat.messages[0]?.id, 'existing');
+  assert.equal(chat.messages[0]?.streaming, true);
+}
+
+// Adding after an external assignment preserves the externally-owned history.
+{
+  const chat = createChat();
+  chat.messages = [{ id: 'existing', role: 'assistant', parts: [] }];
+
+  chat.addMessage({ id: 'new', role: 'assistant', parts: [] });
+
+  assert.deepEqual(chat.messages.map((message) => message.id), ['existing', 'new']);
+}
+
+// Controlled mode is read live, including before first connection/render.
+{
+  const chat = createChat();
+  let change: TestMessagesChangeDetail | undefined;
+
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    change = (event as CustomEvent<TestMessagesChangeDetail>).detail;
+  });
+  chat.addMessage({ id: 'proposed', role: 'assistant', parts: [] });
+
+  assert.deepEqual(chat.messages, []);
+  assert.equal(change?.controlled, true);
+  assert.equal(change?.committed, false);
+  assert.deepEqual(change?.messages.map((message) => message.id), ['proposed']);
+}
+
+// Derived busy state follows the state actually accepted by a controlled host.
+{
+  const rejected = createChat();
+  rejected.messageMode = 'controlled';
+  rejected.addMessage({ id: 'rejected-stream', role: 'assistant', parts: [], streaming: true });
+  assert.equal(rejected.busy, false);
+
+  const accepted = createChat();
+  accepted.messageMode = 'controlled';
+  accepted.addEventListener('messages-change', (event) => {
+    accepted.messages = (event as CustomEvent<TestMessagesChangeDetail>).detail.messages;
+  });
+  accepted.addMessage({ id: 'accepted-stream', role: 'assistant', parts: [], streaming: true });
+  assert.equal(accepted.busy, true);
+}
+
+// Runtime mode switches affect the very next mutation without Store syncing.
+{
+  const chat = createChat();
+  chat.addMessage({ id: 'owned', role: 'assistant', parts: [] });
+
+  chat.messageMode = 'controlled';
+  chat.addMessage({ id: 'not-committed', role: 'assistant', parts: [] });
+  assert.deepEqual(chat.messages.map((message) => message.id), ['owned']);
+
+  chat.messageMode = 'uncontrolled';
+  chat.addMessage({ id: 'owned-again', role: 'assistant', parts: [] });
+  assert.deepEqual(chat.messages.map((message) => message.id), ['owned', 'owned-again']);
+}
 
 // An async beforeSend middleware holds the busy lock and blocks re-entry.
 {

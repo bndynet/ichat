@@ -17,6 +17,7 @@ import type {
 } from '@bndynet/ichat-messages';
 import {
   ChatMessages,
+  buildMessagesChangeDetail,
   resolveLabels,
   removeMessageById,
   clearMessages,
@@ -28,7 +29,10 @@ import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
 import { ConfirmationController } from '../controllers/confirmation-controller.js';
 import { SlotForwardingController } from '../controllers/slot-forwarding-controller.js';
-import { ChatMessageStore } from '../controllers/chat-message-store.js';
+import {
+  ChatMessageStore,
+  type ChatMessageStoreChange,
+} from '../state/chat-message-store.js';
 import './chat-confirmation.js';
 import {
   createMiddlewareChain,
@@ -233,15 +237,46 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   private _confirmCtrl = new ConfirmationController(this);
 
   private _store = new ChatMessageStore({
-    dispatchEvent: (e) => this.dispatchEvent(e),
-    onStreamingChange: (streaming) => this._setStreamingState(streaming),
-    setMessages: (msgs) => { this.messages = msgs as unknown as typeof this.messages; },
-    mode: undefined, // set in constructor after property assignments
+    getMessages: () => this.messages as unknown as ChatMessage[],
+    commit: (change) => this._commitStoreChange(change),
   });
 
   /** @internal Plain `ChatMessage[]` view for interop with pure helpers and child component. */
   private get _msgs(): ChatMessage[] {
-    return this._store.messages;
+    return this.messages as unknown as ChatMessage[];
+  }
+
+  /** Apply a Store proposal according to the host's current ownership mode. */
+  private _commitStoreChange(change: ChatMessageStoreChange): void {
+    const { messages, previousMessages, ...context } = change;
+    const controlled = this.messageMode === 'controlled';
+
+    if (!controlled) {
+      this.messages = messages as unknown as typeof this.messages;
+      this._setStreamingState(messages.some((message) => message.streaming && !message.error));
+    }
+
+    this.dispatchEvent(
+      new CustomEvent<MessagesChangeDetail>('messages-change', {
+        detail: {
+          ...buildMessagesChangeDetail(messages, previousMessages, {
+            ...context,
+            source: 'i-chat',
+          }),
+          controlled,
+          committed: !controlled,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+
+    // A controlled host may synchronously accept or reject the proposal in
+    // the event handler. Keep derived state aligned with the authoritative
+    // public property after that decision, never with an uncommitted proposal.
+    if (controlled || this._msgs !== messages) {
+      this._setStreamingState(this._msgs.some((message) => message.streaming && !message.error));
+    }
   }
 
   // ── Ready contract (CHG-06) ───────────────────────────────────────
@@ -606,7 +641,6 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     }
 
     // Adopt the child's state as our own.
-    this._store.writeMessages(detail.messages as unknown as ChatMessage[]);
     this.messages = detail.messages as unknown as typeof this.messages;
 
     // Re-emit from <i-chat> as the authoritative source.
@@ -643,7 +677,6 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   override firstUpdated(_changed: PropertyValues): void {
     super.firstUpdated(_changed);
     // Properties are bound in the template — no manual push needed.
-    this._store.mode = this.messageMode;
     this._readyResolver();
     this._replayPendingCommands();
   }

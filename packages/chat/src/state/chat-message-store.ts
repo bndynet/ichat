@@ -1,7 +1,6 @@
 import type {
   ChatMessage,
   MessagePart,
-  MessagesChangeDetail,
   MessagesChangeReason,
   MessagePartUpdateResult,
   ToolCallUpdateResult,
@@ -25,133 +24,83 @@ import {
   normalizeMessagePartUpdateEvent,
   normalizeTodoItemUpdateEvent,
   cancelMessageData,
-  buildMessagesChangeDetail,
 } from '@bndynet/ichat-messages';
 
-export type StreamingChangeCallback = (streaming: boolean) => void;
+export interface ChatMessageStoreChangeContext {
+  reason: MessagesChangeReason;
+  messageId?: string;
+  partId?: string;
+  itemId?: string;
+}
+
+export interface ChatMessageStoreChange extends ChatMessageStoreChangeContext {
+  messages: ChatMessage[];
+  previousMessages: ChatMessage[];
+}
 
 export interface ChatMessageStoreOptions {
-  dispatchEvent: (event: Event) => boolean;
-  onStreamingChange: StreamingChangeCallback;
-  setMessages: (msgs: ChatMessage[]) => void;
-  mode?: 'controlled' | 'uncontrolled';
+  /** Read the host's current authoritative message array. */
+  getMessages: () => ChatMessage[];
+  /** Submit a computed change to the host for controlled/uncontrolled handling. */
+  commit: (change: ChatMessageStoreChange) => void;
 }
 
 /**
- * Encapsulates message-array state and all pure data-mutation methods
- * extracted from `<i-chat>`.  The host component delegates to this
- * store and keeps only DOM-touching methods (cancel, removeMessage,
- * clear, presentation proxy methods).
+ * Encapsulates pure message-array mutations without owning a second copy of
+ * the collection. The host remains the single source of truth; every mutation
+ * reads through `getMessages` and submits the computed result through `commit`.
  *
- * Implements {@link import('./chat-run-controller.js').ChatMessageStorePort}
+ * Implements {@link import('../controllers/chat-run-controller.js').ChatMessageStorePort}
  * so it can be passed directly to `ChatRunController`.
  */
 export class ChatMessageStore {
-  private _messages: ChatMessage[] = [];
-  private _mode: 'controlled' | 'uncontrolled';
-  private _onStreamingChange: StreamingChangeCallback;
-  private _dispatch: (event: Event) => boolean;
-  private _setMessages: (msgs: ChatMessage[]) => void;
+  private readonly _getMessages: () => ChatMessage[];
+  private readonly _commit: (change: ChatMessageStoreChange) => void;
 
   constructor(options: ChatMessageStoreOptions) {
-    this._mode = options.mode ?? 'uncontrolled';
-    this._dispatch = options.dispatchEvent;
-    this._onStreamingChange = options.onStreamingChange;
-    this._setMessages = options.setMessages;
+    this._getMessages = options.getMessages;
+    this._commit = options.commit;
   }
 
   // ── Public accessors ────────────────────────────────────────────
 
   /** The current message array (plain `ChatMessage[]`). */
   get messages(): ChatMessage[] {
-    return this._messages;
-  }
-
-  /** Write messages from an external source (e.g. child-originated event). */
-  writeMessages(msgs: ChatMessage[]): void {
-    this._messages = msgs;
-  }
-
-  get mode(): 'controlled' | 'uncontrolled' {
-    return this._mode;
-  }
-
-  set mode(val: 'controlled' | 'uncontrolled') {
-    this._mode = val;
-  }
-
-  // ── Streaming derivation ────────────────────────────────────────
-
-  private _syncStreamingFromMessages(msgs: ChatMessage[]): void {
-    const active = msgs.some((m) => m.streaming && !m.error);
-    this._onStreamingChange(active);
+    return this._getMessages();
   }
 
   // ── Central commit ──────────────────────────────────────────────
 
   private _commitMessages(
+    previousMessages: ChatMessage[],
     next: ChatMessage[],
-    context: {
-      reason: MessagesChangeReason;
-      messageId?: string;
-      partId?: string;
-      itemId?: string;
-    },
+    context: ChatMessageStoreChangeContext,
   ): void {
-    if (next === this._messages) return;
-    const previousMessages = this._messages;
-
-    if (this._mode === 'controlled') {
-      this._syncStreamingFromMessages(next);
-      this._dispatch(
-        new CustomEvent<MessagesChangeDetail>('messages-change', {
-          detail: {
-            ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
-            controlled: true,
-            committed: false,
-          },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      return;
-    }
-
-    // Uncontrolled: component owns the state.
-    this._messages = next;
-    this._setMessages(next);
-    this._syncStreamingFromMessages(next);
-    this._dispatch(
-      new CustomEvent<MessagesChangeDetail>('messages-change', {
-        detail: {
-          ...buildMessagesChangeDetail(next, previousMessages, { ...context, source: 'i-chat' }),
-          controlled: false,
-          committed: true,
-        },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    if (next === previousMessages) return;
+    this._commit({ ...context, messages: next, previousMessages });
   }
 
   // ── Message-level mutations ─────────────────────────────────────
 
   addMessage(message: ChatMessage): void {
-    this._commitMessages(addMessage(this._messages, message), {
+    const previousMessages = this.messages;
+    this._commitMessages(previousMessages, addMessage(previousMessages, message), {
       reason: 'message:add',
       messageId: message.id,
     });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
-    this._commitMessages(patchMessageById(this._messages, id, partial), {
+    const previousMessages = this.messages;
+    this._commitMessages(previousMessages, patchMessageById(previousMessages, id, partial), {
       reason: 'message:update',
       messageId: id,
     });
   }
 
   appendPart(messageId: string, part: MessagePart): void {
-    this._commitMessages(appendMessagePart(this._messages, messageId, part), {
+    const previousMessages = this.messages;
+    this._commitMessages(previousMessages, appendMessagePart(previousMessages, messageId, part), {
       reason: 'part:append',
       messageId,
       partId: part.id,
@@ -163,9 +112,10 @@ export class ChatMessageStore {
     partId: string,
     patch: Partial<MessagePart>,
   ): void {
-    const result = patchMessagePart(this._messages, messageId, partId, patch);
+    const previousMessages = this.messages;
+    const result = patchMessagePart(previousMessages, messageId, partId, patch);
     if (result.ok) {
-      this._commitMessages(result.messages, {
+      this._commitMessages(previousMessages, result.messages, {
         reason: 'part:update',
         messageId,
         partId,
@@ -190,10 +140,11 @@ export class ChatMessageStore {
     partId: string,
     patch: Partial<MessagePart>,
   ): MessagePartUpdateResult {
-    const result = applyMessagePartUpdate(this._messages, { messageId, partId, patch });
+    const previousMessages = this.messages;
+    const result = applyMessagePartUpdate(previousMessages, { messageId, partId, patch });
     if (!result.ok) return { ok: false, reason: result.reason, part: result.part };
 
-    this._commitMessages(result.messages, { reason: 'part:update', messageId, partId });
+    this._commitMessages(previousMessages, result.messages, { reason: 'part:update', messageId, partId });
     return { ok: true, part: result.part };
   }
 
@@ -202,7 +153,8 @@ export class ChatMessageStore {
     partId: string,
     patch: Partial<MessagePart>,
   ): ToolCallUpdateResult {
-    const lookup = findMessagePart(this._messages, messageId, partId);
+    const previousMessages = this.messages;
+    const lookup = findMessagePart(previousMessages, messageId, partId);
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
@@ -211,10 +163,10 @@ export class ChatMessageStore {
     const tcResult = patchToolCallPart(part, patch);
     if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
 
-    const replacement = replaceMessagePart(this._messages, messageId, partId, tcResult.part);
+    const replacement = replaceMessagePart(previousMessages, messageId, partId, tcResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
-    this._commitMessages(replacement.messages, { reason: 'tool-call:update', messageId, partId });
+    this._commitMessages(previousMessages, replacement.messages, { reason: 'tool-call:update', messageId, partId });
     return { ok: true, part: tcResult.part };
   }
 
@@ -225,7 +177,8 @@ export class ChatMessageStore {
     patch: TodoItemPatch,
     revision?: number,
   ): TodoItemUpdateResult {
-    const lookup = findMessagePart(this._messages, messageId, partId);
+    const previousMessages = this.messages;
+    const lookup = findMessagePart(previousMessages, messageId, partId);
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
 
     const { part } = lookup;
@@ -234,10 +187,10 @@ export class ChatMessageStore {
     const todoResult = patchTodoItem(part, itemId, patch, revision);
     if (!todoResult.ok) return { ok: false, reason: todoResult.reason, part: todoResult.part };
 
-    const replacement = replaceMessagePart(this._messages, messageId, partId, todoResult.part);
+    const replacement = replaceMessagePart(previousMessages, messageId, partId, todoResult.part);
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
-    this._commitMessages(replacement.messages, {
+    this._commitMessages(previousMessages, replacement.messages, {
       reason: 'todo-item:update',
       messageId,
       partId,
@@ -278,26 +231,23 @@ export class ChatMessageStore {
   /** Commit any pre-computed message array (used by host for remove/clear). */
   commitMessages(
     next: ChatMessage[],
-    context: {
-      reason: MessagesChangeReason;
-      messageId?: string;
-      partId?: string;
-      itemId?: string;
-    },
+    context: ChatMessageStoreChangeContext,
   ): void {
-    this._commitMessages(next, context);
+    this._commitMessages(this.messages, next, context);
   }
 
   cancelMessageData(id: string, hint?: string): ChatMessage[] | null {
-    const next = cancelMessageData(this._messages, id, hint);
-    if (next === this._messages) return null;
+    const previousMessages = this.messages;
+    const next = cancelMessageData(previousMessages, id, hint);
+    if (next === previousMessages) return null;
     return next;
   }
 
   cancelMessage(id: string, hint?: string): boolean {
-    const next = cancelMessageData(this._messages, id, hint);
-    if (next === this._messages) return false;
-    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
+    const previousMessages = this.messages;
+    const next = cancelMessageData(previousMessages, id, hint);
+    if (next === previousMessages) return false;
+    this._commitMessages(previousMessages, next, { reason: 'message:cancel', messageId: id });
     return true;
   }
 }
