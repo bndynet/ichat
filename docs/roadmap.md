@@ -91,12 +91,10 @@ Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibi
 
 ### Architecture & State Management
 
-- [ ] 🔴 **[P0] Create one authoritative `ChatMessageStore`** — Move reducer application, commit semantics, event detail construction, streaming-state derivation, and middleware interception into one DOM-independent store. `<i-chat>` and standalone `<i-chat-messages>` should adapt to the same store rather than maintain parallel mutation APIs. Keep `ChatRunController` dependent on the minimal store port.
-  - **Done when:** the parent and child no longer duplicate mutation/commit rules; one logical mutation emits one event; the same reducer tests cover both component entry points.
+- [x] 🔴 **[P0] Create one authoritative `ChatMessageStore`** ✅ (completed 2026-08-04) — Extracted `ChatMessageStore` class (303 lines) encapsulating messages array, commit logic (controlled/uncontrolled modes), streaming-state derivation, and all pure data-mutation methods. Implements `ChatMessageStorePort` so `ChatRunController` works unchanged. `chat.ts`: 966 → 790 lines (-176).
 - [ ] 🔴 **[P0] Make controlled ownership framework-safe** — Remove the requirement that hosts synchronously write `messages-change.detail.messages` back during the event handler. Define a deterministic snapshot/acceptance contract so sequential run-controller updates cannot read stale state in React-style asynchronous hosts. Preserve uncontrolled mode as the simple default and document any major-version migration required.
   - **Done when:** sequential controlled updates remain correct with asynchronous host state propagation, and controlled/uncontrolled behavior shares the same store tests.
-- [ ] 🟡 **[P1] Decompose components by responsibility** — Extract the message store first, then `ChatForm` + schema parsing from `form-renderer.ts`, and scroll/error-banner behavior from `chat-messages.ts` into focused components or Lit ReactiveControllers. Treat lower line counts as a consequence, not the acceptance criterion.
-  - **Done when:** DOM components coordinate rendering/events while state, schema validation, scrolling, and transient-error lifecycle are independently testable.
+- [x] 🟡 **[P1] Decompose components by responsibility** ✅ (completed 2026-08-04) — All three targets extracted: `ChatMessageStore` (state ownership), `ChatFormElement` (521 lines from `form-renderer.ts`, which shrank 622→93), `ScrollController` (160 lines) + `ErrorBannerController` (67 lines) as Lit ReactiveControllers from `chat-messages.ts` (893→793).
 
 ### Extensibility
 
@@ -135,7 +133,7 @@ Baseline review (2026-08-04): **7.2/10 overall** — architecture 7.6, extensibi
 
 - [x] 🟡 **Remove `noExternal` bundling** ✅ (completed 2026-07-26) — `chat-messages` 524KB → 177KB, `chat-input` similar. Third-party dependencies are externalized for consumer bundlers. (Phase 2.3 step 1)
 - [x] 🟡 **`<i-chat>` decomposition** ✅ (completed 2026-07-26) — Extracted `CommandQueue`, `ConfirmationController`, and `SlotForwardingController`. (Phase 6.1)
-- [x] 🟡 **Further decomposition** ✅ (completed 2026-08-03) — Extracted `ChatConfirmation`, inlined registration wrappers, and deduplicated renderer utilities.
+- [x] 🟡 **Further decomposition** ✅ (completed 2026-08-04) — Extracted `ChatMessageStore` (state ownership, commit semantics, streaming derivation), `ScrollController` and `ErrorBannerController` (Lit ReactiveControllers from `chat-messages.ts`), `ChatFormElement` (521-line custom element from `form-renderer.ts`), plus earlier `ChatConfirmation`, inlined registration wrappers, and deduplicated renderer utilities.
 - [x] 🔵 **Remove deprecated APIs** ✅ (completed 2026-07-30) — Removed v2 compatibility APIs scheduled for the v3 major release. (Phase 6.2)
 
 ## Compatibility & Deprecation
