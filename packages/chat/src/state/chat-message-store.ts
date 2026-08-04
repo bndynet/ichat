@@ -36,37 +36,123 @@ export interface ChatMessageStoreChangeContext {
 export interface ChatMessageStoreChange extends ChatMessageStoreChangeContext {
   messages: ChatMessage[];
   previousMessages: ChatMessage[];
+  controlled: boolean;
 }
 
 export interface ChatMessageStoreOptions {
   /** Read the host's current authoritative message array. */
   getMessages: () => ChatMessage[];
+  /** Read the host's current ownership mode. */
+  getMode: () => 'controlled' | 'uncontrolled';
   /** Submit a computed change to the host for controlled/uncontrolled handling. */
-  commit: (change: ChatMessageStoreChange) => void;
+  commit: (change: ChatMessageStoreChange) => boolean | void;
+}
+
+interface ProposalTag {
+  epoch: number;
+  revision: number;
+}
+
+interface PendingProposal extends ProposalTag {
+  messages: ChatMessage[];
 }
 
 /**
- * Encapsulates pure message-array mutations without owning a second copy of
- * the collection. The host remains the single source of truth; every mutation
- * reads through `getMessages` and submits the computed result through `commit`.
+ * Encapsulates pure message-array mutations without owning a second committed
+ * copy of the collection. The host remains the single source of truth. In
+ * controlled mode, one latest pending proposal is retained so sequential
+ * mutations remain deterministic while a framework propagates state
+ * asynchronously. A host assignment reconciles or replaces that proposal.
  *
  * Implements {@link import('../controllers/chat-run-controller.js').ChatMessageStorePort}
  * so it can be passed directly to `ChatRunController`.
  */
 export class ChatMessageStore {
   private readonly _getMessages: () => ChatMessage[];
-  private readonly _commit: (change: ChatMessageStoreChange) => void;
+  private readonly _getMode: () => 'controlled' | 'uncontrolled';
+  private readonly _commit: (change: ChatMessageStoreChange) => boolean | void;
+
+  private _pendingProposal?: PendingProposal;
+  private _lastHostMessages?: ChatMessage[];
+  private _hasObservedHostMessages = false;
+  private _wasControlled = false;
+  private _proposalEpoch = 0;
+  private _nextProposalRevision = 0;
+  private readonly _proposalTags = new WeakMap<ChatMessage[], ProposalTag>();
 
   constructor(options: ChatMessageStoreOptions) {
     this._getMessages = options.getMessages;
+    this._getMode = options.getMode;
     this._commit = options.commit;
   }
 
   // ── Public accessors ────────────────────────────────────────────
 
-  /** The current message array (plain `ChatMessage[]`). */
+  /**
+   * Current mutation snapshot. In controlled mode this may be the latest
+   * accepted proposal while the host property is still propagating.
+   */
   get messages(): ChatMessage[] {
-    return this._getMessages();
+    const hostMessages = this._getMessages();
+    const controlled = this._getMode() === 'controlled';
+
+    if (!controlled) {
+      if (this._wasControlled) this._invalidateProposalChain();
+      this._wasControlled = false;
+      this._observeHostMessages(hostMessages);
+      return hostMessages;
+    }
+
+    if (!this._wasControlled) {
+      this._invalidateProposalChain();
+      this._wasControlled = true;
+      this._observeHostMessages(hostMessages);
+    } else {
+      this._reconcileHostMessages(hostMessages);
+    }
+
+    return this._pendingProposal?.messages ?? hostMessages;
+  }
+
+  private _observeHostMessages(messages: ChatMessage[]): void {
+    this._lastHostMessages = messages;
+    this._hasObservedHostMessages = true;
+  }
+
+  private _invalidateProposalChain(): void {
+    this._pendingProposal = undefined;
+    this._proposalEpoch += 1;
+    this._nextProposalRevision = 0;
+  }
+
+  private _reconcileHostMessages(hostMessages: ChatMessage[]): void {
+    if (!this._hasObservedHostMessages) {
+      this._observeHostMessages(hostMessages);
+      return;
+    }
+    if (hostMessages === this._lastHostMessages) return;
+
+    this._observeHostMessages(hostMessages);
+    const pending = this._pendingProposal;
+    if (!pending) return;
+
+    const accepted = this._proposalTags.get(hostMessages);
+    if (
+      !accepted ||
+      accepted.epoch !== pending.epoch ||
+      accepted.revision > pending.revision
+    ) {
+      // An unrelated external replacement supersedes all pending proposals.
+      this._invalidateProposalChain();
+      return;
+    }
+
+    if (accepted.revision === pending.revision) {
+      // The host caught up with the latest proposal; no working copy remains.
+      this._invalidateProposalChain();
+    }
+    // An earlier proposal was accepted out of an async queue. Keep the latest
+    // proposal as the working snapshot until the host catches up to it.
   }
 
   // ── Central commit ──────────────────────────────────────────────
@@ -77,7 +163,35 @@ export class ChatMessageStore {
     context: ChatMessageStoreChangeContext,
   ): void {
     if (next === previousMessages) return;
-    this._commit({ ...context, messages: next, previousMessages });
+    const controlled = this._getMode() === 'controlled';
+
+    if (!controlled) {
+      this._commit({ ...context, messages: next, previousMessages, controlled: false });
+      return;
+    }
+
+    const previousProposal = this._pendingProposal;
+    const proposal: PendingProposal = {
+      messages: next,
+      epoch: this._proposalEpoch,
+      revision: ++this._nextProposalRevision,
+    };
+    this._pendingProposal = proposal;
+    this._proposalTags.set(next, proposal);
+
+    const accepted = this._commit({
+      ...context,
+      messages: next,
+      previousMessages,
+      controlled: true,
+    });
+
+    if (accepted === false && this._pendingProposal === proposal) {
+      // `preventDefault()` rejects this proposal and restores the previous
+      // working snapshot, if one existed.
+      this._proposalTags.delete(next);
+      this._pendingProposal = previousProposal;
+    }
   }
 
   // ── Message-level mutations ─────────────────────────────────────

@@ -124,8 +124,9 @@ export interface ChatConfirmationChangeDetail {
  *
  * @fires send - `{ detail: { content: string } }` when user submits a message
  * @fires cancel - Fired when user clicks cancel during streaming
- * @fires messages-change - `{ detail: MessagesChangeDetail }` after a message-collection mutation commits.
- *   Direct external `messages = […]` assignments do **not** emit this event.
+ * @fires messages-change - `{ detail: MessagesChangeDetail }` after an uncontrolled mutation commits
+ *   or a controlled mutation is proposed. Controlled events are cancelable; call `preventDefault()`
+ *   to reject a proposal. Direct external `messages = […]` assignments do **not** emit this event.
  * @fires streaming-change - `{ detail: { streaming: boolean } }` when streaming state changes
  * @fires busy-change - `{ detail: { busy: boolean } }` when send preprocessing or streaming starts/stops
  * @fires message-action - `{ detail: { action: string, message: ChatMessage } }` from message action buttons
@@ -206,8 +207,10 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
    *   with `committed: true`.
    * - `controlled`: the host owns `messages`.  Imperative methods compute
    *   the next state but do **not** assign `chat.messages`.  They emit
-   *   `messages-change` with `committed: false`; the host must synchronously
-   *   write `event.detail.messages` back to `chat.messages` in the handler.
+   *   a cancelable `messages-change` with `committed: false`. The host may
+   *   write `event.detail.messages` back synchronously or asynchronously.
+   *   Until write-back, subsequent mutations build on the latest proposal.
+   *   Call `event.preventDefault()` to reject a proposal.
    *
    * Changing the mode after messages exist is safe — the next mutation
    * uses the new mode.  Switching from `controlled` back to `uncontrolled`
@@ -238,6 +241,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
 
   private _store = new ChatMessageStore({
     getMessages: () => this.messages as unknown as ChatMessage[],
+    getMode: () => this.messageMode,
     commit: (change) => this._commitStoreChange(change),
   });
 
@@ -247,16 +251,15 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   /** Apply a Store proposal according to the host's current ownership mode. */
-  private _commitStoreChange(change: ChatMessageStoreChange): void {
-    const { messages, previousMessages, ...context } = change;
-    const controlled = this.messageMode === 'controlled';
+  private _commitStoreChange(change: ChatMessageStoreChange): boolean {
+    const { messages, previousMessages, controlled, ...context } = change;
 
     if (!controlled) {
       this.messages = messages as unknown as typeof this.messages;
       this._setStreamingState(messages.some((message) => message.streaming && !message.error));
     }
 
-    this.dispatchEvent(
+    const accepted = this.dispatchEvent(
       new CustomEvent<MessagesChangeDetail>('messages-change', {
         detail: {
           ...buildMessagesChangeDetail(messages, previousMessages, {
@@ -268,15 +271,20 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         },
         bubbles: true,
         composed: true,
+        cancelable: controlled,
       }),
     );
 
-    // A controlled host may synchronously accept or reject the proposal in
-    // the event handler. Keep derived state aligned with the authoritative
-    // public property after that decision, never with an uncommitted proposal.
-    if (controlled || this._msgs !== messages) {
+    if (controlled) {
+      const derivedMessages = accepted ? messages : previousMessages;
+      this._setStreamingState(
+        derivedMessages.some((message) => message.streaming && !message.error),
+      );
+    } else if (this._msgs !== messages) {
       this._setStreamingState(this._msgs.some((message) => message.streaming && !message.error));
     }
+
+    return accepted;
   }
 
   // ── Ready contract (CHG-06) ───────────────────────────────────────
@@ -373,7 +381,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   removeMessage(id: string): void {
-    this._store.commitMessages(removeMessageById(this._msgs, id), {
+    this._store.commitMessages(removeMessageById(this._store.messages, id), {
       reason: 'message:remove',
       messageId: id,
     });
@@ -442,7 +450,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   cancel(hint?: string): void {
-    const streamingMsg = this._msgs.find((m) => m.streaming && !m.error);
+    const streamingMsg = this._store.messages.find((m) => m.streaming && !m.error);
     if (streamingMsg) this.cancelMessage(streamingMsg.id, hint);
   }
 
@@ -522,7 +530,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
    * text deltas, and transition to complete / cancel / error.
    */
   createRunController(options?: ChatRunOptions): ChatRunController {
-    return new ChatRunController(this, options);
+    return new ChatRunController(this._store, options);
   }
 
   /** Focus the input textarea. Safe to call before first render (no-op). */

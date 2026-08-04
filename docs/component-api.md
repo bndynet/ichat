@@ -19,7 +19,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `disabled` | `boolean` | `false` | Disables the default composer |
 | `busy` | `boolean` (readonly) | `false` | `true` while a submission is passing through `beforeSend` middleware or an assistant message is streaming. Reflected as the `busy` and `aria-busy` host attributes; new sends are blocked while the textarea remains available for the next draft. |
 | `ready` | `Promise<void>` (readonly) | — | Resolves after the first render when child elements are queryable. Data methods are safe before `ready`; DOM methods may `await chat.ready`. |
-| `messageMode` | `'uncontrolled'` \| `'controlled'` | `'uncontrolled'` | Message ownership mode. `uncontrolled`: component owns messages (default). `controlled`: host owns messages — imperative methods emit `messages-change` with `committed: false`; host must synchronously write `event.detail.messages` back. |
+| `messageMode` | `'uncontrolled'` \| `'controlled'` | `'uncontrolled'` | Message ownership mode. `uncontrolled`: component owns messages (default). `controlled`: host owns messages — imperative methods emit a cancelable `messages-change` proposal with `committed: false`; host may write `event.detail.messages` back synchronously or asynchronously and may reject with `preventDefault()`. |
 | `showVoiceInput` | `boolean` | `true` | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition |
 | `voiceLang` | `string` | `''` | Forwarded to the default `<i-chat-input>` — BCP 47 tag for speech recognition (e.g. `zh-CN`; empty uses `navigator.language`) |
 | `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
@@ -33,7 +33,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 |-------|--------|--------|
 | `send` | `{ content: string }` | User submitted the default input (or your control inside `slot="input"` must dispatch the same event if you mimic the built-in) |
 | `cancel` | — | User cancelled during streaming (default input) |
-| `messages-change` | `MessagesChangeDetail` | Emitted after any imperative message-collection mutation commits. Direct external `messages = […]` does **not** emit this event. |
+| `messages-change` | `MessagesChangeDetail` | Emitted after an uncontrolled mutation commits or a controlled mutation is proposed. Controlled events are cancelable with `preventDefault()`. Direct external `messages = […]` does **not** emit this event. |
 | `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
 | `busy-change` | `{ busy: boolean }` | Effective busy state changed. Useful for disabling a custom `slot="input"` composer. |
 | `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |

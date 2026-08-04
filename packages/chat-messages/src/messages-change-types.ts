@@ -29,13 +29,16 @@ export type MessagesChangeSource =
 /**
  * Payload of the `messages-change` custom event.
  *
- * The event is dispatched after a message-collection mutation commits.
- * `previousMessages` is the pre-mutation reference; `messages` is the
- * newly committed array.  Direct external property assignment (e.g.
- * `chat.messages = […]`) does **not** emit this event.
+ * The event is dispatched after an uncontrolled message-collection mutation
+ * commits or when `<i-chat>` proposes a controlled mutation.
+ * `previousMessages` is the pre-mutation reference; `messages` is the newly
+ * committed or proposed array. Controlled `<i-chat>` events are cancelable;
+ * consumers can call `preventDefault()` to reject the proposal. Direct
+ * external property assignment (e.g. `chat.messages = […]`) does **not** emit
+ * this event.
  */
 export interface MessagesChangeDetail {
-  /** The newly committed message array (new reference). */
+  /** The newly committed or controlled-mode proposed array (new reference). */
   messages: ChatMessage[];
   /** The message array before the mutation was applied. */
   previousMessages: ChatMessage[];

@@ -4,24 +4,19 @@
  * Verifies module imports, custom element registration, constructor,
  * default property values, and key method signatures.
  *
- * Full component tests (controlled/uncontrolled, slots, confirmations,
- * ready promise, run controller) require a browser environment —
- * use Playwright or @web/test-runner.
+ * Rendered slots, confirmations, and child lifecycle behavior still require a
+ * browser environment such as Playwright or @web/test-runner.
  */
 
 import assert from 'node:assert/strict';
+import type { ChatMessage, MessagesChangeDetail } from '@bndynet/ichat-messages';
+import { textPart } from '@bndynet/ichat-messages';
+import type { ChatRunController } from '../src/controllers/chat-run-controller.js';
 import '../src/components/chat.js';
 
-type TestMessage = {
-  id: string;
-  role: 'assistant';
-  parts: [];
-  streaming?: boolean;
-};
+type TestMessage = ChatMessage;
 
-type TestMessagesChangeDetail = {
-  messages: TestMessage[];
-  previousMessages: TestMessage[];
+type TestMessagesChangeDetail = MessagesChangeDetail & {
   controlled: boolean;
   committed: boolean;
 };
@@ -40,6 +35,7 @@ type TestChatElement = HTMLElement & {
   }): () => void;
   addMessage(message: TestMessage): void;
   updateMessage(id: string, patch: Partial<TestMessage>): void;
+  createRunController(options?: { messageId?: string }): ChatRunController;
   _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
 };
 
@@ -155,6 +151,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 {
   const rejected = createChat();
   rejected.messageMode = 'controlled';
+  rejected.addEventListener('messages-change', (event) => {
+    assert.equal(event.cancelable, true);
+    event.preventDefault();
+  });
   rejected.addMessage({ id: 'rejected-stream', role: 'assistant', parts: [], streaming: true });
   assert.equal(rejected.busy, false);
 
@@ -165,6 +165,106 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   });
   accepted.addMessage({ id: 'accepted-stream', role: 'assistant', parts: [], streaming: true });
   assert.equal(accepted.busy, true);
+}
+
+// Controlled proposals chain correctly before an asynchronous host write-back.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+
+  chat.addMessage({ id: 'async', role: 'assistant', parts: [], streaming: true });
+  chat.updateMessage('async', { streaming: false });
+
+  assert.deepEqual(chat.messages, []);
+  assert.equal(changes.length, 2);
+  assert.equal(changes[1]?.previousMessages, changes[0]?.messages);
+  assert.equal(changes[1]?.messages[0]?.streaming, false);
+
+  // The host is one proposal behind. The next mutation must still use the
+  // latest proposal instead of reverting to this older public snapshot.
+  chat.messages = changes[0]!.messages;
+  chat.addMessage({ id: 'after-lag', role: 'assistant', parts: [] });
+  assert.deepEqual(
+    changes[2]?.messages.map((message) => message.id),
+    ['async', 'after-lag'],
+  );
+  assert.equal(changes[2]?.messages[0]?.streaming, false);
+}
+
+// An unrelated external history replacement supersedes pending proposals.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+
+  chat.addMessage({ id: 'pending', role: 'assistant', parts: [] });
+  chat.messages = [{ id: 'external', role: 'assistant', parts: [] }];
+  chat.addMessage({ id: 'after-replace', role: 'assistant', parts: [] });
+
+  assert.deepEqual(
+    changes.at(-1)?.messages.map((message) => message.id),
+    ['external', 'after-replace'],
+  );
+}
+
+// Rejecting one proposal restores the previous accepted working snapshot.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  let rejectNext = false;
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+    if (rejectNext) event.preventDefault();
+  });
+
+  chat.addMessage({ id: 'kept', role: 'assistant', parts: [], streaming: true });
+  rejectNext = true;
+  chat.updateMessage('kept', { streaming: false });
+  assert.equal(chat.busy, true);
+  rejectNext = false;
+  chat.addMessage({ id: 'after-rejection', role: 'assistant', parts: [] });
+
+  assert.deepEqual(
+    changes.at(-1)?.messages.map((message) => message.id),
+    ['kept', 'after-rejection'],
+  );
+  assert.equal(changes.at(-1)?.messages[0]?.streaming, true);
+}
+
+// ChatRunController streams against the pending controlled snapshot while the
+// host applies only the final proposal asynchronously.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+
+  const run = chat.createRunController({ messageId: 'controlled-run' });
+  run.start([textPart('', { id: 'body' })]);
+  assert.equal(run.appendText('body', 'Hello').ok, true);
+  assert.equal(run.appendText('body', ' world').ok, true);
+  run.complete();
+
+  const finalMessages = changes.at(-1)!.messages;
+  const finalMessage = finalMessages[0]!;
+  const finalPart = finalMessage.parts[0];
+  assert.equal(finalPart?.type, 'text');
+  if (finalPart?.type === 'text') assert.equal(finalPart.text, 'Hello world');
+  assert.equal(finalMessage.streaming, false);
+
+  chat.messages = finalMessages;
+  assert.equal(chat.messages, finalMessages);
+  assert.equal(chat.busy, false);
 }
 
 // Runtime mode switches affect the very next mutation without Store syncing.

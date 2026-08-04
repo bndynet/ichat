@@ -178,10 +178,18 @@ When you need a **single source of truth** shared across multiple components (e.
 // Vue example — messages lives in a reactive store
 chat.messageMode = 'controlled';
 chat.addEventListener('messages-change', (e) => {
-  if (e.detail.committed) return;          // skip external assignments
-  messages.value = e.detail.messages;       // one source, many consumers
+  if (e.detail.committed) return;
+  messages.value = e.detail.messages; // framework propagation may be async
 });
 ```
+
+Controlled `messages-change` events are cancelable proposals. Unless the host
+calls `e.preventDefault()`, sequential imperative updates continue from the
+latest proposal while Vue, React, or another framework propagates the new
+property asynchronously. Assign `e.detail.messages` directly when accepting a
+proposal; cloning an older queued proposal is treated as an intentional external
+history replacement. Call `e.preventDefault()` in the handler to reject a
+proposal.
 
 In uncontrolled mode `chat.messages` is immediately up-to-date after any mutation — just read it. Controlled mode is opt-in and only needed when an external framework must own the array.
 
