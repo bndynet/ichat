@@ -3,6 +3,7 @@ import type {
   MessagePart,
   MessagesChangeReason,
   MessagePartUpdateResult,
+  ToolCallPart,
   ToolCallUpdateResult,
   TodoItemUpdateResult,
   MessagePartUpdateEventResult,
@@ -274,7 +275,7 @@ export class ChatMessageStore {
     const { part } = lookup;
     if (!isToolCallPart(part)) return { ok: false, reason: 'part-type-mismatch', part };
 
-    const tcResult = patchToolCallPart(part, patch);
+    const tcResult = patchToolCallPart(part, patch as Partial<ToolCallPart>);
     if (!tcResult.ok) return { ok: false, reason: tcResult.reason, part: tcResult.part };
 
     const replacement = replaceMessagePart(previousMessages, messageId, partId, tcResult.part);

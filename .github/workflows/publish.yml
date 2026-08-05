@@ -26,14 +26,46 @@ permissions:
   id-token: write
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Type-check all packages
+        run: npm run typecheck
+
+      - name: Build + Test
+        run: npm run pretest && npm test
+
+      - name: Coverage (chat-messages)
+        run: npm run test:coverage -w @bndynet/ichat-messages 2>&1 | node tools/check-coverage.mjs
+
+      - name: Coverage (chat-input)
+        run: npm run test:coverage -w @bndynet/ichat-input 2>&1 | node tools/check-coverage.mjs
+
+      - name: Build + Validate npm pack
+        run: npm run validate:pack
+
+      - name: Build browser test (smoke)
+        run: npm run test:browser:build -w @bndynet/ichat
+
+      - name: Build streaming benchmark (smoke)
+        run: npm run benchmark:streaming:browser:build -w @bndynet/ichat-messages
+
   publish:
+    needs: gate
     uses: bndynet/gh.flows/.github/workflows/npm.yml@main
     with:
       publish-enabled: ${{ github.event_name == 'release' || inputs.publish_enabled }} 
       publish-version: ${{ inputs['publish-version'] }}
-      publish-auth-method: 'oidc'                                 # token (or oidc)
+      publish-auth-method: 'oidc'
       publish-version-command: ${{ format('npm run version -- {0}', inputs['publish-version']) }}
       publish-command: 'npm run publish:packages'
       deploy-folder: 'apps/demo/demo-dist'
     secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}                          # when publish-enabled=true and publish-auth-method=token
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
