@@ -97,10 +97,13 @@ export class ChatMessages extends LitElement {
     const locale = this.config.locale ?? DEFAULT_CONFIG.locale;
     const labelsRef = this.config.labels;
 
-    // Memoization: cache key based on locale + label references
+    // Memoization: cache keyed by locale identity and labels object reference.
+    // Using the object reference instead of a boolean avoids stale cache when
+    // one truthy labels object is replaced with a different one.
     if (
       this.__labelsCache &&
-      this.__labelsCache.key === `${locale}|${!!labelsRef}`
+      this.__labelsCache.locale === locale &&
+      this.__labelsCache.labelsRef === labelsRef
     ) {
       return this.__labelsCache.value;
     }
@@ -110,10 +113,10 @@ export class ChatMessages extends LitElement {
       labels: labelsRef,
     });
 
-    this.__labelsCache = { key: `${locale}|${!!labelsRef}`, value };
+    this.__labelsCache = { locale, labelsRef, value };
     return value;
   }
-  private __labelsCache?: { key: string; value: ChatLabels };
+  private __labelsCache?: { locale: string; labelsRef: object | undefined; value: ChatLabels };
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
   private _messageRenderItems(): Array<

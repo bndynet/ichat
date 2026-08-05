@@ -121,8 +121,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 ### Developer Experience & Package API
 
 - [x] 🟡 **[P1] Define intentional package and API boundaries** ✅ (wontfix 2026-08-05) — Evaluated and determined no action needed. Single-entry barrel with full re-exports is sufficient for the current consumer profile; tree-shaking already removes unused exports. Subpath exports, `sideEffects` metadata, and Custom Elements Manifest would add complexity without measurable benefit given that consumers always need custom-element registration.
-- [ ] 🟢 **[P2] Fix labels-cache reference invalidation** — Cache resolved labels by locale and the actual `config.labels` object reference, not by a boolean indicating whether labels exist. Replacing one truthy labels object with another must invalidate the cache and update rendered localized text.
-  - **Done when:** replacing `{ empty: 'A' }` with `{ empty: 'B' }` under the same locale renders `B`, with a regression test covering the reference change.
+- [x] 🟢 **[P2] Fix labels-cache reference invalidation** ✅ (completed 2026-08-05) — Changed cache key from `${locale}|${!!labelsRef}` (boolean, never invalidates when one truthy object replaces another) to identity comparison (`===`) on the `labelsRef` object reference. Replacing `{ empty: 'A' }` with `{ empty: 'B' }` under the same locale now correctly invalidates the cache and renders the updated text.
 - [ ] 🟢 **[P2] Make documentation reflect runtime behavior** — Reconcile warning-vs-throw semantics, extension registration timing, current test counts, controlled-mode behavior, and CI status. Generate API tables from declarations/Custom Elements Manifest where possible so roadmap, README, and implementation review do not drift independently.
 
 ### Performance & Security
