@@ -42,131 +42,88 @@ npm install @bndynet/ichat-messages
 
 ## Quick start (ES modules)
 
-Load **`@bndynet/ichat`** and import optional renderer packages either at startup or lazily when their UI is needed. Block Renderers, Part Renderers, and Markdown Plugins can all be registered after components mount; new registrations affect subsequent renders:
-
-Custom fenced renderers are sanitised by default. The official renderer
-packages opt into the audited `trusted: true` streaming path internally, so no
-extra security or performance configuration is required for normal use.
+Drop in `<i-chat>` and wire one streaming response with **`createRunController()`**. The controller owns the assistant message for you: it creates the streaming placeholder, takes the deltas, and moves the message to its terminal state.
 
 ```html
 <script type="module">
   import '@bndynet/ichat';
-  import '@bndynet/ichat-renderers';
-  import '@bndynet/ichat-renderer-chart';
-  import '@bndynet/ichat-renderer-mermaid';
 </script>
 
 <i-chat id="chat"></i-chat>
 
 <script type="module">
-  import { textPart, normalizeHistoryMessages } from '@bndynet/ichat';
+  import { textPart } from '@bndynet/ichat';
 
   const chat = document.getElementById('chat');
-  let idSeq = 0;
-  const nextId = () =>
-    globalThis.crypto?.randomUUID?.() ?? `msg-${Date.now().toString(36)}-${++idSeq}`;
-
-  let activeStream = null;
-
-  // TODO: Replace with your history loader, or use [] when there is no history.
-  const history = await fetchHistory();
-  chat.messages = normalizeHistoryMessages(history.messages);
+  let run = null;
 
   chat.addEventListener('send', async (e) => {
-    const text = e.detail.content;
-    const assistantId = nextId();
-    const bodyPartId = 'body';
-    const stream = {
-      assistantId,
-      bodyPartId,
-      abort: new AbortController(),
-      cancelled: false,
-    };
-
-    activeStream = stream;
-
     chat.addMessage({
-      id: nextId(),
+      id: crypto.randomUUID(),
       role: 'self',
-      parts: [textPart(text)],
+      parts: [textPart(e.detail.content)],
       timestamp: Date.now(),
     });
 
-    // Important: create the assistant placeholder before the first network
-    // await, not after the first token arrives. `chat.busy` starts while the
-    // submission is preprocessed, then `streaming: true` keeps the composer
-    // locked and switches Send -> Cancel until the response finishes.
-    chat.addMessage({
-      id: assistantId,
-      role: 'assistant',
-      parts: [textPart('', { id: bodyPartId, status: 'streaming' })],
-      streaming: true,
-      timestamp: Date.now(),
-    });
+    run = chat.createRunController();
+    run.start([textPart('', { id: 'body', status: 'streaming' })]);
 
-    let answer = '';
     try {
-      // TODO: Replace this with your fetch/SSE/WebSocket/SDK adapter.
-      // It should yield text chunks and respect the AbortSignal when possible.
-      for await (const chunk of streamAssistantReply(text, { signal: stream.abort.signal })) {
-        if (stream.abort.signal.aborted) break;
-        answer += chunk;
-        chat.updatePart(assistantId, bodyPartId, {
-          text: answer,
-          status: 'streaming',
-        });
+      // TODO: replace with your fetch/SSE/WebSocket/SDK adapter — it yields
+      // text chunks and should pass `run.signal` to the request.
+      for await (const chunk of streamAssistantReply(e.detail.content, { signal: run.signal })) {
+        run.appendText('body', chunk);
       }
-
-      if (stream.abort.signal.aborted) {
-        chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
-        chat.updateMessage(assistantId, { cancelled: true });
-      } else {
-        chat.updatePart(assistantId, bodyPartId, { status: 'complete' });
-      }
+      run.updatePart('body', { status: 'complete' });
+      run.complete();
     } catch (error) {
-      if (stream.abort.signal.aborted) {
-        chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
-        chat.updateMessage(assistantId, { cancelled: true });
-      } else {
-        chat.updatePart(assistantId, bodyPartId, { status: 'error' });
-        chat.updateMessage(assistantId, {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } finally {
-      // Important: always release streaming, including success, error, and
-      // cancellation. If this is skipped, new submissions remain blocked.
-      chat.updateMessage(assistantId, { streaming: false });
-      if (activeStream === stream) {
-        activeStream = null;
-      }
+      run.fail(error instanceof Error ? error.message : String(error));
     }
   });
 
-  chat.addEventListener('cancel', () => {
-    if (!activeStream || activeStream.cancelled) return;
-    activeStream.cancelled = true;
-    activeStream.abort.abort();
-    chat.cancelMessage(activeStream.assistantId, '*— Response stopped —*');
-  });
-
-  chat.addEventListener('streaming-change', (e) => {
-    // Optional: e.detail.streaming mirrors assistant streaming state
-  });
-
-  chat.addEventListener('busy-change', (e) => {
-    // Optional: e.detail.busy mirrors the default composer's submission lock
-  });
+  chat.addEventListener('cancel', () => run?.cancel('*— Response stopped —*'));
 </script>
 ```
 
-Extension registration is global and remains available after components mount.
-New extensions affect newly added or subsequently updated content; existing
-rendered content is not refreshed automatically. Registering the same object
-again is a no-op; a different object with the same name/id produces a warning
-and keeps the first registration.
+That is the whole integration. `run.signal` is aborted as soon as the run ends, and `complete()` / `fail()` / `cancel()` are no-ops once the run is terminal — a cancelled run whose request then throws stays cancelled, so you never need `finally` bookkeeping to unlock the composer. See the [`ChatRunController` API](docs/component-api.md#chatruncontroller) for the full lifecycle, or [Manual streaming](#manual-streaming-without-chatruncontroller) if you prefer to drive the message store yourself.
 
-A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`tryUpdateToolCall`**, **`tryUpdateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateProgressStep`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createRunController()`** returns a helper that manages the full AI response lifecycle.
+`<i-chat>` also emits `streaming-change` (`e.detail.streaming`) and `busy-change` (`e.detail.busy`) if another part of your UI needs to mirror the assistant streaming state or the composer's submission lock.
+
+### Optional renderers
+
+Chart, KPI, form, Mermaid, and math fences live in separate packages. Import them at startup or lazily when their UI is first needed:
+
+```js
+import '@bndynet/ichat-renderers';
+import '@bndynet/ichat-renderer-chart';
+import '@bndynet/ichat-renderer-mermaid';
+```
+
+Extension registration is global and remains available after components mount.
+Block Renderers, Part Renderers, and Markdown Plugins registered later affect
+newly added or subsequently updated content; existing rendered content is not
+refreshed automatically. Registering the same object again is a no-op; a
+different object with the same name/id produces a warning and keeps the first
+registration.
+
+Custom fenced renderers are sanitised by default. The official renderer
+packages opt into the audited `trusted: true` streaming path internally, so no
+extra security or performance configuration is required for normal use.
+
+### Loading history
+
+When the user first opens a chat, load historical messages as completed content:
+
+```js
+import { normalizeHistoryMessages } from '@bndynet/ichat';
+
+const history = await fetchHistory();
+chat.messages = normalizeHistoryMessages(history.messages);
+```
+
+`normalizeHistoryMessages()` (from `@bndynet/ichat-messages`, re-exported by `@bndynet/ichat`) sanitises messages loaded from your backend — it sets `streaming: false`, marks interrupted messages as `cancelled`, converts any persisted `status: 'streaming' | 'pending'` parts to `'complete'`, and removes empty placeholder messages. Pass `interruptedStatus` / `removeEmptyMessages` options to customise the behaviour.
+
+A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`tryUpdateToolCall`**, **`tryUpdateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateProgressStep`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)).
 
 ### Framework integration (Vue / React)
 
@@ -209,23 +166,7 @@ is the right tool and when to undo an accepted write instead.
 
 In uncontrolled mode `chat.messages` is immediately up-to-date after any mutation — just read it. Controlled mode is opt-in and only needed when an external framework must own the array.
 
-When the user first opens a chat, load historical messages as completed content. Use `normalizeHistoryMessages()` from `@bndynet/ichat-messages` (re-exported by `@bndynet/ichat`) to sanitise messages loaded from your backend — it sets `streaming: false`, marks interrupted messages as `cancelled`, converts any persisted `status: 'streaming' | 'pending'` parts to `'complete'`, and removes empty placeholder messages. Pass `interruptedStatus` / `removeEmptyMessages` options to customise the behaviour.
-
 ### Backend integration
-
-The quick-start example above shows the standard streaming pattern using `chat.addMessage` / `chat.updatePart` / `chat.updateMessage`. For a higher-level API, use `ChatRunController`:
-
-```js
-const run = chat.createRunController();
-run.start([textPart('', { status: 'streaming' })]);
-
-const response = await fetch('/api/chat', { signal: run.signal });
-// ... read stream ...
-run.appendText(partId, delta);
-run.complete();
-```
-
-See [`ChatRunController` API](docs/component-api.md) for the full lifecycle.
 
 **Method mapping** — parse your backend stream into these calls. Event names are yours to define; the lib only provides the methods:
 
@@ -240,6 +181,92 @@ See [`ChatRunController` API](docs/component-api.md) for the full lifecycle.
 | Stream completed                               | `run.complete()`                                                      |
 | Stream error                                   | `run.fail(error)`                                                     |
 | Cancel (abort fetch)                           | `run.cancel(hint)` → aborts `run.signal`, marks the message cancelled |
+
+#### Manual streaming without `ChatRunController`
+
+`ChatRunController` is a thin wrapper over the message store — you can drive the same lifecycle with `addMessage` / `updatePart` / `updateMessage` directly. Reach for this when you need something the controller deliberately keeps out of its terminal transitions, such as per-part `'cancelled'` / `'error'` statuses, or when your own object already owns the abort and cleanup logic. You then take over two rules the controller enforces for you:
+
+1. Create the assistant placeholder **before** the first network `await`, not after the first token arrives.
+2. Always clear `streaming` — on success, error, **and** cancellation. Skipping it in any branch leaves the composer locked for good.
+
+<details>
+<summary>Full hand-written streaming loop</summary>
+
+```js
+import { textPart } from '@bndynet/ichat';
+
+const chat = document.getElementById('chat');
+let activeStream = null;
+
+chat.addEventListener('send', async (e) => {
+  const text = e.detail.content;
+  const assistantId = crypto.randomUUID();
+  const bodyPartId = 'body';
+  const stream = { assistantId, bodyPartId, abort: new AbortController(), cancelled: false };
+
+  activeStream = stream;
+
+  chat.addMessage({
+    id: crypto.randomUUID(),
+    role: 'self',
+    parts: [textPart(text)],
+    timestamp: Date.now(),
+  });
+
+  // `chat.busy` starts while the submission is preprocessed, then
+  // `streaming: true` keeps the composer locked and switches Send -> Cancel
+  // until the response finishes.
+  chat.addMessage({
+    id: assistantId,
+    role: 'assistant',
+    parts: [textPart('', { id: bodyPartId, status: 'streaming' })],
+    streaming: true,
+    timestamp: Date.now(),
+  });
+
+  let answer = '';
+  try {
+    // TODO: Replace this with your fetch/SSE/WebSocket/SDK adapter.
+    // It should yield text chunks and respect the AbortSignal when possible.
+    for await (const chunk of streamAssistantReply(text, { signal: stream.abort.signal })) {
+      if (stream.abort.signal.aborted) break;
+      answer += chunk;
+      chat.updatePart(assistantId, bodyPartId, { text: answer, status: 'streaming' });
+    }
+
+    if (stream.abort.signal.aborted) {
+      chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
+      chat.updateMessage(assistantId, { cancelled: true });
+    } else {
+      chat.updatePart(assistantId, bodyPartId, { status: 'complete' });
+    }
+  } catch (error) {
+    if (stream.abort.signal.aborted) {
+      chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
+      chat.updateMessage(assistantId, { cancelled: true });
+    } else {
+      chat.updatePart(assistantId, bodyPartId, { status: 'error' });
+      chat.updateMessage(assistantId, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  } finally {
+    chat.updateMessage(assistantId, { streaming: false });
+    if (activeStream === stream) {
+      activeStream = null;
+    }
+  }
+});
+
+chat.addEventListener('cancel', () => {
+  if (!activeStream || activeStream.cancelled) return;
+  activeStream.cancelled = true;
+  activeStream.abort.abort();
+  chat.cancelMessage(activeStream.assistantId, '*— Response stopped —*');
+});
+```
+
+</details>
 
 ### Syntax highlighting
 

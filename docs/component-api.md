@@ -56,6 +56,9 @@ run.start([textPart('', { id: 'body', status: 'streaming' })]);
 const res = await fetch('/api/chat', { signal: run.signal });
 // … for each delta:
 run.appendText('body', delta);
+// Flip the part out of `streaming` before the run ends so it gets the clean
+// terminal render (async fenced renderers only run on non-streaming parts).
+run.updatePart('body', { status: 'complete' });
 run.complete();
 ```
 
