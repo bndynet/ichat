@@ -39,6 +39,7 @@ export class ChatReasoning extends LitElement {
 
   @state() private _expanded = false;
   @query('.reasoning-body') private _bodyEl?: HTMLDivElement;
+  @query('.reasoning-content') private _contentEl?: HTMLDivElement;
   private _bodyHtmlCache = '';
   /** Tracks last render’s streaming flag so we can detect true→false without relying on changed.get quirks. */
   private _prevStreaming = false;
@@ -74,6 +75,11 @@ export class ChatReasoning extends LitElement {
     });
     this._bodyHtmlCache = result.html;
     if (!result.changed) return;
+
+    // Auto-scroll to bottom when streaming content grows
+    if (this._contentEl) {
+      this._contentEl.scrollTop = this._contentEl.scrollHeight;
+    }
 
     this.dispatchEvent(
       new CustomEvent('chat-reasoning-updated', {
