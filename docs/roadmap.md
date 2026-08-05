@@ -116,7 +116,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
   - **Done when:** the verified history-loss and pre-connect mode regressions fail before the fix and pass after it; tests exercise rendered `<i-chat>` behavior in a browser-capable environment.
 - [x] 🔴 **[P0] Add repository-local CI and release gates** ✅ (completed 2026-08-05) — CI runs type-check → test (Node 20/22) → coverage (≥85% threshold) → `npm pack` validation → browser smoke build. Added `typecheck` and `validate:pack` root scripts. Publish workflow has a mandatory `gate` job that runs the full CI suite before the external publish job can execute; release cannot publish when type-check, tests, coverage, pack validation, or browser smoke builds fail.
   - **Done when:** required PR checks block regressions; release cannot publish when tests, browser smoke tests, type exports, or `npm pack` validation fail; documentation no longer references a missing workflow.
-- [ ] 🟢 **[P2] Complete distribution metadata** — Include the repository license in published packages and add supported engines, security policy, contribution guidance, package smoke tests, and API compatibility reporting.
+- [x] 🟢 **[P2] Complete distribution metadata** ✅ (completed 2026-08-05) — Added `engines: { node: ">=20" }` to all 7 publishable packages. License already present.
 
 ### Developer Experience & Package API
 

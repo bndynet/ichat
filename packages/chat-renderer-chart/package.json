@@ -35,6 +35,7 @@
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
+  "engines": { "node": ">=20" },
   "license": "MIT",
   "repository": {
     "type": "git",
