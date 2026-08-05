@@ -28,6 +28,26 @@ export class ScrollController implements ReactiveController {
   /** True when new content arrived while auto-scroll was disabled. */
   private _hasNewContent = false;
 
+  /**
+   * Apply state transitions and request a host update when observable state
+   * actually changes.  This keeps the scroll-to-latest affordance (button
+   * visibility) in sync without waiting for an unrelated render.
+   */
+  private _applyState(updates: { autoScroll?: boolean; hasNewContent?: boolean }): void {
+    let changed = false;
+    if (updates.autoScroll !== undefined && updates.autoScroll !== this._autoScroll) {
+      this._autoScroll = updates.autoScroll;
+      changed = true;
+    }
+    if (updates.hasNewContent !== undefined && updates.hasNewContent !== this._hasNewContent) {
+      this._hasNewContent = updates.hasNewContent;
+      changed = true;
+    }
+    if (changed) {
+      (this._host as ReactiveControllerHost & { requestUpdate(): void }).requestUpdate();
+    }
+  }
+
   private _resizeObserver?: ResizeObserver;
   private _observedEl?: Element;
 
@@ -87,7 +107,7 @@ export class ScrollController implements ReactiveController {
         });
       });
     });
-    this._hasNewContent = false;
+    this._applyState({ hasNewContent: false });
   }
 
   /** Handle scroll event from the scroll container. */
@@ -97,15 +117,12 @@ export class ScrollController implements ReactiveController {
     if (!el) return;
     const threshold = 60;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    this._autoScroll = atBottom;
-    if (atBottom) {
-      this._hasNewContent = false;
-    }
+    this._applyState({ autoScroll: atBottom, hasNewContent: atBottom ? false : undefined });
   }
 
   /** Called when the "scroll to bottom" button is clicked. */
   handleScrollToBottom(): void {
-    this._autoScroll = true;
+    this._applyState({ autoScroll: true });
     this.scrollToBottom();
   }
 
@@ -120,13 +137,14 @@ export class ScrollController implements ReactiveController {
   notifyContentChanged(): void {
     if (this._autoScroll) {
       this.scrollToBottom();
+    } else {
+      this._applyState({ hasNewContent: true });
     }
   }
 
   /** Reset scroll state without triggering DOM operations (for clear). */
   reset(): void {
-    this._autoScroll = true;
-    this._hasNewContent = false;
+    this._applyState({ autoScroll: true, hasNewContent: false });
   }
 
   // ── Internal ────────────────────────────────────────────────────
@@ -145,9 +163,8 @@ export class ScrollController implements ReactiveController {
             this.scrollToBottom();
           }, 150);
         } else {
-          this._hasNewContent = true;
+          this._applyState({ hasNewContent: true });
         }
-        this._host.requestUpdate();
       });
       this._resizeObserver.observe(inner);
       this._observedEl = inner;

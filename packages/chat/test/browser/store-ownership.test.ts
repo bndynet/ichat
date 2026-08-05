@@ -12,6 +12,7 @@
 import '../../src/components/chat.js';
 import type { Chat } from '../../src/components/chat.js';
 import type { ChatMessage, MessagesChangeDetail, TextPart } from '@bndynet/ichat-messages';
+import { ScrollController } from '@bndynet/ichat-messages';
 
 // ── Test harness ──────────────────────────────────────────────────────────
 
@@ -340,6 +341,60 @@ test('dom: data-message-id and data-part-id are present', async () => {
   const msgEl = messagesEl?.shadowRoot?.querySelector('[data-message-id="attr-test"]') as HTMLElement | null;
   assert(msgEl, 'message element should have data-message-id');
 });
+
+// 7. ScrollController — observable state contract
+test('scroll: controller initialises with correct defaults', () => {
+  const host = createMockReactiveHost();
+  const ctrl = new ScrollController(host, '.scroll-area');
+
+  assertEqual(ctrl.autoScroll, true);
+  assertEqual(ctrl.hasNewContent, false);
+});
+
+test('scroll: reset does not trigger update when state unchanged', () => {
+  const host = createMockReactiveHost();
+  const ctrl = new ScrollController(host, '.scroll-area');
+
+  const before = host.updateCount;
+  // reset autoScroll=true, hasNewContent=false — same as initial
+  ctrl.reset();
+  assertEqual(host.updateCount, before + 0);
+});
+
+test('scroll: controller can be created and queried', () => {
+  const host = createMockReactiveHost();
+  const ctrl = new ScrollController(host, '.scroll-area');
+
+  assert(typeof ctrl.autoScroll === 'boolean');
+  assert(typeof ctrl.hasNewContent === 'boolean');
+  assertEqual(typeof ctrl.scrollToBottom, 'function');
+  assertEqual(typeof ctrl.handleScroll, 'function');
+  assertEqual(typeof ctrl.handleScrollToBottom, 'function');
+  assertEqual(typeof ctrl.reset, 'function');
+  assertEqual(typeof ctrl.notifyContentChanged, 'function');
+});
+
+// ── Mock ReactiveControllerHost ──────────────────────────────────────────
+
+interface MockReactiveHost {
+  renderRoot: HTMLElement;
+  requestUpdate(): void;
+  updateCount: number;
+  isConnected: boolean;
+  addController?(ctrl: unknown): void;
+}
+
+function createMockReactiveHost(): MockReactiveHost {
+  let count = 0;
+  const el = document.createElement('div');
+  return {
+    renderRoot: el,
+    requestUpdate() { count++; },
+    get updateCount() { return count; },
+    get isConnected() { return true; },
+    addController() { /* no-op — controller adds itself in constructor */ },
+  } as MockReactiveHost & { updateCount: number };
+}
 
 // Report when all tests are queued
 setTimeout(() => {
