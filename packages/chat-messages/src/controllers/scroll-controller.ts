@@ -93,6 +93,10 @@ export class ScrollController implements ReactiveController {
       if (el) el.scrollTop = el.scrollHeight;
     };
 
+    // First scroll is synchronous for immediate response — the ResizeObserver
+    // fires after layout, so scrollHeight is already up-to-date.
+    apply();
+
     // Multi-pass: nested shadow/custom elements (mermaid, forms) often
     // finish layout after the first frame.
     requestAnimationFrame(() => {

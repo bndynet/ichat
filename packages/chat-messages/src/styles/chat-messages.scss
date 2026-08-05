@@ -103,7 +103,6 @@
   overflow-y: auto;
   overflow-x: visible; // allow scroll-highlight ::before to extend outside
   padding: var(--chat-spacing-lg, #{$spacing-lg});
-  scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
     width: var(--chat-scrollbar-width, #{$scrollbar-width});
