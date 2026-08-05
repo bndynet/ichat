@@ -50,7 +50,9 @@
     "highlight.js": ">=11"
   },
   "peerDependenciesMeta": {
-    "highlight.js": { "optional": true }
+    "highlight.js": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
@@ -62,7 +64,9 @@
     "typescript": "^5.8.2",
     "vite": "^6.4.2"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",

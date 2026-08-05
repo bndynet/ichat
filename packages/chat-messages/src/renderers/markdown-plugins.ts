@@ -51,7 +51,7 @@ export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
     if (existing === ext) return;
     console.warn(
       `[i-chat] Markdown plugin "${ext.id}" is already registered with a different object. ` +
-      'Keeping the first registration.',
+        'Keeping the first registration.',
     );
     return;
   }

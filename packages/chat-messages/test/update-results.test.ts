@@ -34,12 +34,7 @@ import {
   type TodoItemUpdateNormalizeFailureReason,
   type TodoItemUpdateNormalizeResult,
 } from '../src/todo-state.js';
-import {
-  textPart,
-  type TodoPart,
-  type ToolCallPart,
-  type ChatMessage,
-} from '../src/types.js';
+import { textPart, type TodoPart, type ToolCallPart, type ChatMessage } from '../src/types.js';
 
 // ── MessagePartLookupResult discriminated union ────────────────────────
 

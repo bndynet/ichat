@@ -20,7 +20,9 @@ onPluginCssChange(() => {
   }
   // Also refresh global styles
   const globalCss = getMarkdownPluginGlobalStyles();
-  let globalStyle = document.head.querySelector(`style[${GLOBAL_PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+  let globalStyle = document.head.querySelector(
+    `style[${GLOBAL_PLUGIN_ATTR}]`,
+  ) as HTMLStyleElement | null;
   if (globalCss) {
     if (!globalStyle) {
       globalStyle = document.createElement('style');
@@ -79,7 +81,9 @@ export function injectPluginCss(parent: ParentNode): () => void {
 export function injectGlobalPluginCss(): void {
   const css = getMarkdownPluginGlobalStyles();
 
-  let style = document.head.querySelector(`style[${GLOBAL_PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+  let style = document.head.querySelector(
+    `style[${GLOBAL_PLUGIN_ATTR}]`,
+  ) as HTMLStyleElement | null;
 
   if (!css) {
     style?.remove();

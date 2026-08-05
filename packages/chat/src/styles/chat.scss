@@ -10,7 +10,17 @@
   overflow: hidden;
   border-radius: var(--chat-radius, 12px);
   background: var(--chat-bg, #f7f7f8);
-  font-family: var(--chat-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
+  font-family: var(
+    --chat-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif
+  );
   box-sizing: border-box;
 }
 
@@ -33,8 +43,5 @@ i-chat-messages {
 // Falls back to horizontal/bottom spacing tokens.
 .chat-footer {
   flex: 0 0 auto;
-  padding: var(
-    --chat-footer-padding,
-    0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px)
-  );
+  padding: var(--chat-footer-padding, 0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px));
 }

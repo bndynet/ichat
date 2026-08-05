@@ -34,12 +34,7 @@ const ICONS: Record<ProgressStatus, string> = {
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-function findClose(
-  tokens: Token[],
-  start: number,
-  openType: string,
-  closeType: string,
-): number {
+function findClose(tokens: Token[], start: number, openType: string, closeType: string): number {
   let depth = 0;
   for (let j = start + 1; j < tokens.length; j++) {
     if (tokens[j].type === openType) depth++;
@@ -82,7 +77,8 @@ export function progressPlugin(md: MarkdownIt): void {
           tokens[j].type !== 'paragraph_open' &&
           tokens[j].type !== 'inline' &&
           tokens[j].type !== 'paragraph_close'
-        ) break;
+        )
+          break;
       }
 
       removals.add(i);
@@ -137,7 +133,12 @@ export function progressPlugin(md: MarkdownIt): void {
           break;
         }
 
-        tokens[j].meta = { ...tokens[j].meta, progress: true, progressStep: stepIdx, progressStatus: status };
+        tokens[j].meta = {
+          ...tokens[j].meta,
+          progress: true,
+          progressStep: stepIdx,
+          progressStatus: status,
+        };
         tokens[liClose].meta = { ...tokens[liClose].meta, progress: true };
         stepIdx++;
         j = liClose + 1;
@@ -236,9 +237,7 @@ export function updateProgressStepStatus(
   if (!progress) return false;
   const scope: Element = progress;
 
-  const item = scope.querySelector(
-    `[data-step="${stepIndex}"]`,
-  ) as HTMLElement | null;
+  const item = scope.querySelector(`[data-step="${stepIndex}"]`) as HTMLElement | null;
   if (!item) return false;
 
   for (const cls of Array.from(item.classList)) {

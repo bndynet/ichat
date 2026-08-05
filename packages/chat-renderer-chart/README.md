@@ -1,6 +1,6 @@
 # @bndynet/ichat-renderer-chart
 
-Chart fenced-code renderer for iChat. Renders ````chart` fence blocks as interactive chart visualizations via `@bndynet/icharts`.
+Chart fenced-code renderer for iChat. Renders ````chart`fence blocks as interactive chart visualizations via`@bndynet/icharts`.
 
 ## Install
 
@@ -37,19 +37,19 @@ Supported chart types: `bar`, `line`, `area`, `pie`, `gauge`.
 
 ## API
 
-| Export | Description |
-|---|---|
-| `chartRenderer` | Pre-built `BlockRenderer` (code toggle on) |
+| Export                       | Description                                 |
+| ---------------------------- | ------------------------------------------- |
+| `chartRenderer`              | Pre-built `BlockRenderer` (code toggle on)  |
 | `createChartRenderer(opts?)` | Factory with customizable `RendererOptions` |
-| `chartPlugin` | markdown-it plugin (for `md.use()`) |
-| `ChartInput` | TypeScript type for chart JSON shape |
+| `chartPlugin`                | markdown-it plugin (for `md.use()`)         |
+| `ChartInput`                 | TypeScript type for chart JSON shape        |
 
 ## Peer dependencies
 
-| Package | Version |
-|---|---|
+| Package                   | Version  |
+| ------------------------- | -------- |
 | `@bndynet/ichat-messages` | `^3.1.0` |
-| `markdown-it` | `>=14` |
+| `markdown-it`             | `>=14`   |
 
 The renderer uses the library's audited `trusted: true` path so the `<i-chart>`
 custom element is preserved. JSON values are escaped before they are written to

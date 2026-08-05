@@ -28,10 +28,7 @@ import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
 import { ConfirmationController } from '../controllers/confirmation-controller.js';
 import { SlotForwardingController } from '../controllers/slot-forwarding-controller.js';
-import {
-  ChatMessageStore,
-  type ChatMessageStoreChange,
-} from '../state/chat-message-store.js';
+import { ChatMessageStore, type ChatMessageStoreChange } from '../state/chat-message-store.js';
 import './chat-confirmation.js';
 import {
   createMiddlewareChain,
@@ -45,13 +42,7 @@ import styles from '../styles/chat.scss';
 void ChatMessages;
 void ChatInput;
 
-export type {
-  ChatMessage,
-  ChatConfig,
-  BlockRenderer,
-  ChatPartActionDetail,
-  ChatLinkClickDetail,
-};
+export type { ChatMessage, ChatConfig, BlockRenderer, ChatPartActionDetail, ChatLinkClickDetail };
 
 export type ChatConfirmationVariant = 'default' | 'danger';
 
@@ -196,7 +187,8 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = '';
 
   /** Passed to the default `<i-chat-input>` — enables `console.debug` speech logs. */
-  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics = false;
+  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics =
+    false;
 
   /**
    * Message ownership mode.
@@ -355,7 +347,11 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
       // cannot prove it while `TExtraParts` is still an unresolved type parameter.
       const teardown = plugin.install(this as unknown as Chat);
       const dispose = () => {
-        try { teardown?.(); } catch { /* teardown must not throw */ }
+        try {
+          teardown?.();
+        } catch {
+          /* teardown must not throw */
+        }
         this._pluginDisposers.delete(plugin.name);
       };
       this._pluginDisposers.set(plugin.name, dispose);
@@ -515,9 +511,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     this._middlewareChain.executeOnError(text);
     if (!this._isChildReady()) {
       // Replace any previous pending error with the newest.
-    this._pendingCommands.clear();
-    this._pendingCommands.removeByKind('show-error', 'dismiss-error');
-    this._pendingCommands.enqueue({ kind: 'show-error', text, options });
+      this._pendingCommands.clear();
+      this._pendingCommands.removeByKind('show-error', 'dismiss-error');
+      this._pendingCommands.enqueue({ kind: 'show-error', text, options });
       return;
     }
     this._messages.showError(text, options);
@@ -534,7 +530,12 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
 
   updateProgressStep(messageId: string, step: number, status: string, bid?: string): boolean {
     if (!this._isChildReady()) return false;
-    return this._messages.updateProgressStep(messageId, step, status as Parameters<ChatMessages['updateProgressStep']>[2], bid);
+    return this._messages.updateProgressStep(
+      messageId,
+      step,
+      status as Parameters<ChatMessages['updateProgressStep']>[2],
+      bid,
+    );
   }
 
   /**
@@ -718,7 +719,11 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     // Dispose all plugins. Errors in individual teardowns are caught so
     // one broken plugin cannot prevent the rest from cleaning up.
     for (const [, dispose] of this._pluginDisposers) {
-      try { dispose(); } catch { /* teardown must not prevent disconnect */ }
+      try {
+        dispose();
+      } catch {
+        /* teardown must not prevent disconnect */
+      }
     }
     this._pluginDisposers.clear();
     super.disconnectedCallback();
@@ -764,7 +769,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
           detail: { content: processed },
           bubbles: true,
           composed: true,
-        })
+        }),
       );
     } finally {
       this._setSubmittingState(false);
@@ -777,7 +782,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
       new CustomEvent('cancel', {
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -810,7 +815,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         detail: { busy: this.busy },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -822,7 +827,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         detail: e.detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -833,7 +838,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         detail: e.detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -844,7 +849,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         detail: e.detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -883,18 +888,20 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         </i-chat-messages>
       </div>
       <div class="chat-footer">
-        ${confirmation
-          ? html`<i-chat-confirmation .request=${confirmation} .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation} @confirmation-settle=${this._handleConfirmationSettle}></i-chat-confirmation>`
-          : html`
+        ${
+          confirmation
+            ? html`<i-chat-confirmation .request=${confirmation} .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation} @confirmation-settle=${this._handleConfirmationSettle}></i-chat-confirmation>`
+            : html`
               <slot
                 name="input"
                 @slotchange=${this._handleInputSlotChange}
                 @send=${this._handleSend}
                 @cancel=${this._handleCancel}
               ></slot>
-              ${this._slotCtrl.hasCustomInput
-                ? nothing
-                : html`
+              ${
+                this._slotCtrl.hasCustomInput
+                  ? nothing
+                  : html`
                     <i-chat-input
                       .placeholder=${this.placeholder}
                       .locale=${this.config.locale ?? ''}
@@ -911,8 +918,10 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
                     >
                       <slot name="actions" slot="actions"></slot>
                     </i-chat-input>
-                  `}
-            `}
+                  `
+              }
+            `
+        }
       </div>
     `;
   }

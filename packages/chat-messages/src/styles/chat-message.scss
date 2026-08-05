@@ -10,17 +10,41 @@
 
   // Avatar: two-level cascade only — per-role token, then shared --chat-avatar-bg|text, then SCSS.
   // Override --chat-avatar-bg to tint every role; override --chat-avatar-user-bg etc. for one role.
-  --_chat-avatar-self-bg: var(--chat-avatar-user-bg, var(--chat-avatar-bg, #{$color-avatar-user-bg}));
-  --_chat-avatar-self-color: var(--chat-avatar-user-text, var(--chat-avatar-text, #{$color-avatar-user-text}));
+  --_chat-avatar-self-bg: var(
+    --chat-avatar-user-bg,
+    var(--chat-avatar-bg, #{$color-avatar-user-bg})
+  );
+  --_chat-avatar-self-color: var(
+    --chat-avatar-user-text,
+    var(--chat-avatar-text, #{$color-avatar-user-text})
+  );
 
-  --_chat-avatar-peer-bg: var(--chat-avatar-peer-bg, var(--chat-avatar-bg, #{$color-avatar-peer-bg}));
-  --_chat-avatar-peer-color: var(--chat-avatar-peer-text, var(--chat-avatar-text, #{$color-avatar-peer-text}));
+  --_chat-avatar-peer-bg: var(
+    --chat-avatar-peer-bg,
+    var(--chat-avatar-bg, #{$color-avatar-peer-bg})
+  );
+  --_chat-avatar-peer-color: var(
+    --chat-avatar-peer-text,
+    var(--chat-avatar-text, #{$color-avatar-peer-text})
+  );
 
-  --_chat-avatar-assistant-bg: var(--chat-avatar-assistant-bg, var(--chat-avatar-bg, #{$color-avatar-assistant-bg}));
-  --_chat-avatar-assistant-color: var(--chat-avatar-assistant-text, var(--chat-avatar-text, #{$color-avatar-assistant-text}));
+  --_chat-avatar-assistant-bg: var(
+    --chat-avatar-assistant-bg,
+    var(--chat-avatar-bg, #{$color-avatar-assistant-bg})
+  );
+  --_chat-avatar-assistant-color: var(
+    --chat-avatar-assistant-text,
+    var(--chat-avatar-text, #{$color-avatar-assistant-text})
+  );
 
-  --_chat-avatar-system-bg: var(--chat-avatar-system-bg, var(--chat-avatar-bg, #{$color-avatar-system-bg}));
-  --_chat-avatar-system-color: var(--chat-avatar-system-text, var(--chat-avatar-text, #{$color-avatar-system-text}));
+  --_chat-avatar-system-bg: var(
+    --chat-avatar-system-bg,
+    var(--chat-avatar-bg, #{$color-avatar-system-bg})
+  );
+  --_chat-avatar-system-color: var(
+    --chat-avatar-system-text,
+    var(--chat-avatar-text, #{$color-avatar-system-text})
+  );
 }
 
 .message {
@@ -87,10 +111,18 @@
   }
 
   &--img {
-    .message--self & { background: var(--_chat-avatar-self-bg); }
-    .message--peer & { background: var(--_chat-avatar-peer-bg); }
-    .message--assistant & { background: var(--_chat-avatar-assistant-bg); }
-    .message--system & { background: var(--_chat-avatar-system-bg); }
+    .message--self & {
+      background: var(--_chat-avatar-self-bg);
+    }
+    .message--peer & {
+      background: var(--_chat-avatar-peer-bg);
+    }
+    .message--assistant & {
+      background: var(--_chat-avatar-assistant-bg);
+    }
+    .message--system & {
+      background: var(--_chat-avatar-system-bg);
+    }
 
     img {
       width: 100%;
@@ -114,7 +146,8 @@
       max-height: 100%;
     }
 
-    img, svg {
+    img,
+    svg {
       object-fit: cover;
       border-radius: 50%;
     }
@@ -154,7 +187,10 @@ i-chat-text-part {
   }
 
   .message--peer & {
-    background: var(--chat-peer-bg, var(--chat-assistant-bg, var(--chat-surface, #{$color-surface})));
+    background: var(
+      --chat-peer-bg,
+      var(--chat-assistant-bg, var(--chat-surface, #{$color-surface}))
+    );
     color: var(--chat-peer-text, var(--chat-assistant-text, var(--chat-text, #{$color-text})));
     border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});

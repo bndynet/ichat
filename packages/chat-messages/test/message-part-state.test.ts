@@ -18,10 +18,7 @@ function test(name: string, run: () => void): void {
   }
 }
 
-function makeMsg(
-  id: string,
-  parts: MessagePart[] = [textPart(`body-${id}`)],
-): ChatMessage {
+function makeMsg(id: string, parts: MessagePart[] = [textPart(`body-${id}`)]): ChatMessage {
   return { id, role: 'assistant', parts, timestamp: 1000 };
 }
 

@@ -103,8 +103,7 @@ function measureValidationComparison(scenario: BenchmarkScenario): ValidationCom
   const legacySamples: number[] = [];
 
   const batchTotal = () =>
-    renderBatch(content, scenario.updatesPerSecond)
-      .reduce((total, value) => total + value, 0);
+    renderBatch(content, scenario.updatesPerSecond).reduce((total, value) => total + value, 0);
 
   try {
     for (let run = 0; run < WARMUP_RUNS; run += 1) {
@@ -117,9 +116,8 @@ function measureValidationComparison(scenario: BenchmarkScenario): ValidationCom
     // Alternate execution order to reduce JIT/thermal bias between the secure
     // implementation and the legacy `validateLink = () => true` baseline.
     for (let run = 0; run < MEASURED_RUNS; run += 1) {
-      const order = run % 2 === 0
-        ? (['legacy', 'secure'] as const)
-        : (['secure', 'legacy'] as const);
+      const order =
+        run % 2 === 0 ? (['legacy', 'secure'] as const) : (['secure', 'legacy'] as const);
 
       for (const mode of order) {
         md.validateLink = mode === 'secure' ? secureValidator : legacyValidator;
@@ -154,14 +152,14 @@ const results = scenarios.map(measureScenario);
 const validationComparisons = ([10, 50] as const).map((sizeKiB) =>
   measureValidationComparison({ kind: 'markdown', sizeKiB, updatesPerSecond: 60 }),
 );
-const runtimeProcess = (globalThis as typeof globalThis & {
-  process?: { version: string; platform: string; arch: string };
-}).process;
+const runtimeProcess = (
+  globalThis as typeof globalThis & {
+    process?: { version: string; platform: string; arch: string };
+  }
+).process;
 
 if (runtimeProcess) {
-  console.log(
-    `Node ${runtimeProcess.version} · ${runtimeProcess.platform}/${runtimeProcess.arch}`,
-  );
+  console.log(`Node ${runtimeProcess.version} · ${runtimeProcess.platform}/${runtimeProcess.arch}`);
 }
 console.log(
   'Scope: markdown-it + streaming renderer only; browser DOM patch/layout and terminal DOMPurify are excluded.',

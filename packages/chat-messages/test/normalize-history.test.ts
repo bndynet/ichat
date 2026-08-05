@@ -117,9 +117,11 @@ test('does not mutate complete parts', () => {
 });
 
 test('does not mutate error parts', () => {
-  const msgs = [makeMsg('a', {
-    parts: [{ id: 'p1', type: 'text', text: 'x', status: 'error' } as MessagePart],
-  })];
+  const msgs = [
+    makeMsg('a', {
+      parts: [{ id: 'p1', type: 'text', text: 'x', status: 'error' } as MessagePart],
+    }),
+  ];
   const [msg] = normalizeHistoryMessages(msgs);
   assert.equal(msg.parts[0].status, 'error');
 });
@@ -127,11 +129,7 @@ test('does not mutate error parts', () => {
 // ── empty message removal ──────────────────────────────────────────────
 
 test('removes messages with no parts by default', () => {
-  const msgs = [
-    makeMsg('a'),
-    { id: 'empty', role: 'assistant' as const, parts: [] },
-    makeMsg('c'),
-  ];
+  const msgs = [makeMsg('a'), { id: 'empty', role: 'assistant' as const, parts: [] }, makeMsg('c')];
   const result = normalizeHistoryMessages(msgs);
   assert.equal(result.length, 2);
   assert.equal(result[0].id, 'a');
@@ -139,10 +137,7 @@ test('removes messages with no parts by default', () => {
 });
 
 test('keeps empty messages when removeEmptyMessages is false', () => {
-  const msgs = [
-    makeMsg('a'),
-    { id: 'empty', role: 'assistant' as const, parts: [] },
-  ];
+  const msgs = [makeMsg('a'), { id: 'empty', role: 'assistant' as const, parts: [] }];
   const result = normalizeHistoryMessages(msgs, { removeEmptyMessages: false });
   assert.equal(result.length, 2);
 });
@@ -178,7 +173,10 @@ test('handles mixed batch: normal + streaming + empty', () => {
 test('preserves message order', () => {
   const msgs = [makeMsg('a'), makeMsg('b'), makeMsg('c'), makeMsg('d')];
   const result = normalizeHistoryMessages(msgs);
-  assert.deepEqual(result.map((m) => m.id), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(
+    result.map((m) => m.id),
+    ['a', 'b', 'c', 'd'],
+  );
 });
 
 // ── stable IDs ─────────────────────────────────────────────────────────

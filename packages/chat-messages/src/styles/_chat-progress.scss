@@ -22,10 +22,12 @@
     &:not(:last-child)::after {
       content: '';
       position: absolute;
-      inset-inline-start: calc(var(--chat-progress-indicator-size, #{$progress-indicator-size}) / 2 - 0.5px);
+      inset-inline-start: calc(
+        var(--chat-progress-indicator-size, #{$progress-indicator-size}) / 2 - 0.5px
+      );
       top: calc(
-        (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em
-        + var(--chat-progress-indicator-size, #{$progress-indicator-size})
+        (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em +
+          var(--chat-progress-indicator-size, #{$progress-indicator-size})
       );
       bottom: calc((var(--chat-line-height, #{$line-height-base}) - 1) / -2 * 1em);
       width: 1px;

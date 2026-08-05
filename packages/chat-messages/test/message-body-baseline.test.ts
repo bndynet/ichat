@@ -13,13 +13,8 @@ import {
   type ToolCallPart,
 } from '../src/types.js';
 import { resolveLabels } from '../src/i18n.js';
-import {
-  createPartActionDetail,
-} from '../src/message-events.js';
-import {
-  getTodoInitialExpanded,
-  shouldInitializeTodoExpansion,
-} from '../src/todo-collapse.js';
+import { createPartActionDetail } from '../src/message-events.js';
+import { getTodoInitialExpanded, shouldInitializeTodoExpansion } from '../src/todo-collapse.js';
 import {
   areTodoItemsTerminal,
   normalizeTodoItemUpdateEvent,
@@ -40,10 +35,7 @@ import {
   replaceMessagePart,
 } from '../src/message-part-state.js';
 import { normalizeMessagePartUpdateEvent } from '../src/message-part-events.js';
-import {
-  isAllowedLinkHref,
-  uriRegexpForAllowedLinkProtocols,
-} from '../src/link-protocols.js';
+import { isAllowedLinkHref, uriRegexpForAllowedLinkProtocols } from '../src/link-protocols.js';
 import { sanitizeInlineSvgAvatar } from '../src/avatar-sanitizer.js';
 
 function test(name: string, run: () => void): void {
@@ -56,7 +48,8 @@ function test(name: string, run: () => void): void {
 }
 
 test('inline SVG avatars use the sanitized result and fail closed', () => {
-  const unsafeSvg = '<svg onload="alert(1)"><foreignObject>unsafe</foreignObject><circle r="8" /></svg>';
+  const unsafeSvg =
+    '<svg onload="alert(1)"><foreignObject>unsafe</foreignObject><circle r="8" /></svg>';
   let receivedConfig: Record<string, unknown> | undefined;
 
   const sanitized = sanitizeInlineSvgAvatar(unsafeSvg, {
@@ -78,14 +71,14 @@ test('inline SVG avatars use the sanitized result and fail closed', () => {
       isSupported: true,
       sanitize: () => '<span>not an svg</span>',
     }),
-    ''
+    '',
   );
   assert.equal(
     sanitizeInlineSvgAvatar(unsafeSvg, {
       isSupported: false,
       sanitize: () => unsafeSvg,
     }),
-    ''
+    '',
   );
 });
 
@@ -113,7 +106,11 @@ test('link protocols use safe defaults and require custom schemes to opt in', ()
     'myapp://example',
   ]) {
     assert.equal(isAllowedLinkHref(href), false, `${href} should be blocked by default`);
-    assert.equal(isAllowedLinkHref(href, []), false, `${href} should be blocked with an empty list`);
+    assert.equal(
+      isAllowedLinkHref(href, []),
+      false,
+      `${href} should be blocked with an empty list`,
+    );
   }
 
   assert.equal(isAllowedLinkHref('myapp://example', ['https:', 'myapp:']), true);
@@ -130,14 +127,10 @@ test('link protocols use safe defaults and require custom schemes to opt in', ()
 });
 
 test('message body exposes the expected first-class part types', () => {
-  assert.deepEqual([...BUILT_IN_MESSAGE_PART_TYPES], [
-    'text',
-    'reasoning',
-    'tool-call',
-    'todo',
-    'file',
-    'source',
-  ]);
+  assert.deepEqual(
+    [...BUILT_IN_MESSAGE_PART_TYPES],
+    ['text', 'reasoning', 'tool-call', 'todo', 'file', 'source'],
+  );
 
   for (const type of BUILT_IN_MESSAGE_PART_TYPES) {
     assert.equal(isBuiltInMessagePartType(type), true);
@@ -278,7 +271,7 @@ test('message part update event normalization supports generic backend patches',
       messageId: 'assistant-42',
       partId: 'body',
       text: 'Streaming text',
-    })
+    }),
   );
   assert.equal(stringUpdate.ok, true);
   assert.deepEqual(stringUpdate.update.patch, { text: 'Streaming text' });
@@ -308,10 +301,10 @@ test('message part update event normalization supports generic backend patches',
   });
   assert.equal(defaultMessageEventUpdate.ok, true);
 
-  assert.deepEqual(
-    normalizeMessagePartUpdateEvent({ type: 'todo.item.updated' }),
-    { ok: false, reason: 'invalid-event' }
-  );
+  assert.deepEqual(normalizeMessagePartUpdateEvent({ type: 'todo.item.updated' }), {
+    ok: false,
+    reason: 'invalid-event',
+  });
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
       type: 'message.part.updated',
@@ -322,7 +315,7 @@ test('message part update event normalization supports generic backend patches',
         patch: { text: 'Wrong envelope' },
       }),
     }),
-    { ok: false, reason: 'invalid-event' }
+    { ok: false, reason: 'invalid-event' },
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -331,7 +324,7 @@ test('message part update event normalization supports generic backend patches',
       sequence_number: '7',
       patch: { text: 'Hello' },
     }),
-    { ok: false, reason: 'invalid-sequence-number' }
+    { ok: false, reason: 'invalid-sequence-number' },
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -339,7 +332,7 @@ test('message part update event normalization supports generic backend patches',
       partId: 'body',
       patch: [],
     }),
-    { ok: false, reason: 'invalid-patch' }
+    { ok: false, reason: 'invalid-patch' },
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -347,7 +340,7 @@ test('message part update event normalization supports generic backend patches',
       partId: 'body',
       patch: {},
     }),
-    { ok: false, reason: 'empty-patch' }
+    { ok: false, reason: 'empty-patch' },
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -355,7 +348,7 @@ test('message part update event normalization supports generic backend patches',
       partId: 'body',
       patch: { id: 'new-id' },
     }),
-    { ok: false, reason: 'part-id-change-not-allowed' }
+    { ok: false, reason: 'part-id-change-not-allowed' },
   );
   assert.deepEqual(
     normalizeMessagePartUpdateEvent({
@@ -363,7 +356,7 @@ test('message part update event normalization supports generic backend patches',
       partId: 'body',
       patch: { type: 'file' },
     }),
-    { ok: false, reason: 'part-type-change-not-allowed' }
+    { ok: false, reason: 'part-type-change-not-allowed' },
   );
 });
 
@@ -448,7 +441,7 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
       { id: 'capture', title: 'Capture', status: 'done' },
       { id: 'verify', title: 'Verify', status: 'pending' },
     ],
-    { id: 'todo-1', revision: 1, status: 'streaming' }
+    { id: 'todo-1', revision: 1, status: 'streaming' },
   );
 
   const updated = patchTodoItem(
@@ -457,7 +450,7 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
     { id: 'ignored-at-runtime', title: 'Verify UI', status: 'active' } as Parameters<
       typeof patchTodoItem
     >[2],
-    2
+    2,
   );
 
   assert.equal(updated.ok, true);
@@ -482,7 +475,7 @@ test('todo item patching is immutable, revision-aware, and updates lifecycle sta
     updated.part,
     'verify',
     { status: 'blocked' } as Parameters<typeof patchTodoItem>[2],
-    3
+    3,
   );
   assert.equal(invalidStatus.ok, false);
   assert.equal(invalidStatus.reason, 'invalid-status');
@@ -555,7 +548,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
       partId: 'plan',
       itemId: 'panel',
       title: 'Build panel',
-    })
+    }),
   );
   assert.equal(stringUpdate.ok, true);
   assert.deepEqual(stringUpdate.update.patch, { title: 'Build panel' });
@@ -587,10 +580,10 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
   });
   assert.equal(defaultMessageEventUpdate.ok, true);
 
-  assert.deepEqual(
-    normalizeTodoItemUpdateEvent({ type: 'tool.updated' }),
-    { ok: false, reason: 'invalid-event' }
-  );
+  assert.deepEqual(normalizeTodoItemUpdateEvent({ type: 'tool.updated' }), {
+    ok: false,
+    reason: 'invalid-event',
+  });
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
       type: 'todo.item.updated',
@@ -602,7 +595,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
         status: 'done',
       }),
     }),
-    { ok: false, reason: 'invalid-event' }
+    { ok: false, reason: 'invalid-event' },
   );
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
@@ -612,7 +605,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
       status: 'done',
       sequence_number: '9',
     }),
-    { ok: false, reason: 'invalid-sequence-number' }
+    { ok: false, reason: 'invalid-sequence-number' },
   );
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
@@ -621,7 +614,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
       itemId: 'panel',
       status: 'blocked',
     }),
-    { ok: false, reason: 'invalid-status' }
+    { ok: false, reason: 'invalid-status' },
   );
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
@@ -631,7 +624,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
       status: 'done',
       revision: '3',
     }),
-    { ok: false, reason: 'invalid-revision' }
+    { ok: false, reason: 'invalid-revision' },
   );
   assert.deepEqual(
     normalizeTodoItemUpdateEvent({
@@ -639,7 +632,7 @@ test('todo SSE update normalization accepts supported shapes and rejects invalid
       partId: 'plan',
       itemId: 'panel',
     }),
-    { ok: false, reason: 'empty-patch' }
+    { ok: false, reason: 'empty-patch' },
   );
 });
 
@@ -694,7 +687,13 @@ test('part-action event helper attaches message context', () => {
     kind: 'todo',
     action: 'change-status',
     message,
-    payload: { action: 'change-status', itemId: 'task-1', previousStatus: 'pending', status: 'active', part: todo },
+    payload: {
+      action: 'change-status',
+      itemId: 'task-1',
+      previousStatus: 'pending',
+      status: 'active',
+      part: todo,
+    },
     part: todo,
   });
   assert.equal(todoPartAction.kind, 'todo');

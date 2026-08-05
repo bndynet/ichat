@@ -47,18 +47,13 @@ function patchFromPayload(payload: Record<string, unknown>): unknown {
  * Normalize a backend/SSE message part update. Accepts a parsed object, a JSON
  * string, or a MessageEvent-like object with a JSON `data` payload.
  */
-export function normalizeMessagePartUpdateEvent(
-  input: unknown
-): MessagePartUpdateNormalizeResult {
+export function normalizeMessagePartUpdateEvent(input: unknown): MessagePartUpdateNormalizeResult {
   const payload = parseTypedEventPayload(input, 'message.part.updated');
   if (!isRecord(payload)) {
     return { ok: false, reason: 'invalid-event' };
   }
 
-  if (
-    typeof payload.type === 'string' &&
-    payload.type !== 'message.part.updated'
-  ) {
+  if (typeof payload.type === 'string' && payload.type !== 'message.part.updated') {
     return { ok: false, reason: 'invalid-event' };
   }
 

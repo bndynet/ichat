@@ -133,19 +133,17 @@ export class ChatPartHost extends LitElement {
         detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
   private _handleRenderedPartUpdated = (e: CustomEvent<{ changed?: boolean }>): void => {
     e.stopPropagation();
     this.dispatchEvent(
-      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true })
+      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true }),
     );
     if (e.detail?.changed && !this.message?.parentId) {
-      this.dispatchEvent(
-        new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
-      );
+      this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
     }
   };
 
@@ -181,19 +179,23 @@ export class ChatPartHost extends LitElement {
         detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
   private _customPartFallback(part: MessagePart): string {
     const value = JSON.stringify(part, null, 2) ?? String(part);
-    const escaped = value.replace(/[&<>"']/g, (character) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    })[character] ?? character);
+    const escaped = value.replace(
+      /[&<>"']/g,
+      (character) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        })[character] ?? character,
+    );
     return `<pre class="part-custom">${escaped}</pre>`;
   }
 
@@ -229,8 +231,7 @@ export class ChatPartHost extends LitElement {
         ></i-chat-todo>`;
       case 'file': {
         if (part.mediaType.startsWith('image/')) {
-          const src =
-            part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
+          const src = part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
           return src
             ? html`<div
                 class="part-attachment part-file part-file--image"
@@ -276,8 +277,7 @@ export class ChatPartHost extends LitElement {
           ${part.snippet ? html`<div class="part-source-snippet">${part.snippet}</div>` : nothing}
         </div>`;
       case 'text': {
-        const animatingHere =
-          part.id === this.streamingTextId && this.streamingTextAnimating;
+        const animatingHere = part.id === this.streamingTextId && this.streamingTextAnimating;
         const content = part.id === this.streamingTextId ? this.streamingText : part.text;
         return html`<i-chat-text-part
           data-part-id=${part.id}
@@ -362,13 +362,11 @@ export class ChatPartHost extends LitElement {
     }
 
     this.dispatchEvent(
-      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true })
+      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true }),
     );
 
     if (didMorph && !this.message?.parentId) {
-      this.dispatchEvent(
-        new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
-      );
+      this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
     }
   }
 
@@ -376,7 +374,7 @@ export class ChatPartHost extends LitElement {
     return html`${repeat(
       this.parts ?? [],
       (p) => p.id,
-      (p) => this._renderPart(p)
+      (p) => this._renderPart(p),
     )}`;
   }
 }

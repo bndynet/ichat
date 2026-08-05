@@ -325,11 +325,7 @@ function handleLinkClick(e) {
     <div class="demo-chat-bar__locale">
       <span class="demo-chat-bar__label">Language</span>
       <el-radio-group v-model="locale" size="small">
-        <el-radio-button
-          v-for="opt in LOCALE_OPTIONS"
-          :key="opt.value"
-          :value="opt.value"
-        >
+        <el-radio-button v-for="opt in LOCALE_OPTIONS" :key="opt.value" :value="opt.value">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -337,11 +333,7 @@ function handleLinkClick(e) {
     <div class="demo-chat-bar__pending">
       <span class="demo-chat-bar__label">Pending</span>
       <el-radio-group v-model="pendingIndicator" size="small">
-        <el-radio-button
-          v-for="opt in PENDING_OPTIONS"
-          :key="opt.value"
-          :value="opt.value"
-        >
+        <el-radio-button v-for="opt in PENDING_OPTIONS" :key="opt.value" :value="opt.value">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -389,11 +381,7 @@ function handleLinkClick(e) {
     />
     <template #footer>
       <el-button @click="cancelReplyDialog">Cancel</el-button>
-      <el-button
-        type="primary"
-        :disabled="!replyContent.trim()"
-        @click="confirmReplyDialog"
-      >
+      <el-button type="primary" :disabled="!replyContent.trim()" @click="confirmReplyDialog">
         Send reply
       </el-button>
     </template>

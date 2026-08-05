@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
-import type {
-  MessagesChangeDetail,
-  MessagesChangeReason,
-} from '../src/messages-change-types.js';
+import type { MessagesChangeDetail, MessagesChangeReason } from '../src/messages-change-types.js';
 import { ChatMessages } from '../src/components/chat-messages.js';
 import { textPart, type ChatMessage } from '../src/types.js';
 

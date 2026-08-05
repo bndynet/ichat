@@ -8,14 +8,10 @@ import {
 } from './typed-event-payload.js';
 
 export type TodoPatchFailureReason =
-  | 'stale-revision'
-  | 'item-not-found'
-  | 'invalid-status'
-  | 'invalid-revision';
+  'stale-revision' | 'item-not-found' | 'invalid-status' | 'invalid-revision';
 
 export type TodoPatchResult =
-  | { ok: true; part: TodoPart }
-  | { ok: false; part: TodoPart; reason: TodoPatchFailureReason };
+  { ok: true; part: TodoPart } | { ok: false; part: TodoPart; reason: TodoPatchFailureReason };
 
 export interface TodoItemUpdate {
   messageId: string;
@@ -77,7 +73,7 @@ export function patchTodoItem(
   }
 
   const items = part.items.map((item, index) =>
-    index === itemIndex ? { ...item, ...patch, id: item.id } : item
+    index === itemIndex ? { ...item, ...patch, id: item.id } : item,
   );
   const status = areTodoItemsTerminal(items)
     ? 'complete'
@@ -101,18 +97,13 @@ export function patchTodoItem(
  * `updateTodoItem()`. Accepts a parsed object, a JSON string, or a MessageEvent-
  * like object with a JSON `data` payload.
  */
-export function normalizeTodoItemUpdateEvent(
-  input: unknown
-): TodoItemUpdateNormalizeResult {
+export function normalizeTodoItemUpdateEvent(input: unknown): TodoItemUpdateNormalizeResult {
   const payload = parseTypedEventPayload(input, 'todo.item.updated');
   if (!isRecord(payload)) {
     return { ok: false, reason: 'invalid-event' };
   }
 
-  if (
-    typeof payload.type === 'string' &&
-    payload.type !== 'todo.item.updated'
-  ) {
+  if (typeof payload.type === 'string' && payload.type !== 'todo.item.updated') {
     return { ok: false, reason: 'invalid-event' };
   }
 

@@ -9,4 +9,8 @@ export { chartRenderer, chartPlugin, createChartRenderer } from './chart-rendere
 
 // Re-export shared renderer utilities from @bndynet/ichat-messages
 export type { RendererOptions } from '@bndynet/ichat-messages';
-export { CHAT_TOGGLE_SOURCE_CLASS, renderCodeFallback, wrapWithCodeToggle } from '@bndynet/ichat-messages';
+export {
+  CHAT_TOGGLE_SOURCE_CLASS,
+  renderCodeFallback,
+  wrapWithCodeToggle,
+} from '@bndynet/ichat-messages';

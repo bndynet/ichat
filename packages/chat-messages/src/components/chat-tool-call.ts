@@ -101,7 +101,7 @@ export class ChatToolCall extends LitElement {
         detail: { kind: 'tool-call', action, toolCallId: this.data?.toolCallId, part: this.data },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -120,9 +120,11 @@ export class ChatToolCall extends LitElement {
 
   private _renderResultPart(part: MessagePart) {
     if (part.type === 'text') {
-      return html`<div>${unsafeHTML(renderMarkdown(part.text, {
-        allowedLinkProtocols: this.allowedLinkProtocols,
-      }))}</div>`;
+      return html`<div>${unsafeHTML(
+        renderMarkdown(part.text, {
+          allowedLinkProtocols: this.allowedLinkProtocols,
+        }),
+      )}</div>`;
     }
     if (part.type === 'file' && part.mediaType.startsWith('image/')) {
       const src = part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
@@ -172,36 +174,50 @@ export class ChatToolCall extends LitElement {
           </span>
         </summary>
         <div class="tc__body">
-          ${hasArgs
-            ? html`<div class="tc__section">${labels.argumentsSection}</div>
+          ${
+            hasArgs
+              ? html`<div class="tc__section">${labels.argumentsSection}</div>
                 <pre class="tc__code">${pretty(tc.args)}</pre>`
-            : nothing}
-          ${tc.error
-            ? html`<div class="tc__section">${labels.errorSection}</div>
+              : nothing
+          }
+          ${
+            tc.error
+              ? html`<div class="tc__section">${labels.errorSection}</div>
                 <div class="tc__error">${tc.error}</div>`
-            : nothing}
-          ${hasResult
-            ? html`<div class="tc__section">${labels.resultSection}</div>
-                ${tc.resultParts && tc.resultParts.length > 0
-                  ? html`<div class="tc__result-parts">
+              : nothing
+          }
+          ${
+            hasResult
+              ? html`<div class="tc__section">${labels.resultSection}</div>
+                ${
+                  tc.resultParts && tc.resultParts.length > 0
+                    ? html`<div class="tc__result-parts">
                       ${tc.resultParts.map((p) => this._renderResultPart(p))}
                     </div>`
-                  : html`<pre class="tc__code">${pretty(tc.result)}</pre>`}`
-            : nothing}
-          ${tc.approval === 'required'
-            ? html`<div class="tc__approval">
+                    : html`<pre class="tc__code">${pretty(tc.result)}</pre>`
+                }`
+              : nothing
+          }
+          ${
+            tc.approval === 'required'
+              ? html`<div class="tc__approval">
                 <button class="tc__btn tc__btn--approve" aria-label=${labels.approve} @click=${() => this._emit('approve')}>
                   ${labels.approve}
                 </button>
                 <button class="tc__btn" aria-label=${labels.reject} @click=${() => this._emit('reject')}>${labels.reject}</button>
               </div>`
-            : nothing}
-          ${tc.approval === 'approved'
-            ? html`<div class="tc__approval-state">${chatIcons.check({ className: 'tc__approval-icon', size: 14 })} ${labels.approved}</div>`
-            : nothing}
-          ${tc.approval === 'rejected'
-            ? html`<div class="tc__approval-state">${chatIcons.x({ className: 'tc__approval-icon', size: 14 })} ${labels.rejected}</div>`
-            : nothing}
+              : nothing
+          }
+          ${
+            tc.approval === 'approved'
+              ? html`<div class="tc__approval-state">${chatIcons.check({ className: 'tc__approval-icon', size: 14 })} ${labels.approved}</div>`
+              : nothing
+          }
+          ${
+            tc.approval === 'rejected'
+              ? html`<div class="tc__approval-state">${chatIcons.x({ className: 'tc__approval-icon', size: 14 })} ${labels.rejected}</div>`
+              : nothing
+          }
         </div>
       </details>
     `;

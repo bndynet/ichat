@@ -257,7 +257,9 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
   const name = escapeHtml(field.name);
   const placeholder = escapeHtml(field.placeholder ?? '');
   const required = field.required ? ' required' : '';
-  const requiredMark = field.required ? '<span class="chat-form__required" aria-hidden="true">*</span>' : '';
+  const requiredMark = field.required
+    ? '<span class="chat-form__required" aria-hidden="true">*</span>'
+    : '';
 
   switch (field.type) {
     case 'textarea':
@@ -268,9 +270,10 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
         </div>`;
 
     case 'select': {
-      const ph = i18n.selectPlaceholder != null
-        ? `<option value="">${escapeHtml(i18n.selectPlaceholder)}</option>`
-        : '';
+      const ph =
+        i18n.selectPlaceholder != null
+          ? `<option value="">${escapeHtml(i18n.selectPlaceholder)}</option>`
+          : '';
       const options = (field.options ?? [])
         .map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`)
         .join('');
@@ -315,14 +318,19 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
     case 'date-range': {
       const rangeLabels = field.rangeLabels ?? i18n.dateRangeLabels;
       const startLabel = rangeLabels ? escapeHtml(rangeLabels[0]) : '';
-      const endLabel   = rangeLabels ? escapeHtml(rangeLabels[1]) : '';
-      const startSubLabel = startLabel ? `<label class="chat-form__date-range-sublabel" for="${id}-start">${startLabel}</label>` : '';
-      const endSubLabel   = endLabel   ? `<label class="chat-form__date-range-sublabel" for="${id}-end">${endLabel}</label>` : '';
+      const endLabel = rangeLabels ? escapeHtml(rangeLabels[1]) : '';
+      const startSubLabel = startLabel
+        ? `<label class="chat-form__date-range-sublabel" for="${id}-start">${startLabel}</label>`
+        : '';
+      const endSubLabel = endLabel
+        ? `<label class="chat-form__date-range-sublabel" for="${id}-end">${endLabel}</label>`
+        : '';
       const minAttr = field.min ? ` min="${escapeHtml(field.min)}"` : '';
       const maxAttr = field.max ? ` max="${escapeHtml(field.max)}"` : '';
-      const errorHtml = i18n.dateRangeError != null
-        ? `<span class="chat-form__date-range-error">${escapeHtml(i18n.dateRangeError)}</span>`
-        : '';
+      const errorHtml =
+        i18n.dateRangeError != null
+          ? `<span class="chat-form__date-range-error">${escapeHtml(i18n.dateRangeError)}</span>`
+          : '';
       return `
         <div class="chat-form__field">
           <span class="chat-form__label">${label}${requiredMark}</span>
@@ -446,9 +454,15 @@ class ChatFormElement extends HTMLElement {
     let hasDateRangeError = false;
     for (const field of schema.fields ?? []) {
       if (field.type !== 'date-range') continue;
-      const rangeEl = this._shadow.querySelector<HTMLElement>(`[data-range-field="${CSS.escape(field.name)}"]`);
-      const start = (formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__start')}"]`)?.value ?? '');
-      const end   = (formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__end')}"]`)?.value ?? '');
+      const rangeEl = this._shadow.querySelector<HTMLElement>(
+        `[data-range-field="${CSS.escape(field.name)}"]`,
+      );
+      const start =
+        formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__start')}"]`)
+          ?.value ?? '';
+      const end =
+        formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__end')}"]`)
+          ?.value ?? '';
       const invalid = start && end && end < start;
       rangeEl?.toggleAttribute('data-invalid', !!invalid);
       if (invalid) hasDateRangeError = true;
@@ -460,36 +474,43 @@ class ChatFormElement extends HTMLElement {
 
     for (const field of schema.fields ?? []) {
       if (field.type === 'checkbox') {
-        values[field.name] = formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name)}"]`)?.checked ?? false;
+        values[field.name] =
+          formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name)}"]`)?.checked ??
+          false;
       } else if (field.type === 'radio') {
-        values[field.name] = data.get(field.name) as string ?? '';
+        values[field.name] = (data.get(field.name) as string) ?? '';
       } else if (field.type === 'date-range') {
         values[field.name] = {
-          start: data.get(field.name + '__start') as string ?? '',
-          end:   data.get(field.name + '__end')   as string ?? '',
+          start: (data.get(field.name + '__start') as string) ?? '',
+          end: (data.get(field.name + '__end') as string) ?? '',
         };
       } else {
         const all = data.getAll(field.name);
-        values[field.name] = all.length > 1 ? (all as string[]) : (all[0] as string) ?? '';
+        values[field.name] = all.length > 1 ? (all as string[]) : ((all[0] as string) ?? '');
       }
     }
 
-    this.dispatchEvent(new CustomEvent('part-action', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        kind: 'form',
-        action: 'submit',
-        formId,
-        title,
-        values,
-      },
-    }));
+    this.dispatchEvent(
+      new CustomEvent('part-action', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          kind: 'form',
+          action: 'submit',
+          formId,
+          title,
+          values,
+        },
+      }),
+    );
 
     this._renderSubmitted(schema, values);
   }
 
-  private _renderSubmitted(schema: FormSchema, values: Record<string, string | boolean | string[] | DateRangeValue>) {
+  private _renderSubmitted(
+    schema: FormSchema,
+    values: Record<string, string | boolean | string[] | DateRangeValue>,
+  ) {
     const title = schema.title ?? '';
     const i18n: FormI18n = schema.i18n ?? {};
     const fields = schema.fields ?? [];
@@ -504,9 +525,9 @@ class ChatFormElement extends HTMLElement {
         } else if (val !== null && typeof val === 'object') {
           const rangeLabels = field.rangeLabels ?? i18n.dateRangeLabels;
           const startLabel = rangeLabels?.[0] ?? '';
-          const endLabel   = rangeLabels?.[1] ?? '';
-          const startPart = startLabel ? `${startLabel}: ${val.start || '—'}` : (val.start || '—');
-          const endPart   = endLabel   ? `${endLabel}: ${val.end || '—'}`     : (val.end   || '—');
+          const endLabel = rangeLabels?.[1] ?? '';
+          const startPart = startLabel ? `${startLabel}: ${val.start || '—'}` : val.start || '—';
+          const endPart = endLabel ? `${endLabel}: ${val.end || '—'}` : val.end || '—';
           displayVal = `${startPart}  →  ${endPart}`;
         } else {
           displayVal = String(val ?? '');

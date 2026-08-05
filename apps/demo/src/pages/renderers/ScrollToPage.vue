@@ -73,7 +73,9 @@ function scrollToCustomPart() {
         <el-button size="small" @click="scrollToMessage('msg-5')">#5</el-button>
         <el-button size="small" @click="scrollToMessage('msg-10')">#10</el-button>
         <el-button size="small" @click="scrollToMessage('msg-15')">#15</el-button>
-        <el-button size="small" type="primary" @click="scrollToMessage('msg-20')">#20 (last)</el-button>
+        <el-button size="small" type="primary" @click="scrollToMessage('msg-20')"
+          >#20 (last)</el-button
+        >
       </div>
       <div class="toolbar-group">
         <span class="toolbar-label">Part:</span>

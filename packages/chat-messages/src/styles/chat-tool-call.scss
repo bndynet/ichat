@@ -7,12 +7,21 @@
   font-family: var(--chat-font-family, inherit);
   margin-bottom: var(--chat-spacing-sm, #{$spacing-sm});
   --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface)));
-  --_tc-border: var(--chat-tool-border, var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)));
-  --_tc-radius: var(--chat-tool-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})));
+  --_tc-border: var(
+    --chat-tool-border,
+    var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))
+  );
+  --_tc-radius: var(
+    --chat-tool-radius,
+    var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))
+  );
   --_tc-shadow: var(--chat-tool-shadow, var(--chat-panel-shadow, none));
   --_tc-text: var(--chat-tool-text, var(--chat-text));
   --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary));
-  --_tc-header-bg: var(--chat-tool-header-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt})));
+  --_tc-header-bg: var(
+    --chat-tool-header-bg,
+    var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+  );
   --_tc-header-hover-bg: var(
     --chat-tool-header-hover-bg,
     var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
@@ -26,7 +35,12 @@
 }
 
 .tc {
-  @include disclosure.surface(var(--_tc-bg), var(--_tc-border), var(--_tc-radius), var(--_tc-shadow));
+  @include disclosure.surface(
+    var(--_tc-bg),
+    var(--_tc-border),
+    var(--_tc-radius),
+    var(--_tc-shadow)
+  );
 
   margin: 0;
   transition: border-color var(--chat-transition-normal, #{$transition-normal});
@@ -188,7 +202,9 @@ pre.tc__code {
   border: 1px solid var(--_tc-border);
   background: var(--chat-surface);
   color: var(--_tc-text);
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
 }
 
 .tc__btn:hover {

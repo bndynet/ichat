@@ -19,8 +19,8 @@ The global build (~623KB) is self-contained — no extra `<script>` tags needed.
 
 ## Component
 
-| Tag | Description |
-|---|---|
+| Tag        | Description                                   |
+| ---------- | --------------------------------------------- |
 | `<i-chat>` | Full chat UI: messages + input in one element |
 
 ## Re-exports
@@ -49,12 +49,12 @@ Backend integration is done via `ChatRunController` — see the [streaming integ
 
 ## Optional add-ons
 
-| Package | Description |
-|---|---|
-| `@bndynet/ichat-renderers` | KPI cards and interactive forms |
-| `@bndynet/ichat-renderer-chart` | Charts (bar, line, area, pie, gauge) via @bndynet/icharts |
-| `@bndynet/ichat-renderer-mermaid` | Mermaid diagrams with theme-aware rendering |
-| `@bndynet/ichat-renderer-katex` | KaTeX math rendering ($inline$ and $$display$$) |
+| Package                           | Description                                               |
+| --------------------------------- | --------------------------------------------------------- |
+| `@bndynet/ichat-renderers`        | KPI cards and interactive forms                           |
+| `@bndynet/ichat-renderer-chart`   | Charts (bar, line, area, pie, gauge) via @bndynet/icharts |
+| `@bndynet/ichat-renderer-mermaid` | Mermaid diagrams with theme-aware rendering               |
+| `@bndynet/ichat-renderer-katex`   | KaTeX math rendering ($inline$ and $$display$$)           |
 
 ## License
 

@@ -140,11 +140,7 @@ export interface ReasoningPart extends PartBase {
  * map cleanly from OpenAI `tool_calls` / Anthropic `tool_use`.
  */
 export type ToolCallState =
-  | 'input-streaming'
-  | 'input-available'
-  | 'executing'
-  | 'output-available'
-  | 'output-error';
+  'input-streaming' | 'input-available' | 'executing' | 'output-available' | 'output-error';
 
 /** A single tool/function invocation and its result. Addressed by part `id`. */
 export interface ToolCallPart extends PartBase {
@@ -230,13 +226,7 @@ export interface CustomPart extends PartBase {
 
 /** Discriminated union of all body parts. */
 export type MessagePart =
-  | TextPart
-  | ReasoningPart
-  | ToolCallPart
-  | FilePart
-  | SourcePart
-  | TodoPart
-  | CustomPart;
+  TextPart | ReasoningPart | ToolCallPart | FilePart | SourcePart | TodoPart | CustomPart;
 
 /** Runtime list of first-class message part types rendered by the library. */
 export const BUILT_IN_MESSAGE_PART_TYPES = [
@@ -325,9 +315,9 @@ export type PartOf<
  * // TextPart | ReasoningPart | ToolCallPart | ... | CustomPart & { type: 'x-weather'; data: { temp: number } }
  * ```
  */
-export type ExtendedMessagePart<
-  TExtraParts extends Record<`x-${string}`, unknown> = {},
-> = [keyof TExtraParts] extends [never]
+export type ExtendedMessagePart<TExtraParts extends Record<`x-${string}`, unknown> = {}> = [
+  keyof TExtraParts,
+] extends [never]
   ? MessagePart
   : Exclude<MessagePart, CustomPart> | CustomPartOf<TExtraParts>;
 
@@ -341,9 +331,9 @@ export type ExtendedMessagePart<
  *
  * Resolves to exactly `ChatMessage` for the default empty mapping.
  */
-export type ExtendedChatMessage<
-  TExtraParts extends Record<`x-${string}`, unknown> = {},
-> = [keyof TExtraParts] extends [never]
+export type ExtendedChatMessage<TExtraParts extends Record<`x-${string}`, unknown> = {}> = [
+  keyof TExtraParts,
+] extends [never]
   ? ChatMessage
   : Omit<ChatMessage, 'parts'> & { parts: ExtendedMessagePart<TExtraParts>[] };
 
@@ -606,24 +596,13 @@ export function textPart(text: string, opts: Partial<PartFactoryOptions> = {}): 
 }
 
 /** Build a {@link ReasoningPart}. Generates an `id` when one is not supplied. */
-export function reasoningPart(
-  text: string,
-  opts: Partial<PartFactoryOptions> = {},
-): ReasoningPart {
+export function reasoningPart(text: string, opts: Partial<PartFactoryOptions> = {}): ReasoningPart {
   return { type: 'reasoning', id: opts.id ?? nextPartId('reasoning'), text, ...stripId(opts) };
 }
 
 /** Build a {@link TodoPart}. Generates an `id` and starts at revision `0`. */
 export function todoPart(items: TodoItem[], opts: TodoPartOptions = {}): TodoPart {
-  const {
-    id,
-    title,
-    revision = 0,
-    defaultCollapsed,
-    interactive,
-    status,
-    metadata,
-  } = opts;
+  const { id, title, revision = 0, defaultCollapsed, interactive, status, metadata } = opts;
   return {
     type: 'todo',
     id: id ?? nextPartId('todo'),

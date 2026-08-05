@@ -10,16 +10,16 @@ npm install @bndynet/ichat-messages
 
 ## Components
 
-| Component | Tag |
-|---|---|
-| `ChatMessages` | `<i-chat-messages>` |
-| `ChatMessage` | `<i-chat-message>` |
-| `ChatPartHost` | `<i-chat-part>` |
-| `ChatTextPart` | `<i-chat-text>` |
-| `ChatToolCall` | `<i-chat-tool-call>` |
-| `ChatTodo` | `<i-chat-todo>` |
+| Component       | Tag                  |
+| --------------- | -------------------- |
+| `ChatMessages`  | `<i-chat-messages>`  |
+| `ChatMessage`   | `<i-chat-message>`   |
+| `ChatPartHost`  | `<i-chat-part>`      |
+| `ChatTextPart`  | `<i-chat-text>`      |
+| `ChatToolCall`  | `<i-chat-tool-call>` |
+| `ChatTodo`      | `<i-chat-todo>`      |
 | `ChatReasoning` | `<i-chat-reasoning>` |
-| `ChatSpinner` | `<i-chat-spinner>` |
+| `ChatSpinner`   | `<i-chat-spinner>`   |
 
 ## Extension APIs
 
@@ -38,13 +38,13 @@ object with the same name/id warns and keeps the first registration.
 
 All runtime dependencies are auto-installed:
 
-| Package | Purpose |
-|---|---|
-| `lit` | Web Component framework |
-| `markdown-it` | Markdown rendering |
-| `dompurify` | HTML sanitization |
-| `highlight.js` | Syntax highlighting |
-| `morphdom` | DOM patching for streaming |
+| Package        | Purpose                    |
+| -------------- | -------------------------- |
+| `lit`          | Web Component framework    |
+| `markdown-it`  | Markdown rendering         |
+| `dompurify`    | HTML sanitization          |
+| `highlight.js` | Syntax highlighting        |
+| `morphdom`     | DOM patching for streaming |
 
 ## License
 

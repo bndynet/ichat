@@ -10,8 +10,8 @@ npm install @bndynet/ichat-input
 
 ## Component
 
-| Tag | Description |
-|---|---|
+| Tag              | Description                                              |
+| ---------------- | -------------------------------------------------------- |
 | `<i-chat-input>` | Multi-line auto-resize textarea with send/cancel buttons |
 
 ## Features

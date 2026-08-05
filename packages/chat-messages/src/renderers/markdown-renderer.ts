@@ -81,17 +81,48 @@ type DOMPurifyConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>;
 const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
   ADD_TAGS: [
     // SVG elements used by chart / custom renderers
-    'svg', 'path', 'rect', 'circle', 'line', 'text',
-    'g', 'defs', 'pattern', 'polyline', 'polygon', 'ellipse',
+    'svg',
+    'path',
+    'rect',
+    'circle',
+    'line',
+    'text',
+    'g',
+    'defs',
+    'pattern',
+    'polyline',
+    'polygon',
+    'ellipse',
     // Native disclosure widget — safe, no script execution
-    'details', 'summary',
+    'details',
+    'summary',
   ],
   ADD_ATTR: [
     // SVG presentation attributes
-    'viewBox', 'd', 'fill', 'stroke', 'stroke-width', 'cx', 'cy', 'r',
-    'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'transform',
-    'text-anchor', 'dominant-baseline', 'font-size', 'opacity', 'points',
-    'stroke-linecap', 'stroke-linejoin',
+    'viewBox',
+    'd',
+    'fill',
+    'stroke',
+    'stroke-width',
+    'cx',
+    'cy',
+    'r',
+    'x',
+    'y',
+    'x1',
+    'y1',
+    'x2',
+    'y2',
+    'width',
+    'height',
+    'transform',
+    'text-anchor',
+    'dominant-baseline',
+    'font-size',
+    'opacity',
+    'points',
+    'stroke-linecap',
+    'stroke-linejoin',
   ],
 };
 
@@ -232,14 +263,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
           pendingBlockHTML.set(id, { html, trusted });
           return `<div id="${id}"></div>`;
         } catch (error) {
-          reportBlockRendererError(
-            customRenderer.name,
-            'render',
-            error,
-            token.content,
-            lang,
-            info,
-          );
+          reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
           return safeRendererFallback(token.content, lang);
         }
       }
@@ -253,14 +277,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         try {
           placeholderHtml = customRenderer.render(token.content, lang, info);
         } catch (error) {
-          reportBlockRendererError(
-            customRenderer.name,
-            'render',
-            error,
-            token.content,
-            lang,
-            info,
-          );
+          reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
         }
       }
 
@@ -312,14 +329,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         pendingBlockHTML.set(id, { html, trusted });
         return `<div id="${id}"></div>`;
       } catch (error) {
-        reportBlockRendererError(
-          customRenderer.name,
-          'render',
-          error,
-          token.content,
-          lang,
-          info,
-        );
+        reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
         return safeRendererFallback(token.content, lang);
       }
     }
@@ -439,33 +449,35 @@ export async function resolveAsyncBlocks(
 
   let resolved = 0;
   let failed = 0;
-  await Promise.all(owned.map(async (block) => {
-    try {
-      const resolvedHtml = await block.promise;
-      if (options.signal?.aborted || block.signal?.aborted) return;
-      const placeholder = container.querySelector(`#${block.placeholderId}`);
-      if (!placeholder) return;
-      placeholder.outerHTML = block.trusted
-        ? resolvedHtml
-        : sanitizeHtml(resolvedHtml, block.renderOptions);
-      resolved += 1;
-    } catch (error) {
-      if (options.signal?.aborted || block.signal?.aborted) return;
-      reportBlockRendererError(
-        block.renderer,
-        'render-async',
-        error,
-        block.code,
-        block.language,
-        block.info,
-        block.renderOptions,
-      );
-      const placeholder = container.querySelector(`#${block.placeholderId}`);
-      if (!placeholder) return;
-      placeholder.outerHTML = block.fallbackHtml;
-      failed += 1;
-    }
-  }));
+  await Promise.all(
+    owned.map(async (block) => {
+      try {
+        const resolvedHtml = await block.promise;
+        if (options.signal?.aborted || block.signal?.aborted) return;
+        const placeholder = container.querySelector(`#${block.placeholderId}`);
+        if (!placeholder) return;
+        placeholder.outerHTML = block.trusted
+          ? resolvedHtml
+          : sanitizeHtml(resolvedHtml, block.renderOptions);
+        resolved += 1;
+      } catch (error) {
+        if (options.signal?.aborted || block.signal?.aborted) return;
+        reportBlockRendererError(
+          block.renderer,
+          'render-async',
+          error,
+          block.code,
+          block.language,
+          block.info,
+          block.renderOptions,
+        );
+        const placeholder = container.querySelector(`#${block.placeholderId}`);
+        if (!placeholder) return;
+        placeholder.outerHTML = block.fallbackHtml;
+        failed += 1;
+      }
+    }),
+  );
 
   return { changed: resolved + failed > 0, resolved, failed };
 }
@@ -576,7 +588,7 @@ function reasoningTagToCloseRe(tag: string): RegExp {
 function extractReasoningWithRegex(
   content: string,
   openRe: RegExp,
-  closeRe: RegExp
+  closeRe: RegExp,
 ): { reasoning: string; content: string } | null {
   openRe.lastIndex = 0;
   const openMatch = openRe.exec(content);
@@ -605,7 +617,7 @@ function extractReasoningWithRegex(
  */
 export function extractReasoning(
   content: string,
-  tags = { open: '<redacted_thinking>', close: '</redacted_thinking>' }
+  tags = { open: '<redacted_thinking>', close: '</redacted_thinking>' },
 ): { reasoning: string; content: string } {
   const openRe = reasoningTagToOpenRe(tags.open);
   const closeRe = reasoningTagToCloseRe(tags.close);
@@ -618,7 +630,7 @@ export function extractReasoning(
 /** True if `content` has an opening reasoning tag but no closing tag yet (streaming). */
 export function hasUnclosedReasoning(
   content: string,
-  tags: { open: string; close: string }
+  tags: { open: string; close: string },
 ): boolean {
   const openRe = reasoningTagToOpenRe(tags.open);
   const closeRe = reasoningTagToCloseRe(tags.close);

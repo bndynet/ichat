@@ -16,7 +16,7 @@ function fallbackEnglish(ms: number): string {
 /** Narrow typing without requiring `Intl.DurationFormat` in TS lib (ES2024). */
 type DurationFormatCtor = new (
   locales?: string | string[],
-  options?: { style?: 'long' | 'short' | 'narrow' | 'digital' }
+  options?: { style?: 'long' | 'short' | 'narrow' | 'digital' },
 ) => { format(duration: Record<string, number>): string };
 
 function getDurationFormat(): DurationFormatCtor | undefined {

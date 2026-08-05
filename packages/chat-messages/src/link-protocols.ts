@@ -20,15 +20,12 @@ export function uriRegexpForAllowedLinkProtocols(protocols?: readonly string[]):
   const normalized = normalizeAllowedLinkProtocols(protocols);
   const effective = normalized.length > 0 ? normalized : [...DEFAULT_ALLOWED_LINK_PROTOCOLS];
   const source = effective.map(escapeRegExp).join('|');
-  return new RegExp(
-    `^(?:(?:(?:${source}):)|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
-    'i'
-  );
+  return new RegExp(`^(?:(?:(?:${source}):)|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
 }
 
 export function isAllowedLinkHref(
   rawHref: string,
-  allowedLinkProtocols?: readonly string[]
+  allowedLinkProtocols?: readonly string[],
 ): boolean {
   const normalized = normalizeAllowedLinkProtocols(allowedLinkProtocols);
   const effective = normalized.length > 0 ? normalized : [...DEFAULT_ALLOWED_LINK_PROTOCOLS];

@@ -23,9 +23,7 @@ import mk from 'markdown-it-katex';
 
 declare const __KATEX_VERSION__: string | undefined;
 
-const KATEX_VERSION = typeof __KATEX_VERSION__ !== 'undefined'
-  ? __KATEX_VERSION__
-  : '0.16.45'; // ← update when katex is upgraded
+const KATEX_VERSION = typeof __KATEX_VERSION__ !== 'undefined' ? __KATEX_VERSION__ : '0.16.45'; // ← update when katex is upgraded
 
 const KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist/fonts`;
 
@@ -144,7 +142,9 @@ const KATEX_FONTS = `
 
 registerMarkdownPlugin({
   id: 'latex',
-  install: (md) => { mk(md, { output: 'mathml' }); },
+  install: (md) => {
+    mk(md, { output: 'mathml' });
+  },
   styles: `.katex .katex-html[aria-hidden="true"] { display: none; }`,
   globalStyles: KATEX_FONTS,
 });

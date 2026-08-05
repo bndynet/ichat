@@ -32,9 +32,7 @@ const charts = {
     type: 'area',
     data: {
       categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      series: [
-        { name: 'Visitors', data: [820, 932, 901, 934, 1290, 1330, 1320] },
-      ],
+      series: [{ name: 'Visitors', data: [820, 932, 901, 934, 1290, 1330, 1320] }],
     },
     options: { title: 'Website Visitors' },
   }),
@@ -70,62 +68,62 @@ const charts = {
 export const demoData = {
   mermaid:
     'Diagrams use the **`mermaid`** fence. Theme follows `data-theme` on `<html>` (light / dark).\n\n' +
-      '## Flowchart\n\n' +
-      '```mermaid\n' +
-      'flowchart LR\n' +
-      '  A[i-chat] --> B[Markdown]\n' +
-      '  B --> C[Mermaid SVG]\n' +
-      '```\n\n' +
-      '## Sequence\n\n' +
-      '```mermaid\n' +
-      'sequenceDiagram\n' +
-      '  participant U as User\n' +
-      '  participant C as Chat\n' +
-      '  U->>C: message\n' +
-      '  C-->>U: streamed reply\n' +
-      '```\n\n' +
-      '## Graph\n\n' +
-      '```mermaid\n' +
-      'graph TD\n' +
-      '  A[Enter Chart Definition] --> B(Preview)\n' +
-      '  B --> C{decide}\n' +
-      '  C --> D[Keep]\n' +
-      '  C --> E[Edit Definition]\n' +
-      '  E --> B\n' +
-      '  D --> F[Save Image and Code]\n' +
-      '  F --> B\n' +
-      '```\n',
+    '## Flowchart\n\n' +
+    '```mermaid\n' +
+    'flowchart LR\n' +
+    '  A[i-chat] --> B[Markdown]\n' +
+    '  B --> C[Mermaid SVG]\n' +
+    '```\n\n' +
+    '## Sequence\n\n' +
+    '```mermaid\n' +
+    'sequenceDiagram\n' +
+    '  participant U as User\n' +
+    '  participant C as Chat\n' +
+    '  U->>C: message\n' +
+    '  C-->>U: streamed reply\n' +
+    '```\n\n' +
+    '## Graph\n\n' +
+    '```mermaid\n' +
+    'graph TD\n' +
+    '  A[Enter Chart Definition] --> B(Preview)\n' +
+    '  B --> C{decide}\n' +
+    '  C --> D[Keep]\n' +
+    '  C --> E[Edit Definition]\n' +
+    '  E --> B\n' +
+    '  D --> F[Save Image and Code]\n' +
+    '  F --> B\n' +
+    '```\n',
 
   chart:
     'Here are the chart types supported by **@bndynet/icharts**.\n\n' +
-      '## XY Charts\n\n### Bar\n\n' +
-      charts.bar +
-      '\n\n### Bar — Horizontal\n\n' +
-      charts.barH +
-      '\n\n' +
-      '### Line\n\n' +
-      charts.line +
-      '\n\n### Area\n\n' +
-      charts.area +
-      '\n\n' +
-      '## Pie\n\n' +
-      charts.pie +
-      '\n\n### Doughnut\n\n' +
-      charts.doughnut +
-      '\n\n' +
-      '## Gauge\n\n' +
-      charts.gauge,
+    '## XY Charts\n\n### Bar\n\n' +
+    charts.bar +
+    '\n\n### Bar — Horizontal\n\n' +
+    charts.barH +
+    '\n\n' +
+    '### Line\n\n' +
+    charts.line +
+    '\n\n### Area\n\n' +
+    charts.area +
+    '\n\n' +
+    '## Pie\n\n' +
+    charts.pie +
+    '\n\n### Doughnut\n\n' +
+    charts.doughnut +
+    '\n\n' +
+    '## Gauge\n\n' +
+    charts.gauge,
 
   kpis:
     'Here is the KPI summary for today:\n\n' +
-      '```kpi\n{"label": "Revenue", "value": "$50,846.90", "trend": -12}\n```\n\n' +
-      '```kpi\n{"label": "New Users", "value": "1,284", "trend": 8}\n```\n\n' +
-      '```kpi\n{"label": "Churn Rate", "value": "3.2%", "trend": 0.5, "unit": "pp"}\n```\n\n' +
-      '```kpi\n{"label": "MRR", "value": "$128,400"}\n```',
+    '```kpi\n{"label": "Revenue", "value": "$50,846.90", "trend": -12}\n```\n\n' +
+    '```kpi\n{"label": "New Users", "value": "1,284", "trend": 8}\n```\n\n' +
+    '```kpi\n{"label": "Churn Rate", "value": "3.2%", "trend": 0.5, "unit": "pp"}\n```\n\n' +
+    '```kpi\n{"label": "MRR", "value": "$128,400"}\n```',
 
   kpiGroup:
     'Here is the combined KPI overview:\n\n' +
-      '```kpis\n[\n  {"label": "Revenue", "value": "$50,846.90", "trend": -12},\n  {"label": "New Users", "value": "1,284", "trend": 8},\n  {"label": "MRR", "value": "$128,400"}\n]\n```',
+    '```kpis\n[\n  {"label": "Revenue", "value": "$50,846.90", "trend": -12},\n  {"label": "New Users", "value": "1,284", "trend": 8},\n  {"label": "MRR", "value": "$128,400"}\n]\n```',
 
   progress:
     '## Deployment Pipeline\n\n' +
@@ -134,62 +132,62 @@ export const demoData = {
 
   form:
     'Please fill out the feedback form below:\n\n' +
-      '```form\n' +
-      '{\n' +
-      '  "id": "user-feedback",\n' +
-      '  "title": "User Feedback",\n' +
-      '  "submitLabel": "Send Feedback",\n' +
-      '  "fields": [\n' +
-      '    {"name": "name", "label": "Your Name", "type": "text", "required": true},\n' +
-      // '    {"name": "email", "label": "Email", "type": "email"},\n' +
-      '    {"name": "satisfaction", "label": "Satisfaction", "type": "select", "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied"]},\n' +
-      '    {"name": "source", "label": "How did you find us?", "type": "radio", "options": ["Search", "Social media", "Word of mouth", "Other"]},\n' +
-      '    {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},\n' +
-      '    {"name": "comments", "label": "Additional Comments", "type": "textarea"}\n' +
-      '  ]\n' +
-      '}\n' +
-      '```',
+    '```form\n' +
+    '{\n' +
+    '  "id": "user-feedback",\n' +
+    '  "title": "User Feedback",\n' +
+    '  "submitLabel": "Send Feedback",\n' +
+    '  "fields": [\n' +
+    '    {"name": "name", "label": "Your Name", "type": "text", "required": true},\n' +
+    // '    {"name": "email", "label": "Email", "type": "email"},\n' +
+    '    {"name": "satisfaction", "label": "Satisfaction", "type": "select", "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied"]},\n' +
+    '    {"name": "source", "label": "How did you find us?", "type": "radio", "options": ["Search", "Social media", "Word of mouth", "Other"]},\n' +
+    '    {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},\n' +
+    '    {"name": "comments", "label": "Additional Comments", "type": "textarea"}\n' +
+    '  ]\n' +
+    '}\n' +
+    '```',
   formSubmitted:
     'Previously submitted form (history replay):\n\n' +
-      '```form\n' +
-      '{\n' +
-      '  "id": "feedback-123",\n' +
-      '  "title": "User Feedback",\n' +
-      '  "fields": [\n' +
-      '    {"name": "name", "label": "Your Name", "type": "text"},\n' +
-      '    {"name": "satisfaction", "label": "Satisfaction", "type": "select", "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied"]},\n' +
-      '    {"name": "source", "label": "How did you find us?", "type": "radio", "options": ["Search", "Social media", "Word of mouth", "Other"]},\n' +
-      '    {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},\n' +
-      '    {"name": "comments", "label": "Additional Comments", "type": "textarea"}\n' +
-      '  ],\n' +
-      '  "submittedValues": {\n' +
-      '    "name": "Alice",\n' +
-      '    "satisfaction": "Very Satisfied",\n' +
-      '    "source": "Social media",\n' +
-      '    "subscribe": true,\n' +
-      '    "comments": "Great product! Love the new features."\n' +
-      '  }\n' +
-      '}\n' +
-      '```',
+    '```form\n' +
+    '{\n' +
+    '  "id": "feedback-123",\n' +
+    '  "title": "User Feedback",\n' +
+    '  "fields": [\n' +
+    '    {"name": "name", "label": "Your Name", "type": "text"},\n' +
+    '    {"name": "satisfaction", "label": "Satisfaction", "type": "select", "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied"]},\n' +
+    '    {"name": "source", "label": "How did you find us?", "type": "radio", "options": ["Search", "Social media", "Word of mouth", "Other"]},\n' +
+    '    {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},\n' +
+    '    {"name": "comments", "label": "Additional Comments", "type": "textarea"}\n' +
+    '  ],\n' +
+    '  "submittedValues": {\n' +
+    '    "name": "Alice",\n' +
+    '    "satisfaction": "Very Satisfied",\n' +
+    '    "source": "Social media",\n' +
+    '    "subscribe": true,\n' +
+    '    "comments": "Great product! Love the new features."\n' +
+    '  }\n' +
+    '}\n' +
+    '```',
   detailsFence:
     'The following use the **fence syntax** (` ```details Title `) to collapse content.\n\n' +
-      '```details 📋 Project Overview\n' +
-      'A modern chat interface with rich markdown support.\n\n' +
-      '**Features:**\n- Streaming messages with typewriter effect\n- Collapsible reasoning blocks\n- Charts, KPI cards, progress, forms\n' +
-      '```\n\n' +
-      '```details 🔍 Tech Stack\n' +
-      '| Layer | Technology |\n| --- | --- |\n| UI | Lit / Web Components |\n| Markdown | markdown-it |\n| Charts | ECharts via @bndynet/icharts |\n| Sanitisation | DOMPurify |\n' +
-      '```',
+    '```details 📋 Project Overview\n' +
+    'A modern chat interface with rich markdown support.\n\n' +
+    '**Features:**\n- Streaming messages with typewriter effect\n- Collapsible reasoning blocks\n- Charts, KPI cards, progress, forms\n' +
+    '```\n\n' +
+    '```details 🔍 Tech Stack\n' +
+    '| Layer | Technology |\n| --- | --- |\n| UI | Lit / Web Components |\n| Markdown | markdown-it |\n| Charts | ECharts via @bndynet/icharts |\n| Sanitisation | DOMPurify |\n' +
+    '```',
 
   detailsContainer:
     'The following use the **container syntax** (`:::details Title`) for collapsible blocks.\n\n' +
-      ':::details 📋 Project Overview\n' +
-      'A modern chat interface with rich markdown support.\n\n' +
-      '**Features:**\n- Streaming messages\n- Collapsible reasoning blocks\n- Custom renderers\n' +
-      ':::\n\n' +
-      ':::details 🔍 Tech Stack\n' +
-      '| Layer | Technology |\n| --- | --- |\n| UI | Lit / Web Components |\n| Markdown | markdown-it |\n| Charts | ECharts |\n' +
-      ':::',
+    ':::details 📋 Project Overview\n' +
+    'A modern chat interface with rich markdown support.\n\n' +
+    '**Features:**\n- Streaming messages\n- Collapsible reasoning blocks\n- Custom renderers\n' +
+    ':::\n\n' +
+    ':::details 🔍 Tech Stack\n' +
+    '| Layer | Technology |\n| --- | --- |\n| UI | Lit / Web Components |\n| Markdown | markdown-it |\n| Charts | ECharts |\n' +
+    ':::',
 };
 
 /** Streaming all-in-one demo — shows charts, KPI, form, details, and progress in a single stream. */
@@ -261,9 +259,7 @@ function playEvents(run, events, playback) {
 
   function nextDelay(ev) {
     return (
-      ev?.delay ??
-      STREAM_STEP_MS.min +
-        Math.random() * (STREAM_STEP_MS.max - STREAM_STEP_MS.min)
+      ev?.delay ?? STREAM_STEP_MS.min + Math.random() * (STREAM_STEP_MS.max - STREAM_STEP_MS.min)
     );
   }
 
@@ -271,8 +267,7 @@ function playEvents(run, events, playback) {
     if (playback.cancelled) return;
     if (i >= events.length) {
       run.updatePart(REASONING_PART_ID, { status: 'complete' });
-      if (hasContentPart)
-        run.updatePart(CONTENT_PART_ID, { status: 'complete' });
+      if (hasContentPart) run.updatePart(CONTENT_PART_ID, { status: 'complete' });
       run.complete();
       playback.timer = null;
       if (activeRun === run) activeRun = null;
@@ -289,9 +284,7 @@ function playEvents(run, events, playback) {
     if (typeof ev.content === 'string') {
       contentText += ev.content;
       if (!hasContentPart) {
-        run.appendPart(
-          textPart(contentText, { id: CONTENT_PART_ID, status: 'streaming' }),
-        );
+        run.appendPart(textPart(contentText, { id: CONTENT_PART_ID, status: 'streaming' }));
         hasContentPart = true;
       } else {
         run.updatePart(CONTENT_PART_ID, {
@@ -317,9 +310,7 @@ function responseAll(chatRef) {
     },
   });
   activeRun = run;
-  run.start([
-    reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' }),
-  ]);
+  run.start([reasoningPart('', { id: REASONING_PART_ID, status: 'streaming' })]);
 
   playback.timer = setTimeout(() => {
     playback.timer = null;
@@ -364,9 +355,7 @@ export function reply(chatRef, question) {
   });
 
   const q = question.toLowerCase();
-  const result = Object.entries(demoData).find(([label]) =>
-    label.toLowerCase().includes(q),
-  )?.[1];
+  const result = Object.entries(demoData).find(([label]) => label.toLowerCase().includes(q))?.[1];
   if (result) {
     const run = chat.createRunController();
     run.start();

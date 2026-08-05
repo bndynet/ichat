@@ -35,7 +35,9 @@ assert.equal(el.voiceDiagnostics, false);
     _submit(): void;
   };
   let sends = 0;
-  input.addEventListener('send', () => { sends += 1; });
+  input.addEventListener('send', () => {
+    sends += 1;
+  });
 
   input.setValue('hello');
   input.busy = true;

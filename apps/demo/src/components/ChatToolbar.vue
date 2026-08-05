@@ -72,22 +72,11 @@ function onClear() {
 
 <template>
   <div class="demo-chat-toolbar">
-    <el-button
-      size="small"
-      :disabled="streaming"
-      :icon="Warning"
-      @click="onErrorMessage"
-    >
+    <el-button size="small" :disabled="streaming" :icon="Warning" @click="onErrorMessage">
       Error Message
     </el-button>
 
-    <el-button
-      size="small"
-      :icon="Bell"
-      @click="onErrorBanner"
-    >
-      Error Banner
-    </el-button>
+    <el-button size="small" :icon="Bell" @click="onErrorBanner"> Error Banner </el-button>
 
     <el-button
       size="small"
@@ -99,15 +88,7 @@ function onClear() {
       Cancel
     </el-button>
 
-    <el-button
-      size="small"
-      type="danger"
-      plain
-      :icon="Delete"
-      @click="onClear"
-    >
-      Clear
-    </el-button>
+    <el-button size="small" type="danger" plain :icon="Delete" @click="onClear"> Clear </el-button>
   </div>
 </template>
 

@@ -2,10 +2,7 @@ import type { ChatMessage, MessagePart, ToolCallPart } from './types.js';
 import { isMessagePart, isToolCallPart } from './part-guards.js';
 import type { MessagePartUpdate } from './message-part-events.js';
 import { patchToolCallPart } from './tool-call-state.js';
-import type {
-  MessagePartUpdateFailureReason,
-  PartLookupFailureReason,
-} from './update-results.js';
+import type { MessagePartUpdateFailureReason, PartLookupFailureReason } from './update-results.js';
 
 export type MessagePartLookupFailureReason = Extract<
   PartLookupFailureReason,
@@ -38,7 +35,7 @@ export type MessagePartUpdateApplyResult =
 export function findMessagePart(
   messages: readonly ChatMessage[],
   messageId: string,
-  partId: string
+  partId: string,
 ): MessagePartLookupResult {
   const message = messages.find((candidate) => candidate.id === messageId);
   if (!message) return { ok: false, reason: 'message-not-found' };
@@ -52,7 +49,7 @@ export function findMessagePart(
 export function appendMessagePart(
   messages: readonly ChatMessage[],
   messageId: string,
-  part: MessagePart
+  part: MessagePart,
 ): ChatMessage[] {
   let didAppend = false;
   const nextMessages = messages.map((message) => {
@@ -68,7 +65,7 @@ export function replaceMessagePart(
   messages: readonly ChatMessage[],
   messageId: string,
   partId: string,
-  nextPart: MessagePart
+  nextPart: MessagePart,
 ): MessagePartReplaceResult {
   const lookup = findMessagePart(messages, messageId, partId);
   if (!lookup.ok) {
@@ -90,7 +87,7 @@ export function patchMessagePart(
   messages: readonly ChatMessage[],
   messageId: string,
   partId: string,
-  patch: Partial<MessagePart>
+  patch: Partial<MessagePart>,
 ): MessagePartPatchResult {
   const lookup = findMessagePart(messages, messageId, partId);
   if (!lookup.ok) {
@@ -105,7 +102,7 @@ export function patchMessagePart(
 
 export function applyMessagePartUpdate(
   messages: readonly ChatMessage[],
-  update: MessagePartUpdate
+  update: MessagePartUpdate,
 ): MessagePartUpdateApplyResult {
   const lookup = findMessagePart(messages, update.messageId, update.partId);
   if (!lookup.ok) {
@@ -150,12 +147,7 @@ export function applyMessagePartUpdate(
     }
   }
 
-  const replacement = replaceMessagePart(
-    messages,
-    update.messageId,
-    update.partId,
-    nextPart
-  );
+  const replacement = replaceMessagePart(messages, update.messageId, update.partId, nextPart);
   if (!replacement.ok) {
     return {
       ok: false,

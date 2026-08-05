@@ -53,7 +53,7 @@ function normalizeRgbColor(value: string): string {
       parseCssChannel(parts[0]),
       parseCssChannel(parts[1]),
       parseCssChannel(parts[2]),
-      parts[3] == null ? 1 : parseCssAlpha(parts[3])
+      parts[3] == null ? 1 : parseCssAlpha(parts[3]),
     );
   }
 
@@ -64,7 +64,7 @@ function normalizeRgbColor(value: string): string {
     parseCssChannel(channels[0]),
     parseCssChannel(channels[1]),
     parseCssChannel(channels[2]),
-    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart)
+    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart),
   );
 }
 
@@ -79,7 +79,7 @@ function normalizeSrgbColor(value: string): string {
     parseCssChannel(channels[0], 1),
     parseCssChannel(channels[1], 1),
     parseCssChannel(channels[2], 1),
-    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart)
+    alphaPart == null || alphaPart === '' ? 1 : parseCssAlpha(alphaPart),
   );
 }
 

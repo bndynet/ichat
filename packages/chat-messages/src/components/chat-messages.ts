@@ -32,10 +32,7 @@ import type {
   ToolCallUpdateResult,
 } from '../update-results.js';
 import { chatIcons } from '../icons.js';
-import type {
-  MessagesChangeDetail,
-  MessagesChangeReason,
-} from '../messages-change-types.js';
+import type { MessagesChangeDetail, MessagesChangeReason } from '../messages-change-types.js';
 import { buildMessagesChangeDetail } from '../messages-change-types.js';
 import {
   addMessage,
@@ -120,8 +117,7 @@ export class ChatMessages extends LitElement {
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
   private _messageRenderItems(): Array<
-    | { kind: 'sep'; key: string; label: string }
-    | { kind: 'msg'; key: string; message: ChatMessage }
+    { kind: 'sep'; key: string; label: string } | { kind: 'msg'; key: string; message: ChatMessage }
   > {
     const msgs = this.messages;
 
@@ -195,9 +191,7 @@ export class ChatMessages extends LitElement {
    * light-DOM children of `<i-chat-messages>` when nested under `<i-chat>`.
    */
   private _syncSlotTemplatesFromAssignedNodes(): void {
-    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>(
-      '.template-slots slot[name]'
-    );
+    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>('.template-slots slot[name]');
     if (!slots) return;
     slots.forEach((slot) => {
       const name = slot.getAttribute('name');
@@ -241,7 +235,7 @@ export class ChatMessages extends LitElement {
             detail: { streaming: nowStreaming },
             bubbles: true,
             composed: true,
-          })
+          }),
         );
       }
       if (this._scrollCtrl.autoScroll) {
@@ -352,7 +346,7 @@ export class ChatMessages extends LitElement {
   tryUpdatePart(
     messageId: string,
     partId: string,
-    patch: Partial<MessagePart>
+    patch: Partial<MessagePart>,
   ): MessagePartUpdateResult {
     const result = applyMessagePartUpdate(this.messages, { messageId, partId, patch });
     if (!result.ok) {
@@ -374,7 +368,7 @@ export class ChatMessages extends LitElement {
   tryUpdateToolCall(
     messageId: string,
     partId: string,
-    patch: Partial<ToolCallPart>
+    patch: Partial<ToolCallPart>,
   ): ToolCallUpdateResult {
     const lookup = findMessagePart(this.messages, messageId, partId);
     if (!lookup.ok) return { ok: false, reason: lookup.reason };
@@ -471,7 +465,7 @@ export class ChatMessages extends LitElement {
     const update = this.tryUpdatePart(
       result.update.messageId,
       result.update.partId,
-      result.update.patch
+      result.update.patch,
     );
     if (!update.ok) {
       return {
@@ -571,7 +565,7 @@ export class ChatMessages extends LitElement {
    */
   freezeMessageAnimation(id: string): boolean {
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
-      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
+      `i-chat-message[data-message-id="${CSS.escape(id)}"]`,
     );
     if (!msgEl) return false;
     msgEl.freezeStreamingAnimation();
@@ -588,7 +582,7 @@ export class ChatMessages extends LitElement {
    */
   scrollToMessage(id: string): boolean {
     const msgEl = this.shadowRoot?.querySelector(
-      `i-chat-message[data-message-id="${CSS.escape(id)}"]`
+      `i-chat-message[data-message-id="${CSS.escape(id)}"]`,
     );
     if (!msgEl) return false;
     msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -605,9 +599,7 @@ export class ChatMessages extends LitElement {
    * @returns `true` if the part element was found and scrolled into view.
    */
   scrollToPart(partId: string): boolean {
-    const partEl = this.shadowRoot?.querySelector(
-      `[data-part-id="${CSS.escape(partId)}"]`
-    );
+    const partEl = this.shadowRoot?.querySelector(`[data-part-id="${CSS.escape(partId)}"]`);
     if (!partEl) return false;
     partEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     this._highlightElement(partEl);
@@ -623,11 +615,9 @@ export class ChatMessages extends LitElement {
    */
   private _highlightElement(el: Element): void {
     el.classList.add('scroll-highlight');
-    el.addEventListener(
-      'animationend',
-      () => el.classList.remove('scroll-highlight'),
-      { once: true },
-    );
+    el.addEventListener('animationend', () => el.classList.remove('scroll-highlight'), {
+      once: true,
+    });
   }
 
   clear(): void {
@@ -660,9 +650,14 @@ export class ChatMessages extends LitElement {
   /**
    * Update a progress step's status within a specific message.
    */
-  updateProgressStep(messageId: string, step: number, status: ProgressStatus, bid?: string): boolean {
+  updateProgressStep(
+    messageId: string,
+    step: number,
+    status: ProgressStatus,
+    bid?: string,
+  ): boolean {
     const msgEl = this.shadowRoot?.querySelector<ChatMessageElement>(
-      `i-chat-message[data-message-id="${CSS.escape(messageId)}"]`
+      `i-chat-message[data-message-id="${CSS.escape(messageId)}"]`,
     );
     if (!msgEl) return false;
     return msgEl.updateProgressStep(step, status, bid);
@@ -702,8 +697,9 @@ export class ChatMessages extends LitElement {
         <slot name="reasoning-header" @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}></slot>
       </div>
       <div class="chat-messages-wrapper" role="log" aria-live="polite" aria-label=${labels.messages.chatMessages}>
-        ${this._errorCtrl.text
-          ? html`<div class="error-banner" role="alert">
+        ${
+          this._errorCtrl.text
+            ? html`<div class="error-banner" role="alert">
               ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}
               <span class="error-banner-text">${this._errorCtrl.text}</span>
               <button
@@ -714,15 +710,17 @@ export class ChatMessages extends LitElement {
                 ${chatIcons.x({ size: 14, strokeWidth: 2.4 })}
               </button>
             </div>`
-          : ''}
+            : ''
+        }
         <div class="chat-messages" @scroll=${this._handleScroll}>
-          ${this.messages.length === 0
-            ? html`<div class="chat-empty">
+          ${
+            this.messages.length === 0
+              ? html`<div class="chat-empty">
                 <slot name="empty">
                   ${this.emptyText || labels.messages.empty}
                 </slot>
               </div>`
-            : html`
+              : html`
                 <div
                   class="chat-messages-inner"
                   @chat-content-resize=${this._onChatContentResize}
@@ -760,15 +758,20 @@ export class ChatMessages extends LitElement {
                               .pendingDelay=${cfg.pendingDelay}
                               .replyTargets=${replyBlocks.get(item.message.id)}
                               @message-cancel=${(e: CustomEvent<{ id: string }>) =>
-                                this.updateMessage(e.detail.id, { streaming: false, cancelled: true })}
+                                this.updateMessage(e.detail.id, {
+                                  streaming: false,
+                                  cancelled: true,
+                                })}
                             ></i-chat-message>
-                          `
+                          `,
                   )}
                 </div>
-              `}
+              `
+          }
         </div>
-        ${this._scrollCtrl.hasNewContent
-          ? html`
+        ${
+          this._scrollCtrl.hasNewContent
+            ? html`
               <button
                 class="scroll-down-btn"
                 @click=${this._handleScrollToBottom}
@@ -777,7 +780,8 @@ export class ChatMessages extends LitElement {
                 ${chatIcons.chevronDown({ size: 20, strokeWidth: 2.4 })}
               </button>
             `
-          : ''}
+            : ''
+        }
       </div>
     `;
   }

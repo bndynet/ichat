@@ -1,6 +1,11 @@
 import type MarkdownIt from 'markdown-it';
 import type { BlockRenderer } from '@bndynet/ichat-messages';
-import { renderCodeFallback, wrapWithCodeToggle, escapeHtml, type RendererOptions } from '@bndynet/ichat-messages';
+import {
+  renderCodeFallback,
+  wrapWithCodeToggle,
+  escapeHtml,
+  type RendererOptions,
+} from '@bndynet/ichat-messages';
 import { DEFAULT_MERMAID_CONFIG } from './mermaid-config.js';
 import { buildMermaidThemeVariables } from './mermaid-theme-tokens.js';
 import { setVersionAttribute } from './version.js';
@@ -212,8 +217,7 @@ function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
 
   // Multiline / long diagrams must not live in an attribute — browsers normalize or truncate.
   const fp = fingerprintMermaidCode(code);
-  const html =
-    `<i-chat-mermaid data-mm-fp="${escapeHtml(fp)}"><pre class="${MERMAID_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre></i-chat-mermaid>`;
+  const html = `<i-chat-mermaid data-mm-fp="${escapeHtml(fp)}"><pre class="${MERMAID_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre></i-chat-mermaid>`;
 
   return opts.codeToggle !== false ? wrapWithCodeToggle('mermaid', code, html) : html;
 }

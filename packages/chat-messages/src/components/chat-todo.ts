@@ -47,9 +47,7 @@ export class ChatTodo extends LitElement {
 
   private _handleToggle(event: Event): void {
     this._expanded = (event.currentTarget as HTMLDetailsElement).open;
-    this.dispatchEvent(
-      new CustomEvent('chat-content-resize', { bubbles: true, composed: true })
-    );
+    this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
   }
 
   private _statusLabel(status: TodoItemStatus, labels: TodoLabels): string {
@@ -70,7 +68,7 @@ export class ChatTodo extends LitElement {
         },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -119,7 +117,9 @@ export class ChatTodo extends LitElement {
 
         <ol class="todo__list" role="list">
           ${part.items.map(
-            (item) => html`<li class="todo__item todo__item--${item.status}" data-item-id=${item.id} role="listitem">
+            (
+              item,
+            ) => html`<li class="todo__item todo__item--${item.status}" data-item-id=${item.id} role="listitem">
               <button
                 class="todo__status"
                 type="button"
@@ -133,11 +133,13 @@ export class ChatTodo extends LitElement {
               </button>
               <span class="todo__content">
                 <span class="todo__item-title">${item.title}</span>
-                ${item.description
-                  ? html`<span class="todo__description">${item.description}</span>`
-                  : nothing}
+                ${
+                  item.description
+                    ? html`<span class="todo__description">${item.description}</span>`
+                    : nothing
+                }
               </span>
-            </li>`
+            </li>`,
           )}
         </ol>
       </details>

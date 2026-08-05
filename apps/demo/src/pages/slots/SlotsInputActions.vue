@@ -24,14 +24,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <i-chat
-    ref="chatRef"
-    @send="handleSend"
-  >
+  <i-chat ref="chatRef" @send="handleSend">
     <div slot="actions">
-      <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo"
-        >Attach</el-button
-      >
+      <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo">Attach</el-button>
     </div>
   </i-chat>
   <ExampleCodeDrawer title="Input actions code example" :content="inputActionsExample" />

@@ -34,21 +34,21 @@ registerCodeRenderer(createMermaidRenderer({ codeToggle: false }));
 
 ## API
 
-| Export | Description |
-|---|---|
-| `mermaidRenderer` | Pre-built `BlockRenderer` (code toggle on) |
+| Export                         | Description                                 |
+| ------------------------------ | ------------------------------------------- |
+| `mermaidRenderer`              | Pre-built `BlockRenderer` (code toggle on)  |
 | `createMermaidRenderer(opts?)` | Factory with customizable `RendererOptions` |
-| `mermaidPlugin` | markdown-it plugin (for `md.use()`) |
-| `ChatMermaid` | `<i-chat-mermaid>` custom element class |
+| `mermaidPlugin`                | markdown-it plugin (for `md.use()`)         |
+| `ChatMermaid`                  | `<i-chat-mermaid>` custom element class     |
 
 ## Dependencies
 
 All runtime dependencies are auto-installed (`mermaid`, `markdown-it`). `@bndynet/ichat-messages` is a peer dependency.
 
-| Package | Version |
-|---|---|
+| Package                   | Version  |
+| ------------------------- | -------- |
 | `@bndynet/ichat-messages` | `^3.1.0` |
-| `markdown-it` | `>=14` |
+| `markdown-it`             | `>=14`   |
 
 The renderer uses the library's audited `trusted: true` path so the
 `<i-chat-mermaid>` custom element is preserved. Mermaid source is HTML-escaped

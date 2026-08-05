@@ -6,78 +6,82 @@
    Integrators: copy these two blocks, or set the same variables on any ancestor
    that wraps your chat (inheritance flows down).
 ────────────────────────────────────────────────────────────────────────── */
-:root:not([data-theme="dark"]) {
+:root:not([data-theme='dark']) {
   /* ── 12 base tokens (everything else derives automatically) ──────── */
-  --chat-bg:                          #f7f7f8;
-  --chat-surface:                     #ffffff;
-  --chat-surface-alt:                 #f0f2f5;
-  --chat-border:                      #e8e8e8;
-  --chat-text:                        #1a1a2e;
-  --chat-text-secondary:              #6b7280;
-  --chat-text-muted:                  #9ca3af;
-  --chat-primary:                     #2563eb;
-  --chat-primary-light:               #dbeafe;
-  --chat-error:                       #ef4444;
-  --chat-success:                     #10b981;
-  --chat-warning:                     #f59e0b;
+  --chat-bg: #f7f7f8;
+  --chat-surface: #ffffff;
+  --chat-surface-alt: #f0f2f5;
+  --chat-border: #e8e8e8;
+  --chat-text: #1a1a2e;
+  --chat-text-secondary: #6b7280;
+  --chat-text-muted: #9ca3af;
+  --chat-primary: #2563eb;
+  --chat-primary-light: #dbeafe;
+  --chat-error: #ef4444;
+  --chat-success: #10b981;
+  --chat-warning: #f59e0b;
 
   /* ── Optional overrides (only when you want to diverge from base) ── */
   /* Code — light panel instead of default dark */
-  --chat-code-bg:                     #f1f5f9;
-  --chat-code-text:                   #334155;
-  --chat-code-inline-bg:              rgba(15, 23, 42, 0.08);
-  --chat-user-code-inline-bg:         rgba(255, 255, 255, 0.22);
+  --chat-code-bg: #f1f5f9;
+  --chat-code-text: #334155;
+  --chat-code-inline-bg: rgba(15, 23, 42, 0.08);
+  --chat-user-code-inline-bg: rgba(255, 255, 255, 0.22);
 
   /* ── Demo: Mermaid-only palette (see README “Mermaid CSS custom properties”) ──
      Accent / lines / fills differ from base `--chat-*` so you can confirm fenced
      diagrams track `--chat-mermaid-*` without changing the rest of the UI. */
-  --chat-mermaid-primary:             #0d9488;
-  --chat-mermaid-primary-contrast:    #f0fdfa;
-  --chat-mermaid-line:                #055d56;
-  --chat-mermaid-node-fill:           #ecfdf5;
-  --chat-mermaid-cluster-fill:        #d1fae5;
-  --chat-mermaid-background:          #f1f5f9;
-  --chat-mermaid-secondary-fill:      #ccfbf1;
-  --chat-mermaid-note-fill:           #fef3c7;
-  --chat-mermaid-note-text:           #78350f;
-  --chat-mermaid-edge-label-bg:       #e0f2fe;
+  --chat-mermaid-primary: #0d9488;
+  --chat-mermaid-primary-contrast: #f0fdfa;
+  --chat-mermaid-line: #055d56;
+  --chat-mermaid-node-fill: #ecfdf5;
+  --chat-mermaid-cluster-fill: #d1fae5;
+  --chat-mermaid-background: #f1f5f9;
+  --chat-mermaid-secondary-fill: #ccfbf1;
+  --chat-mermaid-note-fill: #fef3c7;
+  --chat-mermaid-note-text: #78350f;
+  --chat-mermaid-edge-label-bg: #e0f2fe;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   /* ── 12 base tokens ─────────────────────────────────────────────── */
-  --chat-bg:                          var(--color-sidebar-bg, #242526);
-  --chat-surface:                     var(--color-content-bg, #1b1b1d);
-  --chat-surface-alt:                 var(--color-table-header-bg, rgba(255, 255, 255, 0.07));
-  --chat-border:                      var(--color-border, #444950);
-  --chat-text:                        var(--color-text, #e3e3e3);
-  --chat-text-secondary:              var(--color-text-secondary, #bec3c9);
-  --chat-text-muted:                  color-mix(in srgb, var(--color-text-secondary, #bec3c9) 70%, var(--color-bg, #1b1b1d));
-  --chat-primary:                     var(--color-link, #3578e5);
-  --chat-primary-light:               color-mix(in srgb, var(--color-link, #3578e5) 18%, transparent);
-  --chat-error:                       var(--el-color-error, #f56c6c);
-  --chat-success:                     var(--el-color-success, #67c23a);
-  --chat-warning:                     var(--el-color-warning, #e6a23c);
+  --chat-bg: var(--color-sidebar-bg, #242526);
+  --chat-surface: var(--color-content-bg, #1b1b1d);
+  --chat-surface-alt: var(--color-table-header-bg, rgba(255, 255, 255, 0.07));
+  --chat-border: var(--color-border, #444950);
+  --chat-text: var(--color-text, #e3e3e3);
+  --chat-text-secondary: var(--color-text-secondary, #bec3c9);
+  --chat-text-muted: color-mix(
+    in srgb,
+    var(--color-text-secondary, #bec3c9) 70%,
+    var(--color-bg, #1b1b1d)
+  );
+  --chat-primary: var(--color-link, #3578e5);
+  --chat-primary-light: color-mix(in srgb, var(--color-link, #3578e5) 18%, transparent);
+  --chat-error: var(--el-color-error, #f56c6c);
+  --chat-success: var(--el-color-success, #67c23a);
+  --chat-warning: var(--el-color-warning, #e6a23c);
 
   /* ── Optional overrides ─────────────────────────────────────────── */
-  --chat-primary-hover:               var(--color-link-hover, #538ce9);
-  --chat-code-bg:                     var(--color-code-block-bg, #1c1e21);
-  --chat-code-text:                   var(--color-code-text, #e3e3e3);
-  --chat-code-inline-bg:              var(--color-code-bg, rgba(255, 255, 255, 0.1));
-  --chat-user-code-inline-bg:         rgba(255, 255, 255, 0.18);
-  --chat-shadow-sm:                   0 1px 2px rgba(0, 0, 0, 0.16);
-  --chat-shadow-md:                   0 4px 12px rgba(0, 0, 0, 0.12), 0 12px 28px rgba(0, 0, 0, 0.1);
+  --chat-primary-hover: var(--color-link-hover, #538ce9);
+  --chat-code-bg: var(--color-code-block-bg, #1c1e21);
+  --chat-code-text: var(--color-code-text, #e3e3e3);
+  --chat-code-inline-bg: var(--color-code-bg, rgba(255, 255, 255, 0.1));
+  --chat-user-code-inline-bg: rgba(255, 255, 255, 0.18);
+  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16);
+  --chat-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12), 0 12px 28px rgba(0, 0, 0, 0.1);
 
   /* ── Demo: Mermaid-only palette (dark) ───────────────────────────── */
-  --chat-mermaid-primary:             var(--color-link, #3578e5);
-  --chat-mermaid-primary-contrast:    #ffffff;
-  --chat-mermaid-line:                var(--color-table-border, #606770);
-  --chat-mermaid-node-fill:           var(--color-table-header-bg, rgba(255, 255, 255, 0.07));
-  --chat-mermaid-cluster-fill:        var(--chat-surface, var(--color-content-bg, #1b1b1d));
-  --chat-mermaid-background:          var(--chat-bg, var(--color-sidebar-bg, #242526));
-  --chat-mermaid-secondary-fill:      color-mix(in srgb, var(--color-link, #3578e5) 18%, transparent);
-  --chat-mermaid-note-fill:           var(--color-blockquote-bg, rgba(255, 255, 255, 0.05));
-  --chat-mermaid-note-text:           var(--color-blockquote-text, #ebedf0);
-  --chat-mermaid-edge-label-bg:       var(--chat-surface, var(--color-content-bg, #1b1b1d));
+  --chat-mermaid-primary: var(--color-link, #3578e5);
+  --chat-mermaid-primary-contrast: #ffffff;
+  --chat-mermaid-line: var(--color-table-border, #606770);
+  --chat-mermaid-node-fill: var(--color-table-header-bg, rgba(255, 255, 255, 0.07));
+  --chat-mermaid-cluster-fill: var(--chat-surface, var(--color-content-bg, #1b1b1d));
+  --chat-mermaid-background: var(--chat-bg, var(--color-sidebar-bg, #242526));
+  --chat-mermaid-secondary-fill: color-mix(in srgb, var(--color-link, #3578e5) 18%, transparent);
+  --chat-mermaid-note-fill: var(--color-blockquote-bg, rgba(255, 255, 255, 0.05));
+  --chat-mermaid-note-text: var(--color-blockquote-text, #ebedf0);
+  --chat-mermaid-edge-label-bg: var(--chat-surface, var(--color-content-bg, #1b1b1d));
 }
 
 /* ── Global: site-content-inner fills parent ─────────────────────────── */

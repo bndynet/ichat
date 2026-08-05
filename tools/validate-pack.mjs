@@ -61,7 +61,14 @@ for (const pkg of PACKAGES) {
 
     // Check required exports
     for (const required of REQUIRED_EXPORTS) {
-      if (!files.some((f) => f === required || f === required.replace('.js', '.mjs') || f === required.replace('.js', '.cjs'))) {
+      if (
+        !files.some(
+          (f) =>
+            f === required ||
+            f === required.replace('.js', '.mjs') ||
+            f === required.replace('.js', '.cjs'),
+        )
+      ) {
         console.error(`FAIL ${pkg}: missing export ${required}`);
         failures++;
       }

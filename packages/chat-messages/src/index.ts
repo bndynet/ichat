@@ -28,10 +28,7 @@ export type {
   ResolveAsyncBlocksOptions,
   ResolveAsyncBlocksResult,
 } from './renderers/markdown-renderer.js';
-export {
-  renderMarkdownInto,
-  invalidateMarkdownCache,
-} from './renderers/markdown-morph.js';
+export { renderMarkdownInto, invalidateMarkdownCache } from './renderers/markdown-morph.js';
 export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
 export { registerMarkdownPlugin } from './renderers/markdown-plugins.js';
 export type { MarkdownPlugin } from './renderers/markdown-plugins.js';
@@ -47,9 +44,7 @@ export {
 } from './renderers/renderer-utils.js';
 export type { RendererOptions } from './renderers/renderer-utils.js';
 
-export type {
-  ChatPartRenderContext,
-} from './components/chat-part-host.js';
+export type { ChatPartRenderContext } from './components/chat-part-host.js';
 
 export type {
   MessagesChangeDetail,
@@ -134,10 +129,7 @@ export {
   isToolCallState,
 } from './part-guards.js';
 export { patchToolCallPart } from './tool-call-state.js';
-export type {
-  ToolCallPatchFailureReason,
-  ToolCallPatchResult,
-} from './tool-call-state.js';
+export type { ToolCallPatchFailureReason, ToolCallPatchResult } from './tool-call-state.js';
 export {
   appendMessagePart,
   applyMessagePartUpdate,
@@ -180,13 +172,8 @@ export type {
   ToolCallUpdateFailureReason,
   ToolCallUpdateResult,
 } from './update-results.js';
-export {
-  getTodoInitialExpanded,
-  shouldInitializeTodoExpansion,
-} from './todo-collapse.js';
-export {
-  createPartActionDetail,
-} from './message-events.js';
+export { getTodoInitialExpanded, shouldInitializeTodoExpansion } from './todo-collapse.js';
+export { createPartActionDetail } from './message-events.js';
 
 export {
   calendarDaysAgo,
@@ -209,8 +196,4 @@ export type {
   ConfirmationLabels,
   DeepPartial,
 } from './i18n.js';
-export {
-  resolveLabels,
-  CHAT_LABELS_EN,
-  CHAT_LABELS_ZH_CN,
-} from './i18n.js';
+export { resolveLabels, CHAT_LABELS_EN, CHAT_LABELS_ZH_CN } from './i18n.js';

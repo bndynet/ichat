@@ -6,15 +6,15 @@ Monorepo of npm packages for a **Lit 3** chat UI: markdown, optional fenced-bloc
 
 ## Packages
 
-| Package | Description |
-|--------|-------------|
-| [`@bndynet/ichat`](packages/chat) | **Default.** `<i-chat>` — messages + input. Exports **`registerCodeRenderer`**, re-exports **`rendererRegistry`**, **`StreamingController`**, types, and **`ChatMessages`** for advanced use. |
-| [`@bndynet/ichat-messages`](packages/chat-messages) | Message list only (`<i-chat-messages>`, markdown pipeline, `BlockRenderer`, streaming). Use if you do **not** want `<i-chat>`. |
-| [`@bndynet/ichat-input`](packages/chat-input) | Composer only (`<i-chat-input>`). |
-| [`@bndynet/ichat-renderers`](packages/chat-renderers) | Lightweight fenced-block renderers: KPI cards, interactive forms. No heavy deps. |
-| [`@bndynet/ichat-renderer-chart`](packages/chat-renderer-chart) | Chart fences (bar, line, area, pie, gauge) via `@bndynet/icharts`. |
-| [`@bndynet/ichat-renderer-katex`](packages/chat-renderer-katex) | LaTeX math: `$inline$` and `$$display$$` via KaTeX. |
-| [`@bndynet/ichat-renderer-mermaid`](packages/chat-renderer-mermaid) | Mermaid diagram fences with theme-aware dark/light mode. |
+| Package                                                             | Description                                                                                                                                                                                   |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@bndynet/ichat`](packages/chat)                                   | **Default.** `<i-chat>` — messages + input. Exports **`registerCodeRenderer`**, re-exports **`rendererRegistry`**, **`StreamingController`**, types, and **`ChatMessages`** for advanced use. |
+| [`@bndynet/ichat-messages`](packages/chat-messages)                 | Message list only (`<i-chat-messages>`, markdown pipeline, `BlockRenderer`, streaming). Use if you do **not** want `<i-chat>`.                                                                |
+| [`@bndynet/ichat-input`](packages/chat-input)                       | Composer only (`<i-chat-input>`).                                                                                                                                                             |
+| [`@bndynet/ichat-renderers`](packages/chat-renderers)               | Lightweight fenced-block renderers: KPI cards, interactive forms. No heavy deps.                                                                                                              |
+| [`@bndynet/ichat-renderer-chart`](packages/chat-renderer-chart)     | Chart fences (bar, line, area, pie, gauge) via `@bndynet/icharts`.                                                                                                                            |
+| [`@bndynet/ichat-renderer-katex`](packages/chat-renderer-katex)     | LaTeX math: `$inline$` and `$$display$$` via KaTeX.                                                                                                                                           |
+| [`@bndynet/ichat-renderer-mermaid`](packages/chat-renderer-mermaid) | Mermaid diagram fences with theme-aware dark/light mode.                                                                                                                                      |
 
 > **Zero-config install:** all third-party deps (`lit`, `markdown-it`, `dompurify`, `highlight.js`, `morphdom`, `katex`, `mermaid`, `@bndynet/icharts`) are auto-installed by npm — no manual peer-dependency hunting.
 
@@ -229,17 +229,17 @@ See [`ChatRunController` API](docs/component-api.md) for the full lifecycle.
 
 **Method mapping** — parse your backend stream into these calls. Event names are yours to define; the lib only provides the methods:
 
-| Scenario | Method |
-|---|---|
-| Start assistant response | `run.start([textPart('', { status: 'streaming' })])` |
-| Append text delta | `run.appendText(partId, delta)` |
-| Append structured part (tool-call, reasoning…) | `run.appendPart(part)` |
-| Update an existing part | `run.updatePart(partId, patch)` |
-| Apply a raw part-update payload | `chat.tryApplyMessagePartUpdateEvent(rawEvent)` |
-| Apply a raw todo-update payload | `chat.tryApplyTodoItemUpdateEvent(rawEvent)` |
-| Stream completed | `run.complete()` |
-| Stream error | `run.fail(error)` |
-| Cancel (abort fetch) | `run.cancel(hint)` → aborts `run.signal`, marks the message cancelled |
+| Scenario                                       | Method                                                                |
+| ---------------------------------------------- | --------------------------------------------------------------------- |
+| Start assistant response                       | `run.start([textPart('', { status: 'streaming' })])`                  |
+| Append text delta                              | `run.appendText(partId, delta)`                                       |
+| Append structured part (tool-call, reasoning…) | `run.appendPart(part)`                                                |
+| Update an existing part                        | `run.updatePart(partId, patch)`                                       |
+| Apply a raw part-update payload                | `chat.tryApplyMessagePartUpdateEvent(rawEvent)`                       |
+| Apply a raw todo-update payload                | `chat.tryApplyTodoItemUpdateEvent(rawEvent)`                          |
+| Stream completed                               | `run.complete()`                                                      |
+| Stream error                                   | `run.fail(error)`                                                     |
+| Cancel (abort fetch)                           | `run.cancel(hint)` → aborts `run.signal`, marks the message cancelled |
 
 ### Syntax highlighting
 
@@ -322,19 +322,19 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 
 Detailed design and reference docs live in [`docs/`](docs/README.md):
 
-| Doc | Covers |
-|-----|--------|
-| [React integration](docs/react.md) | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
-| [Message model](docs/message-model.md) | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating |
-| [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware |
-| [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
-| [Custom renderers](docs/renderers.md) | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers |
-| [Progress](docs/progress.md) | `[status]` lists, block IDs, programmatic updates |
-| [Todo panel](docs/todo.md) | Structured items, collapse behavior, status events, updates |
-| [Theming](docs/theming.md) | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference |
-| [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL |
-| [Composer & interaction](docs/composer.md) | Streaming, reply blocks, voice input |
-| [Migration: v2 → v3](docs/migration-v2-to-v3.md) | Breaking changes, deprecated API table, upgrade timeline |
+| Doc                                              | Covers                                                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [React integration](docs/react.md)               | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
+| [Message model](docs/message-model.md)           | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
+| [`<i-chat>` API](docs/component-api.md)          | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
+| [Parts](docs/parts.md)                           | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
+| [Custom renderers](docs/renderers.md)            | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers                                     |
+| [Progress](docs/progress.md)                     | `[status]` lists, block IDs, programmatic updates                                                            |
+| [Todo panel](docs/todo.md)                       | Structured items, collapse behavior, status events, updates                                                  |
+| [Theming](docs/theming.md)                       | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference                          |
+| [Localization (i18n)](docs/localization.md)      | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL                                              |
+| [Composer & interaction](docs/composer.md)       | Streaming, reply blocks, voice input                                                                         |
+| [Migration: v2 → v3](docs/migration-v2-to-v3.md) | Breaking changes, deprecated API table, upgrade timeline                                                     |
 
 ## Development
 
@@ -347,13 +347,13 @@ npm run test     # 24 unit tests (pure helpers)
 npm run dev      # concurrent watch on all packages + chat-demo dev server (see root `package.json`)
 ```
 
-| Script | Description |
-|--------|----------------|
-| `npm run build` | Builds all workspaces in dependency order (ends with `apps/demo`) |
-| `npm run test` | Runs 24 unit tests for pure helpers |
-| `npm run test:coverage` | Runs tests with Node.js coverage report |
-| `npm run dev` | Watch mode for packages and the Vue demo app (`chat-demo`) |
-| `npm run start` | Alias for `npm run dev` (see root `package.json`) |
+| Script                  | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `npm run build`         | Builds all workspaces in dependency order (ends with `apps/demo`) |
+| `npm run test`          | Runs 24 unit tests for pure helpers                               |
+| `npm run test:coverage` | Runs tests with Node.js coverage report                           |
+| `npm run dev`           | Watch mode for packages and the Vue demo app (`chat-demo`)        |
+| `npm run start`         | Alias for `npm run dev` (see root `package.json`)                 |
 
 To run **only** the demo app (after a successful `npm run build`): `npm run dev -w chat-demo`. Preview production build: `npm run preview -w chat-demo`.
 

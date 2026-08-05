@@ -17,7 +17,7 @@ class PartRendererRegistry {
     if (existing) {
       console.warn(
         `[i-chat] Part renderer "${renderer.name}" is already registered with a different object. ` +
-        'Keeping the first registration.',
+          'Keeping the first registration.',
       );
       return;
     }
@@ -26,7 +26,7 @@ class PartRendererRegistry {
     if (renderer.element && !CUSTOM_ELEMENT_NAME_RE.test(renderer.element)) {
       console.warn(
         `[i-chat] Part renderer "${renderer.name}" has an invalid element name "${renderer.element}". ` +
-        'Custom element names must contain a hyphen (e.g. "my-element"). Registration skipped.',
+          'Custom element names must contain a hyphen (e.g. "my-element"). Registration skipped.',
       );
       return;
     }

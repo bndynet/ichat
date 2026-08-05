@@ -126,7 +126,7 @@ export class ChatMessageElement extends LitElement {
           detail: { id: this.message?.id },
           bubbles: true,
           composed: true,
-        })
+        }),
       );
     },
   });
@@ -149,7 +149,10 @@ export class ChatMessageElement extends LitElement {
         case 'reasoning':
           return (p as { text?: string }).text != null && (p as { text?: string }).text!.length > 0;
         case 'todo':
-          return (p as { items?: unknown[] }).items != null && (p as { items?: unknown[] }).items!.length > 0;
+          return (
+            (p as { items?: unknown[] }).items != null &&
+            (p as { items?: unknown[] }).items!.length > 0
+          );
         case 'tool-call':
         case 'file':
         case 'source':
@@ -178,11 +181,7 @@ export class ChatMessageElement extends LitElement {
       this._pendingTimer = null;
       // Re-check conditions when timer fires — streaming may have ended
       // or parts may have arrived in the meantime.
-      if (
-        this.message?.streaming &&
-        !this.message?.error &&
-        !this._hasSubstantiveParts()
-      ) {
+      if (this.message?.streaming && !this.message?.error && !this._hasSubstantiveParts()) {
         this._showPending = true;
       }
     }, this.pendingDelay);
@@ -215,7 +214,7 @@ export class ChatMessageElement extends LitElement {
       // Bind the typewriter to the streaming text part (if any). The text part
       // renderer consumes the displayed content and morphs markdown in place.
       const streamingText = (this.message.parts ?? []).find(
-        (p): p is TextPart => p.type === 'text' && p.status === 'streaming'
+        (p): p is TextPart => p.type === 'text' && p.status === 'streaming',
       );
       this._streamingTextId = streamingText?.id ?? null;
       const shouldAnimate =
@@ -257,7 +256,10 @@ export class ChatMessageElement extends LitElement {
 
   private _streamStartTime: number | null = null;
   private _duration: number | null = null;
-  private _progressOverrides = new Map<string, { step: number; status: ProgressStatus; bid?: string }>();
+  private _progressOverrides = new Map<
+    string,
+    { step: number; status: ProgressStatus; bid?: string }
+  >();
   private _pendingProgressRetry = false;
 
   /** Id of the `text` part currently driven by the typewriter, or `null`. */
@@ -374,7 +376,7 @@ export class ChatMessageElement extends LitElement {
                 .assistantAvatarHtml=${this.assistantAvatarHtml}
               ></i-chat-message>
             </div>
-          `
+          `,
         )}
       </div>
     `;
@@ -391,7 +393,7 @@ export class ChatMessageElement extends LitElement {
         },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -407,9 +409,7 @@ export class ChatMessageElement extends LitElement {
     return null;
   }
 
-  private _partInfoFromPath(
-    path: EventTarget[]
-  ): Pick<ChatLinkClickDetail, 'partId' | 'partType'> {
+  private _partInfoFromPath(path: EventTarget[]): Pick<ChatLinkClickDetail, 'partId' | 'partType'> {
     for (const node of path) {
       if (node === this) break;
       if (!(node instanceof HTMLElement)) continue;
@@ -436,9 +436,7 @@ export class ChatMessageElement extends LitElement {
     const owningMessage = path.find((node) => node instanceof ChatMessageElement);
     if (owningMessage && owningMessage !== this) return;
     if (
-      path.some(
-        (node) => node instanceof HTMLElement && node.classList.contains('message-actions')
-      )
+      path.some((node) => node instanceof HTMLElement && node.classList.contains('message-actions'))
     ) {
       return;
     }
@@ -503,7 +501,7 @@ export class ChatMessageElement extends LitElement {
         detail: { id: this.message?.id },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -547,7 +545,7 @@ export class ChatMessageElement extends LitElement {
 
   private _scheduleProgressReapply(): void {
     if (this._progressOverrides.size === 0) return;
-    Promise.resolve().then(() => {
+    queueMicrotask(() => {
       for (const { step, status, bid } of this._progressOverrides.values()) {
         this._applyProgressOverride(step, status, bid);
       }
@@ -602,40 +600,47 @@ export class ChatMessageElement extends LitElement {
 
     return html`
       <div
-        class="message message--${role} ${this.message.parentId ? 'message--reply' : ''} ${error
-          ? 'message--error'
-          : ''}"
+        class="message message--${role} ${this.message.parentId ? 'message--reply' : ''} ${
+          error ? 'message--error' : ''
+        }"
         role=${role === 'assistant' ? 'article' : nothing}
         @click=${this._handleLinkClick}
       >
         ${this._renderAvatar(resolvedAvatar, role)}
         <div class="bubble-wrapper">
-          ${error
-            ? html`<div class="bubble bubble--error">
+          ${
+            error
+              ? html`<div class="bubble bubble--error">
                 <div class="error-indicator">
                   ${chatIcons.errorCircleFilled({ className: 'error-icon' })}
                   <span class="error-text">${error}</span>
                 </div>
               </div>`
-            : nothing}
-          ${this._showPending
-            ? html`<div
+              : nothing
+          }
+          ${
+            this._showPending
+              ? html`<div
                 class="pending-indicator pending-indicator--${this.pendingIndicator}"
               >
-                ${this.pendingIndicator === 'spinner'
-                  ? html`<i-chat-spinner
+                ${
+                  this.pendingIndicator === 'spinner'
+                    ? html`<i-chat-spinner
                       style="--chat-spinner-color:var(--chat-text-secondary,#909399);--chat-spinner-track:var(--chat-border,#dcdfe6)"
                       label=${this.labels?.messages?.generating ?? 'Generating response…'}
                     ></i-chat-spinner>`
-                  : html`<i-chat-dots
+                    : html`<i-chat-dots
                       style="--chat-dots-size:6px;--chat-dots-color:var(--chat-text-secondary,#909399)"
                       label=${this.labels?.messages?.generating ?? 'Generating response…'}
-                    ></i-chat-dots>`}
+                    ></i-chat-dots>`
+                }
               </div>`
-            : nothing}
-          ${this._pendingActive
-            ? nothing
-            : html`<i-chat-part-host
+              : nothing
+          }
+          ${
+            this._pendingActive
+              ? nothing
+              : html`<i-chat-part-host
             .message=${this.message}
             .parts=${this.message.parts ?? []}
             .streamingTextId=${this._streamingTextId}
@@ -647,19 +652,26 @@ export class ChatMessageElement extends LitElement {
             .allowedLinkProtocols=${this.allowedLinkProtocols}
             .highlightJs=${this.highlightJs}
             @chat-part-host-updated=${this._handlePartHostUpdated}
-          ></i-chat-part-host>`}
+          ></i-chat-part-host>`
+          }
           <div class="message-footer">
-            ${timestamp && !streaming
-              ? html`<div class="timestamp">${this._formatTimestamp(timestamp)}</div>`
-              : nothing}
-            ${role === 'assistant' && !streaming && this._duration !== null
-              ? html`<div class="duration">${this._formatDuration(this._duration)}</div>`
-              : nothing}
-            ${this.actionsHtml && !streaming
-              ? html`<div class="message-actions" @click=${this._handleActionClick}>
+            ${
+              timestamp && !streaming
+                ? html`<div class="timestamp">${this._formatTimestamp(timestamp)}</div>`
+                : nothing
+            }
+            ${
+              role === 'assistant' && !streaming && this._duration !== null
+                ? html`<div class="duration">${this._formatDuration(this._duration)}</div>`
+                : nothing
+            }
+            ${
+              this.actionsHtml && !streaming
+                ? html`<div class="message-actions" @click=${this._handleActionClick}>
                   ${unsafeHTML(this.actionsHtml)}
                 </div>`
-              : nothing}
+                : nothing
+            }
           </div>
           ${this._renderReplyBlocks()}
         </div>

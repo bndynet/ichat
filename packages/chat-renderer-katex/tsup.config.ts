@@ -3,7 +3,9 @@ import { readFileSync } from 'fs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as {
+  version: string;
+};
 
 // Read the installed katex version so CDN URLs stay in sync with the
 // version that markdown-it-katex actually links against.

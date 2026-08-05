@@ -103,6 +103,5 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     );
   };
 
-  md.renderer.rules.chat_details_close = (): string =>
-    `</div></details>\n`;
+  md.renderer.rules.chat_details_close = (): string => `</div></details>\n`;
 }

@@ -1,18 +1,11 @@
-import {
-  invalidateMarkdownCache,
-  renderMarkdownInto,
-} from '../../src/renderers/markdown-morph.js';
+import { invalidateMarkdownCache, renderMarkdownInto } from '../../src/renderers/markdown-morph.js';
 import { renderMarkdownLight } from '../../src/renderers/markdown-renderer.js';
 import { rendererRegistry } from '../../src/renderers/registry.js';
 import { partRendererRegistry } from '../../src/renderers/part-registry.js';
 import { streamingRenderDelayMs } from '../../src/streaming-render-policy.js';
 import '../../src/components/chat-text-part.js';
 import '../../src/components/chat-part-host.js';
-import type {
-  CustomPart,
-  RendererErrorDetail,
-  TextPart,
-} from '../../src/types.js';
+import type { CustomPart, RendererErrorDetail, TextPart } from '../../src/types.js';
 
 type ContentKind = 'plain' | 'markdown';
 type SizeKiB = 2 | 10 | 50;
@@ -75,8 +68,7 @@ interface OfficialRendererValidation {
 declare global {
   interface Window {
     __ICHAT_BENCHMARK__?:
-      | { status: 'idle' | 'running'; progress?: string }
-      | BrowserBenchmarkReport;
+      { status: 'idle' | 'running'; progress?: string } | BrowserBenchmarkReport;
   }
 }
 
@@ -153,10 +145,7 @@ function nextFrame(): Promise<number> {
   return new Promise((resolve) => requestAnimationFrame(resolve));
 }
 
-async function waitForCondition(
-  predicate: () => boolean,
-  timeoutMs = 5000,
-): Promise<boolean> {
+async function waitForCondition(predicate: () => boolean, timeoutMs = 5000): Promise<boolean> {
   const deadline = performance.now() + timeoutMs;
   while (performance.now() < deadline) {
     if (predicate()) return true;
@@ -179,10 +168,14 @@ function deferredValue<T>(): {
 function nextUpdatedEvent(element: HTMLElement): Promise<void> {
   return new Promise((resolve, reject) => {
     const timeout = window.setTimeout(() => reject(new Error('Renderer update timed out')), 500);
-    element.addEventListener('chat-text-part-updated', () => {
-      window.clearTimeout(timeout);
-      resolve();
-    }, { once: true });
+    element.addEventListener(
+      'chat-text-part-updated',
+      () => {
+        window.clearTimeout(timeout);
+        resolve();
+      },
+      { once: true },
+    );
   });
 }
 
@@ -228,11 +221,18 @@ async function validateComponentScheduling(): Promise<ComponentValidation> {
 
   const trailingStartedAt = performance.now();
   const trailingFlushMs = await new Promise<number>((resolve, reject) => {
-    const timeout = window.setTimeout(() => reject(new Error('Trailing stream render timed out')), 250);
-    element.addEventListener('chat-text-part-updated', () => {
-      window.clearTimeout(timeout);
-      resolve(performance.now() - trailingStartedAt);
-    }, { once: true });
+    const timeout = window.setTimeout(
+      () => reject(new Error('Trailing stream render timed out')),
+      250,
+    );
+    element.addEventListener(
+      'chat-text-part-updated',
+      () => {
+        window.clearTimeout(timeout);
+        resolve(performance.now() - trailingStartedAt);
+      },
+      { once: true },
+    );
     element.content = latestContent;
   });
   await element.updateComplete;
@@ -376,13 +376,18 @@ async function validateRendererRuntime(): Promise<RendererRuntimeValidation> {
     partElement.parts = [customPart];
     stage.replaceChildren(partElement);
     await partElement.updateComplete;
-    if (!partElement.textContent?.includes('<script>source</script>')) failures.push('part fallback');
+    if (!partElement.textContent?.includes('<script>source</script>'))
+      failures.push('part fallback');
     if (partElement.querySelector('script')) failures.push('part fallback escaping');
 
-    const syncError = errors.some((detail) =>
-      detail.kind === 'block' && detail.renderer === syncName && detail.phase === 'render');
-    const partError = errors.some((detail) =>
-      detail.kind === 'part' && detail.renderer === partName && detail.phase === 'render');
+    const syncError = errors.some(
+      (detail) =>
+        detail.kind === 'block' && detail.renderer === syncName && detail.phase === 'render',
+    );
+    const partError = errors.some(
+      (detail) =>
+        detail.kind === 'part' && detail.renderer === partName && detail.phase === 'render',
+    );
     if (!syncError) failures.push('sync error event');
     if (!partError) failures.push('part error event');
   } finally {
@@ -462,12 +467,14 @@ async function validateOfficialRenderers(): Promise<OfficialRendererValidation> 
     await mermaidElement.updateComplete;
 
     const mermaidHost = mermaidElement.querySelector('i-chat-mermaid');
-    const sourcePreserved = mermaidHost
-      ?.querySelector(`pre.${mermaidModule.MERMAID_SOURCE_CLASS}`)
-      ?.textContent?.includes('A[Start]') === true;
-    mermaidRendered = Boolean(mermaidHost) && sourcePreserved && await waitForCondition(
-      () => Boolean(mermaidHost?.shadowRoot?.querySelector('svg')),
-    );
+    const sourcePreserved =
+      mermaidHost
+        ?.querySelector(`pre.${mermaidModule.MERMAID_SOURCE_CLASS}`)
+        ?.textContent?.includes('A[Start]') === true;
+    mermaidRendered =
+      Boolean(mermaidHost) &&
+      sourcePreserved &&
+      (await waitForCondition(() => Boolean(mermaidHost?.shadowRoot?.querySelector('svg'))));
     if (!sourcePreserved) failures.push('mermaid source preservation');
     if (!mermaidRendered) failures.push('mermaid SVG');
   } finally {
@@ -498,9 +505,10 @@ async function runScenario(scenario: Scenario, index: number): Promise<ScenarioR
 
   await warmUpScenario(content, partId, scenario.updatesPerSecond);
 
-  const longTaskObserver = typeof PerformanceObserver !== 'undefined'
-    ? new PerformanceObserver((list) => longTaskEntries.push(...list.getEntries()))
-    : undefined;
+  const longTaskObserver =
+    typeof PerformanceObserver !== 'undefined'
+      ? new PerformanceObserver((list) => longTaskEntries.push(...list.getEntries()))
+      : undefined;
   try {
     longTaskObserver?.observe({ type: 'longtask', buffered: false });
   } catch {
@@ -552,28 +560,30 @@ async function runScenario(scenario: Scenario, index: number): Promise<ScenarioR
   const p95ParseMs = percentile(parseSamples, 0.95);
   const p95DomMs = percentile(domSamples, 0.95);
   const p95TotalMs = percentile(totalSamples, 0.95);
-  const updateBudgetMs = scenario.sizeKiB === 50
-    ? BUDGETS.p95StreamingUpdateMs.large
-    : BUDGETS.p95StreamingUpdateMs.standard;
+  const updateBudgetMs =
+    scenario.sizeKiB === 50
+      ? BUDGETS.p95StreamingUpdateMs.large
+      : BUDGETS.p95StreamingUpdateMs.standard;
   const withinBudgetPct =
     (totalSamples.filter((sample) => sample <= updateBudgetMs).length / totalSamples.length) * 100;
   const streamingWorkPct =
     (totalSamples.reduce((total, sample) => total + sample, 0) / streamingElapsedMs) * 100;
-  const droppedFramePct = frameTimes.length === 0
-    ? 0
-    : (frameTimes.filter((duration) => duration > FRAME_BUDGET_MS * 1.5).length / frameTimes.length) * 100;
-  const terminalBudget = scenario.sizeKiB === 50
-    ? BUDGETS.terminalRenderMs.large
-    : BUDGETS.terminalRenderMs.small;
+  const droppedFramePct =
+    frameTimes.length === 0
+      ? 0
+      : (frameTimes.filter((duration) => duration > FRAME_BUDGET_MS * 1.5).length /
+          frameTimes.length) *
+        100;
+  const terminalBudget =
+    scenario.sizeKiB === 50 ? BUDGETS.terminalRenderMs.large : BUDGETS.terminalRenderMs.small;
   const failures: string[] = [];
   if (p95TotalMs > updateBudgetMs) failures.push('p95 streaming update');
   if (withinBudgetPct < BUDGETS.updatesWithinBudgetPct) failures.push('update-budget coverage');
   if (streamingWorkPct > BUDGETS.streamingWorkPct) failures.push('main-thread occupancy');
   if (droppedFramePct > BUDGETS.droppedFramePct) failures.push('dropped frames');
   if (terminalMs > terminalBudget) failures.push('terminal render');
-  const longTaskBudget = scenario.sizeKiB === 50
-    ? BUDGETS.longTasks.large
-    : BUDGETS.longTasks.standard;
+  const longTaskBudget =
+    scenario.sizeKiB === 50 ? BUDGETS.longTasks.large : BUDGETS.longTasks.standard;
   if (longTaskEntries.length > longTaskBudget) failures.push('long tasks');
 
   return {

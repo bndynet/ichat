@@ -38,11 +38,7 @@ test('raw HTML from markdown content remains escaped during streaming', () => {
 test('streaming markdown strips unsafe link protocols', () => {
   for (const fixture of unsafeLinkFixtures) {
     const html = renderMarkdownLight(fixture.markdown);
-    assert.doesNotMatch(
-      html,
-      new RegExp(`href=["']${fixture.protocol}:`, 'i'),
-      fixture.name,
-    );
+    assert.doesNotMatch(html, new RegExp(`href=["']${fixture.protocol}:`, 'i'), fixture.name);
   }
 });
 

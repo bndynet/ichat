@@ -5,7 +5,9 @@ import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import type { Plugin } from 'esbuild';
 
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as {
+  version: string;
+};
 
 const scssPlugin: Plugin = {
   name: 'scss',

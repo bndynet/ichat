@@ -347,7 +347,9 @@ test('events: messages-change bubbles from i-chat', async () => {
   await waitForUpdate(chat);
 
   let bubbled = false;
-  chat.addEventListener('messages-change', () => { bubbled = true; });
+  chat.addEventListener('messages-change', () => {
+    bubbled = true;
+  });
 
   chat.addMessage(textMsg('event', 'test'));
   await waitForUpdate(chat);
@@ -386,7 +388,11 @@ test('state: disabled reflects on input', async () => {
 // 6. DOM attributes
 test('dom: data-message-id and data-part-id are present', async () => {
   const chat = createChat();
-  chat.addMessage({ id: 'attr-test', role: 'assistant', parts: [{ type: 'text', id: 'attr-part', text: 'hi' }] });
+  chat.addMessage({
+    id: 'attr-test',
+    role: 'assistant',
+    parts: [{ type: 'text', id: 'attr-part', text: 'hi' }],
+  });
   await waitForUpdate(chat);
   // Give the nested shadow DOM time to render
   await new Promise((r) => setTimeout(r, 100));
@@ -394,7 +400,9 @@ test('dom: data-message-id and data-part-id are present', async () => {
   const messagesEl = chat.shadowRoot?.querySelector('i-chat-messages') as HTMLElement | null;
   assert(messagesEl, 'i-chat-messages should be present');
 
-  const msgEl = messagesEl?.shadowRoot?.querySelector('[data-message-id="attr-test"]') as HTMLElement | null;
+  const msgEl = messagesEl?.shadowRoot?.querySelector(
+    '[data-message-id="attr-test"]',
+  ) as HTMLElement | null;
   assert(msgEl, 'message element should have data-message-id');
 });
 
@@ -531,10 +539,18 @@ function createMockReactiveHost(): MockReactiveHost {
   const el = document.createElement('div');
   return {
     renderRoot: el,
-    requestUpdate() { count++; },
-    get updateCount() { return count; },
-    get isConnected() { return true; },
-    addController() { /* no-op — controller adds itself in constructor */ },
+    requestUpdate() {
+      count++;
+    },
+    get updateCount() {
+      return count;
+    },
+    get isConnected() {
+      return true;
+    },
+    addController() {
+      /* no-op — controller adds itself in constructor */
+    },
   } as MockReactiveHost & { updateCount: number };
 }
 

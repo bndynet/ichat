@@ -21,10 +21,7 @@ export type MessagesChangeReason =
 /**
  * Identifies which component or subsystem originated the mutation.
  */
-export type MessagesChangeSource =
-  | 'i-chat'
-  | 'i-chat-messages'
-  | 'chat-run-controller';
+export type MessagesChangeSource = 'i-chat' | 'i-chat-messages' | 'chat-run-controller';
 
 /**
  * Payload of the `messages-change` custom event.

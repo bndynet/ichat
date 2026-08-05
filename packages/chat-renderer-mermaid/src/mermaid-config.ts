@@ -1,11 +1,10 @@
-import type { MermaidConfig } from "mermaid";
+import type { MermaidConfig } from 'mermaid';
 
 /**
  * Layout and typography defaults. Colors come from `buildMermaidThemeVariables()`
  * in `mermaid-theme-tokens.ts` at render time (`theme: 'base'`).
  */
-export const DEFAULT_MERMAID_CONFIG: MermaidConfig =
-{
+export const DEFAULT_MERMAID_CONFIG: MermaidConfig = {
   startOnLoad: false,
   securityLevel: 'strict',
 
@@ -21,11 +20,11 @@ export const DEFAULT_MERMAID_CONFIG: MermaidConfig =
     nodeSpacing: 24,
     rankSpacing: 28,
     diagramPadding: 4,
-    curve: 'basis'
+    curve: 'basis',
   },
 
   // Sequence
   sequence: {
     height: 36,
-  }
+  },
 };

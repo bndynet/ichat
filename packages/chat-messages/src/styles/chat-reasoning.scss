@@ -10,9 +10,26 @@
 
 .reasoning {
   @include disclosure.surface(
-    $background: var(--chat-reasoning-bg, color-mix(in srgb, var(--chat-surface, #{$color-surface}) 94%, var(--chat-primary, #{$color-primary}) 6%)),
-    $border: var(--chat-reasoning-border, color-mix(in srgb, var(--chat-border, #{$color-border}) 82%, var(--chat-primary, #{$color-primary}) 18%)),
-    $radius: var(--chat-reasoning-radius, var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))),
+    $background: var(
+        --chat-reasoning-bg,
+        color-mix(
+          in srgb,
+          var(--chat-surface, #{$color-surface}) 94%,
+          var(--chat-primary, #{$color-primary}) 6%
+        )
+      ),
+    $border: var(
+        --chat-reasoning-border,
+        color-mix(
+          in srgb,
+          var(--chat-border, #{$color-border}) 82%,
+          var(--chat-primary, #{$color-primary}) 18%
+        )
+      ),
+    $radius: var(
+        --chat-reasoning-radius,
+        var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm}))
+      ),
     $shadow: var(--chat-reasoning-shadow, var(--chat-panel-shadow, none))
   );
 
@@ -39,8 +56,14 @@
 
 .reasoning-header {
   @include disclosure.header(
-    $background: var(--chat-reasoning-header-bg, var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))),
-    $hover-background: var(--chat-reasoning-header-hover-bg, var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})),
+    $background: var(
+        --chat-reasoning-header-bg,
+        var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+      ),
+    $hover-background: var(
+        --chat-reasoning-header-hover-bg,
+        var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+      ),
     $color: var(--chat-reasoning-text, var(--chat-text-secondary, #{$color-text-secondary})),
     $focus-color: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})),
     $focus-outline-offset: 2px
@@ -67,7 +90,11 @@
   justify-content: center;
   flex: 0 0 auto;
   color: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
-  background: color-mix(in srgb, var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})) 10%,
+    transparent
+  );
 
   svg {
     display: block;
@@ -117,12 +144,17 @@
     max-height: var(--chat-reasoning-content-max-height, 260px);
     opacity: 1;
     overflow-y: auto;
-    border-block-start-color: color-mix(in srgb, var(--chat-border, #{$color-border}) 72%, transparent);
+    border-block-start-color: color-mix(
+      in srgb,
+      var(--chat-border, #{$color-border}) 72%,
+      transparent
+    );
   }
 }
 
 .reasoning-body {
-  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-sm, #{$spacing-sm});
+  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md})
+    var(--chat-spacing-sm, #{$spacing-sm});
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   line-height: var(--chat-line-height, #{$line-height-base});
   color: var(--chat-text-secondary, #{$color-text-secondary});

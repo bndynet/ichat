@@ -18,43 +18,82 @@ function handleSend(e) {
 </script>
 
 <template>
-  <i-chat
-    ref="chatRef"
-    @send="handleSend"
-  >
+  <i-chat ref="chatRef" @send="handleSend">
     <div slot="empty" class="placeholder">
       <h2 class="placeholder__title">Welcome</h2>
       <svg
         class="placeholder__welcome"
-          viewBox="0 0 280 200"
-          fill="none"
+        viewBox="0 0 280 200"
+        fill="none"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="Welcome illustration"
       >
         <defs>
-          <linearGradient id="pw-sky" x1="32" y1="24" x2="248" y2="176" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id="pw-sky"
+            x1="32"
+            y1="24"
+            x2="248"
+            y2="176"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stop-color="#EEF2FF" />
             <stop offset="0.45" stop-color="#E0E7FF" />
             <stop offset="1" stop-color="#F5F3FF" />
           </linearGradient>
-          <linearGradient id="pw-glow" x1="140" y1="40" x2="200" y2="120" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id="pw-glow"
+            x1="140"
+            y1="40"
+            x2="200"
+            y2="120"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stop-color="#A5B4FC" stop-opacity="0.45" />
             <stop offset="1" stop-color="#C4B5FD" stop-opacity="0.15" />
           </linearGradient>
-          <linearGradient id="pw-bubble-l" x1="48" y1="72" x2="152" y2="128" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id="pw-bubble-l"
+            x1="48"
+            y1="72"
+            x2="152"
+            y2="128"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stop-color="#FFFFFF" />
             <stop offset="1" stop-color="#F8FAFC" />
           </linearGradient>
-          <linearGradient id="pw-bubble-r" x1="168" y1="88" x2="248" y2="152" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id="pw-bubble-r"
+            x1="168"
+            y1="88"
+            x2="248"
+            y2="152"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stop-color="#6366F1" />
             <stop offset="1" stop-color="#7C3AED" />
           </linearGradient>
-          <linearGradient id="pw-accent" x1="200" y1="48" x2="240" y2="88" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id="pw-accent"
+            x1="200"
+            y1="48"
+            x2="240"
+            y2="88"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stop-color="#22D3EE" />
             <stop offset="1" stop-color="#38BDF8" />
           </linearGradient>
-          <filter id="pw-soft" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+          <filter
+            id="pw-soft"
+            x="-8%"
+            y="-8%"
+            width="116%"
+            height="116%"
+            color-interpolation-filters="sRGB"
+          >
             <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b" />
             <feOffset dx="0" dy="4" in="b" result="o" />
             <feComponentTransfer in="o" result="a">
@@ -75,7 +114,14 @@ function handleSend(e) {
 
         <rect width="280" height="200" rx="24" fill="url(#pw-sky)" />
 
-        <circle cx="210" cy="52" r="56" fill="url(#pw-glow)" filter="url(#pw-glow-blur)" opacity="0.9" />
+        <circle
+          cx="210"
+          cy="52"
+          r="56"
+          fill="url(#pw-glow)"
+          filter="url(#pw-glow-blur)"
+          opacity="0.9"
+        />
         <circle cx="72" cy="148" r="40" fill="#C7D2FE" opacity="0.35" />
 
         <g filter="url(#pw-soft)">
@@ -89,15 +135,14 @@ function handleSend(e) {
             stroke="#C7D2FE"
             stroke-width="1.25"
           />
-          <path d="M58 140 L42 156 L58 150 Z" fill="url(#pw-bubble-l)" stroke="#C7D2FE" stroke-width="1.25" stroke-linejoin="round" />
-          <rect
-            x="164"
-            y="96"
-            width="84"
-            height="56"
-            rx="14"
-            fill="url(#pw-bubble-r)"
+          <path
+            d="M58 140 L42 156 L58 150 Z"
+            fill="url(#pw-bubble-l)"
+            stroke="#C7D2FE"
+            stroke-width="1.25"
+            stroke-linejoin="round"
           />
+          <rect x="164" y="96" width="84" height="56" rx="14" fill="url(#pw-bubble-r)" />
           <path d="M232 152 L246 164 L232 160 Z" fill="url(#pw-bubble-r)" />
         </g>
 

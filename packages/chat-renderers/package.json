@@ -1,7 +1,7 @@
 {
   "name": "@bndynet/ichat-renderers",
   "version": "3.1.0",
-  "description": "Optional peer add-on for @bndynet/ichat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
+  "description": "Lightweight fenced-code renderers for @bndynet/ichat-messages: KPI cards and interactive forms. No heavy third-party dependencies.",
   "keywords": [
     "ai-chat",
     "chat-ui",
@@ -11,8 +11,6 @@
     "llm-ui",
     "streaming",
     "markdown",
-    "markdown-it",
-    "markdown-it-plugin",
     "fenced-code",
     "renderer"
   ],
@@ -36,13 +34,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^3.1.0",
-    "markdown-it": ">=14"
-  },
-  "peerDependenciesMeta": {
-    "markdown-it": {
-      "optional": true
-    }
+    "@bndynet/ichat-messages": "^3.1.0"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",
@@ -51,7 +43,9 @@
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",

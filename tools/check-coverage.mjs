@@ -42,7 +42,10 @@ async function main() {
   }
 
   // Parse: "# all files | 100.00 | 100.00 | 100.00 |"
-  const parts = allFilesLine.split('|').map(s => s.trim()).filter(Boolean);
+  const parts = allFilesLine
+    .split('|')
+    .map((s) => s.trim())
+    .filter(Boolean);
   const label = parts[0]; // "all files"
   const linePct = parseFloat(parts[1]);
 
@@ -52,9 +55,7 @@ async function main() {
   }
 
   if (linePct < THRESHOLD_PCT) {
-    console.error(
-      `❌ Coverage ${linePct.toFixed(2)}% is below threshold ${THRESHOLD_PCT}%`,
-    );
+    console.error(`❌ Coverage ${linePct.toFixed(2)}% is below threshold ${THRESHOLD_PCT}%`);
     process.exit(1);
   }
 

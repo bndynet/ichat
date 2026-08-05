@@ -55,10 +55,10 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 - [x] Plugin API foundation — `ChatPlugin` exposes `install(chat)` + optional teardown, and `chat.use()` accepts both middleware and plugins. Unified lifecycle ownership, duplicate-name handling, and disconnect cleanup remain P0 work below. (Phase 4.3 foundation)
 - [x] Async BlockRenderer — `renderAsync()` for fenced blocks. Placeholder on first render, swapped when promise resolves. `resolveAsyncBlocks()` exported. (Phase 4.2)
 - [x] Renderer runtime isolation — block and string-part renderer failures fall
-  back safely, async work is terminal-only and lifecycle-cancellable, stale
-  results cannot overwrite newer content, and `chat-renderer-error` provides
-  optional observability. Official Chart and Mermaid compatibility is covered
-  in the browser regression benchmark.
+      back safely, async work is terminal-only and lifecycle-cancellable, stale
+      results cannot overwrite newer content, and `chat-renderer-error` provides
+      optional observability. Official Chart and Mermaid compatibility is covered
+      in the browser regression benchmark.
 
 ### Accessibility
 
@@ -70,6 +70,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] Component tests for `<i-chat-input>` ✅ — Module import, custom element registration, constructor, default property values. (Phase 1.1)
 - [x] Component tests for `<i-chat>` ✅ — Module import, registration, constructor, default properties, method signatures, `ready` promise contract. (Phase 1.1)
+
 ### Documentation
 
 - [x] README updated — ChatRunController, highlight.js, middleware/plugin examples, test scripts. (Phase 7)
@@ -80,7 +81,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 - [x] 🟡 **Deduplicate renderer utils** ✅ (completed 2026-08-03) — Three identical copies of `utils.ts` (+ `icons.ts`/`version.ts`) across `chat-renderers`, `chat-renderer-chart`, `chat-renderer-mermaid` merged into single `renderer-utils.ts` in `chat-messages`. Net: ~540 lines removed.
 - [x] 🟡 **highlight.js → optional peerDep** ✅ (completed 2026-08-03) — Moved from hard dependency to optional peer. Added self-contained `HighlightJs` interface so consumers' TypeScript never needs the package. Without highlight.js: plain `<pre><code>`, no error. `chat-messages` hard deps: 5 → 4.
-- [x] 🟡 **Inline register-*.ts thin wrappers** ✅ (completed 2026-08-03) — Two 10-line files that merely delegated to `@bndynet/ichat-messages` merged into `chat/src/index.ts`. Public API unchanged.
+- [x] 🟡 **Inline register-\*.ts thin wrappers** ✅ (completed 2026-08-03) — Two 10-line files that merely delegated to `@bndynet/ichat-messages` merged into `chat/src/index.ts`. Public API unchanged.
 - [x] 🟡 **Extract confirmation dialog** ✅ (completed 2026-08-03) — `i-chat-confirmation` standalone Lit component with own shadow DOM, styles, and keyboard nav. `chat.ts`: 1088 → 966 lines (-122), `chat.scss`: 202 → 40 lines (-162).
 - [x] 🟡 **Split chat-message.scss** ✅ (completed 2026-08-03) — 707-line monolith split into 3 files: `_chat-message-content.scss` (248), `_chat-message-meta.scss` (211), main file (252). Each partial is self-contained.
 - [x] 🟡 **Extract buildMessagesChangeDetail** ✅ (completed 2026-08-03) — Pure helper in `messages-change-types.ts` shared by both `chat.ts` and `chat-messages.ts`. Eliminates ~25 lines of duplicated detail-building logic.

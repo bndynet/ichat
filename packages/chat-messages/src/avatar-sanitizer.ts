@@ -21,7 +21,7 @@ const INLINE_SVG_SANITIZE_CONFIG: DOMPurifyConfig = {
 /** Sanitize an inline SVG avatar. Returns an empty string when it cannot be rendered safely. */
 export function sanitizeInlineSvgAvatar(
   svgMarkup: string,
-  purifier: InlineSvgPurifier = DOMPurify
+  purifier: InlineSvgPurifier = DOMPurify,
 ): string {
   // DOMPurify is created without a DOM during SSR/Node imports. Fail closed
   // instead of passing the original markup to Lit's unsafeHTML directive.

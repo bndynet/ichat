@@ -86,7 +86,7 @@ export class ChatReasoning extends LitElement {
         detail: { changed: true },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -97,7 +97,7 @@ export class ChatReasoning extends LitElement {
         detail: { expanded: this._expanded },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -113,8 +113,7 @@ export class ChatReasoning extends LitElement {
     // Show "Thinking..." + dots while streaming and either the typewriter is running,
     // or reasoning text has not appeared yet (empty buffer but tags may already be open upstream).
     const isThinking =
-      this.streaming &&
-      (this._streamCtrl.isAnimating || displayed.trim().length === 0);
+      this.streaming && (this._streamCtrl.isAnimating || displayed.trim().length === 0);
     // While streaming: always show the thinking body. After reply completes: collapsed until user expands.
     const bodyOpen = this.streaming || this._expanded;
 
@@ -128,20 +127,26 @@ export class ChatReasoning extends LitElement {
           @click=${this._toggle}
           @keydown=${this._onHeaderKeydown}
         >
-          ${this.headerHtml
-            ? html`<span class="reasoning-header-custom ${isThinking ? 'is-thinking' : ''}">${unsafeHTML(this.headerHtml)}</span>`
-            : html`<span class="reasoning-icon">${chatIcons.lightbulb({ size: 16, strokeWidth: 2 })}</span>
+          ${
+            this.headerHtml
+              ? html`<span class="reasoning-header-custom ${isThinking ? 'is-thinking' : ''}">${unsafeHTML(this.headerHtml)}</span>`
+              : html`<span class="reasoning-icon">${chatIcons.lightbulb({ size: 16, strokeWidth: 2 })}</span>
               <span class="reasoning-title">
-                ${isThinking
-                  ? (this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking)
-                  : (this.labels?.reasoning ?? CHAT_LABELS_EN.reasoning.reasoning)}
-                ${isThinking
-                  ? html`<i-chat-dots
+                ${
+                  isThinking
+                    ? (this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking)
+                    : (this.labels?.reasoning ?? CHAT_LABELS_EN.reasoning.reasoning)
+                }
+                ${
+                  isThinking
+                    ? html`<i-chat-dots
                       style="--chat-dots-color:var(--chat-reasoning-accent,var(--chat-primary,#1a73e8))"
                       label=${this.labels?.thinking ?? CHAT_LABELS_EN.reasoning.thinking}
                     ></i-chat-dots>`
-                  : nothing}
-              </span>`}
+                    : nothing
+                }
+              </span>`
+          }
           <span class="reasoning-chevron ${bodyOpen ? 'expanded' : ''}">
             ${chatIcons.chevronDown({ size: 16, strokeWidth: 2.4 })}
           </span>

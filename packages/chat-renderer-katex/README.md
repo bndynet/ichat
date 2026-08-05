@@ -26,10 +26,10 @@ That's it — no manual `registerMarkdownPlugin` call needed. Inline (`$x^2$`) a
 
 ## Peer dependencies
 
-| Package | Version |
-|---|---|
+| Package                   | Version  |
+| ------------------------- | -------- |
 | `@bndynet/ichat-messages` | `^2.1.1` |
-| `markdown-it` | `>=14` |
+| `markdown-it`             | `>=14`   |
 
 ## License
 

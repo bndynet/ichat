@@ -17,6 +17,7 @@ v3 removes all deprecated APIs introduced in v2, simplifies the event system to 
 **What changed:** `@bndynet/ichat-messages` and `@bndynet/ichat-input` no longer bundle `markdown-it`, `dompurify`, `highlight.js`, `lit`, and `morphdom` into their output.
 
 **Impact:**
+
 - Bundle size reduced: `ichat-messages` ESM from **524KB → 177KB**
 - Your bundler (Vite, webpack, etc.) now resolves these dependencies from `node_modules` instead of using inlined copies
 - No duplicate copies of `markdown-it` / `lit` / etc. between your app and `ichat`
@@ -27,38 +28,38 @@ v3 removes all deprecated APIs introduced in v2, simplifies the event system to 
 
 The following APIs were deprecated in v2 and are removed in v3:
 
-| Removed | Replacement |
-|--------|-------------|
-| `createStreamingController()` | `createRunController()` |
-| `patchTodoItemInPart()` | `patchTodoItem()` |
-| `updateTodoItem()` (boolean) | `tryUpdateTodoItem()` (diagnostic result) |
-| `updateToolCall()` (boolean) | `tryUpdateToolCall()` (diagnostic result) |
-| `applyMessagePartUpdateEvent()` (boolean) | `tryApplyMessagePartUpdateEvent()` |
-| `applyTodoItemUpdateEvent()` (boolean) | `tryApplyTodoItemUpdateEvent()` |
-| `config.dateSeparatorLabels` | `config.labels.dateSeparator` |
+| Removed                                   | Replacement                               |
+| ----------------------------------------- | ----------------------------------------- |
+| `createStreamingController()`             | `createRunController()`                   |
+| `patchTodoItemInPart()`                   | `patchTodoItem()`                         |
+| `updateTodoItem()` (boolean)              | `tryUpdateTodoItem()` (diagnostic result) |
+| `updateToolCall()` (boolean)              | `tryUpdateToolCall()` (diagnostic result) |
+| `applyMessagePartUpdateEvent()` (boolean) | `tryApplyMessagePartUpdateEvent()`        |
+| `applyTodoItemUpdateEvent()` (boolean)    | `tryApplyTodoItemUpdateEvent()`           |
+| `config.dateSeparatorLabels`              | `config.labels.dateSeparator`             |
 
 ### 3. Deprecated events removed
 
 The following DOM events are removed; use the unified `part-action` event instead:
 
-| Removed event | Use instead |
-|--------------|-------------|
+| Removed event | Use instead                                           |
+| ------------- | ----------------------------------------------------- |
 | `form-submit` | `part-action` with `kind: 'form'`, `action: 'submit'` |
-| `todo-action` | `part-action` with `kind: 'todo'` |
-| `tool-action` | `part-action` with `kind: 'tool-call'` |
+| `todo-action` | `part-action` with `kind: 'todo'`                     |
+| `tool-action` | `part-action` with `kind: 'tool-call'`                |
 
 The `part-action` event detail always includes `messageId`, `message`, `partId`, and `partType` enriched by the component hierarchy.
 
 ### 4. Removed type exports
 
-| Removed export | Notes |
-|---------------|-------|
-| `ChatFormSubmitDetail` | Access via `ChatPartActionDetail` generic |
-| `TodoActionDetail` | Access via `ChatPartActionDetail` generic |
-| `ToolActionDetail` | Access via `ChatPartActionDetail` generic |
-| `ChatFormSubmitRequestDetail` | Internal type, no longer exported |
-| `TodoActionRequestDetail` | Internal type, no longer exported |
-| `ToolActionRequestDetail` | Internal type, no longer exported |
+| Removed export                | Notes                                     |
+| ----------------------------- | ----------------------------------------- |
+| `ChatFormSubmitDetail`        | Access via `ChatPartActionDetail` generic |
+| `TodoActionDetail`            | Access via `ChatPartActionDetail` generic |
+| `ToolActionDetail`            | Access via `ChatPartActionDetail` generic |
+| `ChatFormSubmitRequestDetail` | Internal type, no longer exported         |
+| `TodoActionRequestDetail`     | Internal type, no longer exported         |
+| `ToolActionRequestDetail`     | Internal type, no longer exported         |
 
 ---
 
@@ -80,9 +81,9 @@ If you're coming from v1, these v2 features are already available:
 
 ## Timeline
 
-| Version | Status | Key changes |
-|---------|--------|-------------|
-| 2.0.x | Released | Single-source message state, SSE client, middleware, plugins |
-| 2.1.x | In development | Accessibility (Phase 5), bundle optimization (Phase 2.3 step 1) |
-| 2.2.x | Planned | Controlled mode, ChatRunController, markdown streaming-light |
-| 3.0.0 | Planned | Remove deprecated APIs, peer dependency migration |
+| Version | Status         | Key changes                                                     |
+| ------- | -------------- | --------------------------------------------------------------- |
+| 2.0.x   | Released       | Single-source message state, SSE client, middleware, plugins    |
+| 2.1.x   | In development | Accessibility (Phase 5), bundle optimization (Phase 2.3 step 1) |
+| 2.2.x   | Planned        | Controlled mode, ChatRunController, markdown streaming-light    |
+| 3.0.0   | Planned        | Remove deprecated APIs, peer dependency migration               |

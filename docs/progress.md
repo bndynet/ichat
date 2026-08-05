@@ -14,13 +14,13 @@ Ordered lists with `[status]` prefixes are rendered as vertical progress blocks 
 
 Supported status keywords (case-insensitive):
 
-| Status | Aliases |
-|--------|---------|
-| `done` | `complete` |
-| `active` | `current` |
-| `error` | `fail` |
-| `pending` | `wait` |
-| `skipped` | `skip` |
+| Status    | Aliases    |
+| --------- | ---------- |
+| `done`    | `complete` |
+| `active`  | `current`  |
+| `error`   | `fail`     |
+| `pending` | `wait`     |
+| `skipped` | `skip`     |
 
 ## Block ID (`bid`)
 
@@ -53,12 +53,12 @@ chatEl.updateProgressStep(messageId, 1, 'done', 'build');
 chatEl.updateProgressStep(messageId, 2, 'active', 'deploy');
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `messageId` | `string` | The message `id` that contains the progress block |
-| `step` | `number` | One-based step number |
-| `status` | `ProgressStatus` | `'done'` \| `'active'` \| `'error'` \| `'pending'` \| `'skipped'` |
-| `bid` | `string?` | Optional block id; when omitted, targets the first progress block |
+| Parameter   | Type             | Description                                                       |
+| ----------- | ---------------- | ----------------------------------------------------------------- |
+| `messageId` | `string`         | The message `id` that contains the progress block                 |
+| `step`      | `number`         | One-based step number                                             |
+| `status`    | `ProgressStatus` | `'done'` \| `'active'` \| `'error'` \| `'pending'` \| `'skipped'` |
+| `bid`       | `string?`        | Optional block id; when omitted, targets the first progress block |
 
 ## Backend integration
 
@@ -89,11 +89,11 @@ For single-progress messages, `bid` can be omitted in both phases.
 
 ## Progress CSS custom properties
 
-| Property | Derives from | Description |
-|----------|--------------|-------------|
-| `--chat-progress-done` | `--chat-success` | Done step indicator color |
-| `--chat-progress-active` | `--chat-primary` | Active step indicator color |
-| `--chat-progress-error` | `--chat-error` | Error step indicator color |
-| `--chat-progress-line` | `--chat-border` | Connector line color |
-| `--chat-progress-pending-border` | `--chat-border` | Pending step border color |
-| `--chat-progress-indicator-size` | `--chat-font-size` | Indicator circle diameter |
+| Property                         | Derives from       | Description                 |
+| -------------------------------- | ------------------ | --------------------------- |
+| `--chat-progress-done`           | `--chat-success`   | Done step indicator color   |
+| `--chat-progress-active`         | `--chat-primary`   | Active step indicator color |
+| `--chat-progress-error`          | `--chat-error`     | Error step indicator color  |
+| `--chat-progress-line`           | `--chat-border`    | Connector line color        |
+| `--chat-progress-pending-border` | `--chat-border`    | Pending step border color   |
+| `--chat-progress-indicator-size` | `--chat-font-size` | Indicator circle diameter   |

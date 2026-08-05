@@ -55,10 +55,7 @@ export function normalizeHistoryMessages(
   messages: ChatMessage[],
   options?: NormalizeHistoryOptions,
 ): ChatMessage[] {
-  const {
-    interruptedStatus = 'complete',
-    removeEmptyMessages = true,
-  } = options ?? {};
+  const { interruptedStatus = 'complete', removeEmptyMessages = true } = options ?? {};
 
   const normalized = messages.map((msg) => {
     const wasStreaming = msg.streaming === true;

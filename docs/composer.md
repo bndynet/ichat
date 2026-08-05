@@ -78,10 +78,10 @@ The demo uses these same `ChatRunController` paths for complete and simulated st
 
 Show quoted content **under** an existing message (e.g. after the user taps Reply in `message-actions`). The component only **renders** these blocks; you still own the composer (`<i-chat-input>` or `slot="input"`).
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `replyMessage(id, info?)` | `string` (block key) | Adds a quote block under the message with `id`. Each call **stacks** another block on the same message. `info` is optional display fields (`parts`, `avatar`, `role`, …) — you can pass the `ChatMessage` being quoted. |
-| `clearReplyMessage(idOrKey?)` | — | Message `id` → remove **all** blocks under that message; block `key` from `replyMessage` → remove one block; omit → clear every reply block. No-op when nothing matches. **`removeMessage(id)`** also clears blocks for that `id`. |
+| Method                        | Returns              | Description                                                                                                                                                                                                                        |
+| ----------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `replyMessage(id, info?)`     | `string` (block key) | Adds a quote block under the message with `id`. Each call **stacks** another block on the same message. `info` is optional display fields (`parts`, `avatar`, `role`, …) — you can pass the `ChatMessage` being quoted.            |
+| `clearReplyMessage(idOrKey?)` | —                    | Message `id` → remove **all** blocks under that message; block `key` from `replyMessage` → remove one block; omit → clear every reply block. No-op when nothing matches. **`removeMessage(id)`** also clears blocks for that `id`. |
 
 Blocks reuse `<i-chat-message>` in quote mode (charts, forms, Mermaid fences, etc. still render). Style with `.message-replies`, `.message-reply`, and `.message--reply`.
 
@@ -150,14 +150,14 @@ When using `<i-chat-input>` directly, the same properties are available:
 
 **If there is no transcript and no red errors in the console**, use **`voice-input` events** (they bubble with `composed: true`, so you can listen on `<i-chat>` or `document`). Expected order after clicking the mic:
 
-| `detail.kind` | Meaning |
-|---------------|---------|
-| `session-started` | `start()` succeeded (`lang` in `detail`). |
-| `recognition-started` | The recognition service actually began listening — if this never fires, the engine did not start. |
-| `result` | (Only if `voice-diagnostics` / `voiceDiagnostics` is on) partial stats while text updates. |
-| `error` | Always emitted for engine errors; check `detail.code` (`no-speech`, `network`, `not-allowed`, …). For `network`, `detail.hint` explains that Chrome needs outbound access to the speech backend. |
-| `session-stopped` | You clicked the button to stop dictation. |
-| `session-ended` | Dictation ended after a fatal error (e.g. `network`, `not-allowed`); the Listening overlay is cleared. |
+| `detail.kind`         | Meaning                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `session-started`     | `start()` succeeded (`lang` in `detail`).                                                                                                                                                        |
+| `recognition-started` | The recognition service actually began listening — if this never fires, the engine did not start.                                                                                                |
+| `result`              | (Only if `voice-diagnostics` / `voiceDiagnostics` is on) partial stats while text updates.                                                                                                       |
+| `error`               | Always emitted for engine errors; check `detail.code` (`no-speech`, `network`, `not-allowed`, …). For `network`, `detail.hint` explains that Chrome needs outbound access to the speech backend. |
+| `session-stopped`     | You clicked the button to stop dictation.                                                                                                                                                        |
+| `session-ended`       | Dictation ended after a fatal error (e.g. `network`, `not-allowed`); the Listening overlay is cleared.                                                                                           |
 
 **`detail.code === 'network'` (Chrome / Edge):** the browser could not reach the **remote speech recognition service** (not a bug in this component). Fix by: using a network that allows that traffic, disabling VPN/proxy that blocks it, trying another network, or using **server-side ASR** instead of Web Speech API for locked-down environments.
 

@@ -13,7 +13,7 @@
 - [Next.js and SSR](#nextjs-and-ssr)
 - [Pitfalls](#pitfalls)
 
-> **React version matters.** React 19 assigns object/array props as element *properties* and turns `on…` props into event listeners. React 18 and earlier stringify every unknown prop into an attribute and ignore custom events entirely. The ref-based patterns below work identically on both; version-specific shortcuts are called out where they apply.
+> **React version matters.** React 19 assigns object/array props as element _properties_ and turns `on…` props into event listeners. React 18 and earlier stringify every unknown prop into an attribute and ignore custom events entirely. The ref-based patterns below work identically on both; version-specific shortcuts are called out where they apply.
 
 ---
 
@@ -186,17 +186,17 @@ const attach = useCallback((el: Chat | null) => {
 
 ## Passing props
 
-| Property | Type | React 19 as JSX prop | React ≤ 18 |
-|----------|------|----------------------|------------|
-| `messages` | `ChatMessage[]` | `messages={messages}` | ref only |
-| `config` | `ChatConfig` | `config={config}` | ref only |
-| `emptyText` | `string` | `emptyText="…"` | `emptytext="…"` |
-| `placeholder` | `string` | `placeholder="…"` | `placeholder="…"` |
-| `disabled` | `boolean` | `disabled={true}` | ref only |
-| `messageMode` | `'uncontrolled' \| 'controlled'` | `messageMode="controlled"` | `message-mode="controlled"` |
-| `showVoiceInput` | `boolean` | `showVoiceInput={false}` | ref only |
-| `voiceLang` | `string` | `voiceLang="zh-CN"` | `voice-lang="zh-CN"` |
-| `busy`, `ready` | readonly | **never pass** | **never pass** |
+| Property         | Type                             | React 19 as JSX prop       | React ≤ 18                  |
+| ---------------- | -------------------------------- | -------------------------- | --------------------------- |
+| `messages`       | `ChatMessage[]`                  | `messages={messages}`      | ref only                    |
+| `config`         | `ChatConfig`                     | `config={config}`          | ref only                    |
+| `emptyText`      | `string`                         | `emptyText="…"`            | `emptytext="…"`             |
+| `placeholder`    | `string`                         | `placeholder="…"`          | `placeholder="…"`           |
+| `disabled`       | `boolean`                        | `disabled={true}`          | ref only                    |
+| `messageMode`    | `'uncontrolled' \| 'controlled'` | `messageMode="controlled"` | `message-mode="controlled"` |
+| `showVoiceInput` | `boolean`                        | `showVoiceInput={false}`   | ref only                    |
+| `voiceLang`      | `string`                         | `voiceLang="zh-CN"`        | `voice-lang="zh-CN"`        |
+| `busy`, `ready`  | readonly                         | **never pass**             | **never pass**              |
 
 `busy` and `ready` are getter-only. Passing them as props makes React attempt `element.busy = …`, which throws in strict mode. Observe `busy` through the `busy-change` event instead.
 
@@ -214,7 +214,7 @@ useEffect(() => {
 }, [config, disabled]);
 ```
 
-Boolean attributes are a specific trap on React ≤ 18: `show-voice-input={false}` renders `show-voice-input="false"`, and a Lit `Boolean` property reads *presence*, so the feature stays enabled. Always assign booleans through the ref.
+Boolean attributes are a specific trap on React ≤ 18: `show-voice-input={false}` renders `show-voice-input="false"`, and a Lit `Boolean` property reads _presence_, so the feature stays enabled. Always assign booleans through the ref.
 
 ### Keep object props referentially stable
 
@@ -297,21 +297,21 @@ React 19 registers a listener for any prop starting with `on` whose value is a f
 />
 ```
 
-| Event | React 19 prop |
-|-------|---------------|
-| `send` | `onsend` |
-| `cancel` | `oncancel` |
-| `messages-change` | `onmessages-change` |
-| `streaming-change` | `onstreaming-change` |
-| `busy-change` | `onbusy-change` |
-| `message-action` | `onmessage-action` |
-| `part-action` | `onpart-action` |
-| `link-click` | `onlink-click` |
-| `chat-renderer-error` | `onchat-renderer-error` |
-| `confirmation-change` | `onconfirmation-change` |
+| Event                   | React 19 prop             |
+| ----------------------- | ------------------------- |
+| `send`                  | `onsend`                  |
+| `cancel`                | `oncancel`                |
+| `messages-change`       | `onmessages-change`       |
+| `streaming-change`      | `onstreaming-change`      |
+| `busy-change`           | `onbusy-change`           |
+| `message-action`        | `onmessage-action`        |
+| `part-action`           | `onpart-action`           |
+| `link-click`            | `onlink-click`            |
+| `chat-renderer-error`   | `onchat-renderer-error`   |
+| `confirmation-change`   | `onconfirmation-change`   |
 | `confirmation-decision` | `onconfirmation-decision` |
 
-`onSend` (camelCase) silently listens for an event named `Send` and never fires — there is no warning, so this is worth a lint rule if your team uses this style. `onCancel` is worse: it is a *known* React event name, so it goes through the synthetic event system and never reaches the custom element at all. When in doubt, use `useChatEvent`.
+`onSend` (camelCase) silently listens for an event named `Send` and never fires — there is no warning, so this is worth a lint rule if your team uses this style. `onCancel` is worse: it is a _known_ React event name, so it goes through the synthetic event system and never reaches the custom element at all. When in doubt, use `useChatEvent`.
 
 ---
 
@@ -484,7 +484,7 @@ declare module 'react' {
 
 Import the file once so the augmentation is loaded — importing `IChatElement` anywhere in the app is enough, or add it to `include` in `tsconfig.json`.
 
-**React 18 and earlier** (`@types/react` ^18) use the *global* JSX namespace, and only string attributes survive the render. Keep `IChatEventMap` and `IChatElement` exactly as above, then replace `IChatProps` and the augmentation with:
+**React 18 and earlier** (`@types/react` ^18) use the _global_ JSX namespace, and only string attributes survive the render. Keep `IChatEventMap` and `IChatElement` exactly as above, then replace `IChatProps` and the augmentation with:
 
 ```ts
 export interface IChatProps
@@ -523,7 +523,7 @@ declare global {
 }
 ```
 
-That adds these events to *every* `HTMLElement` in the project and narrows built-in DOM events — `cancel`, `error`, and `select` already exist in `lib.dom.d.ts`, so redeclaring them changes their type everywhere, including on `<dialog>` and `<img>`. Scoping the overloads to `IChatElement` keeps the typing precise.
+That adds these events to _every_ `HTMLElement` in the project and narrows built-in DOM events — `cancel`, `error`, and `select` already exist in `lib.dom.d.ts`, so redeclaring them changes their type everywhere, including on `<dialog>` and `<img>`. Scoping the overloads to `IChatElement` keeps the typing precise.
 
 ### Typed custom `x-*` parts
 
@@ -647,17 +647,17 @@ Keep the `import '@bndynet/ichat'` inside `ChatPanel.tsx` so it is only ever rea
 
 ## Pitfalls
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Nothing renders / zero height | `<i-chat>` is `height: 100%`; the parent has no resolved height | Give the container an explicit height or a flex layout with `min-height: 0` |
-| `config="[object Object]"` in the DOM | React ≤ 18 stringifies unknown props | Assign objects through the ref |
-| Props land as attributes on React 19 | The element had not upgraded when React committed | Move `import '@bndynet/ichat'` to module scope |
-| Handler never fires | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `useChatEvent`, or exact lowercase names |
-| Duplicate seed messages in dev | StrictMode runs mount effects twice, and `addMessage` is additive | Seed with `chat.messages = normalizeHistoryMessages(history)` — assignment is idempotent |
-| Message list re-renders constantly | A new `config` object literal each render | `useMemo` the config, or hoist it to module scope |
-| `TypeError: Cannot set property busy` | `busy` is a getter | Read it, or listen for `busy-change` |
-| Controlled UI freezes mid-stream | The `messages-change` handler cloned or transformed the proposal | Store `event.detail.messages` by reference |
-| Composer stays locked after an error | The run never reached a terminal state | Always call `complete()`, `fail()`, or `cancel()` — a `finally` block is the safest place |
+| Symptom                               | Cause                                                                        | Fix                                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Nothing renders / zero height         | `<i-chat>` is `height: 100%`; the parent has no resolved height              | Give the container an explicit height or a flex layout with `min-height: 0`               |
+| `config="[object Object]"` in the DOM | React ≤ 18 stringifies unknown props                                         | Assign objects through the ref                                                            |
+| Props land as attributes on React 19  | The element had not upgraded when React committed                            | Move `import '@bndynet/ichat'` to module scope                                            |
+| Handler never fires                   | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `useChatEvent`, or exact lowercase names                                              |
+| Duplicate seed messages in dev        | StrictMode runs mount effects twice, and `addMessage` is additive            | Seed with `chat.messages = normalizeHistoryMessages(history)` — assignment is idempotent  |
+| Message list re-renders constantly    | A new `config` object literal each render                                    | `useMemo` the config, or hoist it to module scope                                         |
+| `TypeError: Cannot set property busy` | `busy` is a getter                                                           | Read it, or listen for `busy-change`                                                      |
+| Controlled UI freezes mid-stream      | The `messages-change` handler cloned or transformed the proposal             | Store `event.detail.messages` by reference                                                |
+| Composer stays locked after an error  | The run never reached a terminal state                                       | Always call `complete()`, `fail()`, or `cancel()` — a `finally` block is the safest place |
 
 ---
 

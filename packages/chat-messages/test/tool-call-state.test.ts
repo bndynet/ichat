@@ -11,9 +11,7 @@ function test(name: string, run: () => void): void {
   }
 }
 
-function makeToolCallPart(
-  overrides: Partial<ToolCallPart> = {},
-): ToolCallPart {
+function makeToolCallPart(overrides: Partial<ToolCallPart> = {}): ToolCallPart {
   return {
     id: 'tc-1',
     type: 'tool-call' as const,

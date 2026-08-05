@@ -10,11 +10,17 @@ import type { ReactiveController, ReactiveControllerHost } from 'lit';
  * - ResizeObserver-based content-change detection
  */
 export class ScrollController implements ReactiveController {
-  private _host: ReactiveControllerHost & { renderRoot: HTMLElement | DocumentFragment; requestUpdate(): void };
+  private _host: ReactiveControllerHost & {
+    renderRoot: HTMLElement | DocumentFragment;
+    requestUpdate(): void;
+  };
   private _scrollSelector: string;
 
   constructor(
-    host: ReactiveControllerHost & { renderRoot: HTMLElement | DocumentFragment; requestUpdate(): void },
+    host: ReactiveControllerHost & {
+      renderRoot: HTMLElement | DocumentFragment;
+      requestUpdate(): void;
+    },
     scrollSelector: string,
   ) {
     this._host = host;

@@ -1,11 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { RendererErrorDetail } from '../src/types.js';
-import {
-  md,
-  renderMarkdownLight,
-  resolveAsyncBlocks,
-} from '../src/renderers/markdown-renderer.js';
+import { md, renderMarkdownLight, resolveAsyncBlocks } from '../src/renderers/markdown-renderer.js';
 import { rendererRegistry } from '../src/renderers/registry.js';
 import { partRendererRegistry } from '../src/renderers/part-registry.js';
 

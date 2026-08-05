@@ -8,6 +8,9 @@
   ],
   "scripts": {
     "version": "node tools/bump-workspace-version.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
     "build": "npm run build -w @bndynet/ichat-messages && npm run build -w @bndynet/ichat-input && npm run build -w @bndynet/ichat-renderers && npm run build -w @bndynet/ichat-renderer-chart && npm run build -w @bndynet/ichat-renderer-katex && npm run build -w @bndynet/ichat-renderer-mermaid && npm run build -w @bndynet/ichat && npm run build -w apps/demo",
     "pretest": "npm run build -w @bndynet/ichat-messages -w @bndynet/ichat-input",
     "test": "npm run test -w @bndynet/ichat-messages && npm run test -w @bndynet/ichat-input && npm run test -w @bndynet/ichat",
@@ -25,7 +28,13 @@
   },
   "devDependencies": {
     "@bndynet/cli": "^1.5.1",
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "eslint": "^10.8.0",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-lit": "^2.3.1",
+    "prettier": "3.9.6",
+    "typescript-eslint": "^8.66.0"
   },
   "license": "MIT",
   "version": "3.1.0"

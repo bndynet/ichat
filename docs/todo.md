@@ -110,6 +110,7 @@ chat.addEventListener('part-action', (event) => {
   chat.tryUpdateTodoItem(messageId, partId, payload.itemId, { status: payload.status });
 });
 ```
+
 ```
 
 Event detail includes `action`, `itemId`, `previousStatus`, requested `status`, `part`, `messageId`, and `message`.
@@ -129,3 +130,4 @@ The panel derives from the shared `--chat-panel-*` tokens and then the normal `-
 | `--chat-todo-done` | Completed item icon |
 | `--chat-todo-error` | Failed item icon |
 | `--chat-todo-radius` | Panel corner radius |
+```

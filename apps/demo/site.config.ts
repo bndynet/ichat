@@ -1,4 +1,4 @@
-import { defineConfig } from '@bndynet/vue-site'
+import { defineConfig } from '@bndynet/vue-site';
 
 export default defineConfig({
   title: '<i-chat />',
@@ -9,24 +9,84 @@ export default defineConfig({
       label: 'Plugins',
       icon: 'plug',
       children: [
-        { label: 'LaTeX Math', icon: 'sigma', page: () => import('./src/pages/plugins/LatexPage.vue') },
+        {
+          label: 'LaTeX Math',
+          icon: 'sigma',
+          page: () => import('./src/pages/plugins/LatexPage.vue'),
+        },
       ],
     },
-    { label: 'Renderers', icon: 'layout-list',  children: [
-      { label: 'Tool calls', icon: 'wrench', page: () => import('./src/pages/renderers/ToolCallsPage.vue') },
-      { label: 'To-dos', icon: 'list-checks', page: () => import('./src/pages/renderers/TodoPage.vue') },
-      { label: 'File & source', icon: 'paperclip', page: () => import('./src/pages/renderers/FileSourcePage.vue') },
-      { label: 'Custom part (x-*)', icon: 'puzzle', page: () => import('./src/pages/renderers/CustomPartPage.vue') },
-      { label: 'Progress', icon: 'git-branch', page: () => import('./src/pages/renderers/ProgressPage.vue') },
-      { label: 'Charts', icon: 'bar-chart-3', page: () => import('./src/pages/renderers/ChartsPage.vue') },
-      { label: 'Mermaid', icon: 'git-fork', page: () => import('./src/pages/renderers/MermaidPage.vue') },
-      { label: 'KPI cards', icon: 'layout-grid', page: () => import('./src/pages/renderers/KpiCardsPage.vue') },
-      { label: 'KPI group', icon: 'layers', page: () => import('./src/pages/renderers/KpiGroupPage.vue') },
-      { label: 'Form', icon: 'file-text', page: () => import('./src/pages/renderers/FormPage.vue') },
-      { label: 'Confirmation', icon: 'badge-check', page: () => import('./src/pages/renderers/ConfirmationPage.vue') },
-      { label: 'Details', icon: 'panel-bottom', page: () => import('./src/pages/renderers/DetailsPage.vue') },
-      { label: 'Scroll To', icon: 'arrow-down', page: () => import('./src/pages/renderers/ScrollToPage.vue') },
-    ]},
+    {
+      label: 'Renderers',
+      icon: 'layout-list',
+      children: [
+        {
+          label: 'Tool calls',
+          icon: 'wrench',
+          page: () => import('./src/pages/renderers/ToolCallsPage.vue'),
+        },
+        {
+          label: 'To-dos',
+          icon: 'list-checks',
+          page: () => import('./src/pages/renderers/TodoPage.vue'),
+        },
+        {
+          label: 'File & source',
+          icon: 'paperclip',
+          page: () => import('./src/pages/renderers/FileSourcePage.vue'),
+        },
+        {
+          label: 'Custom part (x-*)',
+          icon: 'puzzle',
+          page: () => import('./src/pages/renderers/CustomPartPage.vue'),
+        },
+        {
+          label: 'Progress',
+          icon: 'git-branch',
+          page: () => import('./src/pages/renderers/ProgressPage.vue'),
+        },
+        {
+          label: 'Charts',
+          icon: 'bar-chart-3',
+          page: () => import('./src/pages/renderers/ChartsPage.vue'),
+        },
+        {
+          label: 'Mermaid',
+          icon: 'git-fork',
+          page: () => import('./src/pages/renderers/MermaidPage.vue'),
+        },
+        {
+          label: 'KPI cards',
+          icon: 'layout-grid',
+          page: () => import('./src/pages/renderers/KpiCardsPage.vue'),
+        },
+        {
+          label: 'KPI group',
+          icon: 'layers',
+          page: () => import('./src/pages/renderers/KpiGroupPage.vue'),
+        },
+        {
+          label: 'Form',
+          icon: 'file-text',
+          page: () => import('./src/pages/renderers/FormPage.vue'),
+        },
+        {
+          label: 'Confirmation',
+          icon: 'badge-check',
+          page: () => import('./src/pages/renderers/ConfirmationPage.vue'),
+        },
+        {
+          label: 'Details',
+          icon: 'panel-bottom',
+          page: () => import('./src/pages/renderers/DetailsPage.vue'),
+        },
+        {
+          label: 'Scroll To',
+          icon: 'arrow-down',
+          page: () => import('./src/pages/renderers/ScrollToPage.vue'),
+        },
+      ],
+    },
     {
       label: 'Slots',
       icon: 'puzzle',
@@ -62,24 +122,31 @@ export default defineConfig({
   bootstrap: 'bootstrap.ts',
   env: {
     customElements: ['i-renderers', 'i-chat-input', 'i-chat', 'chat-renderers'],
-    watchPackages: [{
-      name: '@bndynet/ichat-input',
-      entryPath: '../../packages/chat-input/src/index.ts',
-    }, {
-      name: '@bndynet/ichat-renderers',
-      entryPath: '../../packages/chat-renderers/src/index.ts',
-    }, {
-      name: '@bndynet/ichat-renderer-chart',
-      entryPath: '../../packages/chat-renderer-chart/src/index.ts',
-    }, {
-      name: '@bndynet/ichat-renderer-katex',
-      entryPath: '../../packages/chat-renderer-katex/src/index.ts',
-    }, {
-      name: '@bndynet/ichat-renderer-mermaid',
-      entryPath: '../../packages/chat-renderer-mermaid/src/index.ts',
-    }, {
-      name: '@bndynet/ichat',
-      entryPath: '../../packages/chat/src/index.ts',
-    }],
+    watchPackages: [
+      {
+        name: '@bndynet/ichat-input',
+        entryPath: '../../packages/chat-input/src/index.ts',
+      },
+      {
+        name: '@bndynet/ichat-renderers',
+        entryPath: '../../packages/chat-renderers/src/index.ts',
+      },
+      {
+        name: '@bndynet/ichat-renderer-chart',
+        entryPath: '../../packages/chat-renderer-chart/src/index.ts',
+      },
+      {
+        name: '@bndynet/ichat-renderer-katex',
+        entryPath: '../../packages/chat-renderer-katex/src/index.ts',
+      },
+      {
+        name: '@bndynet/ichat-renderer-mermaid',
+        entryPath: '../../packages/chat-renderer-mermaid/src/index.ts',
+      },
+      {
+        name: '@bndynet/ichat',
+        entryPath: '../../packages/chat/src/index.ts',
+      },
+    ],
   },
-})
+});

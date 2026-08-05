@@ -97,8 +97,8 @@ $$
   <div style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
     <h2 style="margin: 0 0 8px;">LaTeX Math (KaTeX)</h2>
     <p style="margin: 0 0 12px;">
-      LaTeX math rendering via <code>registerMarkdownPlugin</code> with KaTeX.
-      Use <code>$...$</code> for inline math and <code>$$...$$</code> for display math.
+      LaTeX math rendering via <code>registerMarkdownPlugin</code> with KaTeX. Use
+      <code>$...$</code> for inline math and <code>$$...$$</code> for display math.
     </p>
     <i-chat ref="chatRef" style="flex: 1; min-height: 0;" />
   </div>

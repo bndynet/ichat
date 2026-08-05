@@ -18,11 +18,7 @@ interface RendererIconOptions {
 
 function strokeIcon(
   paths: string,
-  {
-    size = 13,
-    strokeWidth = 2.2,
-    viewBox = '0 0 24 24',
-  }: RendererIconOptions = {},
+  { size = 13, strokeWidth = 2.2, viewBox = '0 0 24 24' }: RendererIconOptions = {},
 ): string {
   return (
     `<svg width="${size}" height="${size}" viewBox="${viewBox}" fill="none" ` +
@@ -33,7 +29,9 @@ function strokeIcon(
 
 const rendererIcons = {
   code: strokeIcon('<path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" />'),
-  eye: strokeIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />'),
+  eye: strokeIcon(
+    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />',
+  ),
   check: strokeIcon('<path d="m20 6-11 11-5-5" />', {
     size: 11,
     strokeWidth: 3,
@@ -152,105 +150,103 @@ const TOGGLE_STYLES = `
 // reference the tag name — they work in all environments.
 
 if (typeof HTMLElement !== 'undefined') {
+  class ChatCodeToggle extends HTMLElement {
+    private _shadowCodeEl: HTMLElement | null = null;
+    private _srcObserver: MutationObserver | null = null;
+    private _mutationFlush = false;
 
-class ChatCodeToggle extends HTMLElement {
-  private _shadowCodeEl: HTMLElement | null = null;
-  private _srcObserver: MutationObserver | null = null;
-  private _mutationFlush = false;
-
-  connectedCallback(): void {
-    setVersionAttribute(this);
-    if (!this.shadowRoot) {
-      this._initShadow();
-    }
-    this._syncCodeFromLightDom();
-    this._ensureSrcObserver();
-  }
-
-  disconnectedCallback(): void {
-    this._srcObserver?.disconnect();
-    this._srcObserver = null;
-  }
-
-  private _initShadow(): void {
-    const shadow = this.attachShadow({ mode: 'open' });
-
-    // ── Style ──
-    const styleEl = document.createElement('style');
-    styleEl.textContent = TOGGLE_STYLES;
-
-    const renderedView = document.createElement('div');
-    renderedView.className = 'rendered-view';
-    renderedView.appendChild(document.createElement('slot'));
-
-    const codeView = document.createElement('pre');
-    codeView.className = 'code-view chat-code-fallback';
-    const codeEl = document.createElement('code');
-    codeView.appendChild(codeEl);
-    this._shadowCodeEl = codeEl;
-
-    const btn = document.createElement('button');
-    btn.className = 'toggle-btn';
-    btn.type = 'button';
-    btn.title = 'View source';
-    btn.setAttribute('aria-label', 'View source');
-    btn.innerHTML = rendererIcons.code;
-
-    btn.addEventListener('click', () => {
-      const isCode = this.getAttribute('data-view') === 'code';
-      if (isCode) {
-        codeView.style.height = '';
-        this.removeAttribute('data-view');
-        btn.title = 'View source';
-        btn.setAttribute('aria-label', 'View source');
-        btn.innerHTML = rendererIcons.code;
-      } else {
-        // Snapshot the rendered height before hiding it, so the code panel
-        // occupies exactly the same space — no layout jump on toggle.
-        codeView.style.height = renderedView.offsetHeight + 'px';
-        this.setAttribute('data-view', 'code');
-        btn.title = 'View rendered';
-        btn.setAttribute('aria-label', 'View rendered');
-        btn.innerHTML = rendererIcons.eye;
+    connectedCallback(): void {
+      setVersionAttribute(this);
+      if (!this.shadowRoot) {
+        this._initShadow();
       }
-    });
+      this._syncCodeFromLightDom();
+      this._ensureSrcObserver();
+    }
 
-    shadow.appendChild(styleEl);
-    shadow.appendChild(renderedView);
-    shadow.appendChild(codeView);
-    shadow.appendChild(btn);
-  }
+    disconnectedCallback(): void {
+      this._srcObserver?.disconnect();
+      this._srcObserver = null;
+    }
 
-  /** Prefer hidden `<pre class="…">`; fall back to legacy `data-code` attribute. */
-  private _syncCodeFromLightDom(): void {
-    const code =
-      this.querySelector(`pre.${CHAT_TOGGLE_SOURCE_CLASS}`)?.textContent ??
-      this.getAttribute('data-code') ??
-      '';
-    if (this._shadowCodeEl) {
-      this._shadowCodeEl.textContent = code;
+    private _initShadow(): void {
+      const shadow = this.attachShadow({ mode: 'open' });
+
+      // ── Style ──
+      const styleEl = document.createElement('style');
+      styleEl.textContent = TOGGLE_STYLES;
+
+      const renderedView = document.createElement('div');
+      renderedView.className = 'rendered-view';
+      renderedView.appendChild(document.createElement('slot'));
+
+      const codeView = document.createElement('pre');
+      codeView.className = 'code-view chat-code-fallback';
+      const codeEl = document.createElement('code');
+      codeView.appendChild(codeEl);
+      this._shadowCodeEl = codeEl;
+
+      const btn = document.createElement('button');
+      btn.className = 'toggle-btn';
+      btn.type = 'button';
+      btn.title = 'View source';
+      btn.setAttribute('aria-label', 'View source');
+      btn.innerHTML = rendererIcons.code;
+
+      btn.addEventListener('click', () => {
+        const isCode = this.getAttribute('data-view') === 'code';
+        if (isCode) {
+          codeView.style.height = '';
+          this.removeAttribute('data-view');
+          btn.title = 'View source';
+          btn.setAttribute('aria-label', 'View source');
+          btn.innerHTML = rendererIcons.code;
+        } else {
+          // Snapshot the rendered height before hiding it, so the code panel
+          // occupies exactly the same space — no layout jump on toggle.
+          codeView.style.height = renderedView.offsetHeight + 'px';
+          this.setAttribute('data-view', 'code');
+          btn.title = 'View rendered';
+          btn.setAttribute('aria-label', 'View rendered');
+          btn.innerHTML = rendererIcons.eye;
+        }
+      });
+
+      shadow.appendChild(styleEl);
+      shadow.appendChild(renderedView);
+      shadow.appendChild(codeView);
+      shadow.appendChild(btn);
+    }
+
+    /** Prefer hidden `<pre class="…">`; fall back to legacy `data-code` attribute. */
+    private _syncCodeFromLightDom(): void {
+      const code =
+        this.querySelector(`pre.${CHAT_TOGGLE_SOURCE_CLASS}`)?.textContent ??
+        this.getAttribute('data-code') ??
+        '';
+      if (this._shadowCodeEl) {
+        this._shadowCodeEl.textContent = code;
+      }
+    }
+
+    /** Keep shadow code view in sync when morphdom patches the light-DOM `<pre>` (streaming). */
+    private _ensureSrcObserver(): void {
+      if (this._srcObserver || typeof MutationObserver === 'undefined') return;
+      this._srcObserver = new MutationObserver(() => {
+        if (this._mutationFlush) return;
+        this._mutationFlush = true;
+        queueMicrotask(() => {
+          this._mutationFlush = false;
+          this._syncCodeFromLightDom();
+        });
+      });
+      this._srcObserver.observe(this, { childList: true, subtree: true, characterData: true });
     }
   }
 
-  /** Keep shadow code view in sync when morphdom patches the light-DOM `<pre>` (streaming). */
-  private _ensureSrcObserver(): void {
-    if (this._srcObserver || typeof MutationObserver === 'undefined') return;
-    this._srcObserver = new MutationObserver(() => {
-      if (this._mutationFlush) return;
-      this._mutationFlush = true;
-      queueMicrotask(() => {
-        this._mutationFlush = false;
-        this._syncCodeFromLightDom();
-      });
-    });
-    this._srcObserver.observe(this, { childList: true, subtree: true, characterData: true });
+  if (!customElements.get('i-chat-code-toggle')) {
+    customElements.define('i-chat-code-toggle', ChatCodeToggle);
   }
-}
-
-if (!customElements.get('i-chat-code-toggle')) {
-  customElements.define('i-chat-code-toggle', ChatCodeToggle);
-}
-
 } // typeof HTMLElement !== 'undefined'
 
 // ── Public helpers ────────────────────────────────────────────────────────────

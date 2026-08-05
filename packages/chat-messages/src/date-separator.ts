@@ -101,7 +101,7 @@ export function resolveDateSeparatorLabels(options: {
 export function getDateSeparatorInfo(
   messageTs: number,
   labels: DateSeparatorLabels,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): DateSeparatorInfo {
   const days = calendarDaysAgo(messageTs, now);
   if (days <= 0) return { key: 'today', label: labels.today };

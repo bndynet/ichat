@@ -1,9 +1,7 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
-import type {
-  ChatConfirmationResolvedRequest,
-} from './chat.js';
+import type { ChatConfirmationResolvedRequest } from './chat.js';
 import type { ConfirmationLabels } from '@bndynet/ichat-messages';
 import styles from '../styles/chat-confirmation.scss';
 
@@ -31,9 +29,7 @@ export class ChatConfirmation extends LitElement {
   protected firstUpdated(): void {
     // Auto-focus the confirm button when the dialog appears
     requestAnimationFrame(() => {
-      this.renderRoot.querySelector<HTMLElement>(
-        '.chat-confirmation__btn--confirm'
-      )?.focus();
+      this.renderRoot.querySelector<HTMLElement>('.chat-confirmation__btn--confirm')?.focus();
     });
   }
 
@@ -49,7 +45,7 @@ export class ChatConfirmation extends LitElement {
     // Focus trap: wrap Tab / Shift+Tab within the dialog
     if (e.key === 'Tab') {
       const focusable = section.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (focusable.length === 0) return;
       const first = focusable[0];
@@ -71,7 +67,7 @@ export class ChatConfirmation extends LitElement {
         detail: { action },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -117,13 +113,17 @@ export class ChatConfirmation extends LitElement {
         @keydown=${this._handleKeydown}
       >
         <div class="chat-confirmation__body">
-          ${requiredLabel
-            ? html`<div class="chat-confirmation__eyebrow">${requiredLabel}</div>`
-            : nothing}
+          ${
+            requiredLabel
+              ? html`<div class="chat-confirmation__eyebrow">${requiredLabel}</div>`
+              : nothing
+          }
           <div class="chat-confirmation__title">${request.title}</div>
-          ${request.description
-            ? html`<div class="chat-confirmation__description">${request.description}</div>`
-            : nothing}
+          ${
+            request.description
+              ? html`<div class="chat-confirmation__description">${request.description}</div>`
+              : nothing
+          }
           ${this._renderDetails(request)}
         </div>
         <div class="chat-confirmation__actions">

@@ -104,20 +104,12 @@ onMounted(async () => {
               <el-option value="gpt-4o-mini" label="GPT-4o-mini" />
               <el-option value="gpt-4" label="GPT-4" />
               <el-option value="gpt-3.5-turbo" label="GPT-3.5-turbo" />
-              <el-option
-                value="gpt-3.5-turbo-mini"
-                label="GPT-3.5-turbo-mini"
-              />
+              <el-option value="gpt-3.5-turbo-mini" label="GPT-3.5-turbo-mini" />
             </el-select>
           </div>
         </div>
         <div class="slots-input-end">
-          <el-button
-            v-if="streamingUi"
-            size="small"
-            type="warning"
-            @click="handleCancel"
-          >
+          <el-button v-if="streamingUi" size="small" type="warning" @click="handleCancel">
             Stop
           </el-button>
           <el-button

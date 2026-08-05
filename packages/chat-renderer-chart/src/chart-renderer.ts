@@ -3,7 +3,12 @@ import type { BlockRenderer } from '@bndynet/ichat-messages';
 import type { ChartData, ChartOptions } from '@bndynet/icharts';
 import { switchTheme } from '@bndynet/icharts';
 import '@bndynet/icharts'; // registers <i-chart>
-import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from '@bndynet/ichat-messages';
+import {
+  escapeHtml,
+  renderCodeFallback,
+  wrapWithCodeToggle,
+  type RendererOptions,
+} from '@bndynet/ichat-messages';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,9 +104,7 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
 
   const html = `<i-chart type="${escapedType}" data='${escapedData}' options='${escapedOptions}' style="display:block;width:100%;height:320px"></i-chart>`;
 
-  return opts.codeToggle !== false
-    ? wrapWithCodeToggle('chart', code, html)
-    : html;
+  return opts.codeToggle !== false ? wrapWithCodeToggle('chart', code, html) : html;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

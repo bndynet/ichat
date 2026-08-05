@@ -232,7 +232,9 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
     empty: '还没有消息，开始对话吧！',
     dismissError: '关闭错误提示',
     scrollToLatest: '滚动到最新消息',
-    chatMessages: '聊天消息',    generating: '正在生成回复…',  },
+    chatMessages: '聊天消息',
+    generating: '正在生成回复…',
+  },
   confirmation: {
     required: '需要确认',
     confirm: '确认',
@@ -274,10 +276,9 @@ export function resolveLabels(options: {
 }): ChatLabels {
   const base = pickBuiltInLabels(options.locale?.trim() || 'en');
   const o = options.labels;
-  const dateSeparatorOverride: DeepPartial<DateSeparatorLabels> | undefined =
-    o?.dateSeparator
-      ? { ...(o.dateSeparator ?? {}) }
-      : undefined;
+  const dateSeparatorOverride: DeepPartial<DateSeparatorLabels> | undefined = o?.dateSeparator
+    ? { ...(o.dateSeparator ?? {}) }
+    : undefined;
 
   return {
     composer: mergeSection(base.composer, o?.composer),

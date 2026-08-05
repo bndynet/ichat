@@ -14,9 +14,20 @@
   box-sizing: border-box;
   width: 100%;
   padding: var(--chat-spacing-md, 16px);
-  border: 1px solid color-mix(in srgb, var(--chat-confirmation-border, var(--chat-panel-border, var(--chat-border, #e1e4e8))) 72%, transparent);
-  border-radius: var(--chat-confirmation-radius, var(--chat-panel-radius, var(--chat-radius, 0.5rem)));
-  background: var(--chat-confirmation-bg, var(--chat-panel-bg, var(--chat-input-bg, var(--chat-surface, #ffffff))));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--chat-confirmation-border, var(--chat-panel-border, var(--chat-border, #e1e4e8))) 72%,
+      transparent
+    );
+  border-radius: var(
+    --chat-confirmation-radius,
+    var(--chat-panel-radius, var(--chat-radius, 0.5rem))
+  );
+  background: var(
+    --chat-confirmation-bg,
+    var(--chat-panel-bg, var(--chat-input-bg, var(--chat-surface, #ffffff)))
+  );
   color: var(--chat-text, #1a1a2e);
   box-shadow:
     var(--chat-confirmation-shadow, var(--chat-input-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))),
@@ -80,7 +91,14 @@
     border-radius: 0.375rem;
     background: var(--chat-code-bg, color-mix(in srgb, var(--chat-bg, #f7f7f8) 78%, #000 4%));
     color: var(--chat-code-text, var(--chat-text, #1a1a2e));
-    font-family: var(--chat-code-font-family, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+    font-family: var(
+      --chat-code-font-family,
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Consolas,
+      monospace
+    );
     font-size: 0.75rem;
     line-height: 1.45;
     white-space: pre-wrap;
@@ -138,7 +156,10 @@
     inset 0 1px 0 color-mix(in srgb, var(--chat-primary-text, #ffffff) 18%, transparent);
 
   &:hover {
-    background: var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #2563eb) 85%, black));
+    background: var(
+      --chat-primary-hover,
+      color-mix(in srgb, var(--chat-primary, #2563eb) 85%, black)
+    );
   }
 
   .chat-confirmation--danger & {

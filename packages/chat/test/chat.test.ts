@@ -33,7 +33,10 @@ type TestChatElement = HTMLElement & {
     name: string;
     beforeSend?: (content: string) => string | null | Promise<string | null>;
     afterMessageAdded?: (message: TestMessage) => TestMessage | null;
-    beforeAppendPart?: (messageId: string, part: Record<string, unknown>) => Record<string, unknown> | null;
+    beforeAppendPart?: (
+      messageId: string,
+      part: Record<string, unknown>,
+    ) => Record<string, unknown> | null;
     onError?: (error: string, messageId?: string) => void;
     install?: (chat: unknown) => void | (() => void);
   }): () => void;
@@ -47,8 +50,18 @@ type TestChatElement = HTMLElement & {
   cancelMessage(id: string, hint?: string): void;
   cancel(hint?: string): void;
   tryUpdatePart(messageId: string, partId: string, patch: Record<string, unknown>): { ok: boolean };
-  tryUpdateToolCall(messageId: string, partId: string, patch: Record<string, unknown>): { ok: boolean };
-  tryUpdateTodoItem(messageId: string, partId: string, itemId: string, patch: Record<string, unknown>, revision?: number): { ok: boolean };
+  tryUpdateToolCall(
+    messageId: string,
+    partId: string,
+    patch: Record<string, unknown>,
+  ): { ok: boolean };
+  tryUpdateTodoItem(
+    messageId: string,
+    partId: string,
+    itemId: string,
+    patch: Record<string, unknown>,
+    revision?: number,
+  ): { ok: boolean };
   tryApplyMessagePartUpdateEvent(event: Record<string, unknown>): { ok: boolean };
   tryApplyTodoItemUpdateEvent(event: Record<string, unknown>): { ok: boolean };
   createRunController(options?: { messageId?: string }): ChatRunController;
@@ -64,7 +77,9 @@ function createChat(): TestChatElement {
 function sendEvent(content: string): CustomEvent<{ content: string }> {
   return {
     detail: { content },
-    stopPropagation() { /* test event stub */ },
+    stopPropagation() {
+      /* test event stub */
+    },
   } as unknown as CustomEvent<{ content: string }>;
 }
 
@@ -124,12 +139,14 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 // Public `messages` is the single source of truth for Store mutations.
 {
   const chat = createChat();
-  const initial: TestMessage[] = [{
-    id: 'existing',
-    role: 'assistant',
-    parts: [],
-    streaming: false,
-  }];
+  const initial: TestMessage[] = [
+    {
+      id: 'existing',
+      role: 'assistant',
+      parts: [],
+      streaming: false,
+    },
+  ];
 
   chat.messages = initial;
   chat.updateMessage('existing', { streaming: true });
@@ -146,7 +163,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   chat.addMessage({ id: 'new', role: 'assistant', parts: [] });
 
-  assert.deepEqual(chat.messages.map((message) => message.id), ['existing', 'new']);
+  assert.deepEqual(
+    chat.messages.map((message) => message.id),
+    ['existing', 'new'],
+  );
 }
 
 // Controlled mode is read live, including before first connection/render.
@@ -163,7 +183,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   assert.deepEqual(chat.messages, []);
   assert.equal(change?.controlled, true);
   assert.equal(change?.committed, false);
-  assert.deepEqual(change?.messages.map((message) => message.id), ['proposed']);
+  assert.deepEqual(
+    change?.messages.map((message) => message.id),
+    ['proposed'],
+  );
 }
 
 // Derived busy state follows the state actually accepted by a controlled host.
@@ -293,11 +316,17 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   chat.messageMode = 'controlled';
   chat.addMessage({ id: 'not-committed', role: 'assistant', parts: [] });
-  assert.deepEqual(chat.messages.map((message) => message.id), ['owned']);
+  assert.deepEqual(
+    chat.messages.map((message) => message.id),
+    ['owned'],
+  );
 
   chat.messageMode = 'uncontrolled';
   chat.addMessage({ id: 'owned-again', role: 'assistant', parts: [] });
-  assert.deepEqual(chat.messages.map((message) => message.id), ['owned', 'owned-again']);
+  assert.deepEqual(
+    chat.messages.map((message) => message.id),
+    ['owned', 'owned-again'],
+  );
 }
 
 // ── Imperative mutation matrix (Store × ownership) ──────────────────────
@@ -310,7 +339,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
     { id: 'b', role: 'assistant', parts: [] },
   ];
   chat.removeMessage('a');
-  assert.deepEqual(chat.messages.map((m) => m.id), ['b']);
+  assert.deepEqual(
+    chat.messages.map((m) => m.id),
+    ['b'],
+  );
 }
 
 // removeMessage: controlled emits a proposal, does not commit.
@@ -327,10 +359,16 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   });
 
   chat.removeMessage('a');
-  assert.deepEqual(chat.messages.map((m) => m.id), ['a', 'b']);
+  assert.deepEqual(
+    chat.messages.map((m) => m.id),
+    ['a', 'b'],
+  );
   assert.equal(changes.length, 1);
   assert.equal(changes[0]?.controlled, true);
-  assert.deepEqual(changes[0]?.messages.map((m: TestMessage) => m.id), ['b']);
+  assert.deepEqual(
+    changes[0]?.messages.map((m: TestMessage) => m.id),
+    ['b'],
+  );
 }
 
 // clear: uncontrolled commits immediately.
@@ -358,7 +396,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   });
 
   chat.clear();
-  assert.deepEqual(chat.messages.map((m) => m.id), ['a', 'b']);
+  assert.deepEqual(
+    chat.messages.map((m) => m.id),
+    ['a', 'b'],
+  );
   assert.equal(changes.length, 1);
   assert.equal(changes[0]?.controlled, true);
   assert.deepEqual(changes[0]?.messages, []);
@@ -367,7 +408,12 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 // cancelMessage: updates message with cancelled flag + hint in text, uncontrolled.
 {
   const chat = createChat();
-  chat.addMessage({ id: 'streaming', role: 'assistant', parts: [{ type: 'text', id: 't1', text: 'generating...' }], streaming: true });
+  chat.addMessage({
+    id: 'streaming',
+    role: 'assistant',
+    parts: [{ type: 'text', id: 't1', text: 'generating...' }],
+    streaming: true,
+  });
   chat.cancelMessage('streaming', 'user cancelled');
   const msg = chat.messages[0];
   assert.equal(msg?.streaming, false);
@@ -411,7 +457,11 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 // updatePart: uncontrolled commits immediately.
 {
   const chat = createChat();
-  chat.addMessage({ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] });
+  chat.addMessage({
+    id: 'msg',
+    role: 'assistant',
+    parts: [{ type: 'text', id: 'p1', text: 'old' }],
+  });
   chat.updatePart('msg', 'p1', { text: 'new' });
   const part = chat.messages[0]?.parts[0];
   assert.equal(part?.type, 'text');
@@ -426,7 +476,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   chat.addEventListener('messages-change', (event) => {
     changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
   });
-  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+  chat.messages = [
+    { id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] },
+  ];
 
   chat.updatePart('msg', 'p1', { text: 'new' });
   // Store returns the host messages since the proposal was not accepted.
@@ -460,14 +512,19 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   assert.equal(chat.messages[0]?.parts.length, 0);
   assert.equal(changes.length, 1);
   assert.equal(changes[0]?.controlled, true);
-  assert.deepEqual(changes[0]?.messages[0]?.parts.map((p: Record<string, unknown>) => p.id), ['p1']);
+  assert.deepEqual(
+    changes[0]?.messages[0]?.parts.map((p: Record<string, unknown>) => p.id),
+    ['p1'],
+  );
 }
 
 // tryUpdatePart: controlled proposal with diagnostic result.
 {
   const chat = createChat();
   chat.messageMode = 'controlled';
-  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+  chat.messages = [
+    { id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] },
+  ];
 
   const result = chat.tryUpdatePart('msg', 'p1', { text: 'updated' });
   assert.equal(result.ok, true);
@@ -477,13 +534,27 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 {
   const chat = createChat();
   chat.messageMode = 'controlled';
-  chat.messages = [{
-    id: 'msg', role: 'assistant', parts: [
-      { type: 'tool-call', id: 'tc1', toolCallId: 'call-1', toolName: 'search', state: 'executing', args: {} },
-    ],
-  }];
+  chat.messages = [
+    {
+      id: 'msg',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'tool-call',
+          id: 'tc1',
+          toolCallId: 'call-1',
+          toolName: 'search',
+          state: 'executing',
+          args: {},
+        },
+      ],
+    },
+  ];
 
-  const result = chat.tryUpdateToolCall('msg', 'tc1', { state: 'output-available', result: 'done' });
+  const result = chat.tryUpdateToolCall('msg', 'tc1', {
+    state: 'output-available',
+    result: 'done',
+  });
   assert.equal(result.ok, true);
 }
 
@@ -491,11 +562,20 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 {
   const chat = createChat();
   chat.messageMode = 'controlled';
-  chat.messages = [{
-    id: 'msg', role: 'assistant', parts: [
-      { type: 'todo', id: 'td1', revision: 1, items: [{ id: 'item1', title: 'task', status: 'pending' }] },
-    ],
-  }];
+  chat.messages = [
+    {
+      id: 'msg',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'todo',
+          id: 'td1',
+          revision: 1,
+          items: [{ id: 'item1', title: 'task', status: 'pending' }],
+        },
+      ],
+    },
+  ];
 
   const result = chat.tryUpdateTodoItem('msg', 'td1', 'item1', { status: 'done' });
   assert.equal(result.ok, true);
@@ -505,7 +585,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 {
   const chat = createChat();
   chat.messageMode = 'controlled';
-  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+  chat.messages = [
+    { id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] },
+  ];
 
   const result = chat.tryApplyMessagePartUpdateEvent({
     messageId: 'msg',
@@ -519,11 +601,20 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 {
   const chat = createChat();
   chat.messageMode = 'controlled';
-  chat.messages = [{
-    id: 'msg', role: 'assistant', parts: [
-      { type: 'todo', id: 'td1', revision: 1, items: [{ id: 'item1', title: 'task', status: 'pending' }] },
-    ],
-  }];
+  chat.messages = [
+    {
+      id: 'msg',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'todo',
+          id: 'td1',
+          revision: 1,
+          items: [{ id: 'item1', title: 'task', status: 'pending' }],
+        },
+      ],
+    },
+  ];
 
   // normalizeTodoItemUpdateEvent reads status/title/description at the top
   // level (SSE event shape), not nested under a `patch` key.
@@ -554,7 +645,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   chat.updateMessage('c', { streaming: true });
 
   assert.equal(changes.length, 3);
-  assert.deepEqual(changes[2]?.messages.map((m: TestMessage) => m.id), ['b', 'c']);
+  assert.deepEqual(
+    changes[2]?.messages.map((m: TestMessage) => m.id),
+    ['b', 'c'],
+  );
   assert.equal(changes[2]?.messages[1]?.streaming, true);
 }
 
@@ -567,8 +661,14 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   chat.addEventListener('messages-change', (event) => {
     const detail = (event as CustomEvent<TestMessagesChangeDetail>).detail;
-    assert.deepEqual(detail.previousMessages.map((m: TestMessage) => m.id), ['base']);
-    assert.deepEqual(detail.messages.map((m: TestMessage) => m.id), ['base', 'new']);
+    assert.deepEqual(
+      detail.previousMessages.map((m: TestMessage) => m.id),
+      ['base'],
+    );
+    assert.deepEqual(
+      detail.messages.map((m: TestMessage) => m.id),
+      ['base', 'new'],
+    );
   });
   chat.addMessage({ id: 'new', role: 'assistant', parts: [] });
 }
@@ -608,7 +708,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   chat.addEventListener('busy-change', (event) => {
     busyChanges.push((event as CustomEvent<{ busy: boolean }>).detail.busy);
   });
-  chat.addEventListener('send', () => { sends += 1; });
+  chat.addEventListener('send', () => {
+    sends += 1;
+  });
 
   const first = chat._handleSend(sendEvent('first'));
   assert.equal(chat.busy, true);
@@ -656,7 +758,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   const chat = createChat();
   chat.use({
     name: 'rejecting-before-send',
-    beforeSend: async () => { throw new Error('middleware failed'); },
+    beforeSend: async () => {
+      throw new Error('middleware failed');
+    },
   });
 
   await assert.rejects(chat._handleSend(sendEvent('hello')), /middleware failed/);
@@ -699,7 +803,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   chat.addMessage({ id: 'drop', role: 'assistant', parts: [] });
   chat.addMessage({ id: 'keep', role: 'assistant', parts: [] });
   assert.deepEqual(hooks, ['drop', 'keep']);
-  assert.deepEqual(chat.messages.map((m) => m.id), ['keep']);
+  assert.deepEqual(
+    chat.messages.map((m) => m.id),
+    ['keep'],
+  );
 }
 
 // afterMessageAdded: multiple middleware run in FIFO order.
@@ -707,8 +814,20 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   const chat = createChat();
   const order: string[] = [];
 
-  chat.use({ name: 'mw1', afterMessageAdded: (msg) => { order.push('mw1'); return msg; } });
-  chat.use({ name: 'mw2', afterMessageAdded: (msg) => { order.push('mw2'); return msg; } });
+  chat.use({
+    name: 'mw1',
+    afterMessageAdded: (msg) => {
+      order.push('mw1');
+      return msg;
+    },
+  });
+  chat.use({
+    name: 'mw2',
+    afterMessageAdded: (msg) => {
+      order.push('mw2');
+      return msg;
+    },
+  });
 
   chat.addMessage({ id: 'test', role: 'assistant', parts: [] });
   assert.deepEqual(order, ['mw1', 'mw2']);
@@ -761,7 +880,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   chat.use({
     name: 'error-logger',
-    onError: (error, messageId) => { errors.push({ error, messageId }); },
+    onError: (error, messageId) => {
+      errors.push({ error, messageId });
+    },
   });
 
   chat.addErrorMessage('something broke', 'details');
@@ -784,8 +905,13 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   chat.use({
     name: 'combined',
-    onError: () => { order.push('onError'); },
-    afterMessageAdded: () => { order.push('afterMessageAdded'); return null; }, // drop
+    onError: () => {
+      order.push('onError');
+    },
+    afterMessageAdded: () => {
+      order.push('afterMessageAdded');
+      return null;
+    }, // drop
   });
 
   chat.addErrorMessage('err');
@@ -806,7 +932,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
     name: 'lifecycle-plugin',
     install(_c) {
       installed = true;
-      return () => { tornDown = true; };
+      return () => {
+        tornDown = true;
+      };
     },
   });
 
@@ -821,11 +949,15 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   const dispose1 = chat.use({
     name: 'unique-plugin',
-    install() { installs.push('first'); },
+    install() {
+      installs.push('first');
+    },
   });
   const dispose2 = chat.use({
     name: 'unique-plugin',
-    install() { installs.push('second'); },
+    install() {
+      installs.push('second');
+    },
   });
 
   assert.deepEqual(installs, ['first']);
@@ -841,7 +973,11 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   const dispose = chat.use({
     name: 'removable',
-    install() { return () => { tornDown = true; }; },
+    install() {
+      return () => {
+        tornDown = true;
+      };
+    },
   });
 
   const removed = chat.removePlugin('removable');
@@ -856,7 +992,11 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   tornDown = false;
   const dispose2 = chat.use({
     name: 'removable-2',
-    install() { return () => { tornDown = true; }; },
+    install() {
+      return () => {
+        tornDown = true;
+      };
+    },
   });
   dispose2();
   assert.equal(tornDown, true);
@@ -873,7 +1013,10 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
     install(c) {
       const unreg = c.use({
         name: 'plugin-mw',
-        afterMessageAdded: (msg) => { afterCalls.push(msg.id); return msg; },
+        afterMessageAdded: (msg) => {
+          afterCalls.push(msg.id);
+          return msg;
+        },
       });
       return () => unreg();
     },
@@ -895,7 +1038,9 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   let sends = 0;
 
   chat.use({ name: 'delayed-before-send', beforeSend: () => gate.promise });
-  chat.addEventListener('send', () => { sends += 1; });
+  chat.addEventListener('send', () => {
+    sends += 1;
+  });
 
   const pending = chat._handleSend(sendEvent('hello'));
   chat.disabled = true;

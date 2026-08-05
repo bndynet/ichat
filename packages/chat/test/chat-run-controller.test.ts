@@ -238,7 +238,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   let cancelled = false;
   const store = createMockStore();
-  const run = new ChatRunController(store, { onCancel: () => { cancelled = true; } });
+  const run = new ChatRunController(store, {
+    onCancel: () => {
+      cancelled = true;
+    },
+  });
   run.start([textPart('hello')]);
   run.cancel('*— stopped —*');
   assert.equal(run.status, 'cancelled');
@@ -441,4 +445,3 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 }
 
 console.log('ChatRunController: all tests passed');
-

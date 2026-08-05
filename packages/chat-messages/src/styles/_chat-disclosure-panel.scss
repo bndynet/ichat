@@ -1,11 +1,18 @@
 @use 'variables' as *;
 @use 'chat-panel' as panel;
 
-$header-hover-background: color-mix(in srgb, var(--chat-surface-alt, #{$color-surface-alt}) 95%, var(--chat-text, #{$color-text}) 5%) !default;
+$header-hover-background: color-mix(
+  in srgb,
+  var(--chat-surface-alt, #{$color-surface-alt}) 95%,
+  var(--chat-text, #{$color-text}) 5%
+) !default;
 
 @mixin surface(
   $background: var(--chat-panel-bg, var(--chat-surface)),
-  $border: var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)),
+  $border: var(
+      --chat-panel-border,
+      color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)
+    ),
   $radius: var(--chat-disclosure-radius, var(--chat-radius-sm, #{$radius-sm})),
   $shadow: var(--chat-panel-shadow, none)
 ) {
@@ -84,7 +91,8 @@ $header-hover-background: color-mix(in srgb, var(--chat-surface-alt, #{$color-su
   $border: var(--chat-border, #{$color-border}),
   $background: var(--chat-disclosure-body-bg, transparent),
   $color: inherit,
-  $padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md}) var(--chat-spacing-md, #{$spacing-md})
+  $padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md})
+    var(--chat-spacing-md, #{$spacing-md})
 ) {
   padding: $padding;
   background: $background;

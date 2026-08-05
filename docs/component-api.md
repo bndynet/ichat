@@ -10,38 +10,38 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 
 ## `<i-chat>` — properties, methods, events
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `messages` | `ExtendedChatMessage<TExtraParts>[]` (`ChatMessage[]` by default) | `[]` | The authoritative message array. Write directly (`chat.messages = [...]`) to replace all messages, or use imperative methods (`addMessage`, etc.) for incremental updates. When using the generic `Chat<TExtraParts>` type (see [Generic type support](#generic-type-support)), `parts` carry fully typed custom `x-*` extensions that narrow on `part.type`. |
-| `config` | `ChatConfig` | `{}` | Avatars, `locale`, `labels` (all UI strings — see [Localization](./localization.md)), date separators, etc. |
-| `emptyText` | `string` | `''` | Plain text when there are no messages and no `empty` slot |
-| `placeholder` | `string` | `''` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`). Empty → localized default from `config.locale` / `config.labels.composer.placeholder` |
-| `disabled` | `boolean` | `false` | Disables the default composer |
-| `busy` | `boolean` (readonly) | `false` | `true` while a submission is passing through `beforeSend` middleware or an assistant message is streaming. Reflected as the `busy` and `aria-busy` host attributes; new sends are blocked while the textarea remains available for the next draft. |
-| `ready` | `Promise<void>` (readonly) | — | Resolves after the first render when child elements are queryable. Data methods are safe before `ready`; DOM methods may `await chat.ready`. |
-| `messageMode` | `'uncontrolled'` \| `'controlled'` | `'uncontrolled'` | Message ownership mode. `uncontrolled`: component owns messages (default). `controlled`: host owns messages — imperative methods emit a cancelable `messages-change` proposal with `committed: false`; host may write `event.detail.messages` back synchronously or asynchronously and may reject with `preventDefault()`. |
-| `showVoiceInput` | `boolean` | `true` | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition |
-| `voiceLang` | `string` | `''` | Forwarded to the default `<i-chat-input>` — BCP 47 tag for speech recognition (e.g. `zh-CN`; empty uses `navigator.language`) |
-| `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
-| `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
+| Property              | Type                                                              | Default          | Description                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `messages`            | `ExtendedChatMessage<TExtraParts>[]` (`ChatMessage[]` by default) | `[]`             | The authoritative message array. Write directly (`chat.messages = [...]`) to replace all messages, or use imperative methods (`addMessage`, etc.) for incremental updates. When using the generic `Chat<TExtraParts>` type (see [Generic type support](#generic-type-support)), `parts` carry fully typed custom `x-*` extensions that narrow on `part.type`. |
+| `config`              | `ChatConfig`                                                      | `{}`             | Avatars, `locale`, `labels` (all UI strings — see [Localization](./localization.md)), date separators, etc.                                                                                                                                                                                                                                                   |
+| `emptyText`           | `string`                                                          | `''`             | Plain text when there are no messages and no `empty` slot                                                                                                                                                                                                                                                                                                     |
+| `placeholder`         | `string`                                                          | `''`             | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`). Empty → localized default from `config.locale` / `config.labels.composer.placeholder`                                                                                                                                                                                               |
+| `disabled`            | `boolean`                                                         | `false`          | Disables the default composer                                                                                                                                                                                                                                                                                                                                 |
+| `busy`                | `boolean` (readonly)                                              | `false`          | `true` while a submission is passing through `beforeSend` middleware or an assistant message is streaming. Reflected as the `busy` and `aria-busy` host attributes; new sends are blocked while the textarea remains available for the next draft.                                                                                                            |
+| `ready`               | `Promise<void>` (readonly)                                        | —                | Resolves after the first render when child elements are queryable. Data methods are safe before `ready`; DOM methods may `await chat.ready`.                                                                                                                                                                                                                  |
+| `messageMode`         | `'uncontrolled'` \| `'controlled'`                                | `'uncontrolled'` | Message ownership mode. `uncontrolled`: component owns messages (default). `controlled`: host owns messages — imperative methods emit a cancelable `messages-change` proposal with `committed: false`; host may write `event.detail.messages` back synchronously or asynchronously and may reject with `preventDefault()`.                                    |
+| `showVoiceInput`      | `boolean`                                                         | `true`           | Enables/disables the default composer voice button; even when `true`, the button is rendered only if the browser supports speech recognition                                                                                                                                                                                                                  |
+| `voiceLang`           | `string`                                                          | `''`             | Forwarded to the default `<i-chat-input>` — BCP 47 tag for speech recognition (e.g. `zh-CN`; empty uses `navigator.language`)                                                                                                                                                                                                                                 |
+| `voiceListeningLabel` | `string`                                                          | `''`             | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening`                                                                                                                                                                                           |
+| `voiceDiagnostics`    | `boolean`                                                         | `false`          | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps                                                                                                                                                                                                                                                              |
 
 **Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `tryUpdatePart`, `updatePart`, `tryUpdateToolCall`, `tryUpdateTodoItem`, `tryApplyMessagePartUpdateEvent`, `tryApplyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateProgressStep`, `addErrorMessage`, `scrollToMessage`, `scrollToPart`, `focusInput`
 
 **Events on `<i-chat>`:**
 
-| Event | Detail | Notes |
-|-------|--------|--------|
-| `send` | `{ content: string }` | User submitted the default input (or your control inside `slot="input"` must dispatch the same event if you mimic the built-in) |
-| `cancel` | — | User cancelled during streaming (default input) |
-| `messages-change` | `MessagesChangeDetail` | Emitted after an uncontrolled mutation commits or a controlled mutation is proposed. Controlled events are cancelable with `preventDefault()`. Direct external `messages = […]` does **not** emit this event. |
-| `streaming-change` | `{ streaming: boolean }` | Any assistant message is streaming |
-| `busy-change` | `{ busy: boolean }` | Effective busy state changed. Useful for disabling a custom `slot="input"` composer. |
-| `message-action` | `{ action: string, message: ChatMessage }` | From `message-actions` slot / `data-action` buttons |
-| `part-action` | `{ kind, action, messageId, message, partId?, partType?, part?, payload }` | Unified event for rendered part interactions. `kind` is `'form'`, `'todo'`, or `'tool-call'`. |
-| `link-click` | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself |
-| `chat-renderer-error` | `RendererErrorDetail` | A block or string-part renderer failed during matching, sync rendering, or async rendering. The message has already fallen back safely; use this event for logging/observability. |
-| `confirmation-change` | `{ active, queue, queueLength }` | Active composer confirmation or FIFO queue changed |
-| `confirmation-decision` | `ChatConfirmationResult` | User confirmed or cancelled the active composer confirmation |
+| Event                   | Detail                                                                                             | Notes                                                                                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `send`                  | `{ content: string }`                                                                              | User submitted the default input (or your control inside `slot="input"` must dispatch the same event if you mimic the built-in)                                                                               |
+| `cancel`                | —                                                                                                  | User cancelled during streaming (default input)                                                                                                                                                               |
+| `messages-change`       | `MessagesChangeDetail`                                                                             | Emitted after an uncontrolled mutation commits or a controlled mutation is proposed. Controlled events are cancelable with `preventDefault()`. Direct external `messages = […]` does **not** emit this event. |
+| `streaming-change`      | `{ streaming: boolean }`                                                                           | Any assistant message is streaming                                                                                                                                                                            |
+| `busy-change`           | `{ busy: boolean }`                                                                                | Effective busy state changed. Useful for disabling a custom `slot="input"` composer.                                                                                                                          |
+| `message-action`        | `{ action: string, message: ChatMessage }`                                                         | From `message-actions` slot / `data-action` buttons                                                                                                                                                           |
+| `part-action`           | `{ kind, action, messageId, message, partId?, partType?, part?, payload }`                         | Unified event for rendered part interactions. `kind` is `'form'`, `'todo'`, or `'tool-call'`.                                                                                                                 |
+| `link-click`            | `{ href, rawHref, protocol, text, messageId, message, partId?, partType?, target, originalEvent }` | Cancelable event from rendered message links. Call `preventDefault()` to handle a link yourself                                                                                                               |
+| `chat-renderer-error`   | `RendererErrorDetail`                                                                              | A block or string-part renderer failed during matching, sync rendering, or async rendering. The message has already fallen back safely; use this event for logging/observability.                             |
+| `confirmation-change`   | `{ active, queue, queueLength }`                                                                   | Active composer confirmation or FIFO queue changed                                                                                                                                                            |
+| `confirmation-decision` | `ChatConfirmationResult`                                                                           | User confirmed or cancelled the active composer confirmation                                                                                                                                                  |
 
 Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message>`) use `bubbles` + `composed` so you can listen on `<i-chat>` or `document`.
 
@@ -59,18 +59,18 @@ run.appendText('body', delta);
 run.complete();
 ```
 
-| Member | Type | Description |
-|--------|------|-------------|
-| `messageId` | `string` (readonly) | Id of the message this run owns. Only meaningful once `start()` has been accepted. |
-| `status` | `ChatRunStatus` (readonly) | `'idle'` → `'streaming'` → `'completed'` \| `'cancelled'` \| `'error'` |
-| `signal` | `AbortSignal` (readonly) | Aborted when the run completes, fails, or is cancelled. Pass it to `fetch()` so in-flight requests are torn down with the run. |
-| `start(initialParts?)` | `ChatMutationOutcome` | Adds the streaming assistant placeholder. No-op unless `status` is `'idle'`. |
-| `appendPart(part)` | `void` | Appends a structured part (tool-call, reasoning, …). No-op unless streaming. |
-| `updatePart(partId, patch)` | `MessagePartUpdateResult` | Patches a part by id. |
-| `appendText(partId, delta)` | `MessagePartUpdateResult` | Appends a text delta, re-reading the current text so it never builds on a stale snapshot. |
-| `complete(patch?)` | `ChatMutationOutcome` | Clears `streaming`, optionally patching the message (e.g. `{ duration }`). |
-| `fail(error, text?)` | `ChatMutationOutcome` | Records the error, clears `streaming`, and optionally appends a text part. |
-| `cancel(hint?)` | `ChatMutationOutcome` | Marks the message cancelled, then invokes `onCancel`. |
+| Member                      | Type                       | Description                                                                                                                    |
+| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `messageId`                 | `string` (readonly)        | Id of the message this run owns. Only meaningful once `start()` has been accepted.                                             |
+| `status`                    | `ChatRunStatus` (readonly) | `'idle'` → `'streaming'` → `'completed'` \| `'cancelled'` \| `'error'`                                                         |
+| `signal`                    | `AbortSignal` (readonly)   | Aborted when the run completes, fails, or is cancelled. Pass it to `fetch()` so in-flight requests are torn down with the run. |
+| `start(initialParts?)`      | `ChatMutationOutcome`      | Adds the streaming assistant placeholder. No-op unless `status` is `'idle'`.                                                   |
+| `appendPart(part)`          | `void`                     | Appends a structured part (tool-call, reasoning, …). No-op unless streaming.                                                   |
+| `updatePart(partId, patch)` | `MessagePartUpdateResult`  | Patches a part by id.                                                                                                          |
+| `appendText(partId, delta)` | `MessagePartUpdateResult`  | Appends a text delta, re-reading the current text so it never builds on a stale snapshot.                                      |
+| `complete(patch?)`          | `ChatMutationOutcome`      | Clears `streaming`, optionally patching the message (e.g. `{ duration }`).                                                     |
+| `fail(error, text?)`        | `ChatMutationOutcome`      | Records the error, clears `streaming`, and optionally appends a text part.                                                     |
+| `cancel(hint?)`             | `ChatMutationOutcome`      | Marks the message cancelled, then invokes `onCancel`.                                                                          |
 
 `ChatRunOptions`: `messageId`, `role`, `timestamp`, `onCancel`. `onCancel` runs after the cancellation is committed — it is where you tear down your own request pipeline; `run.signal` is aborted for you.
 
@@ -89,11 +89,11 @@ It matters when the host has a **synchronous** reason to refuse a write:
 
 Lifecycle transitions require the underlying mutation to be accepted, so a controlled host that rejects a proposal with `preventDefault()` can never leave the run disagreeing with `chat.messages`:
 
-| Rejected call | Resulting state |
-|---------------|-----------------|
-| `start()` | stays `idle`, no message id claimed, safe to call again |
-| `complete()` / `fail()` | stays `streaming`, signal still open, safe to call again |
-| `cancel()` | stays `streaming`, `onCancel` not invoked, signal still open |
+| Rejected call           | Resulting state                                              |
+| ----------------------- | ------------------------------------------------------------ |
+| `start()`               | stays `idle`, no message id claimed, safe to call again      |
+| `complete()` / `fail()` | stays `streaming`, signal still open, safe to call again     |
+| `cancel()`              | stays `streaming`, `onCancel` not invoked, signal still open |
 
 Each method returns a `ChatMutationOutcome`:
 
@@ -205,13 +205,13 @@ non-generic `Chat`.
 
 **Type helpers:**
 
-| Helper | Signature | Description |
-|--------|-----------|-------------|
-| `Chat<TExtraParts>` | `Chat<{ 'x-*': Data }>` | The generic `<i-chat>` element type; defaults to `Chat<{}>` (plain `ChatMessage[]`). |
+| Helper                   | Signature                              | Description                                                                                       |
+| ------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `Chat<TExtraParts>`      | `Chat<{ 'x-*': Data }>`                | The generic `<i-chat>` element type; defaults to `Chat<{}>` (plain `ChatMessage[]`).              |
 | `ExtendedChatMessage<T>` | `ExtendedChatMessage<{ 'x-*': Data }>` | `ChatMessage` whose `parts` carry typed custom parts. This is the element's `messages` item type. |
-| `ExtendedMessagePart<T>` | `ExtendedMessagePart<{ 'x-*': Data }>` | The built-in `MessagePart` union with the untyped `CustomPart` swapped for `CustomPartOf<T>`. |
-| `CustomPartOf<T>` | `CustomPartOf<{ 'x-*': Data }>` | Produces a typed `CustomPart` discriminated union from a mapping. |
-| `PartOf<M, T>` | `PartOf<ChatMessage, 'text'>` | Extracts the part(s) matching a given type string from a message. |
+| `ExtendedMessagePart<T>` | `ExtendedMessagePart<{ 'x-*': Data }>` | The built-in `MessagePart` union with the untyped `CustomPart` swapped for `CustomPartOf<T>`.     |
+| `CustomPartOf<T>`        | `CustomPartOf<{ 'x-*': Data }>`        | Produces a typed `CustomPart` discriminated union from a mapping.                                 |
+| `PartOf<M, T>`           | `PartOf<ChatMessage, 'text'>`          | Extracts the part(s) matching a given type string from a message.                                 |
 
 With no mapping, `ExtendedChatMessage` and `ExtendedMessagePart` collapse back to plain
 `ChatMessage` and `MessagePart`, so the non-generic surface is unchanged.
@@ -319,16 +319,16 @@ if (result.confirmed) {
 
 `ChatConfirmationRequest` fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string?` | Optional stable id. Generated when omitted |
-| `title` | `string` | Main prompt shown to the user |
-| `description` | `string?` | Short supporting text |
-| `details` | `unknown?` | String or structured data; objects render in a collapsible details block |
-| `requiredLabel` | `string?` | Per-request eyebrow above the title. Set to `''` to hide it for this request |
-| `confirmLabel` / `cancelLabel` | `string?` | Per-request button labels |
-| `variant` | `'default' \| 'danger'` | Use `danger` for destructive or high-impact actions |
-| `payload` | `unknown?` | Host data returned in `result.request`; not rendered by default |
+| Field                          | Type                    | Description                                                                  |
+| ------------------------------ | ----------------------- | ---------------------------------------------------------------------------- |
+| `id`                           | `string?`               | Optional stable id. Generated when omitted                                   |
+| `title`                        | `string`                | Main prompt shown to the user                                                |
+| `description`                  | `string?`               | Short supporting text                                                        |
+| `details`                      | `unknown?`              | String or structured data; objects render in a collapsible details block     |
+| `requiredLabel`                | `string?`               | Per-request eyebrow above the title. Set to `''` to hide it for this request |
+| `confirmLabel` / `cancelLabel` | `string?`               | Per-request button labels                                                    |
+| `variant`                      | `'default' \| 'danger'` | Use `danger` for destructive or high-impact actions                          |
+| `payload`                      | `unknown?`              | Host data returned in `result.request`; not rendered by default              |
 
 Multiple calls are queued FIFO and shown one at a time. `clearConfirmations()` resolves the active and queued confirmations as `{ confirmed: false, action: 'cancel' }`.
 
@@ -340,16 +340,16 @@ The small eyebrow above the title comes from `config.labels.confirmation.require
 
 Message-related slots are **forwarded** with declarative `<slot name="…" slot="…">` under the inner components so your nodes **stay direct children of `<i-chat>`** (page / framework styles still apply). Put **`slot="…"`** on direct children of `<i-chat>` (same names as on a standalone `<i-chat-messages>`).
 
-| Slot | Description |
-|------|-------------|
-| `self-avatar` | Avatar template for `role: 'self'` |
-| `peer-avatar` | Avatar for `role: 'peer'` |
-| `assistant-avatar` | Avatar for assistant / system |
-| `message-actions` | Row shown on assistant messages (e.g. buttons with `data-action`) |
-| `reasoning-header` | Custom header for reasoning / “thinking” blocks |
-| `empty` | Content when there are no messages |
-| `actions` | Bottom-left toolbar **inside** the default `<i-chat-input>` (attach, model picker, etc.) |
-| `input` | **Replaces** the entire default `<i-chat-input>` — supply your own footer; dispatch `send` and mirror `busy-change` / `streaming-change` as needed |
+| Slot               | Description                                                                                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `self-avatar`      | Avatar template for `role: 'self'`                                                                                                                 |
+| `peer-avatar`      | Avatar for `role: 'peer'`                                                                                                                          |
+| `assistant-avatar` | Avatar for assistant / system                                                                                                                      |
+| `message-actions`  | Row shown on assistant messages (e.g. buttons with `data-action`)                                                                                  |
+| `reasoning-header` | Custom header for reasoning / “thinking” blocks                                                                                                    |
+| `empty`            | Content when there are no messages                                                                                                                 |
+| `actions`          | Bottom-left toolbar **inside** the default `<i-chat-input>` (attach, model picker, etc.)                                                           |
+| `input`            | **Replaces** the entire default `<i-chat-input>` — supply your own footer; dispatch `send` and mirror `busy-change` / `streaming-change` as needed |
 
 When a composer confirmation is active, the confirmation panel temporarily replaces both the default composer and any custom `slot="input"` content.
 

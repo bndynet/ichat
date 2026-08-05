@@ -9,10 +9,7 @@ export class StreamingController implements ReactiveController {
   private _active = false;
   private _onComplete?: () => void;
 
-  constructor(
-    host: ReactiveControllerHost,
-    options?: { speed?: number; onComplete?: () => void }
-  ) {
+  constructor(host: ReactiveControllerHost, options?: { speed?: number; onComplete?: () => void }) {
     this._host = host;
     this._host.addController(this);
     this._charsPerTick = options?.speed ?? 3;
@@ -99,7 +96,7 @@ export class StreamingController implements ReactiveController {
 
     this._visibleLength = Math.min(
       this._visibleLength + this._charsPerTick,
-      this._fullContent.length
+      this._fullContent.length,
     );
     this._host.requestUpdate();
     this._rafId = requestAnimationFrame(this._tick);

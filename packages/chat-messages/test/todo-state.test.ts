@@ -299,7 +299,13 @@ test('normalizeTodoItemUpdateEvent rejects missing messageId', () => {
 });
 
 test('normalizeTodoItemUpdateEvent rejects empty messageId', () => {
-  const input = { type: 'todo.item.updated', messageId: '  ', partId: 'p', itemId: 'i', status: 'done' };
+  const input = {
+    type: 'todo.item.updated',
+    messageId: '  ',
+    partId: 'p',
+    itemId: 'i',
+    status: 'done',
+  };
   const result = normalizeTodoItemUpdateEvent(input);
 
   assert.ok(!result.ok);
@@ -329,7 +335,13 @@ test('normalizeTodoItemUpdateEvent rejects missing itemId', () => {
 });
 
 test('normalizeTodoItemUpdateEvent rejects invalid status', () => {
-  const input = { type: 'todo.item.updated', messageId: 'm', partId: 'p', itemId: 'i', status: 'bogus' };
+  const input = {
+    type: 'todo.item.updated',
+    messageId: 'm',
+    partId: 'p',
+    itemId: 'i',
+    status: 'bogus',
+  };
   const result = normalizeTodoItemUpdateEvent(input);
 
   assert.ok(!result.ok);

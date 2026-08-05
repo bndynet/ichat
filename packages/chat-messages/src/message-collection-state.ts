@@ -6,10 +6,7 @@ import { textPart } from './types.js';
  * Caller is responsible for id uniqueness — this function does not
  * deduplicate or enforce a duplicate-id policy.
  */
-export function addMessage(
-  messages: ChatMessage[],
-  message: ChatMessage,
-): ChatMessage[] {
+export function addMessage(messages: ChatMessage[], message: ChatMessage): ChatMessage[] {
   return [...messages, message];
 }
 
@@ -35,10 +32,7 @@ export function patchMessageById(
  *
  * Returns the **original** array reference when no message matches `id`.
  */
-export function removeMessageById(
-  messages: ChatMessage[],
-  id: string,
-): ChatMessage[] {
+export function removeMessageById(messages: ChatMessage[], id: string): ChatMessage[] {
   const index = messages.findIndex((m) => m.id === id);
   if (index === -1) return messages;
   return messages.filter((m) => m.id !== id);

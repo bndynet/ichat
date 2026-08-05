@@ -26,7 +26,9 @@ function test(name: string, run: () => void): void {
 function makePlugin(id: string, styles?: string, globalStyles?: string): MarkdownPlugin {
   return {
     id,
-    install(_md: MarkdownIt) { /* noop */ },
+    install(_md: MarkdownIt) {
+      /* noop */
+    },
     styles,
     globalStyles,
   };
@@ -67,7 +69,9 @@ test('mounted roots receive CSS from plugins registered later', () => {
   const fakeDocument = {
     createElement: () => ({
       textContent: '',
-      setAttribute() { /* noop */ },
+      setAttribute() {
+        /* noop */
+      },
       remove() {
         rootStyle = null;
       },
@@ -75,7 +79,9 @@ test('mounted roots receive CSS from plugins registered later', () => {
     head: {
       firstChild: null,
       querySelector: () => null,
-      insertBefore() { /* noop */ },
+      insertBefore() {
+        /* noop */
+      },
     },
   };
   const globals = globalThis as typeof globalThis & { document?: Document };
@@ -87,10 +93,9 @@ test('mounted roots receive CSS from plugins registered later', () => {
     assert.ok(rootStyle, 'an empty tracked style should be created on mount');
     assert.equal(rootStyle.textContent, '');
 
-    registerMarkdownPlugin(makePlugin(
-      'test-runtime-plugin-css',
-      '.runtime-plugin { color: rebeccapurple; }',
-    ));
+    registerMarkdownPlugin(
+      makePlugin('test-runtime-plugin-css', '.runtime-plugin { color: rebeccapurple; }'),
+    );
     assert.match(rootStyle.textContent, /runtime-plugin/);
 
     cleanup();
@@ -115,7 +120,9 @@ test('registerMarkdownPlugin runs install on the markdown-it instance', () => {
   let installed = false;
   const p: MarkdownPlugin = {
     id: 'test-install-runs',
-    install(_md: MarkdownIt) { installed = true; },
+    install(_md: MarkdownIt) {
+      installed = true;
+    },
   };
   registerMarkdownPlugin(p);
   assert.equal(installed, true);
@@ -125,11 +132,15 @@ test('plugins are installed in registration order', () => {
   const order: string[] = [];
   registerMarkdownPlugin({
     id: 'test-order-1',
-    install() { order.push('first'); },
+    install() {
+      order.push('first');
+    },
   });
   registerMarkdownPlugin({
     id: 'test-order-2',
-    install() { order.push('second'); },
+    install() {
+      order.push('second');
+    },
   });
   assert.deepEqual(order, ['first', 'second']);
 });
@@ -147,7 +158,9 @@ test('styles are collected into combined CSS', () => {
 });
 
 test('globalStyles are collected into combined global CSS', () => {
-  registerMarkdownPlugin(makePlugin('test-global-styles', undefined, '@font-face { font-family: Test; }'));
+  registerMarkdownPlugin(
+    makePlugin('test-global-styles', undefined, '@font-face { font-family: Test; }'),
+  );
   const globalCss = getMarkdownPluginGlobalStyles();
   assert.ok(globalCss.includes('@font-face'), 'global CSS should contain @font-face');
 });
@@ -190,7 +203,9 @@ test('re-registering the same object does not re-run install', () => {
   let count = 0;
   const p: MarkdownPlugin = {
     id: 'test-idempotent-install',
-    install() { count++; },
+    install() {
+      count++;
+    },
   };
   registerMarkdownPlugin(p);
   assert.equal(count, 1);
@@ -215,8 +230,20 @@ test('markdown duplicate id warns and keeps the first registration', () => {
 test('duplicate id does not run install twice', () => {
   const id = 'test-dup-install';
   let count = 0;
-  registerMarkdownPlugin({ id, install: () => { count++; } });
-  captureWarnings(() => registerMarkdownPlugin({ id, install: () => { count++; } }));
+  registerMarkdownPlugin({
+    id,
+    install: () => {
+      count++;
+    },
+  });
+  captureWarnings(() =>
+    registerMarkdownPlugin({
+      id,
+      install: () => {
+        count++;
+      },
+    }),
+  );
   assert.equal(count, 1, 'install should only run once');
 });
 
@@ -236,7 +263,10 @@ test('block renderer duplicate name warns and keeps the first registration', () 
   try {
     const warnings = captureWarnings(() => rendererRegistry.register(second));
     assert.equal(warnings.length, 1);
-    assert.equal(rendererRegistry.list().find((renderer) => renderer.name === name), first);
+    assert.equal(
+      rendererRegistry.list().find((renderer) => renderer.name === name),
+      first,
+    );
   } finally {
     rendererRegistry.unregister(name);
   }
@@ -250,7 +280,10 @@ test('part renderer duplicate name warns and keeps the first registration', () =
   try {
     const warnings = captureWarnings(() => partRendererRegistry.register(second));
     assert.equal(warnings.length, 1);
-    assert.equal(partRendererRegistry.list().find((renderer) => renderer.name === name), first);
+    assert.equal(
+      partRendererRegistry.list().find((renderer) => renderer.name === name),
+      first,
+    );
   } finally {
     partRendererRegistry.unregister(name);
   }

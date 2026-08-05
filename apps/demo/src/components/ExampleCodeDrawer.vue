@@ -53,7 +53,15 @@ onBeforeUnmount(() => {
     title="View example code"
     @click="openDrawer"
   >
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <path d="m8 9-3 3 3 3" />
       <path d="m16 9 3 3-3 3" />
       <path d="m14 5-4 14" />

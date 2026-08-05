@@ -21,10 +21,7 @@ function parseJsonPayload(input: string): unknown {
  * `message` event remains compatible with data-only streams that route by
  * `data.type`.
  */
-export function parseTypedEventPayload(
-  input: unknown,
-  expectedType: string
-): unknown {
+export function parseTypedEventPayload(input: unknown, expectedType: string): unknown {
   if (typeof input === 'string') {
     return parseJsonPayload(input);
   }
@@ -57,7 +54,7 @@ export function parseTypedEventPayload(
 }
 
 export function getEventSequenceNumber(
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
 ): number | undefined | 'invalid' {
   const sequenceNumber = payload.sequence_number ?? payload.sequenceNumber;
   if (sequenceNumber === undefined) {

@@ -12,14 +12,14 @@
 
 ## 1. Document Status
 
-| Item | Value |
-|------|-------|
-| Document status | **Complete — all 9 changes implemented** |
-| Implementation progress | **9 / 9** |
-| Current code baseline | monorepo `2.0.0` |
-| Last verified | 2026-07-21 |
-| Core approach | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
-| Compatibility policy | 2.x only adds APIs, migrates internals, and fixes defects; public API removal is reserved for the next major version |
+| Item                    | Value                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Document status         | **Complete — all 9 changes implemented**                                                                                |
+| Implementation progress | **9 / 9**                                                                                                               |
+| Current code baseline   | monorepo `2.0.0`                                                                                                        |
+| Last verified           | 2026-07-21                                                                                                              |
+| Core approach           | `<i-chat>` is the sole message-state owner in composed usage; `<i-chat-messages>` retains standalone state capabilities |
+| Compatibility policy    | 2.x only adds APIs, migrates internals, and fixes defects; public API removal is reserved for the next major version    |
 
 ### Status Values
 
@@ -56,15 +56,15 @@ Most proxy methods also depend on `this._messages`, so they can throw when calle
 
 ### Current Hotspots
 
-| Location | Current responsibility or issue |
-|----------|---------------------------------|
-| `packages/chat/src/components/chat.ts`: `messages` property | Publicly readable but not the authoritative state for every write path |
-| `packages/chat/src/components/chat.ts`: message proxy methods | Mutate the inner component and are unsafe before first render |
-| `packages/chat/src/components/chat.ts`: `firstUpdated()` / `updated()` | Push top-level properties downward but cannot synchronize internal mutations upward |
-| `packages/chat/src/components/chat.ts`: `createStreamingController()` | Exposes an animation controller instead of a chat-run controller |
-| `packages/chat-messages/src/components/chat-messages.ts`: mutation methods | Mix message collection updates, list UI state, and some DOM side effects |
-| `packages/chat-messages/src/components/chat-messages.ts`: `cancelMessage()` | Couples data mutation, hint insertion, animation control, and DOM lookup |
-| `packages/chat-messages/src/controllers/streaming-controller.ts` | Appropriate for internal typewriter animation, but not as a top-level run API |
+| Location                                                                    | Current responsibility or issue                                                     |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `packages/chat/src/components/chat.ts`: `messages` property                 | Publicly readable but not the authoritative state for every write path              |
+| `packages/chat/src/components/chat.ts`: message proxy methods               | Mutate the inner component and are unsafe before first render                       |
+| `packages/chat/src/components/chat.ts`: `firstUpdated()` / `updated()`      | Push top-level properties downward but cannot synchronize internal mutations upward |
+| `packages/chat/src/components/chat.ts`: `createStreamingController()`       | Exposes an animation controller instead of a chat-run controller                    |
+| `packages/chat-messages/src/components/chat-messages.ts`: mutation methods  | Mix message collection updates, list UI state, and some DOM side effects            |
+| `packages/chat-messages/src/components/chat-messages.ts`: `cancelMessage()` | Couples data mutation, hint insertion, animation control, and DOM lookup            |
+| `packages/chat-messages/src/controllers/streaming-controller.ts`            | Appropriate for internal typewriter animation, but not as a top-level run API       |
 
 ## 3. Refactor Goals
 
@@ -184,16 +184,16 @@ Event requirements:
 
 ## 6. Implementation Dashboard
 
-| Change | Scope | Status | Dependency | Risk | Breaking |
-|--------|-------|--------|------------|------|----------|
-| CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge | `DONE` | None | Medium | No (bug fix) |
-| CHG-02 | Extract shared pure message-collection reducers | `DONE` | CHG-01 | Low | No |
-| CHG-03 | Move regular message mutations to the top-level store | `DONE` | CHG-02 | Medium | No (bug fix) |
-| CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store | `DONE` | CHG-03 | Medium | No (bug fix) |
-| CHG-05 | Separate cancellation data semantics from animation side effects | `DONE` | CHG-04 | High | No (bug fix) |
-| CHG-06 | Add pre-render safety and a ready contract | `DONE` | CHG-05 | Medium | No |
-| CHG-07 | Remove dependency on the temporary bridge and finish state convergence | `DONE` | CHG-06 | Medium | No (internal) |
-| CHG-08 | Add explicit controlled and uncontrolled modes | `DONE` | CHG-07 | Medium | Potential; default remains compatible |
+| Change | Scope                                                                         | Status | Dependency                      | Risk        | Breaking                                                            |
+| ------ | ----------------------------------------------------------------------------- | ------ | ------------------------------- | ----------- | ------------------------------------------------------------------- |
+| CHG-01 | Add the `messages-change` contract and temporary reverse-sync bridge          | `DONE` | None                            | Medium      | No (bug fix)                                                        |
+| CHG-02 | Extract shared pure message-collection reducers                               | `DONE` | CHG-01                          | Low         | No                                                                  |
+| CHG-03 | Move regular message mutations to the top-level store                         | `DONE` | CHG-02                          | Medium      | No (bug fix)                                                        |
+| CHG-04 | Move diagnostic, tool, todo, and SSE updates to the top-level store           | `DONE` | CHG-03                          | Medium      | No (bug fix)                                                        |
+| CHG-05 | Separate cancellation data semantics from animation side effects              | `DONE` | CHG-04                          | High        | No (bug fix)                                                        |
+| CHG-06 | Add pre-render safety and a ready contract                                    | `DONE` | CHG-05                          | Medium      | No                                                                  |
+| CHG-07 | Remove dependency on the temporary bridge and finish state convergence        | `DONE` | CHG-06                          | Medium      | No (internal)                                                       |
+| CHG-08 | Add explicit controlled and uncontrolled modes                                | `DONE` | CHG-07                          | Medium      | Potential; default remains compatible                               |
 | CHG-09 | Add `ChatRunController` and deprecate the old top-level animation entry point | `DONE` | CHG-07; preferably after CHG-08 | Medium-high | No for addition/deprecation; removal is Yes and deferred to a major |
 
 > All 9 changes are complete. CHG-08 and CHG-09 may ship in later minor releases and must not block CHG-01 through CHG-07.
@@ -212,15 +212,15 @@ Before moving every method, make existing top-level proxy calls synchronize the 
 
 ### Expected Impact
 
-| Area | Impact |
-|------|--------|
-| `packages/chat-messages/src` | Add event types; route internal mutations through one commit helper that emits the event |
-| `packages/chat/src/components/chat.ts` | Listen for child changes, synchronize the top-level property, and re-emit from `<i-chat>` |
-| `packages/chat-messages/src/index.ts` | Export event detail, reason, and source types |
-| `packages/chat/src/index.ts` | Re-export event types |
-| `packages/chat-messages/test` | Add event count, detail, no-op, and failure tests |
-| `packages/chat/test` or equivalent shell test location | Add top-level synchronization tests; establish a minimal test entry if needed |
-| `docs/component-api.md` | Document the event |
+| Area                                                   | Impact                                                                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `packages/chat-messages/src`                           | Add event types; route internal mutations through one commit helper that emits the event  |
+| `packages/chat/src/components/chat.ts`                 | Listen for child changes, synchronize the top-level property, and re-emit from `<i-chat>` |
+| `packages/chat-messages/src/index.ts`                  | Export event detail, reason, and source types                                             |
+| `packages/chat/src/index.ts`                           | Re-export event types                                                                     |
+| `packages/chat-messages/test`                          | Add event count, detail, no-op, and failure tests                                         |
+| `packages/chat/test` or equivalent shell test location | Add top-level synchronization tests; establish a minimal test entry if needed             |
+| `docs/component-api.md`                                | Document the event                                                                        |
 
 ### Tasks
 
@@ -275,13 +275,13 @@ Move message-array operations that do not depend on the DOM out of `ChatMessages
 
 ### Expected Impact
 
-| Area | Impact |
-|------|--------|
-| `packages/chat-messages/src/message-collection-state.ts` (suggested new file) | Add pure reducers/helpers |
-| `packages/chat-messages/src/message-part-state.ts` | Reuse existing part helpers; do not duplicate them |
-| `packages/chat-messages/src/components/chat-messages.ts` | Use pure helpers plus `_commitMessages` |
-| `packages/chat-messages/src/index.ts` | Export helpers and types required by `@bndynet/ichat` |
-| `packages/chat-messages/test/message-body-baseline.test.ts` or a new test file | Add pure-function unit tests |
+| Area                                                                           | Impact                                                |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `packages/chat-messages/src/message-collection-state.ts` (suggested new file)  | Add pure reducers/helpers                             |
+| `packages/chat-messages/src/message-part-state.ts`                             | Reuse existing part helpers; do not duplicate them    |
+| `packages/chat-messages/src/components/chat-messages.ts`                       | Use pure helpers plus `_commitMessages`               |
+| `packages/chat-messages/src/index.ts`                                          | Export helpers and types required by `@bndynet/ichat` |
+| `packages/chat-messages/test/message-body-baseline.test.ts` or a new test file | Add pure-function unit tests                          |
 
 ### Minimum Reducer Capabilities
 
@@ -350,15 +350,15 @@ Make common, lower-risk data methods write directly to `<i-chat>.messages` inste
 
 ### Methods Migrated in This Change
 
-| Method | Final owner | Additional UI side effect |
-|--------|-------------|---------------------------|
-| `addMessage` | Top-level reducer and commit | Synchronize streaming state; the list remains the final derived event source |
-| `updateMessage` | Top-level reducer and commit | Same as above |
-| `appendPart` | Top-level reducer and commit | None |
-| `updatePart` | Top-level reducer and commit | None |
-| `removeMessage` | Top-level reducer and commit | Ask the list to remove reply blocks for the message |
-| `clear` | Top-level reducer and commit | Ask the list to clear presentation state |
-| `addErrorMessage` | Construct the message at the top level, then call `addMessage` | None |
+| Method            | Final owner                                                    | Additional UI side effect                                                    |
+| ----------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `addMessage`      | Top-level reducer and commit                                   | Synchronize streaming state; the list remains the final derived event source |
+| `updateMessage`   | Top-level reducer and commit                                   | Same as above                                                                |
+| `appendPart`      | Top-level reducer and commit                                   | None                                                                         |
+| `updatePart`      | Top-level reducer and commit                                   | None                                                                         |
+| `removeMessage`   | Top-level reducer and commit                                   | Ask the list to remove reply blocks for the message                          |
+| `clear`           | Top-level reducer and commit                                   | Ask the list to clear presentation state                                     |
+| `addErrorMessage` | Construct the message at the top level, then call `addMessage` | None                                                                         |
 
 ### Expected Impact
 
@@ -423,12 +423,12 @@ Move update paths that return diagnostics or normalize backend events while pres
 
 ### Expected Impact
 
-| Area | Risk |
-|------|------|
-| `packages/chat/src/components/chat.ts` | Return values must remain identical to the child implementation |
-| `packages/chat-messages/src/update-results.ts` | Reuse result types without changing reason unions |
-| `message-part-state.ts`, `tool-call-state.ts`, `todo-state.ts` | Reuse validation logic; do not copy rules |
-| SSE docs and tests | Preserve envelope normalization and failure results |
+| Area                                                           | Risk                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `packages/chat/src/components/chat.ts`                         | Return values must remain identical to the child implementation |
+| `packages/chat-messages/src/update-results.ts`                 | Reuse result types without changing reason unions               |
+| `message-part-state.ts`, `tool-call-state.ts`, `todo-state.ts` | Reuse validation logic; do not copy rules                       |
+| SSE docs and tests                                             | Preserve envelope normalization and failure results             |
 
 ### Tasks
 
@@ -554,15 +554,15 @@ Define safe behavior for every public method when child elements do not yet exis
 
 ### Method Categories and Target Behavior
 
-| Category | Methods | Behavior before first render |
-|----------|---------|------------------------------|
-| Pure data | add/update/part/tool/todo/SSE/remove/clear/cancel/addErrorMessage | Execute synchronously |
-| Top-level UI state | Confirmation APIs | Execute synchronously, preserving current behavior |
-| Safe no-op | `focusInput()` | Do not throw; consumer may call again after ready |
-| DOM query with result | `updateProgressStep()` | Return `false`; do not throw |
-| List presentation | `showError()` / `dismissError()` | Store the latest pending state and apply it after child readiness |
-| Reply blocks | `replyMessage()` / `clearReplyMessage()` | Queue lightweight commands with stable keys and replay them in order after readiness |
-| Renderer registry | `registerRenderer()` | Execute immediately, preserving current behavior |
+| Category              | Methods                                                           | Behavior before first render                                                         |
+| --------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Pure data             | add/update/part/tool/todo/SSE/remove/clear/cancel/addErrorMessage | Execute synchronously                                                                |
+| Top-level UI state    | Confirmation APIs                                                 | Execute synchronously, preserving current behavior                                   |
+| Safe no-op            | `focusInput()`                                                    | Do not throw; consumer may call again after ready                                    |
+| DOM query with result | `updateProgressStep()`                                            | Return `false`; do not throw                                                         |
+| List presentation     | `showError()` / `dismissError()`                                  | Store the latest pending state and apply it after child readiness                    |
+| Reply blocks          | `replyMessage()` / `clearReplyMessage()`                          | Queue lightweight commands with stable keys and replay them in order after readiness |
+| Renderer registry     | `registerRenderer()`                                              | Execute immediately, preserving current behavior                                     |
 
 ### Ready API
 
@@ -647,18 +647,18 @@ Confirm that every `<i-chat>` message mutation commits at the top level and that
 
 ### Final Method Ownership Matrix
 
-| Category | Top-level store | Child / DOM | Notes |
-|----------|-----------------|-------------|-------|
-| add/update/remove/clear | Yes | Presentation cleanup only | Data writes only at the top level |
-| append/update part | Yes | No | Pure data |
-| tool/todo/SSE | Yes | No | Pure data plus diagnostics |
-| cancel | Yes | Animation freeze | Hybrid behavior without double writes |
-| error banner | No | Yes | Local UI state |
-| reply blocks | No | Yes | Local UI state |
-| progress override | No | Yes | Currently a rendered DOM override, not structured part state |
-| scroll/new-content | No | Yes | Local UI state |
-| input focus | No | Yes | DOM behavior |
-| confirmations | Top-level UI state | No | Separate from the message store |
+| Category                | Top-level store    | Child / DOM               | Notes                                                        |
+| ----------------------- | ------------------ | ------------------------- | ------------------------------------------------------------ |
+| add/update/remove/clear | Yes                | Presentation cleanup only | Data writes only at the top level                            |
+| append/update part      | Yes                | No                        | Pure data                                                    |
+| tool/todo/SSE           | Yes                | No                        | Pure data plus diagnostics                                   |
+| cancel                  | Yes                | Animation freeze          | Hybrid behavior without double writes                        |
+| error banner            | No                 | Yes                       | Local UI state                                               |
+| reply blocks            | No                 | Yes                       | Local UI state                                               |
+| progress override       | No                 | Yes                       | Currently a rendered DOM override, not structured part state |
+| scroll/new-content      | No                 | Yes                       | Local UI state                                               |
+| input focus             | No                 | Yes                       | DOM behavior                                                 |
+| confirmations           | Top-level UI state | No                        | Separate from the message store                              |
 
 ### Acceptance Criteria
 
@@ -922,17 +922,17 @@ If a dedicated `@bndynet/ichat` test script is added, also run that workspace co
 
 ## 10. Risk Register
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Parent and child both emit `messages-change` | Medium | High | Parent stops child propagation and re-emits; test one event per mutation |
-| A stale top-level binding overwrites newer child state | Medium | High | Synchronous commits, no asynchronous bridge, and reference assertions |
-| Cancellation data and row events form a loop | High | High | Separate non-event DOM freeze method; isolate cancellation in CHG-05 |
-| Cancellation reveals buffered text or loses the hint | Medium | Medium | Define semantics before implementation and add browser tests |
-| Standalone child behavior regresses | Medium | High | Shared reducers and parameterized tests for both entry points |
-| Asynchronous controlled write-back creates a stale base | Medium | High | Explicit mode, synchronous acceptance contract, uncontrolled default |
-| No-op identity optimization affects an implicit refresh | Low | Low | Document the behavior and render only for real data changes |
-| Presentation state is accidentally moved into message data | Medium | Medium | Enforce the final ownership matrix during review |
-| Old `StreamingController` API is removed too early | Low | High | Deprecate only in 2.x; defer removal explicitly to a major |
+| Risk                                                       | Probability | Impact | Mitigation                                                               |
+| ---------------------------------------------------------- | ----------- | ------ | ------------------------------------------------------------------------ |
+| Parent and child both emit `messages-change`               | Medium      | High   | Parent stops child propagation and re-emits; test one event per mutation |
+| A stale top-level binding overwrites newer child state     | Medium      | High   | Synchronous commits, no asynchronous bridge, and reference assertions    |
+| Cancellation data and row events form a loop               | High        | High   | Separate non-event DOM freeze method; isolate cancellation in CHG-05     |
+| Cancellation reveals buffered text or loses the hint       | Medium      | Medium | Define semantics before implementation and add browser tests             |
+| Standalone child behavior regresses                        | Medium      | High   | Shared reducers and parameterized tests for both entry points            |
+| Asynchronous controlled write-back creates a stale base    | Medium      | High   | Explicit mode, synchronous acceptance contract, uncontrolled default     |
+| No-op identity optimization affects an implicit refresh    | Low         | Low    | Document the behavior and render only for real data changes              |
+| Presentation state is accidentally moved into message data | Medium      | Medium | Enforce the final ownership matrix during review                         |
+| Old `StreamingController` API is removed too early         | Low         | High   | Deprecate only in 2.x; defer removal explicitly to a major               |
 
 ## 11. Release and Version Guidance
 
@@ -1033,6 +1033,7 @@ Future AI agents must execute one Change at a time:
   - `cancelMessage()` still uses `'message:update'` reason (will be `'message:cancel'` in CHG-05)
   - Bridge is temporary — CHG-03 through CHG-07 will progressively remove delegation
 - Follow-up work: CHG-02 (extract pure reducers)
+
 ### CHG-02 Implementation Record
 
 - Status: DONE
@@ -1192,22 +1193,22 @@ Future AI agents must execute one Change at a time:
 
 ## 14. Final Summary
 
-All 9 changes are complete.  The `<i-chat>` component now has a single-source message
+All 9 changes are complete. The `<i-chat>` component now has a single-source message
 state architecture.
 
 ### Before vs After
 
-| Aspect | Before (2.0.0) | After (refactor) |
-|--------|---------------|------------------|
-| **Message state** | Two divergent copies (chat + child), could lose data | Single source: `chat.messages`, always up-to-date |
-| **Sync timing** | `chat.messages` stale after `addMessage()` | Updated synchronously before method returns |
-| **Cancel events** | 2 `messages-change` with reason `message:update` | 1 event with reason `message:cancel` |
-| **Pre-render safety** | Methods throw if called before DOM ready | All safe: data executes, presentation queues |
-| **Cancel hint** | Could append twice on repeated calls | Idempotent — appended exactly once |
-| **Streaming detection** | Only checked the mutated message | Checks all messages (correct for multi-stream) |
-| **Lifecycle pushing** | `firstUpdated`/`updated` manually pushed properties | Template `.messages` one-way binding |
-| **Framework integration** | No standard pattern | `messages-change` event + `ready` promise + controlled mode |
-| **Response lifecycle** | `createStreamingController()` — animation only | `createRunController()` — full lifecycle (start/stream/complete/cancel/fail) |
+| Aspect                    | Before (2.0.0)                                       | After (refactor)                                                             |
+| ------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Message state**         | Two divergent copies (chat + child), could lose data | Single source: `chat.messages`, always up-to-date                            |
+| **Sync timing**           | `chat.messages` stale after `addMessage()`           | Updated synchronously before method returns                                  |
+| **Cancel events**         | 2 `messages-change` with reason `message:update`     | 1 event with reason `message:cancel`                                         |
+| **Pre-render safety**     | Methods throw if called before DOM ready             | All safe: data executes, presentation queues                                 |
+| **Cancel hint**           | Could append twice on repeated calls                 | Idempotent — appended exactly once                                           |
+| **Streaming detection**   | Only checked the mutated message                     | Checks all messages (correct for multi-stream)                               |
+| **Lifecycle pushing**     | `firstUpdated`/`updated` manually pushed properties  | Template `.messages` one-way binding                                         |
+| **Framework integration** | No standard pattern                                  | `messages-change` event + `ready` promise + controlled mode                  |
+| **Response lifecycle**    | `createStreamingController()` — animation only       | `createRunController()` — full lifecycle (start/stream/complete/cancel/fail) |
 
 ### Breaking Changes
 
@@ -1215,15 +1216,15 @@ state architecture.
 
 ### Key New APIs (all additive)
 
-| API | Type | Description |
-|-----|------|-------------|
-| `messages-change` event | Event | Emitted after every mutation; `bubbles: true`, `composed: true` |
-| `MessagesChangeDetail` | Type | Event detail with `messages`, `previousMessages`, `reason`, `source`, ids |
-| `ready` | Getter | `Promise<void>` — resolves after first render |
-| `messageMode` | Property | `'uncontrolled'` (default) or `'controlled'` |
-| `createRunController()` | Method | Returns `ChatRunController` for full response lifecycle |
-| `ChatRunController` | Class | `start()`/`appendPart()`/`appendText()`/`updatePart()`/`complete()`/`fail()`/`cancel()` |
-| `chat.messages` | Property | Now the authoritative store (was merely "bound to inner list") |
+| API                     | Type     | Description                                                                             |
+| ----------------------- | -------- | --------------------------------------------------------------------------------------- |
+| `messages-change` event | Event    | Emitted after every mutation; `bubbles: true`, `composed: true`                         |
+| `MessagesChangeDetail`  | Type     | Event detail with `messages`, `previousMessages`, `reason`, `source`, ids               |
+| `ready`                 | Getter   | `Promise<void>` — resolves after first render                                           |
+| `messageMode`           | Property | `'uncontrolled'` (default) or `'controlled'`                                            |
+| `createRunController()` | Method   | Returns `ChatRunController` for full response lifecycle                                 |
+| `ChatRunController`     | Class    | `start()`/`appendPart()`/`appendText()`/`updatePart()`/`complete()`/`fail()`/`cancel()` |
+| `chat.messages`         | Property | Now the authoritative store (was merely "bound to inner list")                          |
 
 ### Files Changed
 
@@ -1257,5 +1258,3 @@ flowchart TD
   Chat -->|"freezeMessageAnimation (non-event)"| List
   Chat -->|"showError / replyMessage / ..."| List
 ```
-
-

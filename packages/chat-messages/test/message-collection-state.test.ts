@@ -142,7 +142,7 @@ test('cancelMessageData creates new text part for hint when none exists', () => 
   assert.equal(parts.length, 2);
   assert.equal(parts[0].type, 'reasoning');
   assert.equal(parts[1].type, 'text');
-  assert.ok(((parts[1] as { type: 'text'; text: string }).text).includes('*— stopped —*'));
+  assert.ok((parts[1] as { type: 'text'; text: string }).text.includes('*— stopped —*'));
 });
 
 test('cancelMessageData returns original array when message not found', () => {

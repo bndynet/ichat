@@ -148,12 +148,8 @@ function requestQueuedConfirmations() {
       <el-button size="small" type="primary" @click="requestDefaultConfirmation">
         Normal
       </el-button>
-      <el-button size="small" type="danger" @click="requestDangerConfirmation">
-        Danger
-      </el-button>
-      <el-button size="small" @click="requestQueuedConfirmations">
-        Queue 3
-      </el-button>
+      <el-button size="small" type="danger" @click="requestDangerConfirmation"> Danger </el-button>
+      <el-button size="small" @click="requestQueuedConfirmations"> Queue 3 </el-button>
     </div>
     <div class="confirmation-demo-status">
       <span>Active: {{ activeTitle || 'none' }}</span>
@@ -183,12 +179,7 @@ function requestQueuedConfirmations() {
         <el-button size="small" text bg @click="draft += (draft ? ' ' : '') + '[file]'">
           Attach
         </el-button>
-        <el-button
-          size="small"
-          type="primary"
-          :disabled="!draft.trim()"
-          @click="sendDraft"
-        >
+        <el-button size="small" type="primary" :disabled="!draft.trim()" @click="sendDraft">
           Send
         </el-button>
       </div>

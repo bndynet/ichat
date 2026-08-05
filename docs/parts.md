@@ -206,12 +206,12 @@ The library ships only the `registerPartRenderer` capability — you define and 
 
 These are **two different extension points**:
 
-| | **`parts[]` types** (`file`, `source`, `x-*`) | **`registerCodeRenderer`** ([Custom renderers](./renderers.md#custom-renderers)) |
-|--|--|--|
-| **Where it lives** | Top-level entries in `message.parts` | Inside a **`text`** part’s markdown (fenced code block) |
-| **Registration** | Built-in renderers for `file` / `source`; `x-*` via `registerPartRenderer({ name, test, element \| render })` (falls back to JSON when unregistered) | `registerCodeRenderer({ name, test, render })` on the markdown pipeline |
-| **Streaming / updates** | Each part has its own `id` — patch with `updatePart` | Grows with the surrounding `text` part’s markdown stream |
-| **Good for** | Protocol-aligned blocks (files, citations, vendor parts), tool `resultParts` | Charts, KPI cards, forms, Mermaid — content authored as markdown |
+|                         | **`parts[]` types** (`file`, `source`, `x-*`)                                                                                                        | **`registerCodeRenderer`** ([Custom renderers](./renderers.md#custom-renderers)) |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Where it lives**      | Top-level entries in `message.parts`                                                                                                                 | Inside a **`text`** part’s markdown (fenced code block)                          |
+| **Registration**        | Built-in renderers for `file` / `source`; `x-*` via `registerPartRenderer({ name, test, element \| render })` (falls back to JSON when unregistered) | `registerCodeRenderer({ name, test, render })` on the markdown pipeline          |
+| **Streaming / updates** | Each part has its own `id` — patch with `updatePart`                                                                                                 | Grows with the surrounding `text` part’s markdown stream                         |
+| **Good for**            | Protocol-aligned blocks (files, citations, vendor parts), tool `resultParts`                                                                         | Charts, KPI cards, forms, Mermaid — content authored as markdown                 |
 
 Use **`registerCodeRenderer`** when the assistant’s answer is markdown and you want a fenced block (e.g. ` ```chart `). Use **`file` / `source` / `x-*` parts** when your backend already emits structured part arrays (Anthropic content blocks, Vercel AI SDK message parts, etc.) or when a block should update independently of the markdown body.
 

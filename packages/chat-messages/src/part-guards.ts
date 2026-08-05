@@ -32,17 +32,11 @@ function hasNonEmptyString(value: unknown): value is string {
 }
 
 export function isTodoItemStatus(value: unknown): value is TodoItemStatus {
-  return (
-    typeof value === 'string' &&
-    (TODO_ITEM_STATUSES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (TODO_ITEM_STATUSES as readonly string[]).includes(value);
 }
 
 export function isToolCallState(value: unknown): value is ToolCallState {
-  return (
-    typeof value === 'string' &&
-    (TOOL_CALL_STATES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (TOOL_CALL_STATES as readonly string[]).includes(value);
 }
 
 export function isTodoItem(value: unknown): value is TodoItem {

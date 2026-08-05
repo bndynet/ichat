@@ -24,8 +24,8 @@ onMounted(async () => {
 <template>
   <p class="mermaid-demo-hint">
     Mermaid colors come from optional <code>--chat-mermaid-*</code> tokens in
-    <code>apps/demo/styles.css</code> (teal accent + mint block fills in light, emerald tones in dark).
-    Remove that block to fall back to normal <code>--chat-*</code> only.
+    <code>apps/demo/styles.css</code> (teal accent + mint block fills in light, emerald tones in
+    dark). Remove that block to fall back to normal <code>--chat-*</code> only.
   </p>
   <i-chat-messages ref="chatRef"></i-chat-messages>
   <ExampleCodeDrawer title="Mermaid code example" :content="mermaidExample" />

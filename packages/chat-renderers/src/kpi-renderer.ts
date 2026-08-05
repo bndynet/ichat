@@ -1,5 +1,10 @@
 import type { BlockRenderer } from '@bndynet/ichat-messages';
-import { escapeHtml, renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from '@bndynet/ichat-messages';
+import {
+  escapeHtml,
+  renderCodeFallback,
+  wrapWithCodeToggle,
+  type RendererOptions,
+} from '@bndynet/ichat-messages';
 
 interface KpiData {
   label: string;

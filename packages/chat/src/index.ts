@@ -9,10 +9,7 @@ export type {
   ChatMessageMode,
 } from './components/chat.js';
 export { ChatRunController } from './controllers/chat-run-controller.js';
-export type {
-  ChatRunStatus,
-  ChatRunOptions,
-} from './controllers/chat-run-controller.js';
+export type { ChatRunStatus, ChatRunOptions } from './controllers/chat-run-controller.js';
 export type { ChatMutationOutcome } from './state/mutation-outcome.js';
 export type { ChatMiddleware } from './middleware/chat-middleware.js';
 export type { ChatPlugin } from './middleware/chat-plugin.js';

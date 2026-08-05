@@ -36,7 +36,9 @@ export class ConfirmationController implements ReactiveController {
     host.addController(this);
   }
 
-  hostConnected(): void { /* no-op */ }
+  hostConnected(): void {
+    /* no-op */
+  }
   hostDisconnected(): void {
     this.cancelAll();
   }
@@ -95,7 +97,7 @@ export class ConfirmationController implements ReactiveController {
         detail: result,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
     this._emitChange();
     this._host.requestUpdate();
@@ -103,10 +105,7 @@ export class ConfirmationController implements ReactiveController {
 
   /** Cancel the active confirmation and drain the queue. */
   cancelAll(): void {
-    const pending = [
-      ...(this.active ? [this.active] : []),
-      ...this._queue,
-    ];
+    const pending = [...(this.active ? [this.active] : []), ...this._queue];
     if (pending.length === 0) return;
 
     this.active = null;
@@ -123,7 +122,10 @@ export class ConfirmationController implements ReactiveController {
     return `confirm-${Date.now().toString(36)}-${this._idSeq.toString(36)}`;
   }
 
-  private _resultFor(item: PendingConfirmation, action: ChatConfirmationAction): ChatConfirmationResult {
+  private _resultFor(
+    item: PendingConfirmation,
+    action: ChatConfirmationAction,
+  ): ChatConfirmationResult {
     return {
       id: item.request.id,
       action,
@@ -142,7 +144,7 @@ export class ConfirmationController implements ReactiveController {
         },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 }

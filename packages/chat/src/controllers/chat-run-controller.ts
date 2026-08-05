@@ -8,12 +8,7 @@ import {
 
 // ── public types ─────────────────────────────────────────────────────
 
-export type ChatRunStatus =
-  | 'idle'
-  | 'streaming'
-  | 'completed'
-  | 'cancelled'
-  | 'error';
+export type ChatRunStatus = 'idle' | 'streaming' | 'completed' | 'cancelled' | 'error';
 
 export interface ChatRunOptions {
   /** Override the generated message id (default: auto-generated). */
@@ -48,7 +43,11 @@ export interface ChatMessageStorePort {
   cancelMessage(id: string, hint?: string): ChatMutationOutcome | void;
   appendPart(messageId: string, part: MessagePart): void;
   updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void;
-  tryUpdatePart(messageId: string, partId: string, patch: Partial<MessagePart>): MessagePartUpdateResult;
+  tryUpdatePart(
+    messageId: string,
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): MessagePartUpdateResult;
 }
 
 // ── controller ─────────────────────────────────────────────────────

@@ -70,11 +70,7 @@ export class ChatTextPart extends LitElement {
       }
 
       const now = performance.now();
-      const delay = streamingRenderDelayMs(
-        this.content.length,
-        now,
-        this._lastStreamingRenderAt,
-      );
+      const delay = streamingRenderDelayMs(this.content.length, now, this._lastStreamingRenderAt);
       if (delay > 0) {
         this._scheduleStreamingRender(delay);
         return;
@@ -91,7 +87,7 @@ export class ChatTextPart extends LitElement {
           detail: { changed: true },
           bubbles: true,
           composed: true,
-        })
+        }),
       );
       return;
     }
@@ -128,7 +124,7 @@ export class ChatTextPart extends LitElement {
         detail: { changed: true },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -181,7 +177,7 @@ export class ChatTextPart extends LitElement {
         detail: { changed: true },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -191,7 +187,7 @@ export class ChatTextPart extends LitElement {
         detail,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 

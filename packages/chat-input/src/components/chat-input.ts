@@ -125,7 +125,8 @@ export class ChatInput extends LitElement {
    * When true, logs speech-recognition milestones to the console (`console.debug`).
    * `voice-input` events are always dispatched for important kinds regardless of this flag.
    */
-  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics = false;
+  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics =
+    false;
 
   @state() private _value = '';
   @state() private _listening = false;
@@ -197,7 +198,7 @@ export class ChatInput extends LitElement {
         detail: payload,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -377,7 +378,7 @@ export class ChatInput extends LitElement {
         detail: { content },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
 
     this._value = '';
@@ -392,7 +393,7 @@ export class ChatInput extends LitElement {
       new CustomEvent('cancel', {
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -426,13 +427,15 @@ export class ChatInput extends LitElement {
             @input=${this._handleInput}
             @keydown=${this._handleKeydown}
           ></textarea>
-          ${this._listening
-            ? html`
+          ${
+            this._listening
+              ? html`
                 <div class="chat-input-listening-overlay" role="status" aria-live="polite">
                   <span class="chat-input-listening-overlay__label">${L.voiceListening}</span>
                 </div>
               `
-            : nothing}
+              : nothing
+          }
         </div>
         <div class="chat-input-toolbar">
           <div
@@ -443,8 +446,9 @@ export class ChatInput extends LitElement {
             <slot name="actions"></slot>
           </div>
           <div class="chat-input-toolbar-end">
-            ${this.streaming
-              ? html`
+            ${
+              this.streaming
+                ? html`
                   <button
                     class="chat-input-btn chat-input-cancel"
                     @click=${this._cancel}
@@ -454,9 +458,10 @@ export class ChatInput extends LitElement {
                     ${chatInputIcons.cancel()}
                   </button>
                 `
-              : html`
-                  ${showVoiceButton
-                    ? html`
+                : html`
+                  ${
+                    showVoiceButton
+                      ? html`
                         <button
                           type="button"
                           class="chat-input-btn chat-input-voice ${this._listening ? 'chat-input-voice--active' : ''}"
@@ -469,7 +474,8 @@ export class ChatInput extends LitElement {
                           ${this._listening ? chatInputIcons.stopDictation() : chatInputIcons.microphone()}
                         </button>
                       `
-                    : nothing}
+                      : nothing
+                  }
                   <button
                     class="chat-input-btn chat-input-send"
                     @click=${this._submit}
@@ -479,7 +485,8 @@ export class ChatInput extends LitElement {
                   >
                     ${chatInputIcons.send()}
                   </button>
-                `}
+                `
+            }
           </div>
         </div>
       </div>

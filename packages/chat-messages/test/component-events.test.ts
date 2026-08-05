@@ -157,11 +157,10 @@ test('part host enriches embedded part-action events from child components', () 
   assert.equal(partActions[0].partType, 'todo');
 
   // Already-enriched events are skipped
-  const alreadyEnriched = eventFromPath(
-    'part-action',
-    { kind: 'todo', messageId: message.id },
-    [todoElement, host],
-  );
+  const alreadyEnriched = eventFromPath('part-action', { kind: 'todo', messageId: message.id }, [
+    todoElement,
+    host,
+  ]);
   host._onPartAction(alreadyEnriched);
   assert.equal(alreadyEnriched.stopped, false);
   assert.equal(partActions.length, 1);

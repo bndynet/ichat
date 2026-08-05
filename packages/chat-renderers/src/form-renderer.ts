@@ -6,10 +6,23 @@
  * in chat-form.ts to keep this file focused on BlockRenderer registration.
  */
 import type { BlockRenderer } from '@bndynet/ichat-messages';
-import { renderCodeFallback, wrapWithCodeToggle, type RendererOptions } from '@bndynet/ichat-messages';
+import {
+  renderCodeFallback,
+  wrapWithCodeToggle,
+  type RendererOptions,
+} from '@bndynet/ichat-messages';
 import './chat-form.js';
 
-export type FormFieldType = 'text' | 'number' | 'email' | 'password' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date-range';
+export type FormFieldType =
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'password'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'radio'
+  | 'date-range';
 
 export interface FormField {
   name: string;
