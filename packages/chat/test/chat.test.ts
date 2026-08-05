@@ -41,6 +41,16 @@ type TestChatElement = HTMLElement & {
   addMessage(message: TestMessage): void;
   updateMessage(id: string, patch: Partial<TestMessage>): void;
   appendPart(messageId: string, part: Record<string, unknown>): void;
+  updatePart(messageId: string, partId: string, patch: Record<string, unknown>): void;
+  removeMessage(id: string): void;
+  clear(): void;
+  cancelMessage(id: string, hint?: string): void;
+  cancel(hint?: string): void;
+  tryUpdatePart(messageId: string, partId: string, patch: Record<string, unknown>): { ok: boolean };
+  tryUpdateToolCall(messageId: string, partId: string, patch: Record<string, unknown>): { ok: boolean };
+  tryUpdateTodoItem(messageId: string, partId: string, itemId: string, patch: Record<string, unknown>, revision?: number): { ok: boolean };
+  tryApplyMessagePartUpdateEvent(event: Record<string, unknown>): { ok: boolean };
+  tryApplyTodoItemUpdateEvent(event: Record<string, unknown>): { ok: boolean };
   createRunController(options?: { messageId?: string }): ChatRunController;
   showError(text: string, options?: { duration?: number }): void;
   addErrorMessage(error: string, text?: string): void;
@@ -288,6 +298,303 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
   chat.messageMode = 'uncontrolled';
   chat.addMessage({ id: 'owned-again', role: 'assistant', parts: [] });
   assert.deepEqual(chat.messages.map((message) => message.id), ['owned', 'owned-again']);
+}
+
+// ── Imperative mutation matrix (Store × ownership) ──────────────────────
+
+// removeMessage: uncontrolled commits immediately.
+{
+  const chat = createChat();
+  chat.messages = [
+    { id: 'a', role: 'assistant', parts: [] },
+    { id: 'b', role: 'assistant', parts: [] },
+  ];
+  chat.removeMessage('a');
+  assert.deepEqual(chat.messages.map((m) => m.id), ['b']);
+}
+
+// removeMessage: controlled emits a proposal, does not commit.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.messages = [
+    { id: 'a', role: 'assistant', parts: [] },
+    { id: 'b', role: 'assistant', parts: [] },
+  ];
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+
+  chat.removeMessage('a');
+  assert.deepEqual(chat.messages.map((m) => m.id), ['a', 'b']);
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0]?.controlled, true);
+  assert.deepEqual(changes[0]?.messages.map((m: TestMessage) => m.id), ['b']);
+}
+
+// clear: uncontrolled commits immediately.
+{
+  const chat = createChat();
+  chat.messages = [
+    { id: 'a', role: 'assistant', parts: [] },
+    { id: 'b', role: 'assistant', parts: [] },
+  ];
+  chat.clear();
+  assert.deepEqual(chat.messages, []);
+}
+
+// clear: controlled emits a proposal, does not commit.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.messages = [
+    { id: 'a', role: 'assistant', parts: [] },
+    { id: 'b', role: 'assistant', parts: [] },
+  ];
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+
+  chat.clear();
+  assert.deepEqual(chat.messages.map((m) => m.id), ['a', 'b']);
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0]?.controlled, true);
+  assert.deepEqual(changes[0]?.messages, []);
+}
+
+// cancelMessage: updates message with cancelled flag + hint in text, uncontrolled.
+{
+  const chat = createChat();
+  chat.addMessage({ id: 'streaming', role: 'assistant', parts: [{ type: 'text', id: 't1', text: 'generating...' }], streaming: true });
+  chat.cancelMessage('streaming', 'user cancelled');
+  const msg = chat.messages[0];
+  assert.equal(msg?.streaming, false);
+  assert.equal(msg?.cancelled, true);
+  const part = msg?.parts[0];
+  assert.equal(part?.type, 'text');
+  if (part?.type === 'text') assert.equal(part.text, 'generating...\n\nuser cancelled');
+}
+
+// cancelMessage: controlled emits a proposal.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    const detail = (event as CustomEvent<TestMessagesChangeDetail>).detail;
+    changes.push(detail);
+    chat.messages = detail.messages;
+  });
+  chat.addMessage({ id: 'streaming', role: 'assistant', parts: [], streaming: true });
+  chat.cancelMessage('streaming');
+
+  const lastChange = changes.at(-1)!;
+  const msg = lastChange.messages[0];
+  assert.equal(msg?.streaming, false);
+  assert.equal(msg?.cancelled, true);
+}
+
+// cancel: finds the streaming message, uncontrolled.
+{
+  const chat = createChat();
+  chat.addMessage({ id: 'done', role: 'assistant', parts: [], streaming: false });
+  chat.addMessage({ id: 'streaming', role: 'assistant', parts: [], streaming: true });
+  chat.cancel();
+  assert.equal(chat.messages[0]?.streaming, false);
+  assert.equal(chat.messages[0]?.cancelled, undefined);
+  assert.equal(chat.messages[1]?.streaming, false);
+  assert.equal(chat.messages[1]?.cancelled, true);
+}
+
+// updatePart: uncontrolled commits immediately.
+{
+  const chat = createChat();
+  chat.addMessage({ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] });
+  chat.updatePart('msg', 'p1', { text: 'new' });
+  const part = chat.messages[0]?.parts[0];
+  assert.equal(part?.type, 'text');
+  if (part?.type === 'text') assert.equal(part.text, 'new');
+}
+
+// updatePart: controlled emits a proposal, does not commit.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+
+  chat.updatePart('msg', 'p1', { text: 'new' });
+  // Store returns the host messages since the proposal was not accepted.
+  const part = chat.messages[0]?.parts[0];
+  assert.equal(part?.type, 'text');
+  if (part?.type === 'text') assert.equal(part.text, 'old');
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0]?.controlled, true);
+}
+
+// appendPart: uncontrolled commits immediately (ownership-specific).
+{
+  const chat = createChat();
+  chat.addMessage({ id: 'msg', role: 'assistant', parts: [] });
+  chat.appendPart('msg', { type: 'text', id: 'p1', text: 'appended' });
+  assert.equal(chat.messages[0]?.parts.length, 1);
+  assert.equal(chat.messages[0]?.parts[0]?.id, 'p1');
+}
+
+// appendPart: controlled emits a proposal, does not commit.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+  chat.messages = [{ id: 'msg', role: 'assistant', parts: [] }];
+
+  chat.appendPart('msg', { type: 'text', id: 'p1', text: 'proposed' });
+  assert.equal(chat.messages[0]?.parts.length, 0);
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0]?.controlled, true);
+  assert.deepEqual(changes[0]?.messages[0]?.parts.map((p: Record<string, unknown>) => p.id), ['p1']);
+}
+
+// tryUpdatePart: controlled proposal with diagnostic result.
+{
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+
+  const result = chat.tryUpdatePart('msg', 'p1', { text: 'updated' });
+  assert.equal(result.ok, true);
+}
+
+// tryUpdateToolCall: controlled, valid patch.
+{
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  chat.messages = [{
+    id: 'msg', role: 'assistant', parts: [
+      { type: 'tool-call', id: 'tc1', toolCallId: 'call-1', toolName: 'search', state: 'executing', args: {} },
+    ],
+  }];
+
+  const result = chat.tryUpdateToolCall('msg', 'tc1', { state: 'output-available', result: 'done' });
+  assert.equal(result.ok, true);
+}
+
+// tryUpdateTodoItem: controlled, valid patch.
+{
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  chat.messages = [{
+    id: 'msg', role: 'assistant', parts: [
+      { type: 'todo', id: 'td1', revision: 1, items: [{ id: 'item1', title: 'task', status: 'pending' }] },
+    ],
+  }];
+
+  const result = chat.tryUpdateTodoItem('msg', 'td1', 'item1', { status: 'done' });
+  assert.equal(result.ok, true);
+}
+
+// tryApplyMessagePartUpdateEvent: controlled, valid SSE-like payload.
+{
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  chat.messages = [{ id: 'msg', role: 'assistant', parts: [{ type: 'text', id: 'p1', text: 'old' }] }];
+
+  const result = chat.tryApplyMessagePartUpdateEvent({
+    messageId: 'msg',
+    partId: 'p1',
+    patch: { text: 'from-event' },
+  });
+  assert.equal(result.ok, true);
+}
+
+// tryApplyTodoItemUpdateEvent: controlled, valid SSE-like payload.
+{
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  chat.messages = [{
+    id: 'msg', role: 'assistant', parts: [
+      { type: 'todo', id: 'td1', revision: 1, items: [{ id: 'item1', title: 'task', status: 'pending' }] },
+    ],
+  }];
+
+  // normalizeTodoItemUpdateEvent reads status/title/description at the top
+  // level (SSE event shape), not nested under a `patch` key.
+  const result = chat.tryApplyTodoItemUpdateEvent({
+    messageId: 'msg',
+    partId: 'td1',
+    itemId: 'item1',
+    status: 'done',
+  });
+  assert.equal(result.ok, true);
+}
+
+// Sequential controlled mutations (remove → add → update) chain proposals.
+{
+  const chat = createChat();
+  const changes: TestMessagesChangeDetail[] = [];
+  chat.messageMode = 'controlled';
+  chat.addEventListener('messages-change', (event) => {
+    changes.push((event as CustomEvent<TestMessagesChangeDetail>).detail);
+  });
+  chat.messages = [
+    { id: 'a', role: 'assistant', parts: [] },
+    { id: 'b', role: 'assistant', parts: [] },
+  ];
+
+  chat.removeMessage('a');
+  chat.addMessage({ id: 'c', role: 'assistant', parts: [] });
+  chat.updateMessage('c', { streaming: true });
+
+  assert.equal(changes.length, 3);
+  assert.deepEqual(changes[2]?.messages.map((m: TestMessage) => m.id), ['b', 'c']);
+  assert.equal(changes[2]?.messages[1]?.streaming, true);
+}
+
+// ── Ownership × event contract ──────────────────────────────────────────
+
+// messages-change detail carries accurate previousMessages in both modes.
+{
+  const chat = createChat();
+  chat.messages = [{ id: 'base', role: 'assistant', parts: [] }];
+
+  chat.addEventListener('messages-change', (event) => {
+    const detail = (event as CustomEvent<TestMessagesChangeDetail>).detail;
+    assert.deepEqual(detail.previousMessages.map((m: TestMessage) => m.id), ['base']);
+    assert.deepEqual(detail.messages.map((m: TestMessage) => m.id), ['base', 'new']);
+  });
+  chat.addMessage({ id: 'new', role: 'assistant', parts: [] });
+}
+
+// controlled events are cancelable; uncontrolled are not.
+{
+  // Controlled
+  const controlled = createChat();
+  controlled.messageMode = 'controlled';
+  let ctrlCancelable: boolean | undefined;
+
+  controlled.addEventListener('messages-change', (event) => {
+    ctrlCancelable = event.cancelable;
+  });
+  controlled.addMessage({ id: 'p', role: 'assistant', parts: [] });
+  assert.equal(ctrlCancelable, true);
+
+  // Uncontrolled
+  const uncontrolled = createChat();
+  let uncCancelable: boolean | undefined;
+
+  uncontrolled.addEventListener('messages-change', (event) => {
+    uncCancelable = event.cancelable;
+  });
+  uncontrolled.addMessage({ id: 'q', role: 'assistant', parts: [] });
+  assert.equal(uncCancelable, false);
 }
 
 // An async beforeSend middleware holds the busy lock and blocks re-entry.

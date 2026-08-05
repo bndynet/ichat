@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iChat Store × Ownership Browser Tests</title>
+    <style>
+      :root {
+        color: #172033;
+        background: #f5f7fb;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      body { margin: 0; padding: 24px; }
+      main { max-width: 960px; margin: 0 auto; }
+      h1 { margin: 0 0 4px; font-size: 22px; }
+      .meta { margin: 0 0 16px; color: #5c667a; font-size: 13px; }
+      #status { font-weight: 600; margin-bottom: 12px; }
+      #status[data-state="running"] { color: #315efb; }
+      #status[data-state="passed"] { color: #08783e; }
+      #status[data-state="failed"] { color: #b42318; }
+      .results { border: 1px solid #dce1eb; border-radius: 10px; background: #fff; }
+      .result {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 10px 14px; border-bottom: 1px solid #e7eaf0; font-size: 13px;
+      }
+      .result:last-child { border-bottom: 0; }
+      .result .icon { flex-shrink: 0; width: 18px; text-align: center; }
+      .result.pass .icon { color: #08783e; }
+      .result.fail .icon { color: #b42318; }
+      .result .name { font-weight: 600; min-width: 280px; }
+      .result .detail { color: #5c667a; }
+      .result.fail .detail { color: #b42318; }
+      #chat-host {
+        position: fixed; left: -9999px; top: 0; width: 400px; height: 600px;
+        border: 1px solid #dce1eb; visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Store × Ownership Browser Tests</h1>
+      <p class="meta">
+        Rendered <code>&lt;i-chat&gt;</code> behaviour in a real browser DOM.
+        Tests cover uncontrolled/controlled mutations, child-component sync,
+        event contracts, and busy-state reflection.
+      </p>
+      <div id="status" data-state="running">Running…</div>
+      <div class="results" id="results"></div>
+    </main>
+    <!-- Off-screen host for rendered component tests -->
+    <div id="chat-host"></div>
+    <script type="module" src="./store-ownership.test.ts"></script>
+  </body>
+</html>
