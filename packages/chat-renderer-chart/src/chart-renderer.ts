@@ -82,6 +82,8 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
   } catch {
     return renderCodeFallback('chart', code);
   }
+  // JSON.parse("null") / JSON.parse("123") → not an object
+  if (!input || typeof input !== 'object') return renderCodeFallback('chart', code);
 
   const options: ChartOptions = { ...(input.options ?? {}) };
 

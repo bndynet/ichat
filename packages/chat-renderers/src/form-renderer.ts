@@ -76,6 +76,8 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
   } catch {
     return renderCodeFallback('form', code);
   }
+  // JSON.parse("null") / JSON.parse("123") → not an object
+  if (!schema || typeof schema !== 'object') return renderCodeFallback('form', code);
 
   const formId = schema.id ?? nextFormId();
   const safeData = escapeAttr(JSON.stringify(schema));
