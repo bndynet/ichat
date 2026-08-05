@@ -93,10 +93,6 @@ export class ScrollController implements ReactiveController {
       if (el) el.scrollTop = el.scrollHeight;
     };
 
-    // First scroll is synchronous for immediate response — the ResizeObserver
-    // fires after layout, so scrollHeight is already up-to-date.
-    apply();
-
     // Multi-pass: nested shadow/custom elements (mermaid, forms) often
     // finish layout after the first frame.
     requestAnimationFrame(() => {
@@ -160,6 +156,11 @@ export class ScrollController implements ReactiveController {
       this._resizeObserver = new ResizeObserver(() => {
         if (this._autoScroll) {
           this._resizeScrollLock = true;
+          // Sync scroll for instant response — ResizeObserver fires after layout,
+          // so scrollHeight is already up-to-date.  The following scrollToBottom()
+          // adds RAF multi-pass for late-arriving nested content (mermaid, forms).
+          const scrollEl = this._host.renderRoot?.querySelector<HTMLElement>(this._scrollSelector);
+          if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
           this.scrollToBottom();
           clearTimeout(this._resizeDebounceTimer);
           this._resizeDebounceTimer = setTimeout(() => {
