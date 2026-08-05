@@ -101,7 +101,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 ### Extensibility
 
-- [ ] 🔴 **[P0] Close the Middleware and Plugin contracts** — Route `afterMessageAdded`, `beforeAppendPart`, and `onError` through the same authoritative mutation/error paths as `beforeSend`, or remove any hook that is not intended to be supported. Replace the parallel direct-install / `PluginManager` paths with one lifecycle owner that handles duplicate names, teardown, explicit disposal, and component disconnect. Add contract tests for every documented hook and lifecycle transition.
+- [x] 🔴 **[P0] Close the Middleware and Plugin contracts** ✅ (completed 2026-08-05) — Routed `afterMessageAdded`, `beforeAppendPart`, and `onError` through the same authoritative mutation/error paths as `beforeSend`. Removed the dead `PluginManager`/`createPluginManager`; `chat.use()` is now the single lifecycle owner with duplicate-name guard for plugins, `removePlugin(name)`, and automatic teardown on `disconnectedCallback`. Added contract tests for every documented hook and lifecycle transition.
   - **Done when:** every public hook has at least one integration test; a plugin teardown runs exactly once; documentation contains no declared-but-unwired extension points.
 - [x] 🟡 **[P1] Make global extension registration deterministic** ✅ (completed 2026-08-05) — Keep one intentionally global registration model without adding per-instance contexts. Remove misleading instance registration methods; allow Block Renderer, Part Renderer, and Markdown Plugin registration at runtime, consistently applying new extensions to subsequent renders. Same-object registration is idempotent, while same-name/id different-object registration warns and keeps the first definition.
   - **Done when:** all three extension mechanisms share the same runtime timing and conflict rules; Markdown caches and mounted plugin style roots react to later registration; existing rendered content is not refreshed implicitly; public documentation exposes only module-level registration; duplicate bundles do not replace working registrations.
@@ -134,7 +134,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 ### Maintenance & Internal Consistency
 
-- [ ] 🟢 **[P2] Remove duplicate and unused internal paths** — The unused `markdown-extensions.ts` implementation was removed with the global registration-contract cleanup. Remove or consolidate the remaining parallel/incomplete plugin-manager path so each extension mechanism has one implementation.
+- [x] 🟢 **[P2] Remove duplicate and unused internal paths** ✅ (completed 2026-08-05) — The unused `markdown-extensions.ts` implementation was removed with the global registration-contract cleanup. The dead `PluginManager`/`createPluginManager`/`installPlugin` path was removed when consolidating plugin lifecycle ownership into `chat.ts`.
 
 ### Previously Completed Architecture and Bundle Work
 

@@ -5,7 +5,10 @@ import type { Chat } from '../components/chat.js';
  *
  * Plugins are installed via `chat.use(plugin)` and can register middleware,
  * block renderers, part renderers, or perform any setup.  Return an optional
- * teardown function to clean up when the plugin is removed.
+ * teardown function to clean up when the plugin is removed via
+ * `chat.removePlugin(name)` or component disconnect.
+ *
+ * Duplicate plugin names are rejected — only the first registration is kept.
  *
  * @example
  * ```ts
@@ -31,65 +34,11 @@ export interface ChatPlugin {
   /**
    * Called when the plugin is installed.
    * @param chat — The `<i-chat>` element instance.
-   * @returns Optional cleanup function called when `removePlugin(name)` is invoked.
+   * @returns Optional cleanup function called when `removePlugin(name)` is invoked
+   *   or the component is disconnected.
    */
   install(chat: Chat): void | (() => void);
 
   /** Optional semantic version for compatibility checks. */
   version?: string;
-}
-
-/**
- * Manages the lifecycle of registered plugins.
- */
-export interface PluginManager {
-  readonly plugins: ReadonlyMap<string, ChatPlugin>;
-  use(plugin: ChatPlugin): () => void;
-  remove(name: string): boolean;
-}
-
-export function createPluginManager(): PluginManager {
-  const plugins = new Map<string, ChatPlugin>();
-  const teardowns = new Map<string, () => void>();
-
-  return {
-    get plugins(): ReadonlyMap<string, ChatPlugin> {
-      return plugins;
-    },
-
-    use(plugin: ChatPlugin): () => void {
-      if (plugins.has(plugin.name)) {
-        // Replace existing plugin
-        const oldTeardown = teardowns.get(plugin.name);
-        oldTeardown?.();
-      }
-
-      plugins.set(plugin.name, plugin);
-
-      return () => {
-        plugins.delete(plugin.name);
-        const teardown = teardowns.get(plugin.name);
-        teardown?.();
-        teardowns.delete(plugin.name);
-      };
-    },
-
-    remove(name: string): boolean {
-      const teardown = teardowns.get(name);
-      teardown?.();
-      teardowns.delete(name);
-      return plugins.delete(name);
-    },
-  };
-}
-
-/**
- * Helper to install a plugin into a Chat element and capture its teardown.
- * @internal Used by `chat.use()` for plugin support.
- */
-export function installPlugin(chat: Chat, plugin: ChatPlugin): () => void {
-  const teardown = plugin.install(chat);
-  return () => {
-    teardown?.();
-  };
 }

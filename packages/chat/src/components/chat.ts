@@ -307,15 +307,21 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     return this._readyPromise;
   }
 
-  // ── Middleware ────────────────────────────────────────────────────
+  // ── Middleware & Plugin lifecycle ─────────────────────────────────
 
   private readonly _middlewareChain: MiddlewareChain = createMiddlewareChain();
+  private readonly _pluginDisposers = new Map<string, () => void>();
 
   /**
    * Register a middleware or plugin.
    *
-   * - `ChatMiddleware`: Returns a disposal function to unregister.
-   * - `ChatPlugin`: Calls `plugin.install(chat)` and returns its disposal function.
+   * - `ChatMiddleware`: Returns a disposal function to unregister. Duplicate
+   *   middleware names are allowed (each runs independently in FIFO order).
+   * - `ChatPlugin`: Calls `plugin.install(chat)` and returns its disposal
+   *   function. Duplicate plugin names are rejected — only the first
+   *   registration is kept and a warning is emitted.
+   *
+   * All plugins are automatically disposed on component disconnect.
    *
    * @example
    * ```ts
@@ -339,11 +345,37 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
     // Plugin
     if ('install' in middlewareOrPlugin) {
       const plugin = middlewareOrPlugin as ChatPlugin;
+      if (this._pluginDisposers.has(plugin.name)) {
+        console.warn(
+          `[i-chat] Plugin "${plugin.name}" is already installed. Keeping the first installation.`,
+        );
+        return () => {}; // no-op disposer for the rejected duplicate
+      }
       const teardown = plugin.install(this);
-      return () => teardown?.();
+      const dispose = () => {
+        try { teardown?.(); } catch { /* teardown must not throw */ }
+        this._pluginDisposers.delete(plugin.name);
+      };
+      this._pluginDisposers.set(plugin.name, dispose);
+      return dispose;
     }
     // Middleware
     return this._middlewareChain.use(middlewareOrPlugin as ChatMiddleware);
+  }
+
+  /**
+   * Remove a plugin by name and run its teardown.
+   *
+   * @returns `true` if a plugin with that name was installed and removed,
+   *   `false` if no such plugin was found.
+   */
+  removePlugin(name: string): boolean {
+    const dispose = this._pluginDisposers.get(name);
+    if (dispose) {
+      dispose();
+      return true;
+    }
+    return false;
   }
 
   constructor() {
@@ -360,7 +392,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   // presentation proxy methods stay in this component.
 
   addMessage(message: ChatMessage): void {
-    this._store.addMessage(message);
+    const processed = this._middlewareChain.executeAfterMessageAdded(message);
+    if (processed == null) return; // dropped by middleware
+    this._store.addMessage(processed);
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
@@ -368,7 +402,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   appendPart(messageId: string, part: Parameters<ChatMessages['appendPart']>[1]): void {
-    this._store.appendPart(messageId, part);
+    const processed = this._middlewareChain.executeBeforeAppendPart(messageId, part);
+    if (processed == null) return; // dropped by middleware
+    this._store.appendPart(messageId, processed);
   }
 
   updatePart(
@@ -396,7 +432,17 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   addErrorMessage(error: string, text = ''): void {
-    this._store.addErrorMessage(error, text);
+    this._middlewareChain.executeOnError(error);
+    const msg: ChatMessage = {
+      id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      role: 'assistant',
+      parts: text ? [{ type: 'text', id: `err-text-${Date.now()}`, text }] : [],
+      error,
+      timestamp: Date.now(),
+    };
+    const processed = this._middlewareChain.executeAfterMessageAdded(msg);
+    if (processed == null) return; // dropped by middleware
+    this._store.addMessage(processed);
   }
 
   // ── Diagnostic / tool / todo / SSE (CHG-04) ──────────────────────
@@ -464,6 +510,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   }
 
   showError(text: string, options?: { duration?: number }): void {
+    this._middlewareChain.executeOnError(text);
     if (!this._isChildReady()) {
       // Replace any previous pending error with the newest.
     this._pendingCommands.clear();
@@ -666,6 +713,12 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   override disconnectedCallback(): void {
     this._confirmCtrl.cancelAll();
     this._pendingCommands.clear();
+    // Dispose all plugins. Errors in individual teardowns are caught so
+    // one broken plugin cannot prevent the rest from cleaning up.
+    for (const [, dispose] of this._pluginDisposers) {
+      try { dispose(); } catch { /* teardown must not prevent disconnect */ }
+    }
+    this._pluginDisposers.clear();
     super.disconnectedCallback();
   }
 

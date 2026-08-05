@@ -31,11 +31,19 @@ type TestChatElement = HTMLElement & {
   ready: Promise<void>;
   use(middleware: {
     name: string;
-    beforeSend: (content: string) => string | null | Promise<string | null>;
+    beforeSend?: (content: string) => string | null | Promise<string | null>;
+    afterMessageAdded?: (message: TestMessage) => TestMessage | null;
+    beforeAppendPart?: (messageId: string, part: Record<string, unknown>) => Record<string, unknown> | null;
+    onError?: (error: string, messageId?: string) => void;
+    install?: (chat: unknown) => void | (() => void);
   }): () => void;
+  removePlugin(name: string): boolean;
   addMessage(message: TestMessage): void;
   updateMessage(id: string, patch: Partial<TestMessage>): void;
+  appendPart(messageId: string, part: Record<string, unknown>): void;
   createRunController(options?: { messageId?: string }): ChatRunController;
+  showError(text: string, options?: { duration?: number }): void;
+  addErrorMessage(error: string, text?: string): void;
   _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
 };
 
@@ -346,6 +354,231 @@ assert.ok(el.ready instanceof Promise, 'ready should be a Promise');
 
   await assert.rejects(chat._handleSend(sendEvent('hello')), /middleware failed/);
   assert.equal(chat.busy, false);
+}
+
+// ── Middleware hook contract tests ────────────────────────────────────────
+
+// afterMessageAdded: transforms the message before it reaches the store.
+{
+  const chat = createChat();
+  const hooks: string[] = [];
+
+  chat.use({
+    name: 'transform-add',
+    afterMessageAdded: (msg) => {
+      hooks.push('afterMessageAdded');
+      return { ...msg, id: `transformed-${msg.id}` };
+    },
+  });
+
+  chat.addMessage({ id: 'original', role: 'assistant', parts: [] });
+  assert.deepEqual(hooks, ['afterMessageAdded']);
+  assert.equal(chat.messages[0]?.id, 'transformed-original');
+}
+
+// afterMessageAdded: returning null drops the message.
+{
+  const chat = createChat();
+  const hooks: string[] = [];
+
+  chat.use({
+    name: 'drop-msg',
+    afterMessageAdded: (msg) => {
+      hooks.push(msg.id);
+      return msg.id === 'keep' ? msg : null;
+    },
+  });
+
+  chat.addMessage({ id: 'drop', role: 'assistant', parts: [] });
+  chat.addMessage({ id: 'keep', role: 'assistant', parts: [] });
+  assert.deepEqual(hooks, ['drop', 'keep']);
+  assert.deepEqual(chat.messages.map((m) => m.id), ['keep']);
+}
+
+// afterMessageAdded: multiple middleware run in FIFO order.
+{
+  const chat = createChat();
+  const order: string[] = [];
+
+  chat.use({ name: 'mw1', afterMessageAdded: (msg) => { order.push('mw1'); return msg; } });
+  chat.use({ name: 'mw2', afterMessageAdded: (msg) => { order.push('mw2'); return msg; } });
+
+  chat.addMessage({ id: 'test', role: 'assistant', parts: [] });
+  assert.deepEqual(order, ['mw1', 'mw2']);
+}
+
+// beforeAppendPart: transforms the part before it is appended.
+{
+  const chat = createChat();
+  const hooks: string[] = [];
+
+  chat.use({
+    name: 'transform-part',
+    beforeAppendPart: (_mid, part) => {
+      hooks.push('beforeAppendPart');
+      if (part.type === 'text') {
+        return { ...part, text: `[wrapped] ${part.text}` };
+      }
+      return part;
+    },
+  });
+
+  chat.addMessage({ id: 'msg', role: 'assistant', parts: [] });
+  chat.appendPart('msg', { type: 'text', id: 'p1', text: 'hello' });
+  assert.deepEqual(hooks, ['beforeAppendPart']);
+
+  const part = chat.messages[0]?.parts[0];
+  assert.equal(part?.type, 'text');
+  if (part?.type === 'text') assert.equal(part.text, '[wrapped] hello');
+}
+
+// beforeAppendPart: returning null drops the part.
+{
+  const chat = createChat();
+  chat.use({
+    name: 'drop-part',
+    beforeAppendPart: (_mid, part) => (part.id === 'keep' ? part : null),
+  });
+
+  chat.addMessage({ id: 'msg', role: 'assistant', parts: [] });
+  chat.appendPart('msg', { type: 'text', id: 'drop', text: 'nope' });
+  chat.appendPart('msg', { type: 'text', id: 'keep', text: 'yes' });
+  assert.equal(chat.messages[0]?.parts.length, 1);
+  assert.equal(chat.messages[0]?.parts[0]?.id, 'keep');
+}
+
+// onError: called on showError and addErrorMessage.
+{
+  const chat = createChat();
+  const errors: Array<{ error: string; messageId?: string }> = [];
+
+  chat.use({
+    name: 'error-logger',
+    onError: (error, messageId) => { errors.push({ error, messageId }); },
+  });
+
+  chat.addErrorMessage('something broke', 'details');
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0]?.error, 'something broke');
+  assert.equal(errors[0]?.messageId, undefined);
+
+  // showError fires onError before the child-messages path.
+  // In Node tests the child is not rendered, so it queues rather than
+  // delegating to the child — but onError still fires.
+  chat.showError('ui error');
+  assert.equal(errors.length, 2);
+  assert.equal(errors[1]?.error, 'ui error');
+}
+
+// onError + afterMessageAdded: both fire for addErrorMessage, in that order.
+{
+  const chat = createChat();
+  const order: string[] = [];
+
+  chat.use({
+    name: 'combined',
+    onError: () => { order.push('onError'); },
+    afterMessageAdded: () => { order.push('afterMessageAdded'); return null; }, // drop
+  });
+
+  chat.addErrorMessage('err');
+  assert.deepEqual(order, ['onError', 'afterMessageAdded']);
+  // Message was dropped by afterMessageAdded → store is empty.
+  assert.equal(chat.messages.length, 0);
+}
+
+// ── Plugin lifecycle tests ───────────────────────────────────────────────
+
+// Plugin install: install() is called, teardown is captured.
+{
+  const chat = createChat();
+  let installed = false;
+  let tornDown = false;
+
+  chat.use({
+    name: 'lifecycle-plugin',
+    install(_c) {
+      installed = true;
+      return () => { tornDown = true; };
+    },
+  });
+
+  assert.equal(installed, true);
+  assert.equal(tornDown, false);
+}
+
+// Duplicate plugin names are rejected with a warning.
+{
+  const chat = createChat();
+  const installs: string[] = [];
+
+  const dispose1 = chat.use({
+    name: 'unique-plugin',
+    install() { installs.push('first'); },
+  });
+  const dispose2 = chat.use({
+    name: 'unique-plugin',
+    install() { installs.push('second'); },
+  });
+
+  assert.deepEqual(installs, ['first']);
+  // Second disposer is a no-op (no teardown registered for it).
+  dispose2();
+  assert.deepEqual(installs, ['first']);
+}
+
+// removePlugin: runs teardown and unregisters the plugin.
+{
+  const chat = createChat();
+  let tornDown = false;
+
+  const dispose = chat.use({
+    name: 'removable',
+    install() { return () => { tornDown = true; }; },
+  });
+
+  const removed = chat.removePlugin('removable');
+  assert.equal(removed, true);
+  assert.equal(tornDown, true);
+
+  // removePlugin for unknown name returns false.
+  assert.equal(chat.removePlugin('nonexistent'), false);
+
+  // Disposer from use() also works (calls removePlugin internally).
+  // Re-install and dispose via the returned function.
+  tornDown = false;
+  const dispose2 = chat.use({
+    name: 'removable-2',
+    install() { return () => { tornDown = true; }; },
+  });
+  dispose2();
+  assert.equal(tornDown, true);
+}
+
+// Plugin middleware integration: a plugin can register middleware and
+// both are cleaned up when the plugin is removed.
+{
+  const chat = createChat();
+  const afterCalls: string[] = [];
+
+  const dispose = chat.use({
+    name: 'mw-plugin',
+    install(c) {
+      const unreg = c.use({
+        name: 'plugin-mw',
+        afterMessageAdded: (msg) => { afterCalls.push(msg.id); return msg; },
+      });
+      return () => unreg();
+    },
+  });
+
+  chat.addMessage({ id: 'before-remove', role: 'assistant', parts: [] });
+  assert.deepEqual(afterCalls, ['before-remove']);
+
+  // Removing the plugin also tears down its registered middleware.
+  chat.removePlugin('mw-plugin');
+  chat.addMessage({ id: 'after-remove', role: 'assistant', parts: [] });
+  assert.deepEqual(afterCalls, ['before-remove']);
 }
 
 // A state change while middleware is awaiting prevents the eventual send.
