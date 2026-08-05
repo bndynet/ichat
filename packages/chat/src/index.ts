@@ -87,6 +87,7 @@ export type {
   CustomPartOf,
   PartOf,
   ExtendedMessagePart,
+  ExtendedChatMessage,
   PartFactoryOptions,
   ChatLabels,
   ComposerLabels,

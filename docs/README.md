@@ -2,6 +2,10 @@
 
 In-depth design and reference docs. For installation and a runnable quick start, see the [project README](../README.md).
 
+## Framework integration
+
+- [React](./react.md) — ref binding, props on React 19 vs 18, event listening, controlled mode, TypeScript declaration merging, Next.js / SSR.
+
 ## Core concepts
 
 - [Message model](./message-model.md) — message roles (`ChatMessageRole`), common `ChatMessage` fields, and the structured `parts[]` body (factories, streaming/updating).

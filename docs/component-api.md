@@ -12,7 +12,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `messages` | `ChatMessage[]` | `[]` | The authoritative message array. Write directly (`chat.messages = [...]`) to replace all messages, or use imperative methods (`addMessage`, etc.) for incremental updates. When using the generic `Chat<TExtraParts>` type (see [Generic type support](#generic-type-support)), `parts` carry fully typed custom `x-*` extensions. |
+| `messages` | `ExtendedChatMessage<TExtraParts>[]` (`ChatMessage[]` by default) | `[]` | The authoritative message array. Write directly (`chat.messages = [...]`) to replace all messages, or use imperative methods (`addMessage`, etc.) for incremental updates. When using the generic `Chat<TExtraParts>` type (see [Generic type support](#generic-type-support)), `parts` carry fully typed custom `x-*` extensions that narrow on `part.type`. |
 | `config` | `ChatConfig` | `{}` | Avatars, `locale`, `labels` (all UI strings — see [Localization](./localization.md)), date separators, etc. |
 | `emptyText` | `string` | `''` | Plain text when there are no messages and no `empty` slot |
 | `placeholder` | `string` | `''` | Default `<i-chat-input>` placeholder (ignored when using `slot="input"`). Empty → localized default from `config.locale` / `config.labels.composer.placeholder` |
@@ -164,18 +164,20 @@ registerMarkdownPlugin({
 `<i-chat>` is generic over custom part types, enabling full type-checking and autocomplete for host-defined `x-*` extensions.
 
 ```typescript
-import type { Chat, CustomPartOf, PartOf, ExtendedMessagePart } from '@bndynet/ichat';
+import type { Chat, CustomPartOf, PartOf, ExtendedChatMessage } from '@bndynet/ichat';
 
-// 1. Define your custom part data types
-interface MyParts {
+// 1. Describe your custom part data as a **type alias**, not an interface.
+//    An interface has no implicit index signature, so it does not satisfy the
+//    `Record<`x-${string}`, unknown>` constraint that `Chat<TExtraParts>` imposes.
+type MyParts = {
   'x-weather': { temp: number; humidity: number; unit: 'C' | 'F' };
   'x-map': { lat: number; lng: number; zoom: number };
-}
+};
 
 // 2. Cast the element to Chat<YourParts>
 const chat = document.querySelector('i-chat') as Chat<MyParts>;
 
-// 3. Custom parts are now fully typed
+// 3. Custom parts are now fully typed and narrow on `part.type`
 chat.messages.forEach((msg) => {
   msg.parts.forEach((part) => {
     if (part.type === 'x-weather') {
@@ -186,24 +188,43 @@ chat.messages.forEach((msg) => {
       part.data.lat;     // ✅ number
       part.data.zoom;    // ✅ number
     }
+    if (part.type === 'x-unknown') {
+      // ❌ compile error — 'x-unknown' is not declared in MyParts
+    }
   });
 });
 ```
+
+Once you supply a mapping, the open-ended `CustomPart` (whose `data` is `unknown`) is
+removed from the part union and replaced by `CustomPartOf<MyParts>`. That is what makes
+`part.data` narrow to a concrete shape instead of staying `unknown`. The trade-off is
+deliberate: a `Chat<MyParts>` promises that every `x-*` part it carries is one you
+declared. If you also handle parts outside the mapping, add them to `MyParts` (use
+`unknown` as the data type for the ones you do not care about) or work with the
+non-generic `Chat`.
 
 **Type helpers:**
 
 | Helper | Signature | Description |
 |--------|-----------|-------------|
 | `Chat<TExtraParts>` | `Chat<{ 'x-*': Data }>` | The generic `<i-chat>` element type; defaults to `Chat<{}>` (plain `ChatMessage[]`). |
+| `ExtendedChatMessage<T>` | `ExtendedChatMessage<{ 'x-*': Data }>` | `ChatMessage` whose `parts` carry typed custom parts. This is the element's `messages` item type. |
+| `ExtendedMessagePart<T>` | `ExtendedMessagePart<{ 'x-*': Data }>` | The built-in `MessagePart` union with the untyped `CustomPart` swapped for `CustomPartOf<T>`. |
 | `CustomPartOf<T>` | `CustomPartOf<{ 'x-*': Data }>` | Produces a typed `CustomPart` discriminated union from a mapping. |
 | `PartOf<M, T>` | `PartOf<ChatMessage, 'text'>` | Extracts the part(s) matching a given type string from a message. |
-| `ExtendedMessagePart<T>` | `ExtendedMessagePart<{ 'x-*': Data }>` | `MessagePart` union extended with typed custom parts. |
+
+With no mapping, `ExtendedChatMessage` and `ExtendedMessagePart` collapse back to plain
+`ChatMessage` and `MessagePart`, so the non-generic surface is unchanged.
 
 ```typescript
 // CustomPartOf example
 type WeatherPart = CustomPartOf<MyParts>;
 //   = CustomPart & { type: 'x-weather'; data: { temp: number; humidity: number; unit: 'C' | 'F' } }
 //   | CustomPart & { type: 'x-map'; data: { lat: number; lng: number; zoom: number } }
+
+// ExtendedChatMessage example — assignable to plain ChatMessage
+declare const typed: ExtendedChatMessage<MyParts>;
+const plain: ChatMessage = typed; // ✅ widening always works
 
 // PartOf example (works with plain ChatMessage too)
 type TextParts = PartOf<ChatMessage, 'text'>;      // TextPart

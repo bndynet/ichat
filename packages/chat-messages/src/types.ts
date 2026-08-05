@@ -307,7 +307,14 @@ export type PartOf<
  *
  * When `TExtraParts` is the default `{}` (empty mapping), this resolves to
  * plain `MessagePart` — fully backward-compatible.  When a mapping is
- * provided, the resulting union includes the narrowed `CustomPart` types.
+ * provided, the open-ended {@link CustomPart} is **replaced** by the narrowed
+ * union from {@link CustomPartOf}.  Replacing rather than adding is what makes
+ * `part.type === 'x-weather'` narrow `part.data` to the declared shape: leaving
+ * `CustomPart` in the union would keep matching every `x-*` discriminant and
+ * collapse `data` back to `unknown`.
+ *
+ * Declare a key as `unknown` (e.g. `{ 'x-legacy': unknown }`) to keep an
+ * untyped escape hatch for parts whose payload is not known ahead of time.
  *
  * @typeParam TExtraParts — A mapping of `x-*` type strings to their data types.
  *
@@ -320,7 +327,25 @@ export type PartOf<
  */
 export type ExtendedMessagePart<
   TExtraParts extends Record<`x-${string}`, unknown> = {},
-> = MessagePart | CustomPartOf<TExtraParts>;
+> = [keyof TExtraParts] extends [never]
+  ? MessagePart
+  : Exclude<MessagePart, CustomPart> | CustomPartOf<TExtraParts>;
+
+/**
+ * A {@link ChatMessage} whose `parts` carry typed custom extensions.
+ *
+ * Uses `Omit` + re-declaration rather than `ChatMessage & { parts: … }`: an
+ * intersection would leave `parts` as `MessagePart[] & ExtendedMessagePart<T>[]`,
+ * and discriminant narrowing does not distribute across an intersection of
+ * unions, so `part.data` would stay `unknown`.
+ *
+ * Resolves to exactly `ChatMessage` for the default empty mapping.
+ */
+export type ExtendedChatMessage<
+  TExtraParts extends Record<`x-${string}`, unknown> = {},
+> = [keyof TExtraParts] extends [never]
+  ? ChatMessage
+  : Omit<ChatMessage, 'parts'> & { parts: ExtendedMessagePart<TExtraParts>[] };
 
 export interface ChatMessage {
   id: string;

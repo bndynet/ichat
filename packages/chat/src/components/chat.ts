@@ -7,7 +7,7 @@ import type {
   ChatMessage,
   ChatConfig,
   BlockRenderer,
-  ExtendedMessagePart,
+  ExtendedChatMessage,
   MessagesChangeDetail,
   MessagePartUpdateResult,
   ToolCallUpdateResult,
@@ -167,7 +167,7 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
    * `parts` array carries fully typed custom parts so host-defined `x-*`
    * extensions enjoy autocomplete and type-checking.
    */
-  @property({ type: Array }) messages: Array<ChatMessage & { parts: ExtendedMessagePart<TExtraParts>[] }> = [];
+  @property({ type: Array }) messages: ExtendedChatMessage<TExtraParts>[] = [];
 
   @property({ type: Object }) config: ChatConfig = {};
   @property() emptyText = '';
@@ -351,7 +351,9 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
         );
         return () => {}; // no-op disposer for the rejected duplicate
       }
-      const teardown = plugin.install(this);
+      // Any concrete `Chat<MyParts>` is assignable to `Chat<{}>`, but TypeScript
+      // cannot prove it while `TExtraParts` is still an unresolved type parameter.
+      const teardown = plugin.install(this as unknown as Chat);
       const dispose = () => {
         try { teardown?.(); } catch { /* teardown must not throw */ }
         this._pluginDisposers.delete(plugin.name);

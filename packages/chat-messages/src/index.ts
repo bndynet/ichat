@@ -96,6 +96,7 @@ export type {
   CustomPartOf,
   PartOf,
   ExtendedMessagePart,
+  ExtendedChatMessage,
   PartFactoryOptions,
 } from './types.js';
 export {

@@ -170,6 +170,8 @@ A message body is an ordered array of typed **`parts`** (there is no plain `cont
 
 ### Framework integration (Vue / React)
 
+**React users:** see the dedicated [React integration guide](docs/react.md) — ref binding, props on React 19 vs ≤ 18, event listening, controlled mode, TypeScript declaration merging, and Next.js/SSR.
+
 By default **`<i-chat>` owns its own message state**. Listen to `messages-change` for side effects like logging or persistence:
 
 ```js
@@ -322,6 +324,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 
 | Doc | Covers |
 |-----|--------|
+| [React integration](docs/react.md) | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
 | [Message model](docs/message-model.md) | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating |
 | [`<i-chat>` API](docs/component-api.md) | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware |
 | [Parts](docs/parts.md) | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts |
