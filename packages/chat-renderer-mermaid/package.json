@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-renderer-mermaid",
   "version": "3.1.0",
   "description": "Mermaid diagram fenced-code renderer for @bndynet/ichat: theme-aware diagrams with async rendering.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "web-components",
+    "lit",
+    "llm-ui",
+    "markdown",
+    "markdown-it-plugin",
+    "fenced-code",
+    "mermaid",
+    "diagram",
+    "flowchart"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -41,6 +55,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

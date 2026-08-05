@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-renderer-chart",
   "version": "3.1.0",
   "description": "Chart fenced-code renderer for @bndynet/ichat: bar, line, area, pie, and gauge charts via @bndynet/icharts.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "web-components",
+    "lit",
+    "llm-ui",
+    "markdown",
+    "markdown-it-plugin",
+    "fenced-code",
+    "chart",
+    "data-visualization",
+    "echarts"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -40,6 +54,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

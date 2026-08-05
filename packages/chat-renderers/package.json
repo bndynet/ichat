@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-renderers",
   "version": "3.1.0",
   "description": "Optional peer add-on for @bndynet/ichat-messages: JSON chart blocks, a markdown-it fence plugin, and hooks for more fenced-code renderers.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "web-components",
+    "lit",
+    "llm-ui",
+    "streaming",
+    "markdown",
+    "markdown-it",
+    "markdown-it-plugin",
+    "fenced-code",
+    "renderer"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -42,6 +56,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-messages",
   "version": "3.1.0",
   "description": "Lit 3 chat message UI as Web Components: Markdown + syntax highlighting, pluggable fenced-block renderers, collapsible reasoning, and streaming previews (bring your own composer).",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "chat-messages",
+    "web-components",
+    "custom-elements",
+    "lit",
+    "llm-ui",
+    "streaming",
+    "markdown",
+    "syntax-highlighting",
+    "reasoning"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -53,6 +67,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

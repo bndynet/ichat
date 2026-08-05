@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-renderer-katex",
   "version": "3.1.0",
   "description": "KaTeX math rendering plugin for @bndynet/ichat: $inline$ and $$display$$ LaTeX math via markdown-it-katex.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "web-components",
+    "lit",
+    "llm-ui",
+    "markdown",
+    "markdown-it-plugin",
+    "katex",
+    "latex",
+    "math",
+    "tex"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -40,6 +54,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

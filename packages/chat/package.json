@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat",
   "version": "3.1.0",
   "description": "Complete Lit 3 chat Web Component: messages + input. Register optional renderers (e.g. @bndynet/ichat-renderers) in your app.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "chat-component",
+    "web-components",
+    "custom-elements",
+    "lit",
+    "llm",
+    "llm-ui",
+    "streaming",
+    "markdown",
+    "typescript"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -42,6 +56,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"

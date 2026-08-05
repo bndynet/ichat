@@ -2,6 +2,20 @@
   "name": "@bndynet/ichat-input",
   "version": "3.1.0",
   "description": "Lit 3 chat input Web Component: auto-resize textarea, send button, streaming cancel, and keyboard shortcuts.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "chat-input",
+    "web-components",
+    "custom-elements",
+    "lit",
+    "llm-ui",
+    "streaming",
+    "composer",
+    "textarea",
+    "autosize"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -37,6 +51,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
   },
   "publishConfig": {
     "access": "public"
