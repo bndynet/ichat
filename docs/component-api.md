@@ -25,7 +25,7 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 | `voiceListeningLabel` | `string` | `''` | Forwarded to the default `<i-chat-input>` — text on the listening overlay. Empty → localized default from `config.locale` / `config.labels.composer.voiceListening` |
 | `voiceDiagnostics` | `boolean` | `false` | Forwarded to the default `<i-chat-input>` — enables `console.debug` for speech-recognition steps |
 
-**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `tryUpdatePart`, `updatePart`, `tryUpdateToolCall`, `tryUpdateTodoItem`, `tryApplyMessagePartUpdateEvent`, `tryApplyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateProgressStep`, `addErrorMessage`, `scrollToMessage`, `scrollToPart`, `registerCodeRenderer`, `registerMarkdownPlugin`, `focusInput`
+**Methods:** `requestConfirmation`, `clearConfirmations`, `addMessage`, `updateMessage`, `appendPart`, `tryUpdatePart`, `updatePart`, `tryUpdateToolCall`, `tryUpdateTodoItem`, `tryApplyMessagePartUpdateEvent`, `tryApplyTodoItemUpdateEvent`, `removeMessage`, `replyMessage`, `clearReplyMessage`, `clear`, `cancel`, `cancelMessage`, `showError`, `dismissError`, `updateProgressStep`, `addErrorMessage`, `scrollToMessage`, `scrollToPart`, `focusInput`
 
 **Events on `<i-chat>`:**
 
@@ -64,12 +64,12 @@ registerMarkdownPlugin({
 ```
 
 - **Idempotent** — registering the same object reference with the same `id` is a no-op.
-- **Conflict detection** — registering a different object under an already-used `id` throws a clear error.
+- **Conflict detection** — registering a different object under an already-used `id` warns and keeps the first registration.
 - **CSS auto-injection** — the `styles` string is automatically injected into every `<i-chat-messages>`, `<i-chat-message>`, `<i-chat-reasoning>`, and `<i-chat-tool-call>` shadow root via a shared constructable stylesheet.
 - **Cache invalidation** — the markdown render cache is flushed so re-renders pick up the extension.
-- For fenced-code-block renderers (chart, Mermaid, form, etc.), use `registerRenderer` instead. See [Renderers](./renderers.md).
+- For fenced-code-block renderers (chart, Mermaid, form, etc.), use the module-level `registerCodeRenderer` function. See [Renderers](./renderers.md).
 
-> **⚠️ Important:** All Markdown extensions — both `registerMarkdownPlugin` and `registerCodeRenderer` — **must** be registered **before** the first `<i-chat>` or `<i-chat-messages>` component connects to the DOM. Extensions registered after a component has already connected and rendered may not take effect on existing content. Always register extensions at module-init time, before any `<i-chat>` element is inserted into the document.
+> Block Renderers, Part Renderers, and Markdown Plugins use global module-level registries and may be registered at runtime. New registrations affect subsequent renders without automatically refreshing existing content. Re-registering the same object is an idempotent no-op; a different object with the same name/id produces a warning and keeps the first registration.
 
 ### Generic type support
 

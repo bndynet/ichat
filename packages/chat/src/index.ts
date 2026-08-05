@@ -24,7 +24,13 @@ export type {
 import type { BlockRenderer, PartRenderer } from '@bndynet/ichat-messages';
 import { rendererRegistry, partRendererRegistry } from '@bndynet/ichat-messages';
 
-/** Register a fenced-code block renderer for `<i-chat>` / `<i-chat-messages>`. */
+/**
+ * Register a fenced-code block renderer globally. Runtime registration is
+ * supported and affects subsequent renders.
+ *
+ * Re-registering the same object is a no-op. A different object with the same
+ * name warns and keeps the first registration.
+ */
 export function registerCodeRenderer(renderer: BlockRenderer): void {
   rendererRegistry.register(renderer);
 }
@@ -34,17 +40,14 @@ export function registerCodeRenderer(renderer: BlockRenderer): void {
  */
 export const registerRenderer = registerCodeRenderer;
 
-/** Register a renderer for host-defined `x-*` custom parts. */
+/** Register a renderer globally for host-defined `x-*` custom parts. */
 export function registerPartRenderer(renderer: PartRenderer): void {
   partRendererRegistry.register(renderer);
 }
 
 // Re-export markdown plugin API so consumers can register plugins
 // from the top-level @bndynet/ichat package.
-export {
-  registerMarkdownPlugin,
-  freezeMarkdownPlugins,
-} from '@bndynet/ichat-messages';
+export { registerMarkdownPlugin } from '@bndynet/ichat-messages';
 export type { MarkdownPlugin } from '@bndynet/ichat-messages';
 
 // Re-export commonly used types and utilities so consumers don't need

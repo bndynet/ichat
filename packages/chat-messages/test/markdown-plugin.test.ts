@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import type MarkdownIt from 'markdown-it';
 import {
   registerMarkdownPlugin,
-  freezeMarkdownPlugins,
   getMarkdownPluginStyles,
   getMarkdownPluginGlobalStyles,
   type MarkdownPlugin,
 } from '../src/renderers/markdown-plugins.js';
+import { md } from '../src/renderers/markdown-renderer.js';
+import { injectGlobalPluginCss, injectPluginCss } from '../src/renderers/plugin-styles.js';
 import { rendererRegistry } from '../src/renderers/registry.js';
+import { partRendererRegistry } from '../src/renderers/part-registry.js';
 import type { BlockRenderer } from '../src/types.js';
 
 function test(name: string, run: () => void): void {
@@ -30,16 +32,81 @@ function makePlugin(id: string, styles?: string, globalStyles?: string): Markdow
   };
 }
 
-// NOTE: Module-level state (registeredPlugins, frozen flag) is shared across
-// tests. Each test group uses unique plugin IDs to avoid cross-test interference.
-// The freeze tests run last since they permanently lock the registry.
+function captureWarnings(run: () => void): string[] {
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    warnings.push(args.map(String).join(' '));
+  };
+  try {
+    run();
+  } finally {
+    console.warn = originalWarn;
+  }
+  return warnings;
+}
+
+// NOTE: Module-level plugin state is shared across tests. Each test group uses
+// unique plugin IDs to avoid cross-test interference.
+
+test('mounted roots receive CSS from plugins registered later', () => {
+  interface FakeStyle {
+    textContent: string;
+    setAttribute(name: string): void;
+    remove(): void;
+  }
+
+  let rootStyle: FakeStyle | null = null;
+  const parent = {
+    firstChild: null,
+    querySelector: () => rootStyle,
+    insertBefore(style: FakeStyle) {
+      rootStyle = style;
+    },
+  };
+  const fakeDocument = {
+    createElement: () => ({
+      textContent: '',
+      setAttribute() { /* noop */ },
+      remove() {
+        rootStyle = null;
+      },
+    }),
+    head: {
+      firstChild: null,
+      querySelector: () => null,
+      insertBefore() { /* noop */ },
+    },
+  };
+  const globals = globalThis as typeof globalThis & { document?: Document };
+  const originalDocument = globals.document;
+  globals.document = fakeDocument as unknown as Document;
+
+  try {
+    const cleanup = injectPluginCss(parent as unknown as ParentNode);
+    assert.ok(rootStyle, 'an empty tracked style should be created on mount');
+    assert.equal(rootStyle.textContent, '');
+
+    registerMarkdownPlugin(makePlugin(
+      'test-runtime-plugin-css',
+      '.runtime-plugin { color: rebeccapurple; }',
+    ));
+    assert.match(rootStyle.textContent, /runtime-plugin/);
+
+    cleanup();
+    assert.equal(rootStyle, null);
+  } finally {
+    if (originalDocument) globals.document = originalDocument;
+    else delete globals.document;
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 1. Registration before mount succeeds
+// 1. Registration
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('registerMarkdownPlugin succeeds before freeze', () => {
-  const p = makePlugin('test-pre-freeze');
+test('registerMarkdownPlugin succeeds', () => {
+  const p = makePlugin('test-registration');
   // Should not throw.
   registerMarkdownPlugin(p);
 });
@@ -135,61 +202,122 @@ test('re-registering the same object does not re-run install', () => {
 // 4. Conflict detection (different object, same id)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('re-registering a different object with the same id is silently ignored', () => {
+test('markdown duplicate id warns and keeps the first registration', () => {
   const p1 = makePlugin('test-conflict');
   registerMarkdownPlugin(p1);
 
   const p2 = makePlugin('test-conflict'); // different object
-  assert.doesNotThrow(() => registerMarkdownPlugin(p2));
+  const warnings = captureWarnings(() => registerMarkdownPlugin(p2));
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Keeping the first registration/);
 });
 
 test('duplicate id does not run install twice', () => {
   const id = 'test-dup-install';
   let count = 0;
   registerMarkdownPlugin({ id, install: () => { count++; } });
-  registerMarkdownPlugin({ id, install: () => { count++; } });
+  captureWarnings(() => registerMarkdownPlugin({ id, install: () => { count++; } }));
   assert.equal(count, 1, 'install should only run once');
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 5. Registration after freeze is a warning, not an error
-// ═══════════════════════════════════════════════════════════════════════════════
-
-test('registerMarkdownPlugin does not throw after freezeMarkdownPlugins', () => {
-  freezeMarkdownPlugins();
-  assert.doesNotThrow(() => registerMarkdownPlugin(makePlugin('test-after-freeze')));
+test('block renderer duplicate name warns and keeps the first registration', () => {
+  const name = 'test-block-conflict';
+  const first: BlockRenderer = {
+    name,
+    test: () => true,
+    render: () => 'first',
+  };
+  const second: BlockRenderer = {
+    name,
+    test: () => true,
+    render: () => 'second',
+  };
+  rendererRegistry.register(first);
+  try {
+    const warnings = captureWarnings(() => rendererRegistry.register(second));
+    assert.equal(warnings.length, 1);
+    assert.equal(rendererRegistry.list().find((renderer) => renderer.name === name), first);
+  } finally {
+    rendererRegistry.unregister(name);
+  }
 });
 
-test('rendererRegistry.register does not throw after freeze', () => {
-  rendererRegistry.freeze();
-  assert.doesNotThrow(() =>
-    rendererRegistry.register({
-      name: 'test-after-freeze',
-      test: (lang: string) => lang === 'test',
-      render: (code: string) => `<pre>${code}</pre>`,
-    }),
-    /must be registered before iChat is mounted/,
-  );
+test('part renderer duplicate name warns and keeps the first registration', () => {
+  const name = 'test-part-conflict';
+  const first = { name, test: () => true, render: () => 'first' };
+  const second = { name, test: () => true, render: () => 'second' };
+  partRendererRegistry.register(first);
+  try {
+    const warnings = captureWarnings(() => partRendererRegistry.register(second));
+    assert.equal(warnings.length, 1);
+    assert.equal(partRendererRegistry.list().find((renderer) => renderer.name === name), first);
+  } finally {
+    partRendererRegistry.unregister(name);
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 6. freezeMarkdownPlugins is idempotent
+// 5. Runtime registration and removal
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('freezeMarkdownPlugins is idempotent', () => {
-  freezeMarkdownPlugins();
-  freezeMarkdownPlugins();
-  freezeMarkdownPlugins();
-  // After multiple freezes, registration should not throw (just warn).
-  assert.doesNotThrow(() => registerMarkdownPlugin(makePlugin('test-multi-freeze')));
+test('markdown plugins can register after markdown has already rendered', () => {
+  const marker = 'runtime-markdown-plugin';
+  const source = `\`${marker}\``;
+  assert.doesNotMatch(md.render(source), /runtime-plugin-applied/);
+
+  registerMarkdownPlugin({
+    id: 'test-runtime-markdown-plugin',
+    install(instance) {
+      const previous = instance.renderer.rules.code_inline;
+      instance.renderer.rules.code_inline = (tokens, index, options, env, self) => {
+        if (tokens[index].content === marker) {
+          return '<span class="runtime-plugin-applied">registered</span>';
+        }
+        return previous
+          ? previous(tokens, index, options, env, self)
+          : `<code>${instance.utils.escapeHtml(tokens[index].content)}</code>`;
+      };
+    },
+  });
+
+  assert.match(md.render(source), /runtime-plugin-applied/);
+});
+
+test('block renderers can register and unregister at runtime', () => {
+  const language = 'test-runtime-block';
+  const renderer: BlockRenderer = {
+    name: 'test-runtime-block-renderer',
+    test: (lang: string) => lang === language,
+    render: (code: string) => `<pre>${code}</pre>`,
+  };
+
+  assert.equal(rendererRegistry.getRenderer(language), undefined);
+  rendererRegistry.register(renderer);
+  assert.equal(rendererRegistry.getRenderer(language), renderer);
+  rendererRegistry.unregister(renderer.name);
+  assert.equal(rendererRegistry.getRenderer(language), undefined);
+});
+
+test('part renderers can register and unregister at runtime', () => {
+  const type = 'x-test-runtime-part';
+  const renderer = {
+    name: 'test-runtime-part-renderer',
+    test: (candidate: string) => candidate === type,
+    render: () => 'runtime',
+  };
+
+  assert.equal(partRendererRegistry.getRenderer(type), undefined);
+  partRendererRegistry.register(renderer);
+  assert.equal(partRendererRegistry.getRenderer(type), renderer);
+  partRendererRegistry.unregister(renderer.name);
+  assert.equal(partRendererRegistry.getRenderer(type), undefined);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 7. CSS injection functions are importable (smoke test)
+// 6. CSS injection functions are importable (smoke test)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('injectPluginCss and injectGlobalPluginCss are importable', async () => {
-  const mod = await import('../src/renderers/plugin-styles.js');
-  assert.equal(typeof mod.injectPluginCss, 'function');
-  assert.equal(typeof mod.injectGlobalPluginCss, 'function');
+test('injectPluginCss and injectGlobalPluginCss are importable', () => {
+  assert.equal(typeof injectPluginCss, 'function');
+  assert.equal(typeof injectGlobalPluginCss, 'function');
 });

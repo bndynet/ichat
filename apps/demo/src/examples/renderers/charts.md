@@ -1,13 +1,11 @@
 ## Register the chart renderer
 
-Register the renderer before adding any message that contains a `chart` fence.
+Import the renderer package before rendering a `chart` fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
 import '@bndynet/ichat'
-import { registerRenderer, textPart } from '@bndynet/ichat'
-import { chartRenderer } from '@bndynet/ichat-renderers'
-
-registerRenderer(chartRenderer)
+import '@bndynet/ichat-renderer-chart' // Auto-registers the chart renderer
+import { textPart } from '@bndynet/ichat'
 
 const chat = document.querySelector('i-chat-messages')
 ```

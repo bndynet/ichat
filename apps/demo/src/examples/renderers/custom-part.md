@@ -1,6 +1,6 @@
 ## Register a custom element renderer
 
-Register an `x-*` part type once, then add it to a normal message. The element receives the part data as a property.
+Register an `x-*` part type before adding a matching part. Registration may happen at startup or lazily after chat components have mounted. The element receives the part data as a property.
 
 ```js
 import '@bndynet/ichat'

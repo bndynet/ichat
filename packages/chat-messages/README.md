@@ -27,7 +27,12 @@ npm install @bndynet/ichat-messages
   output is sanitised by default, with `trusted: true` as an explicit opt-in for
   audited renderers that need rich output during streaming
 - **`registerMarkdownPlugin(plugin)`** — markdown-it plugins with auto CSS injection
-- **`registerPartRenderer(type, renderer)`** — custom `parts[]` type renderers (e.g. `file`, `source`, `x-*`)
+- **`registerPartRenderer(renderer)`** — custom `parts[]` type renderers (e.g. `file`, `source`, `x-*`)
+
+All three global registries support runtime registration. New extensions affect
+subsequently added or updated content without automatically refreshing existing
+rendered content. Same-object registration is idempotent, while a different
+object with the same name/id warns and keeps the first registration.
 
 ## Dependencies
 

@@ -1,5 +1,6 @@
 import { renderMarkdown, type MarkdownRenderOptions } from './markdown-renderer.js';
 import { morphHtmlInto } from './dom-morph.js';
+import { onRendererRegistryChange } from './registry.js';
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
   previousHtml?: string;
@@ -72,3 +73,7 @@ export function invalidateMarkdownCache(partId?: string): void {
     rawContentCache.clear();
   }
 }
+
+// A renderer registered at runtime must be visible the next time an existing
+// text part renders, even when its raw Markdown content has not changed.
+onRendererRegistryChange(() => invalidateMarkdownCache());

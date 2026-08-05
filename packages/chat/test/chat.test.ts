@@ -96,8 +96,9 @@ assert.equal(typeof el.dismissError, 'function');
 assert.equal(typeof el.requestConfirmation, 'function');
 assert.equal(typeof el.clearConfirmations, 'function');
 assert.equal(typeof el.createRunController, 'function');
-assert.equal(typeof el.registerRenderer, 'function');
 assert.equal(typeof el.use, 'function');
+assert.equal('registerCodeRenderer' in el, false);
+assert.equal('registerRenderer' in el, false);
 
 // ready returns a Promise
 assert.ok(el.ready instanceof Promise, 'ready should be a Promise');

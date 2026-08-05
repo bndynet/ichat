@@ -103,8 +103,8 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 - [ ] 🔴 **[P0] Close the Middleware and Plugin contracts** — Route `afterMessageAdded`, `beforeAppendPart`, and `onError` through the same authoritative mutation/error paths as `beforeSend`, or remove any hook that is not intended to be supported. Replace the parallel direct-install / `PluginManager` paths with one lifecycle owner that handles duplicate names, teardown, explicit disposal, and component disconnect. Add contract tests for every documented hook and lifecycle transition.
   - **Done when:** every public hook has at least one integration test; a plugin teardown runs exactly once; documentation contains no declared-but-unwired extension points.
-- [ ] 🟡 **[P1] Introduce a scoped `ExtensionContext`** — Keep a global default for the one-line setup, but allow each chat instance/application boundary to own its block renderers, part renderers, and Markdown plugins. Remove the mismatch where an instance exposes `registerCodeRenderer()` even though the global registry may already be frozen. Registration must return an explicit result instead of silently warning and doing nothing.
-  - **Done when:** two chat instances can use different extension sets; dynamic application boundaries do not depend on module import order; the global convenience path remains backward compatible.
+- [x] 🟡 **[P1] Make global extension registration deterministic** ✅ (completed 2026-08-05) — Keep one intentionally global registration model without adding per-instance contexts. Remove misleading instance registration methods; allow Block Renderer, Part Renderer, and Markdown Plugin registration at runtime, consistently applying new extensions to subsequent renders. Same-object registration is idempotent, while same-name/id different-object registration warns and keeps the first definition.
+  - **Done when:** all three extension mechanisms share the same runtime timing and conflict rules; Markdown caches and mounted plugin style roots react to later registration; existing rendered content is not refreshed implicitly; public documentation exposes only module-level registration; duplicate bundles do not replace working registrations.
 - [ ] 🟡 **[P1] Harden the Renderer result contract** — Replace the primary `trusted?: boolean` + raw HTML string convention with explicit result modes such as element, sanitized HTML, and internal trusted HTML. Keep untrusted rendering as the default, restrict trusted bypass to audited built-ins/capabilities, validate custom-element names, and preserve renderer error observability.
   - **Done when:** third-party renderers cannot bypass sanitization with an accidental boolean; sync/async/element renderers share one documented lifecycle and error contract.
 - [ ] 🟡 **[P1] Validate renderer input schemas at runtime** — Validate Form, Chart, and other JSON renderer payloads before property access or custom-element creation. Invalid data must produce a safe code fallback and a structured renderer diagnostic instead of relying on TypeScript assertions after `JSON.parse`.
@@ -134,7 +134,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 ### Maintenance & Internal Consistency
 
-- [ ] 🟢 **[P2] Remove duplicate and unused internal paths** — Delete or consolidate the unused `markdown-extensions.ts` implementation and the parallel/incomplete plugin-manager path after the selected contracts are in place. Keep one implementation per extension mechanism.
+- [ ] 🟢 **[P2] Remove duplicate and unused internal paths** — The unused `markdown-extensions.ts` implementation was removed with the global registration-contract cleanup. Remove or consolidate the remaining parallel/incomplete plugin-manager path so each extension mechanism has one implementation.
 
 ### Previously Completed Architecture and Bundle Work
 

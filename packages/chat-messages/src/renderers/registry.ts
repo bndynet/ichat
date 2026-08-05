@@ -1,28 +1,37 @@
 import type { BlockRenderer } from '../types.js';
 
+const changeListeners = new Set<() => void>();
+
+/** @internal Subscribe to changes that can affect fenced-block output. */
+export function onRendererRegistryChange(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => changeListeners.delete(listener);
+}
+
+function notifyChange(): void {
+  for (const listener of changeListeners) listener();
+}
+
 class RendererRegistry {
   private _renderers = new Map<string, BlockRenderer>();
-  private _frozen = false;
-
-  /** Freeze the registry so no new renderers can be registered. Idempotent. */
-  freeze(): void {
-    this._frozen = true;
-  }
 
   register(renderer: BlockRenderer): void {
-    if (this._frozen) {
+    const existing = this._renderers.get(renderer.name);
+    if (existing === renderer) return;
+    if (existing) {
       console.warn(
-        '[i-chat] Block renderers should be registered before iChat is mounted. ' +
-        'Call registerCodeRenderer() at module-init time, ' +
-        'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
+        `[i-chat] Block renderer "${renderer.name}" is already registered with a different object. ` +
+        'Keeping the first registration.',
       );
       return;
     }
+
     this._renderers.set(renderer.name, renderer);
+    notifyChange();
   }
 
   unregister(name: string): void {
-    this._renderers.delete(name);
+    if (this._renderers.delete(name)) notifyChange();
   }
 
   getRenderer(

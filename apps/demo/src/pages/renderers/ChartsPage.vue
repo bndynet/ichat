@@ -1,5 +1,6 @@
 <script setup>
 import '@bndynet/ichat';
+import '@bndynet/ichat-renderer-chart';
 import { onMounted, onUnmounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'

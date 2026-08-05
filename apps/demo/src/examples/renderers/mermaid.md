@@ -1,13 +1,11 @@
 ## Register the Mermaid renderer
 
-Register the renderer once before sending Markdown with Mermaid fences.
+Import the renderer package before rendering a Mermaid fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
 import '@bndynet/ichat'
-import { registerRenderer, textPart } from '@bndynet/ichat'
-import { mermaidRenderer } from '@bndynet/ichat-renderers'
-
-registerRenderer(mermaidRenderer)
+import '@bndynet/ichat-renderer-mermaid' // Auto-registers the Mermaid renderer
+import { textPart } from '@bndynet/ichat'
 
 const chat = document.querySelector('i-chat-messages')
 ```

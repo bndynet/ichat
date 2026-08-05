@@ -8,8 +8,8 @@
  * Usage:
  *   import '@bndynet/ichat-renderer-katex';
  *
- * Must be imported before the first `<i-chat>` or `<i-chat-messages>` element
- * connects to the DOM.
+ * May be imported at startup or lazy-loaded later. Runtime registration affects
+ * subsequent markdown renders.
  */
 
 import { registerMarkdownPlugin } from '@bndynet/ichat-messages';
@@ -148,4 +148,3 @@ registerMarkdownPlugin({
   styles: `.katex .katex-html[aria-hidden="true"] { display: none; }`,
   globalStyles: KATEX_FONTS,
 });
-

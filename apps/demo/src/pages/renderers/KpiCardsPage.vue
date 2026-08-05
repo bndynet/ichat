@@ -1,5 +1,6 @@
 <script setup>
 import '@bndynet/ichat';
+import '@bndynet/ichat-renderers';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'

@@ -33,10 +33,7 @@ export {
   invalidateMarkdownCache,
 } from './renderers/markdown-morph.js';
 export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
-export {
-  registerMarkdownPlugin,
-  freezeMarkdownPlugins,
-} from './renderers/markdown-plugins.js';
+export { registerMarkdownPlugin } from './renderers/markdown-plugins.js';
 export type { MarkdownPlugin } from './renderers/markdown-plugins.js';
 export { updateProgressStepStatus } from './renderers/progress-plugin.js';
 export type { ProgressStatus } from './renderers/progress-plugin.js';

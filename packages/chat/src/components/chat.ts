@@ -23,7 +23,6 @@ import {
   clearMessages,
 } from '@bndynet/ichat-messages';
 import { ChatInput } from '@bndynet/ichat-input';
-import { rendererRegistry } from '@bndynet/ichat-messages';
 import { ChatRunController } from '../controllers/chat-run-controller.js';
 import type { ChatRunOptions } from '../controllers/chat-run-controller.js';
 import { CommandQueue } from '../controllers/command-queue.js';
@@ -104,7 +103,7 @@ export interface ChatConfirmationChangeDetail {
  *
  * Bundles `<i-chat-messages>` and `<i-chat-input>`. Optional fenced-block
  * renderers (e.g. from `@bndynet/ichat-renderers`) should be registered with
- * `registerRenderer` from `@bndynet/ichat` before messages use those blocks.
+ * `registerCodeRenderer` from `@bndynet/ichat` before messages use those blocks.
  *
  * ## Slots
  *
@@ -509,18 +508,6 @@ export class Chat<TExtraParts extends Record<`x-${string}`, unknown> = {}> exten
   scrollToPart(partId: string): boolean {
     if (!this._isChildReady()) return false;
     return this._messages.scrollToPart(partId);
-  }
-
-  /** Register a fenced-code block renderer at runtime. */
-  registerCodeRenderer(renderer: BlockRenderer): void {
-    rendererRegistry.register(renderer);
-  }
-
-  /**
-   * @deprecated Use {@link registerCodeRenderer} instead.
-   */
-  registerRenderer(renderer: BlockRenderer): void {
-    this.registerCodeRenderer(renderer);
   }
 
   /**

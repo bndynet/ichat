@@ -1,10 +1,14 @@
 <script setup>
 import '@bndynet/ichat';
 import { onMounted, nextTick, ref } from 'vue';
-import { textPart } from '@bndynet/ichat';
+import { registerPartRenderer, textPart } from '@bndynet/ichat';
 import { nextId } from '../../composables/demo-data.js';
 import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
 import customPartExample from '../../examples/renderers/custom-part.md?raw';
+import { weatherElementRenderer, weatherStringRenderer } from '../../renderers/weather';
+
+registerPartRenderer(weatherElementRenderer);
+registerPartRenderer(weatherStringRenderer);
 
 const chatRef = ref(null);
 

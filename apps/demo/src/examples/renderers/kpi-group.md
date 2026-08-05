@@ -1,13 +1,11 @@
 ## Register the KPI group renderer
 
-Register `kpisRenderer` once to render a group of KPI cards from a single fence.
+Import the renderer package before rendering a `kpis` fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
 import '@bndynet/ichat'
-import { registerRenderer, textPart } from '@bndynet/ichat'
-import { kpisRenderer } from '@bndynet/ichat-renderers'
-
-registerRenderer(kpisRenderer)
+import '@bndynet/ichat-renderers' // Auto-registers the KPI renderers
+import { textPart } from '@bndynet/ichat'
 
 const chat = document.querySelector('i-chat-messages')
 ```

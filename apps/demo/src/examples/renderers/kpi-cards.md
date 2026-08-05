@@ -1,13 +1,11 @@
 ## Register the KPI renderer
 
-Register the single-card renderer before sending a `kpi` fence.
+Import the renderer package before rendering a `kpi` fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
 import '@bndynet/ichat'
-import { registerRenderer, textPart } from '@bndynet/ichat'
-import { kpiRenderer } from '@bndynet/ichat-renderers'
-
-registerRenderer(kpiRenderer)
+import '@bndynet/ichat-renderers' // Auto-registers the KPI renderers
+import { textPart } from '@bndynet/ichat'
 
 const chat = document.querySelector('i-chat-messages')
 ```

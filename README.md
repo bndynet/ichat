@@ -42,7 +42,7 @@ npm install @bndynet/ichat-messages
 
 ## Quick start (ES modules)
 
-Load **`@bndynet/ichat`** and, if you want chart / KPI / form / Mermaid fences, register **`@bndynet/ichat-renderers`** once **before** the first `<i-chat>` component connects to the DOM (see `apps/demo/bootstrap.ts` in this repo). All Markdown extensions — both `registerCodeRenderer` and `registerMarkdownPlugin` — must be registered at module-init time, before any `<i-chat>` or `<i-chat-messages>` element is inserted into the document:
+Load **`@bndynet/ichat`** and import optional renderer packages either at startup or lazily when their UI is needed. Block Renderers, Part Renderers, and Markdown Plugins can all be registered after components mount; new registrations affect subsequent renders:
 
 Custom fenced renderers are sanitised by default. The official renderer
 packages opt into the audited `trusted: true` streaming path internally, so no
@@ -159,6 +159,12 @@ extra security or performance configuration is required for normal use.
   });
 </script>
 ```
+
+Extension registration is global and remains available after components mount.
+New extensions affect newly added or subsequently updated content; existing
+rendered content is not refreshed automatically. Registering the same object
+again is a no-op; a different object with the same name/id produces a warning
+and keeps the first registration.
 
 A message body is an ordered array of typed **`parts`** (there is no plain `content` string — see [Message model](docs/message-model.md#message-body--parts)). Use **`addMessage`**, **`updateMessage`**, **`appendPart`**, **`updatePart`**, **`tryUpdateToolCall`**, **`tryUpdateTodoItem`**, **`removeMessage`**, **`replyMessage`**, **`clearReplyMessage`**, **`clear`**, and **`updateProgressStep`** on the same `<i-chat>` element (see the [`<i-chat>` API](docs/component-api.md)). **`createRunController()`** returns a helper that manages the full AI response lifecycle.
 

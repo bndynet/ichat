@@ -14,7 +14,6 @@ export interface MarkdownPlugin {
 const registeredPlugins = new Map<string, MarkdownPlugin>();
 let combinedStyles = '';
 let combinedGlobalStyles = '';
-let frozen = false;
 let onCssChange: (() => void) | null = null;
 
 /** Register a callback invoked whenever the combined plugin CSS changes. */
@@ -34,42 +33,25 @@ function recomputeCss(): void {
   onCssChange?.();
 }
 
-/** Freeze the plugin registry so no new plugins can be registered. Idempotent. */
-export function freezeMarkdownPlugins(): void {
-  frozen = true;
-}
-
 /**
  * Register a markdown-it plugin on the shared instance.
  *
  * - Same `id` with the same object reference: silent no-op (idempotent).
- * - Same `id` with a different object: throws — prevents accidental version
- *   conflicts or duplicate registration from separate bundles.
+ * - Same `id` with a different object: warns and keeps the first registration.
  * - Plugins are installed in registration order; fine-grained markdown-it
  *   rule ordering within a single plugin is controlled via
  *   `md.inline.ruler.before()` / `md.block.ruler.after()` etc.
  *
  * Plugins are permanent — once registered they cannot be unregistered.
- *
- * @throws If called after the first iChat component has connected to the DOM.
- * @throws If a different plugin is already registered under the same `id`.
+ * Registration is allowed at runtime and affects subsequent markdown renders.
  */
 export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
-  if (frozen) {
-    console.warn(
-      '[i-chat] Markdown plugins should be registered before iChat is mounted. ' +
-      'Call registerMarkdownPlugin() at module-init time, ' +
-      'before any <i-chat> or <i-chat-messages> element is inserted into the document.',
-    );
-  }
-
   const existing = registeredPlugins.get(ext.id);
   if (existing) {
     if (existing === ext) return;
     console.warn(
       `[i-chat] Markdown plugin "${ext.id}" is already registered with a different object. ` +
-      'This usually means two copies of the same plugin are loaded from separate bundles. ' +
-      'Skipping duplicate.',
+      'Keeping the first registration.',
     );
     return;
   }

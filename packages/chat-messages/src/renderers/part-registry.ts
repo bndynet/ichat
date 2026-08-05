@@ -9,6 +9,16 @@ class PartRendererRegistry {
   private _renderers = new Map<string, PartRenderer>();
 
   register(renderer: PartRenderer): void {
+    const existing = this._renderers.get(renderer.name);
+    if (existing === renderer) return;
+    if (existing) {
+      console.warn(
+        `[i-chat] Part renderer "${renderer.name}" is already registered with a different object. ` +
+        'Keeping the first registration.',
+      );
+      return;
+    }
+
     this._renderers.set(renderer.name, renderer);
   }
 

@@ -12,6 +12,8 @@ const GLOBAL_PLUGIN_ATTR = 'data-ichat-plugin-global';
 const trackedStyles = new Set<HTMLStyleElement>();
 
 onPluginCssChange(() => {
+  if (typeof document === 'undefined') return;
+
   const css = getMarkdownPluginStyles();
   for (const style of trackedStyles) {
     style.textContent = css;
@@ -48,21 +50,15 @@ export function injectPluginCss(parent: ParentNode): () => void {
 
   let style = parent.querySelector(`style[${PLUGIN_ATTR}]`) as HTMLStyleElement | null;
 
-  if (!css) {
-    if (style) {
-      trackedStyles.delete(style);
-      style.remove();
-    }
-    return () => {};
-  }
-
   if (!style) {
     style = document.createElement('style');
     style.setAttribute(PLUGIN_ATTR, '');
     parent.insertBefore(style, parent.firstChild);
-    trackedStyles.add(style);
   }
 
+  // Track the root even while CSS is empty so a plugin registered after this
+  // component mounted can populate the style element in place.
+  trackedStyles.add(style);
   style.textContent = css;
   return () => {
     trackedStyles.delete(style!);
@@ -98,4 +94,3 @@ export function injectGlobalPluginCss(): void {
 
   style.textContent = css;
 }
-

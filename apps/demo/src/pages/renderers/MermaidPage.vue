@@ -1,5 +1,6 @@
 <script setup>
 import '@bndynet/ichat';
+import '@bndynet/ichat-renderer-mermaid';
 import { onMounted, nextTick, ref } from 'vue'
 import { textPart } from '@bndynet/ichat'
 import { demoData, nextId } from '../../composables/demo-data.js'

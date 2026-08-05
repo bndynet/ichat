@@ -1,13 +1,11 @@
 ## Register the form renderer
 
-Register the renderer once, then send a JSON form definition in a `form` fence.
+Import the renderer package before rendering a `form` fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
 import '@bndynet/ichat'
-import { registerRenderer, textPart } from '@bndynet/ichat'
-import { formRenderer } from '@bndynet/ichat-renderers'
-
-registerRenderer(formRenderer)
+import '@bndynet/ichat-renderers' // Auto-registers the form renderer
+import { textPart } from '@bndynet/ichat'
 
 const chat = document.querySelector('i-chat-messages')
 ```

@@ -32,11 +32,14 @@ import {
   registerCodeRenderer,
   registerMarkdownPlugin,
   registerPartRenderer,
-  freezeMarkdownPlugins,
 } from '@bndynet/ichat';
 ```
 
 Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConfig`, etc.).
+
+These global module-level APIs support runtime registration. New extensions
+affect subsequently added or updated content without automatically refreshing
+existing rendered content.
 
 For custom `x-*` part types, use the generic `Chat<TExtraParts>` to get full type-checking of your custom part data — see [Generic type support](../../docs/component-api.md#generic-type-support) in the API docs.
 

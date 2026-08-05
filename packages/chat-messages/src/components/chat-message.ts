@@ -22,8 +22,6 @@ import './chat-part-host.js';
 import './chat-dots.js';
 import './chat-spinner.js';
 import { injectPluginCss } from '../renderers/plugin-styles.js';
-import { freezeMarkdownPlugins } from '../renderers/markdown-plugins.js';
-import { rendererRegistry } from '../renderers/registry.js';
 
 @customElement('i-chat-message')
 export class ChatMessageElement extends LitElement {
@@ -75,10 +73,6 @@ export class ChatMessageElement extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
-    // Freeze both registries on first mount — after this point, registering
-    // renderers or markdown plugins will throw a clear error.
-    rendererRegistry.freeze();
-    freezeMarkdownPlugins();
     this._pluginCleanup = injectPluginCss(this.shadowRoot!);
   }
 
