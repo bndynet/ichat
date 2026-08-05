@@ -153,7 +153,8 @@ export {
 } from './message-collection-state.js';
 export { normalizeHistoryMessages } from './normalize-history.js';
 export type { NormalizeHistoryOptions } from './normalize-history.js';
-export {  MessagePartUpdateApplyResult,
+export type {
+  MessagePartUpdateApplyResult,
   MessagePartLookupFailureReason,
   MessagePartLookupResult,
   MessagePartPatchResult,

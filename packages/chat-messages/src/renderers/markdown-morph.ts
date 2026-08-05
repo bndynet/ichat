@@ -3,6 +3,12 @@ import { morphHtmlInto } from './dom-morph.js';
 import { onRendererRegistryChange } from './registry.js';
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
+  /**
+   * HTML currently rendered in `el` for the *complete* `content`. A partial
+   * render (e.g. the streaming light pipeline, which only covers the text
+   * revealed so far) must not be passed here: on a `partId` cache hit it is
+   * morphed back into `el` as-is, which would pin the DOM to truncated HTML.
+   */
   previousHtml?: string;
   /** Optional part id for content-level caching (avoids re-render when raw markdown is unchanged). */
   partId?: string;

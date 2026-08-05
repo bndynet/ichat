@@ -26,6 +26,7 @@ import {
   normalizeTodoItemUpdateEvent,
   cancelMessageData,
 } from '@bndynet/ichat-messages';
+import { acceptedNoOp, type ChatMutationOutcome } from './mutation-outcome.js';
 
 export interface ChatMessageStoreChangeContext {
   reason: MessagesChangeReason;
@@ -162,13 +163,13 @@ export class ChatMessageStore {
     previousMessages: ChatMessage[],
     next: ChatMessage[],
     context: ChatMessageStoreChangeContext,
-  ): void {
-    if (next === previousMessages) return;
+  ): ChatMutationOutcome {
+    if (next === previousMessages) return acceptedNoOp();
     const controlled = this._getMode() === 'controlled';
 
     if (!controlled) {
       this._commit({ ...context, messages: next, previousMessages, controlled: false });
-      return;
+      return { changed: true, accepted: true };
     }
 
     const previousProposal = this._pendingProposal;
@@ -180,66 +181,73 @@ export class ChatMessageStore {
     this._pendingProposal = proposal;
     this._proposalTags.set(next, proposal);
 
-    const accepted = this._commit({
-      ...context,
-      messages: next,
-      previousMessages,
-      controlled: true,
-    });
+    const accepted =
+      this._commit({
+        ...context,
+        messages: next,
+        previousMessages,
+        controlled: true,
+      }) !== false;
 
-    if (accepted === false && this._pendingProposal === proposal) {
+    if (!accepted && this._pendingProposal === proposal) {
       // `preventDefault()` rejects this proposal and restores the previous
       // working snapshot, if one existed.
       this._proposalTags.delete(next);
       this._pendingProposal = previousProposal;
     }
+
+    return { changed: true, accepted };
   }
 
   // ── Message-level mutations ─────────────────────────────────────
 
-  addMessage(message: ChatMessage): void {
+  addMessage(message: ChatMessage): ChatMutationOutcome {
     const previousMessages = this.messages;
-    this._commitMessages(previousMessages, addMessage(previousMessages, message), {
+    return this._commitMessages(previousMessages, addMessage(previousMessages, message), {
       reason: 'message:add',
       messageId: message.id,
     });
   }
 
-  updateMessage(id: string, partial: Partial<ChatMessage>): void {
+  updateMessage(id: string, partial: Partial<ChatMessage>): ChatMutationOutcome {
     const previousMessages = this.messages;
-    this._commitMessages(previousMessages, patchMessageById(previousMessages, id, partial), {
+    return this._commitMessages(previousMessages, patchMessageById(previousMessages, id, partial), {
       reason: 'message:update',
       messageId: id,
     });
   }
 
-  appendPart(messageId: string, part: MessagePart): void {
+  appendPart(messageId: string, part: MessagePart): ChatMutationOutcome {
     const previousMessages = this.messages;
-    this._commitMessages(previousMessages, appendMessagePart(previousMessages, messageId, part), {
-      reason: 'part:append',
-      messageId,
-      partId: part.id,
-    });
+    return this._commitMessages(
+      previousMessages,
+      appendMessagePart(previousMessages, messageId, part),
+      {
+        reason: 'part:append',
+        messageId,
+        partId: part.id,
+      },
+    );
   }
 
   updatePart(
     messageId: string,
     partId: string,
     patch: Partial<MessagePart>,
-  ): void {
+  ): ChatMutationOutcome {
     const previousMessages = this.messages;
     const result = patchMessagePart(previousMessages, messageId, partId, patch);
-    if (result.ok) {
-      this._commitMessages(previousMessages, result.messages, {
-        reason: 'part:update',
-        messageId,
-        partId,
-      });
-    }
+    if (!result.ok) return acceptedNoOp();
+
+    return this._commitMessages(previousMessages, result.messages, {
+      reason: 'part:update',
+      messageId,
+      partId,
+    });
   }
 
-  addErrorMessage(error: string, text = ''): void {
-    this.addMessage({
+  addErrorMessage(error: string, text = ''): ChatMutationOutcome {
+    return this.addMessage({
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       role: 'assistant',
       parts: text ? [{ type: 'text', id: `err-text-${Date.now()}`, text }] : [],
@@ -347,8 +355,8 @@ export class ChatMessageStore {
   commitMessages(
     next: ChatMessage[],
     context: ChatMessageStoreChangeContext,
-  ): void {
-    this._commitMessages(this.messages, next, context);
+  ): ChatMutationOutcome {
+    return this._commitMessages(this.messages, next, context);
   }
 
   cancelMessageData(id: string, hint?: string): ChatMessage[] | null {
@@ -358,11 +366,11 @@ export class ChatMessageStore {
     return next;
   }
 
-  cancelMessage(id: string, hint?: string): boolean {
+  cancelMessage(id: string, hint?: string): ChatMutationOutcome {
     const previousMessages = this.messages;
-    const next = cancelMessageData(previousMessages, id, hint);
-    if (next === previousMessages) return false;
-    this._commitMessages(previousMessages, next, { reason: 'message:cancel', messageId: id });
-    return true;
+    return this._commitMessages(previousMessages, cancelMessageData(previousMessages, id, hint), {
+      reason: 'message:cancel',
+      messageId: id,
+    });
   }
 }

@@ -833,7 +833,7 @@ Calling `complete`, `cancel`, or `fail` again after a terminal state must be a n
 - [ ] `appendText()` reads the newest part text from the store and never appends to a stale local snapshot.
 - [ ] `complete()` ends message streaming and finishes streaming part state as required.
 - [ ] `fail()` records the error and terminal state while restoring composer availability.
-- [ ] `cancel()` invokes the host `onCancel` callback and then uses top-level cancellation semantics. Define and test the final state even if the callback throws.
+- [ ] `cancel()` applies top-level cancellation semantics first and invokes the host `onCancel` callback only once the mutation is accepted, so a rejected proposal never tears down the host's request pipeline. Define and test the final state even if the callback throws.
 - [ ] Run-originated writes continue to emit only standard `messages-change` events.
 - [ ] Document the synchronous host write-back constraint in controlled mode.
 - [ ] Add `@deprecated` to `Chat.createStreamingController()`, explaining that it controls animation only and recommending the new controller.

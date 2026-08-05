@@ -232,6 +232,62 @@ test('controlled: rejecting a proposal keeps previous state', async () => {
   assertEqual(chat.messages[0]?.id, 'original');
 });
 
+test('controlled: rejecting the run placeholder leaves the run idle', async () => {
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  await waitForUpdate(chat);
+
+  chat.addEventListener('messages-change', (e) => {
+    e.preventDefault();
+  });
+
+  const run = chat.createRunController();
+  const outcome = run.start([{ type: 'text', id: 'body', text: '' }]);
+  await waitForUpdate(chat);
+
+  assertEqual(outcome.accepted, false);
+  assertEqual(run.status, 'idle');
+  assertEqual(chat.messages.length, 0);
+  assertEqual(run.appendText('body', 'hi').ok, false);
+  assert(!chat.busy, 'a rejected placeholder must not leave the host busy');
+});
+
+test('controlled: rejecting completion keeps the run streaming', async () => {
+  const chat = createChat();
+  chat.messageMode = 'controlled';
+  await waitForUpdate(chat);
+
+  let reject = false;
+  chat.addEventListener('messages-change', (e) => {
+    if (reject) {
+      e.preventDefault();
+      return;
+    }
+    chat.messages = (e as CustomEvent<MessagesChangeDetail>).detail.messages;
+  });
+
+  const run = chat.createRunController();
+  run.start([{ type: 'text', id: 'body', text: 'hi' }]);
+  await waitForUpdate(chat);
+  assertEqual(run.status, 'streaming');
+
+  reject = true;
+  const outcome = run.complete();
+  await waitForUpdate(chat);
+
+  assertEqual(outcome.accepted, false);
+  assertEqual(run.status, 'streaming');
+  assertEqual(chat.messages[0]?.streaming, true);
+  assert(chat.busy, 'host stays busy while the message is still streaming');
+  assertEqual(run.signal.aborted, false);
+
+  reject = false;
+  assertEqual(run.complete().accepted, true);
+  await waitForUpdate(chat);
+  assertEqual(run.status, 'completed');
+  assertEqual(chat.messages[0]?.streaming, false);
+});
+
 test('controlled: busy state reflects accepted messages', async () => {
   const chat = createChat();
   chat.messageMode = 'controlled';
@@ -372,6 +428,92 @@ test('scroll: controller can be created and queried', () => {
   assertEqual(typeof ctrl.handleScrollToBottom, 'function');
   assertEqual(typeof ctrl.reset, 'function');
   assertEqual(typeof ctrl.notifyContentChanged, 'function');
+});
+
+// 8. Streaming → terminal render
+//
+// Regression: the shared `partId` markdown cache used to short-circuit the
+// terminal render and morph the caller's `previousHtml` back into the DOM.
+// During streaming that baseline is the light render of the text revealed so
+// far, so a second message with the same part id and identical text stayed
+// pinned to the truncated typewriter output.
+
+const TERMINAL_TAIL = 'TAIL-MARKER-END';
+
+/** Long enough that the typewriter is still far behind when the run completes. */
+const TERMINAL_BODY =
+  Array.from(
+    { length: 120 },
+    (_, i) => `Paragraph ${i} with enough text to outpace the typewriter.`,
+  ).join('\n\n') + `\n\n${TERMINAL_TAIL}`;
+
+function createDetachedChat(): Chat {
+  const container = document.createElement('div');
+  container.style.display = 'none';
+  document.body.appendChild(container);
+  const el = document.createElement('i-chat') as Chat;
+  container.appendChild(el);
+  return el;
+}
+
+/** Walk nested shadow roots — the text part lives several levels deep. */
+function deepQuery(root: Document | ShadowRoot | Element, selector: string): Element | null {
+  const direct = root.querySelector(selector);
+  if (direct) return direct;
+  for (const el of root.querySelectorAll('*')) {
+    const shadow = (el as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
+    if (!shadow) continue;
+    const found = deepQuery(shadow, selector);
+    if (found) return found;
+  }
+  return null;
+}
+
+function renderedPartText(chat: Chat, messageId: string, partId: string): string {
+  const msgEl = deepQuery(chat.shadowRoot!, `[data-message-id="${messageId}"]`);
+  assert(msgEl, `message ${messageId} should be rendered`);
+  const contentEl = deepQuery(msgEl!.shadowRoot ?? msgEl!, `div.content[data-part-id="${partId}"]`);
+  assert(contentEl, `text part ${partId} of ${messageId} should be rendered`);
+  return contentEl!.textContent ?? '';
+}
+
+async function streamThenComplete(chat: Chat, messageId: string, partId: string): Promise<void> {
+  chat.addMessage({
+    id: messageId,
+    role: 'assistant',
+    streaming: true,
+    parts: [{ type: 'text', id: partId, text: TERMINAL_BODY, status: 'streaming' }],
+  });
+  await waitForUpdate(chat);
+  // Let the typewriter reveal only a few characters, so the streaming light
+  // render in the DOM is a strict prefix of the full body.
+  await new Promise((r) => setTimeout(r, 60));
+
+  chat.updatePart(messageId, partId, { status: 'complete' });
+  chat.updateMessage(messageId, { streaming: false });
+  await waitForUpdate(chat);
+  await new Promise((r) => setTimeout(r, 60));
+}
+
+test('render: terminal render replaces the partial streaming output', async () => {
+  const chat = createDetachedChat();
+  await waitForUpdate(chat);
+
+  // First run populates the shared markdown cache for this part id.
+  await streamThenComplete(chat, 'terminal-1', 'terminal-content');
+  const first = renderedPartText(chat, 'terminal-1', 'terminal-content');
+  assert(
+    first.includes(TERMINAL_TAIL),
+    `first message should render the full body, got ${first.length} chars`,
+  );
+
+  // Second run reuses the part id with byte-identical text — the cache hits.
+  await streamThenComplete(chat, 'terminal-2', 'terminal-content');
+  const second = renderedPartText(chat, 'terminal-2', 'terminal-content');
+  assert(
+    second.includes(TERMINAL_TAIL),
+    `second message should render the full body, got ${second.length} chars`,
+  );
 });
 
 // ── Mock ReactiveControllerHost ──────────────────────────────────────────

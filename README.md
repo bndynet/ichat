@@ -197,6 +197,14 @@ proposal; cloning an older queued proposal is treated as an intentional external
 history replacement. Call `e.preventDefault()` in the handler to reject a
 proposal.
 
+Rejecting a proposal also holds back the `ChatRunController` that produced it: a
+rejected `start()` leaves the run `idle` and a rejected
+`complete()` / `fail()` / `cancel()` leaves it `streaming`, so the run never
+disagrees with your message array. Inspect the returned `ChatMutationOutcome`
+(`{ changed, accepted }`) if you want to retry or report the rejection — see
+[Rejected proposals](docs/component-api.md#rejected-proposals) for when rejecting
+is the right tool and when to undo an accepted write instead.
+
 In uncontrolled mode `chat.messages` is immediately up-to-date after any mutation — just read it. Controlled mode is opt-in and only needed when an external framework must own the array.
 
 When the user first opens a chat, load historical messages as completed content. Use `normalizeHistoryMessages()` from `@bndynet/ichat-messages` (re-exported by `@bndynet/ichat`) to sanitise messages loaded from your backend — it sets `streaming: false`, marks interrupted messages as `cancelled`, converts any persisted `status: 'streaming' | 'pending'` parts to `'complete'`, and removes empty placeholder messages. Pass `interruptedStatus` / `removeEmptyMessages` options to customise the behaviour.
@@ -229,7 +237,7 @@ See [`ChatRunController` API](docs/component-api.md) for the full lifecycle.
 | Apply a raw todo-update payload | `chat.tryApplyTodoItemUpdateEvent(rawEvent)` |
 | Stream completed | `run.complete()` |
 | Stream error | `run.fail(error)` |
-| Cancel (abort fetch) | `run.signal` → fetch aborted, then `chat.cancelMessage(id)` |
+| Cancel (abort fetch) | `run.cancel(hint)` → aborts `run.signal`, marks the message cancelled |
 
 ### Syntax highlighting
 

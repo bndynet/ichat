@@ -20,6 +20,11 @@ export class ChatTextPart extends LitElement {
 
   @query('.content') private _contentEl?: HTMLDivElement;
   private _htmlCache = '';
+  /**
+   * `_htmlCache` holds a streaming light render, which covers only the text
+   * revealed so far. It must not be reused as the terminal render baseline.
+   */
+  private _htmlCacheIsPartial = false;
   private _streamingPartId?: string;
   private _lastStreamingRenderAt = Number.NEGATIVE_INFINITY;
   private _streamingRenderTimer?: number;
@@ -79,6 +84,7 @@ export class ChatTextPart extends LitElement {
       this._lastStreamingRenderAt = now;
       const html = renderMarkdownLight(this.content, markdownOptions);
       this._htmlCache = html;
+      this._htmlCacheIsPartial = true;
       el.innerHTML = html;
       this.dispatchEvent(
         new CustomEvent('chat-text-part-updated', {
@@ -96,7 +102,7 @@ export class ChatTextPart extends LitElement {
     let result: ReturnType<typeof renderMarkdownInto>;
     try {
       result = renderMarkdownInto(el, this.content, {
-        previousHtml: this._htmlCache,
+        previousHtml: this._htmlCacheIsPartial ? '' : this._htmlCache,
         ...markdownOptions,
         rendererSignal: candidateController.signal,
         partId,
@@ -106,6 +112,7 @@ export class ChatTextPart extends LitElement {
       throw error;
     }
     this._htmlCache = result.html;
+    this._htmlCacheIsPartial = false;
     if (result.rendered) {
       this._asyncRendererController?.abort();
       this._asyncRendererController = candidateController;

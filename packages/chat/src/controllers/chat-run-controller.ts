@@ -1,5 +1,10 @@
 import type { ChatMessage, MessagePart } from '@bndynet/ichat-messages';
 import type { MessagePartUpdateResult } from '@bndynet/ichat-messages';
+import {
+  acceptedNoOp,
+  normalizeOutcome,
+  type ChatMutationOutcome,
+} from '../state/mutation-outcome.js';
 
 // ── public types ─────────────────────────────────────────────────────
 
@@ -15,19 +20,34 @@ export interface ChatRunOptions {
   messageId?: string;
   role?: 'assistant';
   timestamp?: number;
-  /** Called when the run is cancelled.  The consumer remains responsible for aborting the network request. */
+  /**
+   * Called when the run is cancelled.  The consumer remains responsible for
+   * aborting the network request.
+   *
+   * Runs after the cancellation has been committed to the store, and not at all
+   * when a controlled host rejects it.
+   */
   onCancel?: () => void;
 }
 
 // ── minimal port ────────────────────────────────────────────────────
 
+/**
+ * The subset of {@link import('../state/chat-message-store.js').ChatMessageStore}
+ * that a run needs.
+ *
+ * The three mutations that drive lifecycle transitions report a
+ * {@link ChatMutationOutcome} so the controller can tell an accepted write from
+ * one a controlled host rejected.  `void` remains allowed for implementations
+ * written against the older signature and is treated as accepted.
+ */
 export interface ChatMessageStorePort {
   readonly messages: ChatMessage[];
-  addMessage(message: ChatMessage): void;
-  updateMessage(id: string, partial: Partial<ChatMessage>): void;
+  addMessage(message: ChatMessage): ChatMutationOutcome | void;
+  updateMessage(id: string, partial: Partial<ChatMessage>): ChatMutationOutcome | void;
+  cancelMessage(id: string, hint?: string): ChatMutationOutcome | void;
   appendPart(messageId: string, part: MessagePart): void;
   updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void;
-  cancelMessage(id: string, hint?: string): void;
   tryUpdatePart(messageId: string, partId: string, patch: Partial<MessagePart>): MessagePartUpdateResult;
 }
 
@@ -45,6 +65,12 @@ export interface ChatMessageStorePort {
  * One controller represents one run.  Create a new controller for each
  * AI response.
  *
+ * Lifecycle transitions only happen once the underlying store mutation is
+ * accepted.  A controlled host that rejects a proposal with `preventDefault()`
+ * therefore leaves the run in its previous state — a rejected `start()` stays
+ * `idle` and a rejected `complete()`/`fail()`/`cancel()` stays `streaming` —
+ * so the caller can inspect the returned outcome and retry.
+ *
  * @example
  * ```ts
  * const run = chat.createRunController();
@@ -60,7 +86,7 @@ export class ChatRunController {
 
   private _messageId!: string;
   private _status: ChatRunStatus = 'idle';
-  private _abortController?: AbortController;
+  private readonly _abortController = new AbortController();
 
   constructor(store: ChatMessageStorePort, options: ChatRunOptions = {}) {
     this._store = store;
@@ -83,9 +109,6 @@ export class ChatRunController {
    * network requests are automatically torn down when the run ends.
    */
   get signal(): AbortSignal {
-    if (!this._abortController) {
-      this._abortController = new AbortController();
-    }
     return this._abortController.signal;
   }
 
@@ -94,23 +117,32 @@ export class ChatRunController {
   /**
    * Create the assistant placeholder message and begin streaming.
    * Must be called before any other method.
+   *
+   * @returns The outcome of the placeholder mutation.  When it was rejected the
+   *          run stays `idle` and no message id is claimed, so `start()` can be
+   *          called again.
    */
-  start(initialParts?: MessagePart[]): void {
-    if (this._status !== 'idle') return;
+  start(initialParts?: MessagePart[]): ChatMutationOutcome {
+    if (this._status !== 'idle') return acceptedNoOp();
 
-    this._messageId =
+    const messageId =
       this._options.messageId ??
       `msg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-    this._store.addMessage({
-      id: this._messageId,
-      role: this._options.role ?? 'assistant',
-      parts: initialParts ?? [],
-      streaming: true,
-      timestamp: this._options.timestamp ?? Date.now(),
-    });
+    const outcome = normalizeOutcome(
+      this._store.addMessage({
+        id: messageId,
+        role: this._options.role ?? 'assistant',
+        parts: initialParts ?? [],
+        streaming: true,
+        timestamp: this._options.timestamp ?? Date.now(),
+      }),
+    );
+    if (!outcome.accepted) return outcome;
 
+    this._messageId = messageId;
     this._status = 'streaming';
+    return outcome;
   }
 
   /**
@@ -157,56 +189,70 @@ export class ChatRunController {
    * Mark the run as successfully completed.  Clears the streaming flag
    * on the message and aborts the signal.  No-op if already terminal.
    */
-  complete(patch?: Partial<ChatMessage>): void {
-    if (this._status !== 'streaming') return;
-    this._store.updateMessage(this._messageId, {
-      streaming: false,
-      ...patch,
-    });
+  complete(patch?: Partial<ChatMessage>): ChatMutationOutcome {
+    if (this._status !== 'streaming') return acceptedNoOp();
+
+    const outcome = normalizeOutcome(
+      this._store.updateMessage(this._messageId, {
+        streaming: false,
+        ...patch,
+      }),
+    );
+    if (!outcome.accepted) return outcome;
+
     this._status = 'completed';
     this._cleanup();
+    return outcome;
   }
 
   /**
    * Mark the run as failed.  Records the error on the message, clears
    * streaming, and aborts the signal.  No-op if already terminal.
    */
-  fail(error: string, text?: string): void {
-    if (this._status !== 'streaming') return;
-    this._store.updateMessage(this._messageId, {
-      streaming: false,
-      error,
-      ...(text
-        ? {
-            parts: [
-              ...(this._store.messages.find((m) => m.id === this._messageId)?.parts ?? []),
-              { type: 'text' as const, id: `err-${Date.now()}`, text },
-            ],
-          }
-        : {}),
-    });
+  fail(error: string, text?: string): ChatMutationOutcome {
+    if (this._status !== 'streaming') return acceptedNoOp();
+
+    const outcome = normalizeOutcome(
+      this._store.updateMessage(this._messageId, {
+        streaming: false,
+        error,
+        ...(text
+          ? {
+              parts: [
+                ...(this._store.messages.find((m) => m.id === this._messageId)?.parts ?? []),
+                { type: 'text' as const, id: `err-${Date.now()}`, text },
+              ],
+            }
+          : {}),
+      }),
+    );
+    if (!outcome.accepted) return outcome;
+
     this._status = 'error';
     this._cleanup();
+    return outcome;
   }
 
   /**
-   * Cancel the run.  Invokes the host `onCancel` callback, delegates to
-   * the store's cancel logic, and aborts the signal.  No-op if already
-   * terminal.
+   * Cancel the run.  Delegates to the store's cancel logic, then invokes the
+   * host `onCancel` callback and aborts the signal.  No-op if already terminal.
    */
-  cancel(hint?: string): void {
-    if (this._status !== 'streaming') return;
-    this._options.onCancel?.();
-    this._store.cancelMessage(this._messageId, hint);
+  cancel(hint?: string): ChatMutationOutcome {
+    if (this._status !== 'streaming') return acceptedNoOp();
+
+    const outcome = normalizeOutcome(this._store.cancelMessage(this._messageId, hint));
+    // `onCancel` tears down the caller's in-flight request, so it must not run
+    // when a controlled host rejects the cancellation.
+    if (!outcome.accepted) return outcome;
+
     this._status = 'cancelled';
+    this._options.onCancel?.();
     this._cleanup();
+    return outcome;
   }
 
-  /** Abort the signal and release the controller. */
+  /** Abort the signal so in-flight requests bound to it are torn down. */
   private _cleanup(): void {
-    if (this._abortController) {
-      this._abortController.abort();
-      this._abortController = undefined;
-    }
+    this._abortController.abort();
   }
 }

@@ -45,6 +45,94 @@ Properties, methods, and events of the `<i-chat>` shell, plus slots and per-mess
 
 Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message>`) use `bubbles` + `composed` so you can listen on `<i-chat>` or `document`.
 
+## `ChatRunController`
+
+`chat.createRunController(options?)` returns a controller that owns one assistant response: it creates the placeholder message, accepts streamed part updates, and moves to a terminal state. Create a new controller for every response. All writes go through `<i-chat>`, so a run behaves identically in uncontrolled and controlled mode.
+
+```typescript
+const run = chat.createRunController({ onCancel: () => abortMyPipeline() });
+
+run.start([textPart('', { id: 'body', status: 'streaming' })]);
+const res = await fetch('/api/chat', { signal: run.signal });
+// … for each delta:
+run.appendText('body', delta);
+run.complete();
+```
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `messageId` | `string` (readonly) | Id of the message this run owns. Only meaningful once `start()` has been accepted. |
+| `status` | `ChatRunStatus` (readonly) | `'idle'` → `'streaming'` → `'completed'` \| `'cancelled'` \| `'error'` |
+| `signal` | `AbortSignal` (readonly) | Aborted when the run completes, fails, or is cancelled. Pass it to `fetch()` so in-flight requests are torn down with the run. |
+| `start(initialParts?)` | `ChatMutationOutcome` | Adds the streaming assistant placeholder. No-op unless `status` is `'idle'`. |
+| `appendPart(part)` | `void` | Appends a structured part (tool-call, reasoning, …). No-op unless streaming. |
+| `updatePart(partId, patch)` | `MessagePartUpdateResult` | Patches a part by id. |
+| `appendText(partId, delta)` | `MessagePartUpdateResult` | Appends a text delta, re-reading the current text so it never builds on a stale snapshot. |
+| `complete(patch?)` | `ChatMutationOutcome` | Clears `streaming`, optionally patching the message (e.g. `{ duration }`). |
+| `fail(error, text?)` | `ChatMutationOutcome` | Records the error, clears `streaming`, and optionally appends a text part. |
+| `cancel(hint?)` | `ChatMutationOutcome` | Marks the message cancelled, then invokes `onCancel`. |
+
+`ChatRunOptions`: `messageId`, `role`, `timestamp`, `onCancel`. `onCancel` runs after the cancellation is committed — it is where you tear down your own request pipeline; `run.signal` is aborted for you.
+
+### Rejected proposals
+
+Most integrations can skip this section. In uncontrolled mode — and in controlled mode when you always write `e.detail.messages` back — every mutation is accepted and the return values can be ignored.
+
+It matters when the host has a **synchronous** reason to refuse a write:
+
+- **Quota or rate limits** — the user is out of credits, so no assistant placeholder should be created. A rejected `start()` lets you show a notice instead of streaming into a message that does not exist.
+- **Read-only or archived conversations** — a state machine forbids further writes to this thread.
+- **Ownership conflicts** — another tab, device, or newer run has taken over the session, so a stale run must not append to it.
+- **Local policy checks** — a synchronous validation or moderation rule refuses the content.
+
+`preventDefault()` has to be decided synchronously inside the `messages-change` handler; the event has already been dispatched by the time an `await` resolves. For asynchronous checks — a moderation endpoint, a save that may fail — accept the proposal and undo it afterwards with `run.cancel(hint)` or by assigning a corrected `chat.messages`, rather than trying to reject after the fact.
+
+Lifecycle transitions require the underlying mutation to be accepted, so a controlled host that rejects a proposal with `preventDefault()` can never leave the run disagreeing with `chat.messages`:
+
+| Rejected call | Resulting state |
+|---------------|-----------------|
+| `start()` | stays `idle`, no message id claimed, safe to call again |
+| `complete()` / `fail()` | stays `streaming`, signal still open, safe to call again |
+| `cancel()` | stays `streaming`, `onCancel` not invoked, signal still open |
+
+Each method returns a `ChatMutationOutcome`:
+
+```typescript
+interface ChatMutationOutcome {
+  changed: boolean;  // the mutation produced a new array (false = no-op)
+  accepted: boolean; // false only when a controlled host called preventDefault()
+}
+```
+
+`accepted` is proposal-level: it means the host did not veto the write, **not** that the data is on screen. In controlled mode writing `messages` back is still the host's job, so a run may hold `accepted: true` while the UI has not caught up — that is intentional, because a run cannot wait for framework propagation without stalling the stream.
+
+A no-op is **not** a rejection. Completing or cancelling a message the host has already removed reports `{ changed: false, accepted: true }` and still reaches the terminal state, so a run can never be stranded in `streaming`. `changed: false` is otherwise useful for diagnostics — for example logging a backend delta that targeted a message the user had already deleted, instead of dropping it silently.
+
+In uncontrolled mode `accepted` is always `true` and the component writes `messages` itself, so the return value can be ignored.
+
+Putting it together for the quota case:
+
+```js
+chat.messageMode = 'controlled';
+chat.addEventListener('messages-change', (e) => {
+  if (e.detail.reason === 'message:add' && !hasCredits()) {
+    e.preventDefault();
+    return;
+  }
+  messages.value = e.detail.messages; // accept
+});
+
+const run = chat.createRunController();
+if (!run.start([textPart('', { id: 'body', status: 'streaming' })]).accepted) {
+  showNotice('Out of credits');
+  return; // no placeholder was created and the run never left `idle`
+}
+
+const res = await fetch('/api/chat', { signal: run.signal });
+// … stream into run.appendText('body', delta) …
+run.complete();
+```
+
 ## Markdown Extension API
 
 Register markdown-it plugins (inline rules, block rules, renderer overrides) with automatic CSS injection into the Shadow DOM.
