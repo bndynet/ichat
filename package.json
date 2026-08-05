@@ -12,6 +12,7 @@
     "pretest": "npm run build -w @bndynet/ichat-messages -w @bndynet/ichat-input",
     "test": "npm run test -w @bndynet/ichat-messages && npm run test -w @bndynet/ichat-input && npm run test -w @bndynet/ichat",
     "test:coverage": "npm run test:coverage -w @bndynet/ichat-messages && npm run test:coverage -w @bndynet/ichat-input",
+    "pretypecheck": "npm run build -w @bndynet/ichat-messages -w @bndynet/ichat-input -w @bndynet/ichat-renderers -w @bndynet/ichat-renderer-chart -w @bndynet/ichat-renderer-katex -w @bndynet/ichat-renderer-mermaid",
     "typecheck": "tsc --noEmit -p packages/chat-messages/tsconfig.json && tsc --noEmit -p packages/chat-input/tsconfig.json && tsc --noEmit -p packages/chat/tsconfig.json && tsc --noEmit -p packages/chat-renderers/tsconfig.json && tsc --noEmit -p packages/chat-renderer-chart/tsconfig.json && tsc --noEmit -p packages/chat-renderer-katex/tsconfig.json && tsc --noEmit -p packages/chat-renderer-mermaid/tsconfig.json",
     "validate:pack": "npm run build && node tools/validate-pack.mjs",
     "benchmark:streaming": "npm run benchmark:streaming -w @bndynet/ichat-messages",
