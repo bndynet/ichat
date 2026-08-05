@@ -234,6 +234,7 @@ export function createMermaidRenderer(options: RendererOptions = {}): BlockRende
   return {
     name: 'mermaid',
     mode: 'trusted',
+    trusted: true,
     test: (lang: string) => lang === 'mermaid',
     render: (code: string) => renderMermaidBlock(code, options),
   };

@@ -95,6 +95,7 @@ export function createFormRenderer(options: RendererOptions = {}): BlockRenderer
   return {
     name: 'form',
     mode: 'trusted',
+    trusted: true,
     test: (lang: string) => lang === 'form',
     render: (code: string, _lang: string) => renderForm(code, options),
   };

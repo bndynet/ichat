@@ -169,6 +169,7 @@ function reportBlockRendererError(
 rendererRegistry.register({
   name: 'chat-details',
   mode: 'trusted',
+  trusted: true,
   test: (lang: string) => /^details\b/i.test(lang),
   render: (content: string, _lang: string, info = ''): string => {
     // Extract title: everything after the first word ("details")

@@ -123,6 +123,7 @@ export function createChartRenderer(options: RendererOptions = {}): BlockRendere
   return {
     name: 'chart',
     mode: 'trusted',
+    trusted: true,
     test: (lang: string) => lang === 'chart',
     render: (code: string, _lang: string) => renderChart(code, options),
   };
