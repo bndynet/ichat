@@ -10,7 +10,7 @@ Project-level follow-up work for `@bndynet/ichat`. Keep this checklist current: 
 
 ### Testing & CI
 
-- [x] Unit and component test foundations — the current local suites for `@bndynet/ichat-messages` (29 tests), `@bndynet/ichat`, and `@bndynet/ichat-input` pass on Node.js 20. Pure reducers, component contracts, renderer isolation, streaming safety, and run-controller flows are covered. (Phase 1.1)
+- [x] Unit and component test foundations — the comprehensive test suites for `@bndynet/ichat-messages` (16 files, ~255 test blocks), `@bndynet/ichat` (Node + browser), and `@bndynet/ichat-input` pass on Node.js 20/22. Pure reducers, component contracts, renderer isolation, streaming safety, run-controller flows, middleware hooks, plugin lifecycle, ownership matrix, and event contracts are covered. (Phase 1.1)
 - [x] Coverage commands — package-level coverage scripts are available for the messages and input packages. Enforced thresholds and repository-local PR CI remain P0 work below.
 - [x] 🟢 **SSE integration tests** ✅ (completed 2026-07-31) — ChatRunController + stream parser → `tryApplyMessagePartUpdateEvent` / `tryApplyTodoItemUpdateEvent` end-to-end. (Phase 1.1)
 - [x] 🟢 **ChatRunController integration tests** ✅ (completed 2026-07-31) — Full lifecycle: start → appendText → updatePart → complete / fail / cancel. (Phase 1.1)
@@ -122,7 +122,7 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 - [x] 🟡 **[P1] Define intentional package and API boundaries** ✅ (wontfix 2026-08-05) — Evaluated and determined no action needed. Single-entry barrel with full re-exports is sufficient for the current consumer profile; tree-shaking already removes unused exports. Subpath exports, `sideEffects` metadata, and Custom Elements Manifest would add complexity without measurable benefit given that consumers always need custom-element registration.
 - [x] 🟢 **[P2] Fix labels-cache reference invalidation** ✅ (completed 2026-08-05) — Changed cache key from `${locale}|${!!labelsRef}` (boolean, never invalidates when one truthy object replaces another) to identity comparison (`===`) on the `labelsRef` object reference. Replacing `{ empty: 'A' }` with `{ empty: 'B' }` under the same locale now correctly invalidates the cache and renders the updated text.
-- [ ] 🟢 **[P2] Make documentation reflect runtime behavior** — Reconcile warning-vs-throw semantics, extension registration timing, current test counts, controlled-mode behavior, and CI status. Generate API tables from declarations/Custom Elements Manifest where possible so roadmap, README, and implementation review do not drift independently.
+- [x] 🟢 **[P2] Make documentation reflect runtime behavior** ✅ (completed 2026-08-05) — Updated test counts across roadmap, implementation-review, and README. Fixed CI pipeline description (added typecheck/pack/browser-smoke jobs, dropped Node 18). Removed obsolete SSE client risk row. Updated middleware example to show all 4 hooks. Changed `renderers.md` from deprecated `trusted: true` to `mode: 'trusted'`. Marked completed SSE/run-controller integration tests in Next Steps.
 
 ### Performance & Security
 

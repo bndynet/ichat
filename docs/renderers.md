@@ -41,14 +41,14 @@ const escapeHtml = (value: string) =>
 
 const trustedRenderer: BlockRenderer = {
   name: 'my-safe-widget',
-  trusted: true,
+  mode: 'trusted',
   test: (lang) => lang === 'my-safe-widget',
   render: (code) => `<my-safe-widget data-code="${escapeHtml(code)}"></my-safe-widget>`,
 };
 ```
 
-Only set `trusted: true` when every model-controlled value (`code`, `lang`, and
-`info`) is escaped for its HTML context. Trusted output bypasses DOMPurify. The
+Only set `mode: 'trusted'` (or the deprecated `trusted: true` for backward
+compatibility) when every model-controlled value (`code`, `lang`, and `info`) is escaped for its HTML context. Trusted output bypasses DOMPurify. The
 official chart, KPI, form, details, and Mermaid renderers are audited and opt in
 internally, so they continue to render live without user configuration. An
 untrusted async renderer is not started repeatedly during streaming; it starts
