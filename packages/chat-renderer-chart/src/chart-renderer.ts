@@ -120,7 +120,7 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
 export function createChartRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'chart',
-    trusted: true,
+    mode: 'trusted',
     test: (lang: string) => lang === 'chart',
     render: (code: string, _lang: string) => renderChart(code, options),
   };

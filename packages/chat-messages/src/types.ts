@@ -5,19 +5,33 @@ export interface BlockRendererContext {
   signal?: AbortSignal;
 }
 
+/**
+ * How a `BlockRenderer`'s HTML output is handled before insertion.
+ *
+ * - `sanitized` (default): HTML passes through DOMPurify. Untrusted renderers
+ *   show an escaped code block while streaming and their terminal output is
+ *   sanitised.
+ * - `trusted`: HTML bypasses DOMPurify. Use **only** when the renderer treats
+ *   `code`, `lang`, and `info` as untrusted input and escapes every value
+ *   before inserting it into HTML. Restricted to audited built-ins and
+ *   capabilities that have been reviewed for injection safety.
+ */
+export type BlockRenderMode = 'sanitized' | 'trusted';
+
 export interface BlockRenderer {
   /** Unique name for this renderer */
   name: string;
   /** Return true if this renderer handles the given fenced code block language */
   test: (lang: string) => boolean;
   /**
-   * Allow this renderer's HTML to bypass DOMPurify and render while content is
-   * still streaming. Defaults to `false`.
+   * How the renderer output is handled. Defaults to `'sanitized'`.
    *
-   * Set this only when the renderer treats `code`, `lang`, and `info` as
-   * untrusted input and escapes every value before inserting it into HTML.
-   * Untrusted renderers show an escaped code block while streaming and their
-   * terminal output is sanitised before insertion.
+   * Prefer `mode` over the deprecated `trusted` boolean; when both are set,
+   * `mode` wins.  `trusted: true` is equivalent to `mode: 'trusted'`.
+   */
+  mode?: BlockRenderMode;
+  /**
+   * @deprecated Use `mode: 'trusted'` instead. Kept for backward compatibility.
    */
   trusted?: boolean;
   /**

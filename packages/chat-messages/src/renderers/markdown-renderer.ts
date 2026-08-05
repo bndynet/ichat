@@ -119,6 +119,13 @@ function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
 // Trusted renderer output is spliced back after DOMPurify. Untrusted output is
 // inserted before the single terminal sanitisation pass; while streaming it is
 // replaced with the escaped default code-block rendering.
+
+/** Resolve the effective trust mode: `mode` wins over deprecated `trusted`. */
+function isRendererTrusted(r: { mode?: 'sanitized' | 'trusted'; trusted?: boolean }): boolean {
+  if (r.mode !== undefined) return r.mode === 'trusted';
+  return r.trusted === true;
+}
+
 interface PendingBlockHTML {
   html: string;
   trusted: boolean;
@@ -161,7 +168,7 @@ function reportBlockRendererError(
 // based renderers (e.g. the progress ordered-list syntax) work fine.
 rendererRegistry.register({
   name: 'chat-details',
-  trusted: true,
+  mode: 'trusted',
   test: (lang: string) => /^details\b/i.test(lang),
   render: (content: string, _lang: string, info = ''): string => {
     // Extract title: everything after the first word ("details")
@@ -201,7 +208,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   });
 
   if (customRenderer) {
-    const trusted = customRenderer.trusted === true;
+    const trusted = isRendererTrusted(customRenderer);
 
     // DOMPurify is intentionally absent from the hot streaming path. Defer
     // untrusted rich output until the terminal render rather than injecting it

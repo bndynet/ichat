@@ -1,5 +1,8 @@
 import type { PartRenderer } from '../types.js';
 
+/** Validates a custom element name (must contain a hyphen per the spec). */
+const CUSTOM_ELEMENT_NAME_RE = /^[a-z][a-z0-9]*-[a-z0-9-]*$/i;
+
 /**
  * Registry of {@link PartRenderer}s for host-defined `x-*` custom parts.
  * Mirrors {@link RendererRegistry} (fenced-block renderers) but matches on the
@@ -15,6 +18,15 @@ class PartRendererRegistry {
       console.warn(
         `[i-chat] Part renderer "${renderer.name}" is already registered with a different object. ` +
         'Keeping the first registration.',
+      );
+      return;
+    }
+
+    // Validate custom element name if element mode is used
+    if (renderer.element && !CUSTOM_ELEMENT_NAME_RE.test(renderer.element)) {
+      console.warn(
+        `[i-chat] Part renderer "${renderer.name}" has an invalid element name "${renderer.element}". ` +
+        'Custom element names must contain a hyphen (e.g. "my-element"). Registration skipped.',
       );
       return;
     }

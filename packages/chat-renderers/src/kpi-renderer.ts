@@ -48,7 +48,7 @@ function renderKpi(code: string, opts: RendererOptions = {}): string {
 export function createKpiRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'kpi',
-    trusted: true,
+    mode: 'trusted',
     test: (lang: string) => lang === 'kpi',
     render: (code: string, _lang: string) => renderKpi(code, options),
   };
@@ -88,7 +88,7 @@ function renderKpis(code: string, opts: RendererOptions = {}): string {
 export function createKpisRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'kpis',
-    trusted: true,
+    mode: 'trusted',
     test: (lang: string) => lang === 'kpis',
     render: (code: string, _lang: string) => renderKpis(code, options),
   };

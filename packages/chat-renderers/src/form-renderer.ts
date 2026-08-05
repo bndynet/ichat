@@ -92,7 +92,7 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
 export function createFormRenderer(options: RendererOptions = {}): BlockRenderer {
   return {
     name: 'form',
-    trusted: true,
+    mode: 'trusted',
     test: (lang: string) => lang === 'form',
     render: (code: string, _lang: string) => renderForm(code, options),
   };

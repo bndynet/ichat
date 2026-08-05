@@ -63,6 +63,7 @@ export type {
   ChatMessageRole,
   HighlightJs,
   BlockRenderer,
+  BlockRenderMode,
   BlockRendererContext,
   RendererErrorDetail,
   RendererErrorKind,
