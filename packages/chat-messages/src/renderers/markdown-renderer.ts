@@ -72,7 +72,18 @@ const md = getSharedMd(() => {
   instance.use(collapsiblePlugin);
 
   // Open all links in a new window/tab.
-  const defaultLinkOpen = instance.renderer.rules.link_open!;
+  // markdown-it v14 removed link_open from default_rules — it falls back to
+  // renderToken.  Save whichever path is active so our wrapper always has a
+  // valid fallback.
+  const defaultLinkOpen: (
+    tokens: any[],
+    idx: number,
+    options: any,
+    env: any,
+    self: any,
+  ) => string = instance.renderer.rules.link_open
+    ? instance.renderer.rules.link_open.bind(instance.renderer)
+    : (tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options);
   instance.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     tokens[idx].attrPush(['target', '_blank']);
     tokens[idx].attrPush(['rel', 'noopener noreferrer']);
