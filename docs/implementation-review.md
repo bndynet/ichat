@@ -1,7 +1,6 @@
 # Optimization Plan — Implementation Review
 
-**Date:** 2025-07-25
-**Branch:** `v3`
+**Date:** 2026-08-06
 **Repo:** `bndynet/ichat`
 
 ---
@@ -10,7 +9,7 @@
 
 Implemented 5 of 7 phases from the optimization plan, with a focus on the highest-impact items. The codebase now has:
 
-- Comprehensive test suite (~360+ test blocks across all packages) covering pure helpers, components, middleware, ownership, and browser rendering
+- Comprehensive test suite (~390+ test blocks across 16 test files) covering pure helpers, components, middleware, ownership, and browser rendering
 - CI pipeline with Node.js 20/22 matrix, type-check, coverage (≥85%), npm pack validation, and browser smoke build
 - **Performance optimizations**: markdown cache, memoized computed properties, optional highlight.js
 - **`ChatRunController`** for backend streaming integration
@@ -167,7 +166,7 @@ import {
 | ---------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
 | highlight.js removed from bundle         | Medium   | Consumers must pass `highlightJs` via config; fallback renders plain `<pre><code>` |
 | Markdown cache could serve stale content | Low      | Cache keyed by raw content string; `invalidateMarkdownCache()` available           |
-| Breaking changes in v3                   | High     | All completed in v3; migration guide at `docs/migration-v2-to-v3.md`               |
+| Breaking changes in v3                   | High     | All completed in v3; removed APIs documented in this file                |
 
 ---
 

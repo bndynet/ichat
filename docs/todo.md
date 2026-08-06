@@ -26,7 +26,7 @@ interface TodoPart {
 }
 ```
 
-The header count and completed progress are derived from `items`. Expanded state is local to `<i-chat-todo>`, so `updateTodoItem()` does not reopen a panel the user collapsed.
+The header count and completed progress are derived from `items`. Expanded state is local to `<i-chat-todo>`, so `tryUpdateTodoItem()` does not reopen a panel the user collapsed.
 
 ## Create a todo
 
@@ -54,17 +54,14 @@ Set `interactive: false` when the panel is display-only. `defaultCollapsed` affe
 
 ## Update an item
 
-`updateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale. Use `tryUpdateTodoItem()` when you need the exact failure reason.
+`tryUpdateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `{ ok, reason? }` — `ok: false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale.
 
 ```javascript
-chat.updateTodoItem('assistant-42', 'plan', 'panel', { status: 'done' }, 3);
-chat.updateTodoItem('assistant-42', 'plan', 'verify', { status: 'active' }, 4);
+const r1 = chat.tryUpdateTodoItem('assistant-42', 'plan', 'panel', { status: 'done' }, 3);
+if (!r1.ok) console.warn('Todo update ignored:', r1.reason);
 
-const result = chat.tryUpdateTodoItem('assistant-42', 'plan', 'verify', { status: 'done' }, 5);
-if (!result.ok) {
-  console.warn('Todo update ignored:', result.reason);
-}
-```
+const r2 = chat.tryUpdateTodoItem('assistant-42', 'plan', 'verify', { status: 'active' }, 4);
+if (!r2.ok) console.warn('Todo update ignored:', r2.reason);
 
 When every item is `done` or `skipped`, the part lifecycle status becomes `complete`. Updating a completed todo back to a non-terminal state changes the lifecycle to `streaming`.
 

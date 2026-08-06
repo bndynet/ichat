@@ -83,13 +83,9 @@ Append and patch parts by id instead of rewriting the whole message:
 | `updatePart(messageId, partId, patch)`                           | Shallow-merge `patch` into the matching part (e.g. grow `text`, flip `status`). Keyed by `id`, so stateful elements survive. |
 | `tryUpdatePart(messageId, partId, patch)`                        | Validates and patches any message part, returning `{ ok, reason? }`.                                                         |
 | `tryUpdateToolCall(messageId, partId, patch)`                    | Validates and patches a `tool-call` part, returning `{ ok, reason? }`.                                                       |
-| `updateToolCall(messageId, partId, patch)`                       | Validated convenience wrapper for `tool-call` parts.                                                                         |
 | `tryUpdateTodoItem(messageId, partId, itemId, patch, revision?)` | Immutably patches one todo item, returning `{ ok, reason? }`.                                                                |
-| `updateTodoItem(messageId, partId, itemId, patch, revision?)`    | Immutably patches one todo item and ignores stale explicit revisions.                                                        |
 | `tryApplyMessagePartUpdateEvent(event)`                          | Normalizes a backend/SSE part update, then applies it with diagnostic failure reasons.                                       |
-| `applyMessagePartUpdateEvent(event)`                             | Boolean wrapper around `tryApplyMessagePartUpdateEvent`.                                                                     |
 | `tryApplyTodoItemUpdateEvent(event)`                             | Normalizes a backend/SSE todo item update, then applies it with diagnostic failure reasons.                                  |
-| `applyTodoItemUpdateEvent(event)`                                | Normalizes a backend/SSE todo item update, then applies it through `updateTodoItem`.                                         |
 
 The same part collection and backend-event logic is exported as pure helpers for adapters and tests that manage `messages[]` outside the Web Component: `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, `replaceMessagePart()`, `applyMessagePartUpdate()`, and `normalizeMessagePartUpdateEvent()`.
 

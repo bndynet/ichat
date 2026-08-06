@@ -146,4 +146,4 @@ Initial review (2026-08-04): **7.2/10 overall**. Post-refactor verification (202
 
 ## Compatibility & Deprecation
 
-All deprecated APIs listed in prior versions have been removed in v3. See the [v2→v3 migration guide](./migration-v2-to-v3.md) for replacements.
+All deprecated APIs listed in prior versions have been removed in v3.

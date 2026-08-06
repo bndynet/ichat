@@ -139,7 +139,7 @@ export function ChatPanel() {
 }
 ```
 
-Two things to note. `<i-chat>` is `height: 100%` and `flex: 1 1 auto`, so it needs an ancestor with a resolved height — without one it collapses to zero, which is the most common "it renders nothing" report. And the listeners are wired with raw `addEventListener` to keep this a single self-contained file; the [`useChatEvent` hook](#portable-a-usechatevent-hook) below is the nicer form once you have the type declarations in place.
+Two things to note. `<i-chat>` is `height: 100%` and `flex: 1 1 auto`, so it needs an ancestor with a resolved height — without one it collapses to zero, which is the most common "it renders nothing" report.
 
 ---
 
@@ -235,55 +235,7 @@ Define truly static config at module scope, outside the component.
 
 ## Listening to events
 
-`<i-chat>` communicates through `CustomEvent`s. All of them bubble and cross shadow boundaries, so you can listen on the element itself.
-
-### Portable: a `useChatEvent` hook
-
-This works on every React version and is the pattern to reach for by default. The handler is kept in a ref so changing it does not tear down and re-add the listener on every render:
-
-```tsx
-import { useEffect, useRef, type RefObject } from 'react';
-import type { IChatElement, IChatEventMap } from './ichat';
-
-export function useChatEvent<K extends keyof IChatEventMap>(
-  ref: RefObject<IChatElement | null>,
-  type: K,
-  handler: (event: IChatEventMap[K]) => void,
-) {
-  const saved = useRef(handler);
-  useEffect(() => {
-    saved.current = handler;
-  });
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const listener = (event: Event) => saved.current(event as IChatEventMap[K]);
-    element.addEventListener(type, listener);
-    return () => element.removeEventListener(type, listener);
-  }, [ref, type]);
-}
-```
-
-Usage:
-
-```tsx
-useChatEvent(chatRef, 'send', (event) => {
-  void handleSend(event.detail.content); // detail is typed
-});
-
-useChatEvent(chatRef, 'busy-change', (event) => {
-  setBusy(event.detail.busy);
-});
-
-useChatEvent(chatRef, 'link-click', (event) => {
-  if (event.detail.protocol !== 'myapp:') return;
-  event.preventDefault();
-  navigate(event.detail.rawHref);
-});
-```
-
-`IChatElement` and `IChatEventMap` come from the declaration file in the [next section](#typescript-declaration-merging).
+`<i-chat>` communicates through `CustomEvent`s. All of them bubble and cross shadow boundaries, so you can listen on the element itself with `addEventListener`.
 
 ### React 19 shortcut: `on…` props
 
@@ -311,7 +263,7 @@ React 19 registers a listener for any prop starting with `on` whose value is a f
 | `confirmation-change`   | `onconfirmation-change`   |
 | `confirmation-decision` | `onconfirmation-decision` |
 
-`onSend` (camelCase) silently listens for an event named `Send` and never fires — there is no warning, so this is worth a lint rule if your team uses this style. `onCancel` is worse: it is a _known_ React event name, so it goes through the synthetic event system and never reaches the custom element at all. When in doubt, use `useChatEvent`.
+`onSend` (camelCase) silently listens for an event named `Send` and never fires — there is no warning, so this is worth a lint rule if your team uses this style. `onCancel` is worse: it is a _known_ React event name, so it goes through the synthetic event system and never reaches the custom element at all. When in doubt, use `addEventListener` with exact lowercase event names.
 
 ---
 
@@ -320,22 +272,27 @@ React 19 registers a listener for any prop starting with `on` whose value is a f
 By default `<i-chat>` owns its messages and `chat.messages` is up to date immediately after every mutation — just read it. Reach for controlled mode only when an external store must be the single source of truth (a sidebar, an export view, and the chat all reading one array).
 
 ```tsx
-import { useRef, useState } from 'react';
-import type { ChatMessage, IChatElement } from './ichat';
+import { useRef, useState, useEffect } from 'react';
+import type { ChatMessage } from '@bndynet/ichat';
 
 export function ControlledChat() {
-  const chatRef = useRef<IChatElement>(null);
+  const chatRef = useRef<Chat>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  useChatEvent(chatRef, 'messages-change', (event) => {
-    // Reject synchronously if the write is not allowed.
-    if (event.detail.reason === 'message:add' && !hasCredits()) {
-      event.preventDefault();
-      return;
-    }
-    // Accept: store the proposed array by reference.
-    setMessages(event.detail.messages);
-  });
+  useEffect(() => {
+    const chat = chatRef.current;
+    if (!chat) return;
+    const handler = (event: Event) => {
+      const e = event as CustomEvent;
+      if (e.detail.reason === 'message:add' && !hasCredits()) {
+        event.preventDefault();
+        return;
+      }
+      setMessages(e.detail.messages);
+    };
+    chat.addEventListener('messages-change', handler);
+    return () => chat.removeEventListener('messages-change', handler);
+  }, []);
 
   return <i-chat ref={chatRef} messageMode="controlled" messages={messages} />;
 }
@@ -612,8 +569,8 @@ Slotted nodes stay in the light DOM, so your app's CSS (including CSS Modules an
 One exception: `message-actions` is read as a **template**. Its markup is serialized to an HTML string and re-rendered under every message row, so React event handlers attached to those buttons are lost. Use `data-action` and handle the resulting `message-action` event on the chat element instead:
 
 ```tsx
-useChatEvent(chatRef, 'message-action', (event) => {
-  const { action, message } = event.detail;
+chatRef.current?.addEventListener('message-action', (event) => {
+  const { action, message } = (event as CustomEvent).detail;
   if (action === 'copy') void navigator.clipboard.writeText(getMessageText(message));
 });
 ```
@@ -652,7 +609,7 @@ Keep the `import '@bndynet/ichat'` inside `ChatPanel.tsx` so it is only ever rea
 | Nothing renders / zero height         | `<i-chat>` is `height: 100%`; the parent has no resolved height              | Give the container an explicit height or a flex layout with `min-height: 0`               |
 | `config="[object Object]"` in the DOM | React ≤ 18 stringifies unknown props                                         | Assign objects through the ref                                                            |
 | Props land as attributes on React 19  | The element had not upgraded when React committed                            | Move `import '@bndynet/ichat'` to module scope                                            |
-| Handler never fires                   | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `useChatEvent`, or exact lowercase names                                              |
+| Handler never fires                   | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `addEventListener` with exact lowercase names                                              |
 | Duplicate seed messages in dev        | StrictMode runs mount effects twice, and `addMessage` is additive            | Seed with `chat.messages = normalizeHistoryMessages(history)` — assignment is idempotent  |
 | Message list re-renders constantly    | A new `config` object literal each render                                    | `useMemo` the config, or hoist it to module scope                                         |
 | `TypeError: Cannot set property busy` | `busy` is a getter                                                           | Read it, or listen for `busy-change`                                                      |

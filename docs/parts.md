@@ -48,8 +48,8 @@ chat.appendPart(msgId, {
   args: { q: 'lit web components' },
   state: 'input-available',
 });
-chat.updateToolCall(msgId, 'tc-1', { state: 'executing' });
-chat.updateToolCall(msgId, 'tc-1', {
+chat.tryUpdateToolCall(msgId, 'tc-1', { state: 'executing' });
+chat.tryUpdateToolCall(msgId, 'tc-1', {
   state: 'output-available',
   durationMs: 1100,
   // `result` (string / JSON) renders as a code block, or use `resultParts`
