@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'chat-input-host-tokens';
+@use 'reduced-motion' as *;
 
 :host {
   display: block;

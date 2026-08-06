@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'reduced-motion';
 @use 'chat-message-content' as content;
 @use 'chat-message-meta' as meta;
 @use 'chat-progress' as progress;

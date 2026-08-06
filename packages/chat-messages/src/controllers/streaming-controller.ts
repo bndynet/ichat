@@ -8,12 +8,14 @@ export class StreamingController implements ReactiveController {
   private _charsPerTick: number;
   private _active = false;
   private _onComplete?: () => void;
+  private readonly _reduceMotion: boolean;
 
   constructor(host: ReactiveControllerHost, options?: { speed?: number; onComplete?: () => void }) {
     this._host = host;
     this._host.addController(this);
     this._charsPerTick = options?.speed ?? 3;
     this._onComplete = options?.onComplete;
+    this._reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   get displayedContent(): string {
@@ -34,14 +36,14 @@ export class StreamingController implements ReactiveController {
     const wasComplete = this._visibleLength >= this._fullContent.length;
     this._fullContent = content;
 
-    if (animate && this._charsPerTick > 0 && this._visibleLength < content.length) {
-      this._active = true;
-      this._startAnimation();
-    } else if (!animate || this._charsPerTick <= 0) {
-      // animate=false or speed=0 both mean: show everything instantly, no rAF
+    if (this._reduceMotion || !animate || this._charsPerTick <= 0) {
+      // Reduced motion, explicit opt-out, or speed=0: show everything instantly.
       this._visibleLength = content.length;
       this._active = false;
       this._host.requestUpdate();
+    } else if (this._visibleLength < content.length) {
+      this._active = true;
+      this._startAnimation();
     } else if (wasComplete && this._visibleLength >= content.length) {
       this._active = false;
       this._host.requestUpdate();

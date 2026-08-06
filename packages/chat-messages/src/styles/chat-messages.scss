@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'chat-host-tokens';
+@use 'reduced-motion';
 
 :host {
   display: flex;

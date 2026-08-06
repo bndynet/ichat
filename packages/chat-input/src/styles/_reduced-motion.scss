@@ -1,0 +1,19 @@
+// Opt-in respect for OS-level "reduce motion" accessibility preference.
+// When the user has this setting enabled, all CSS animations and transitions
+// are effectively disabled across the shadow tree.
+//
+// This is a low-cost, high-value WCAG 2.2 AA improvement that helps users
+// with vestibular disorders.
+//
+// 0.01ms is used instead of 0s so that `animationend` / `transitionend`
+// events still fire — some controllers depend on them to advance state.
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

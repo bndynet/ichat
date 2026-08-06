@@ -1,3 +1,5 @@
+@use '../../../chat-messages/src/styles/reduced-motion';
+
 // Shell only: set `--chat-*` on this host or an ancestor. Inner components load
 // token SCSS via `@use 'chat-host-tokens'` / `@use 'chat-input-host-tokens'`.
 
