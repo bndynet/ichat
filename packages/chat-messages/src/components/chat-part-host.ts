@@ -294,28 +294,28 @@ export class ChatPartHost extends LitElement {
         const renderer = this._partRenderer(part);
         if (renderer?.element) {
           const tag = unsafeStatic(renderer.element);
-          return staticHtml`<div class="bubble">
+          return staticHtml`
             <${tag}
               data-part-id=${part.id}
               data-part-type=${part.type}
               .data=${(part as CustomPart).data}
               .part=${part}
             ></${tag}>
-          </div>`;
+          `;
         }
         if (renderer?.render) {
-          return html`<div class="bubble">
+          return html`
             <div
               class="part-custom-host"
               data-part-id=${part.id}
               data-part-type=${part.type}
               ${ref(this._customRef(part.id))}
             ></div>
-          </div>`;
+          `;
         }
-        return html`<div class="bubble">
+        return html`
           <pre class="part-custom">${JSON.stringify(part, null, 2)}</pre>
-        </div>`;
+        `;
       }
     }
   }
