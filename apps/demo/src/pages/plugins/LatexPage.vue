@@ -1,11 +1,11 @@
 <script setup>
-import '@bndynet/ichat';
-import '@bndynet/ichat-renderer-katex';
-import { nextTick, onMounted, ref } from 'vue';
-import { nextId } from '../../composables/demo-data.js';
-import { textPart } from '@bndynet/ichat';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import latexExample from '../../examples/plugins/latex.md?raw';
+import "@bndynet/ichat";
+import "@bndynet/ichat-renderer-katex";
+import { nextTick, onMounted, ref } from "vue";
+import { nextId } from "../../composables/demo-data.js";
+import { textPart } from "@bndynet/ichat";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import latexExample from "../../examples/plugins/latex.md?raw";
 
 const chatRef = ref(null);
 
@@ -25,7 +25,7 @@ onMounted(async () => {
 
   chat.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     timestamp: Date.now(),
     parts: [
       textPart(`## Inline Math
@@ -94,13 +94,19 @@ $$
 </script>
 
 <template>
-  <div style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
-    <h2 style="margin: 0 0 8px;">LaTeX Math (KaTeX)</h2>
-    <p style="margin: 0 0 12px;">
-      LaTeX math rendering via <code>registerMarkdownPlugin</code> with KaTeX. Use
-      <code>$...$</code> for inline math and <code>$$...$$</code> for display math.
+  <div
+    style="display: flex; flex-direction: column; height: 100%; min-height: 0"
+  >
+    <h2 style="margin: 0 0 8px">LaTeX Math (KaTeX)</h2>
+    <p style="margin: 0 0 12px">
+      LaTeX math rendering via <code>registerMarkdownPlugin</code> with KaTeX.
+      Use <code>$...$</code> for inline math and <code>$$...$$</code> for
+      display math.
     </p>
-    <i-chat ref="chatRef" style="flex: 1; min-height: 0;" />
+    <i-chat ref="chatRef" style="flex: 1; min-height: 0" />
   </div>
-  <ExampleCodeDrawer title="LaTeX plugin code example" :content="latexExample" />
+  <ExampleCodeDrawer
+    title="LaTeX plugin code example"
+    :content="latexExample"
+  />
 </template>

@@ -1,4 +1,4 @@
-export { Chat } from './components/chat.js';
+export { Chat } from "./components/chat.js";
 export type {
   ChatConfirmationAction,
   ChatConfirmationChangeDetail,
@@ -7,20 +7,26 @@ export type {
   ChatConfirmationResult,
   ChatConfirmationVariant,
   ChatMessageMode,
-} from './components/chat.js';
-export { ChatRunController } from './controllers/chat-run-controller.js';
-export type { ChatRunStatus, ChatRunOptions } from './controllers/chat-run-controller.js';
-export type { ChatMutationOutcome } from './state/mutation-outcome.js';
-export type { ChatMiddleware } from './middleware/chat-middleware.js';
-export type { ChatPlugin } from './middleware/chat-plugin.js';
-export { createMiddlewareChain } from './middleware/chat-middleware.js';
+} from "./components/chat.js";
+export { ChatRunController } from "./controllers/chat-run-controller.js";
+export type {
+  ChatRunStatus,
+  ChatRunOptions,
+} from "./controllers/chat-run-controller.js";
+export type { ChatMutationOutcome } from "./state/mutation-outcome.js";
+export type { ChatMiddleware } from "./middleware/chat-middleware.js";
+export type { ChatPlugin } from "./middleware/chat-plugin.js";
+export { createMiddlewareChain } from "./middleware/chat-middleware.js";
 export type {
   MessagesChangeDetail,
   MessagesChangeReason,
   MessagesChangeSource,
-} from '@bndynet/ichat-messages';
-import type { BlockRenderer, PartRenderer } from '@bndynet/ichat-messages';
-import { rendererRegistry, partRendererRegistry } from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
+import type { BlockRenderer, PartRenderer } from "@bndynet/ichat-messages";
+import {
+  rendererRegistry,
+  partRendererRegistry,
+} from "@bndynet/ichat-messages";
 
 /**
  * Register a fenced-code block renderer globally. Runtime registration is
@@ -45,8 +51,8 @@ export function registerPartRenderer(renderer: PartRenderer): void {
 
 // Re-export markdown plugin API so consumers can register plugins
 // from the top-level @bndynet/ichat package.
-export { registerMarkdownPlugin } from '@bndynet/ichat-messages';
-export type { MarkdownPlugin } from '@bndynet/ichat-messages';
+export { registerMarkdownPlugin } from "@bndynet/ichat-messages";
+export type { MarkdownPlugin } from "@bndynet/ichat-messages";
 
 // Re-export commonly used types and utilities so consumers don't need
 // to install the sub-packages separately.
@@ -97,7 +103,7 @@ export type {
   PluralForms,
   ChatLinkClickDetail,
   MarkdownRenderOptions,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
 export {
   DEFAULT_CONFIG,
   BUILT_IN_MESSAGE_PART_TYPES,
@@ -142,7 +148,7 @@ export {
   CHAT_LABELS_ZH_CN,
   formatAssistantDurationMs,
   normalizeHistoryMessages,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
 export type {
   ChatPartRenderContext,
   MessagePartUpdate,
@@ -172,6 +178,11 @@ export type {
   ToolCallUpdateFailureReason,
   ToolCallUpdateResult,
   NormalizeHistoryOptions,
-} from '@bndynet/ichat-messages';
-export { ChatInput } from '@bndynet/ichat-input';
-export { ChatMessages, ChatPartHost, ChatToolCall, ChatTodo } from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
+export { ChatInput } from "@bndynet/ichat-input";
+export {
+  ChatMessages,
+  ChatPartHost,
+  ChatToolCall,
+  ChatTodo,
+} from "@bndynet/ichat-messages";

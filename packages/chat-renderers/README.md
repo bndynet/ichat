@@ -18,7 +18,7 @@ npm install @bndynet/ichat-renderers
 Auto-registers on import — no `registerCodeRenderer` calls needed:
 
 ```typescript
-import '@bndynet/ichat-renderers';  // auto-registers kpi, kpis, form
+import "@bndynet/ichat-renderers"; // auto-registers kpi, kpis, form
 ```
 
 ## Built-in renderers

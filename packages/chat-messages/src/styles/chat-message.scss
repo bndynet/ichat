@@ -1,10 +1,10 @@
-@use 'variables' as *;
-@use 'chat-host-tokens';
-@use 'reduced-motion';
-@use 'chat-message-content' as content;
-@use 'chat-message-meta' as meta;
-@use 'chat-progress' as progress;
-@use 'chat-kpi' as kpi;
+@use "variables" as *;
+@use "chat-host-tokens";
+@use "reduced-motion";
+@use "chat-message-content" as content;
+@use "chat-message-meta" as meta;
+@use "chat-progress" as progress;
+@use "chat-kpi" as kpi;
 
 :host {
   display: block;
@@ -52,7 +52,8 @@
   display: flex;
   gap: var(--chat-spacing-sm, #{$spacing-sm});
   max-width: var(--chat-message-max-width, #{$message-max-width});
-  animation: messageIn var(--chat-transition-normal, #{$transition-normal}) forwards;
+  animation: messageIn var(--chat-transition-normal, #{$transition-normal})
+    forwards;
 
   &--self {
     margin-inline-start: auto;
@@ -175,14 +176,21 @@ i-chat-text-part {
 
 .bubble {
   border-radius: var(--chat-radius-lg, #{$radius-lg});
-  margin-block-end: var(--chat-bubble-block-end-gap, var(--chat-spacing-sm, #{$spacing-sm}));
-  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+  margin-block-end: var(
+    --chat-bubble-block-end-gap,
+    var(--chat-spacing-sm, #{$spacing-sm})
+  );
+  padding: var(--chat-spacing-sm, #{$spacing-sm})
+    var(--chat-spacing-md, #{$spacing-md});
   line-height: var(--chat-line-height, #{$line-height-base});
   word-break: break-word;
   overflow-wrap: break-word;
 
   .message--self & {
-    background: var(--chat-self-bg, var(--chat-user-bg, var(--chat-primary, #{$color-primary})));
+    background: var(
+      --chat-self-bg,
+      var(--chat-user-bg, var(--chat-primary, #{$color-primary}))
+    );
     color: var(--chat-self-text, var(--chat-user-text, #{$color-user-text}));
     border-end-end-radius: var(--chat-radius-sm, #{$radius-sm});
   }
@@ -192,14 +200,20 @@ i-chat-text-part {
       --chat-peer-bg,
       var(--chat-assistant-bg, var(--chat-surface, #{$color-surface}))
     );
-    color: var(--chat-peer-text, var(--chat-assistant-text, var(--chat-text, #{$color-text})));
+    color: var(
+      --chat-peer-text,
+      var(--chat-assistant-text, var(--chat-text, #{$color-text}))
+    );
     border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});
   }
 
   .message--assistant &,
   .message--system & {
-    background: var(--chat-assistant-bg, var(--chat-surface, #{$color-surface}));
+    background: var(
+      --chat-assistant-bg,
+      var(--chat-surface, #{$color-surface})
+    );
     color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
     border-end-start-radius: var(--chat-radius-sm, #{$radius-sm});
     box-shadow: var(--chat-shadow-sm, #{$shadow-sm});

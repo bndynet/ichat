@@ -1,9 +1,9 @@
 <script setup>
-import '@bndynet/ichat';
-import { ref, nextTick, onMounted } from 'vue';
-import { reply } from '../../composables/demo-data';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import placeholderExample from '../../examples/slots/placeholder.md?raw';
+import "@bndynet/ichat";
+import { ref, nextTick, onMounted } from "vue";
+import { reply } from "../../composables/demo-data";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import placeholderExample from "../../examples/slots/placeholder.md?raw";
 
 const chatRef = ref(null);
 
@@ -104,7 +104,13 @@ function handleSend(e) {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <filter id="pw-glow-blur" x="-40%" y="-40%" width="180%" height="180%">
+          <filter
+            id="pw-glow-blur"
+            x="-40%"
+            y="-40%"
+            width="180%"
+            height="180%"
+          >
             <feGaussianBlur stdDeviation="18" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -142,15 +148,38 @@ function handleSend(e) {
             stroke-width="1.25"
             stroke-linejoin="round"
           />
-          <rect x="164" y="96" width="84" height="56" rx="14" fill="url(#pw-bubble-r)" />
+          <rect
+            x="164"
+            y="96"
+            width="84"
+            height="56"
+            rx="14"
+            fill="url(#pw-bubble-r)"
+          />
           <path d="M232 152 L246 164 L232 160 Z" fill="url(#pw-bubble-r)" />
         </g>
 
         <g opacity="0.95">
           <rect x="64" y="96" width="52" height="8" rx="4" fill="#A5B4FC" />
           <rect x="64" y="110" width="36" height="8" rx="4" fill="#E2E8F0" />
-          <rect x="184" y="118" width="44" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.92" />
-          <rect x="184" y="130" width="28" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.55" />
+          <rect
+            x="184"
+            y="118"
+            width="44"
+            height="6"
+            rx="3"
+            fill="#FFFFFF"
+            fill-opacity="0.92"
+          />
+          <rect
+            x="184"
+            y="130"
+            width="28"
+            height="6"
+            rx="3"
+            fill="#FFFFFF"
+            fill-opacity="0.55"
+          />
         </g>
 
         <g stroke-linecap="round" stroke-width="2.5">
@@ -163,7 +192,10 @@ function handleSend(e) {
       <p class="placeholder__hint">Type a message below to begin.</p>
     </div>
   </i-chat>
-  <ExampleCodeDrawer title="Placeholder code example" :content="placeholderExample" />
+  <ExampleCodeDrawer
+    title="Placeholder code example"
+    :content="placeholderExample"
+  />
 </template>
 
 <style scoped>

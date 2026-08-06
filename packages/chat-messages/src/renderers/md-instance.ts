@@ -8,18 +8,18 @@
  * @internal
  */
 
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from "markdown-it";
 
-const MD_KEY = Symbol.for('@bndynet/ichat-messages:markdown-it');
+const MD_KEY = Symbol.for("@bndynet/ichat-messages:markdown-it");
 
 /** Get or create the shared markdown-it instance. Idempotent. */
 export function getSharedMd(factory: () => MarkdownIt): MarkdownIt {
   // Use globalThis (standard) in all modern runtimes; the global fallback is
   // only needed for ancient Node.js without --harmony-global-this.
   const store = (
-    typeof globalThis !== 'undefined'
+    typeof globalThis !== "undefined"
       ? globalThis
-      : (Function('return this')() as typeof globalThis)
+      : (Function("return this")() as typeof globalThis)
   ) as Record<symbol, MarkdownIt>;
   return (store[MD_KEY] ??= factory());
 }

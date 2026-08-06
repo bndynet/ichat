@@ -1,31 +1,32 @@
 <script setup>
-import '@bndynet/ichat';
-import '@bndynet/ichat-renderer-mermaid';
-import { onMounted, nextTick, ref } from 'vue'
-import { textPart } from '@bndynet/ichat'
-import { demoData, nextId } from '../../composables/demo-data.js'
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
-import mermaidExample from '../../examples/renderers/mermaid.md?raw'
+import "@bndynet/ichat";
+import "@bndynet/ichat-renderer-mermaid";
+import { onMounted, nextTick, ref } from "vue";
+import { textPart } from "@bndynet/ichat";
+import { demoData, nextId } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import mermaidExample from "../../examples/renderers/mermaid.md?raw";
 
-const chatRef = ref(null)
+const chatRef = ref(null);
 
 onMounted(async () => {
-  await nextTick()
-  console.log(demoData.mermaid)
+  await nextTick();
+  console.log(demoData.mermaid);
   chatRef.value.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     parts: [textPart(demoData.mermaid)],
     timestamp: Date.now(),
-  })
-})
+  });
+});
 </script>
 
 <template>
   <p class="mermaid-demo-hint">
     Mermaid colors come from optional <code>--chat-mermaid-*</code> tokens in
-    <code>apps/demo/styles.css</code> (teal accent + mint block fills in light, emerald tones in
-    dark). Remove that block to fall back to normal <code>--chat-*</code> only.
+    <code>apps/demo/styles.css</code> (teal accent + mint block fills in light,
+    emerald tones in dark). Remove that block to fall back to normal
+    <code>--chat-*</code> only.
   </p>
   <i-chat-messages ref="chatRef"></i-chat-messages>
   <ExampleCodeDrawer title="Mermaid code example" :content="mermaidExample" />

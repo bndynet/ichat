@@ -1,26 +1,26 @@
-import { LitElement, html, nothing } from 'lit';
-import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
-import { customElement, property } from 'lit/decorators.js';
-import { setVersionAttribute } from '../version.js';
-import { ref, createRef } from 'lit/directives/ref.js';
-import { repeat } from 'lit/directives/repeat.js';
+import { LitElement, html, nothing } from "lit";
+import { html as staticHtml, unsafeStatic } from "lit/static-html.js";
+import { customElement, property } from "lit/decorators.js";
+import { setVersionAttribute } from "../version.js";
+import { ref, createRef } from "lit/directives/ref.js";
+import { repeat } from "lit/directives/repeat.js";
 import type {
   ChatMessage,
   ChatPartActionDetail,
   CustomPart,
   MessagePart,
   RendererErrorDetail,
-} from '../types.js';
-import type { ChatLabels } from '../i18n.js';
-import { createPartActionDetail } from '../message-events.js';
-import { sanitizeHtml } from '../renderers/markdown-renderer.js';
-import { partRendererRegistry } from '../renderers/part-registry.js';
-import { morphHtmlInto } from '../renderers/dom-morph.js';
-import { isAllowedLinkHref } from '../link-protocols.js';
-import './chat-reasoning.js';
-import './chat-text-part.js';
-import './chat-tool-call.js';
-import './chat-todo.js';
+} from "../types.js";
+import type { ChatLabels } from "../i18n.js";
+import { createPartActionDetail } from "../message-events.js";
+import { sanitizeHtml } from "../renderers/markdown-renderer.js";
+import { partRendererRegistry } from "../renderers/part-registry.js";
+import { morphHtmlInto } from "../renderers/dom-morph.js";
+import { isAllowedLinkHref } from "../link-protocols.js";
+import "./chat-reasoning.js";
+import "./chat-text-part.js";
+import "./chat-tool-call.js";
+import "./chat-todo.js";
 
 export interface ChatPartRenderContext {
   message?: ChatMessage;
@@ -42,20 +42,24 @@ export interface ChatPartRenderContext {
  * custom-part markup. Built-in text parts own their markdown morphing in
  * `<i-chat-text-part>`; string-mode custom renderers are still morphed here.
  */
-@customElement('i-chat-part-host')
+@customElement("i-chat-part-host")
 export class ChatPartHost extends LitElement {
   @property({ attribute: false }) message?: ChatMessage;
   @property({ attribute: false }) parts: MessagePart[] = [];
   @property({ attribute: false }) streamingTextId: string | null = null;
-  @property() streamingText = '';
+  @property() streamingText = "";
   @property({ type: Boolean }) streamingTextAnimating = false;
   @property({ type: Number }) speed = 3;
-  @property() reasoningHeaderHtml = '';
+  @property() reasoningHeaderHtml = "";
   @property({ attribute: false }) labels?: ChatLabels;
   @property({ attribute: false }) allowedLinkProtocols?: readonly string[];
-  @property({ attribute: false }) highlightJs?: import('../types.js').ChatConfig['highlightJs'];
+  @property({ attribute: false })
+  highlightJs?: import("../types.js").ChatConfig["highlightJs"];
 
-  private _customRefs = new Map<string, ReturnType<typeof createRef<HTMLDivElement>>>();
+  private _customRefs = new Map<
+    string,
+    ReturnType<typeof createRef<HTMLDivElement>>
+  >();
   private _customCache = new Map<string, string>();
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -65,11 +69,11 @@ export class ChatPartHost extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     setVersionAttribute(this);
-    this.addEventListener('part-action', this._onPartAction);
+    this.addEventListener("part-action", this._onPartAction);
   }
 
   override disconnectedCallback(): void {
-    this.removeEventListener('part-action', this._onPartAction);
+    this.removeEventListener("part-action", this._onPartAction);
     super.disconnectedCallback();
   }
 
@@ -102,7 +106,7 @@ export class ChatPartHost extends LitElement {
     e.stopPropagation();
 
     const enriched = createPartActionDetail({
-      kind: kind as ChatPartActionDetail['kind'],
+      kind: kind as ChatPartActionDetail["kind"],
       action: (detail.action as string) ?? kind,
       message: this.message,
       payload: detail,
@@ -127,9 +131,11 @@ export class ChatPartHost extends LitElement {
     return undefined;
   }
 
-  private _dispatchPartAction<TDetail>(detail: ChatPartActionDetail<TDetail>): void {
+  private _dispatchPartAction<TDetail>(
+    detail: ChatPartActionDetail<TDetail>,
+  ): void {
     this.dispatchEvent(
-      new CustomEvent<ChatPartActionDetail<TDetail>>('part-action', {
+      new CustomEvent<ChatPartActionDetail<TDetail>>("part-action", {
         detail,
         bubbles: true,
         composed: true,
@@ -137,18 +143,30 @@ export class ChatPartHost extends LitElement {
     );
   }
 
-  private _handleRenderedPartUpdated = (e: CustomEvent<{ changed?: boolean }>): void => {
+  private _handleRenderedPartUpdated = (
+    e: CustomEvent<{ changed?: boolean }>,
+  ): void => {
     e.stopPropagation();
     this.dispatchEvent(
-      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true }),
+      new CustomEvent("chat-part-host-updated", {
+        bubbles: true,
+        composed: true,
+      }),
     );
     if (e.detail?.changed && !this.message?.parentId) {
-      this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent("chat-content-resize", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
     }
   };
 
   private _linkHref(rawHref: string): string | typeof nothing {
-    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
+    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols)
+      ? rawHref
+      : nothing;
   }
 
   private _customRef(id: string): ReturnType<typeof createRef<HTMLDivElement>> {
@@ -163,9 +181,9 @@ export class ChatPartHost extends LitElement {
   private _partRenderer(part: MessagePart) {
     return partRendererRegistry.getRenderer(part.type, (renderer, error) => {
       this._dispatchRendererError({
-        kind: 'part',
+        kind: "part",
         renderer: renderer.name,
-        phase: 'match',
+        phase: "match",
         error,
         partId: part.id,
         partType: part.type,
@@ -175,7 +193,7 @@ export class ChatPartHost extends LitElement {
 
   private _dispatchRendererError(detail: RendererErrorDetail): void {
     this.dispatchEvent(
-      new CustomEvent<RendererErrorDetail>('chat-renderer-error', {
+      new CustomEvent<RendererErrorDetail>("chat-renderer-error", {
         detail,
         bubbles: true,
         composed: true,
@@ -189,11 +207,11 @@ export class ChatPartHost extends LitElement {
       /[&<>"']/g,
       (character) =>
         ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;',
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
         })[character] ?? character,
     );
     return `<pre class="part-custom">${escaped}</pre>`;
@@ -201,19 +219,19 @@ export class ChatPartHost extends LitElement {
 
   private _renderPart(part: MessagePart) {
     switch (part.type) {
-      case 'reasoning':
+      case "reasoning":
         return html`<i-chat-reasoning
           data-part-id=${part.id}
           data-part-type=${part.type}
           .content=${part.text}
-          .streaming=${part.status === 'streaming'}
+          .streaming=${part.status === "streaming"}
           .speed=${this.speed <= 0 ? 0 : Math.max(1, this.speed - 1)}
           .headerHtml=${this.reasoningHeaderHtml}
           .labels=${this.labels?.reasoning}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
           @chat-reasoning-updated=${this._handleRenderedPartUpdated}
         ></i-chat-reasoning>`;
-      case 'tool-call':
+      case "tool-call":
         return html`<i-chat-tool-call
           data-part-id=${part.id}
           data-part-type=${part.type}
@@ -222,27 +240,33 @@ export class ChatPartHost extends LitElement {
           .labels=${this.labels?.toolCall}
           .allowedLinkProtocols=${this.allowedLinkProtocols}
         ></i-chat-tool-call>`;
-      case 'todo':
+      case "todo":
         return html`<i-chat-todo
           data-part-id=${part.id}
           data-part-type=${part.type}
           .data=${part}
           .labels=${this.labels?.todo}
         ></i-chat-todo>`;
-      case 'file': {
-        if (part.mediaType.startsWith('image/')) {
-          const src = part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
+      case "file": {
+        if (part.mediaType.startsWith("image/")) {
+          const src =
+            part.url ??
+            (part.data ? `data:${part.mediaType};base64,${part.data}` : "");
           return src
             ? html`<div
                 class="part-attachment part-file part-file--image"
                 data-part-id=${part.id}
                 data-part-type=${part.type}
               >
-                <img class="part-file-image" src=${src} alt=${part.name ?? 'image'} />
+                <img
+                  class="part-file-image"
+                  src=${src}
+                  alt=${part.name ?? "image"}
+                />
               </div>`
             : nothing;
         }
-        const href = part.url ?? '';
+        const href = part.url ?? "";
         return html`<div
           class="part-attachment part-file part-file--link"
           data-part-id=${part.id}
@@ -259,7 +283,7 @@ export class ChatPartHost extends LitElement {
           >
         </div>`;
       }
-      case 'source':
+      case "source":
         return html`<div
           class="part-attachment part-source-card"
           data-part-id=${part.id}
@@ -276,9 +300,11 @@ export class ChatPartHost extends LitElement {
           >
           ${part.snippet ? html`<div class="part-source-snippet">${part.snippet}</div>` : nothing}
         </div>`;
-      case 'text': {
-        const animatingHere = part.id === this.streamingTextId && this.streamingTextAnimating;
-        const content = part.id === this.streamingTextId ? this.streamingText : part.text;
+      case "text": {
+        const animatingHere =
+          part.id === this.streamingTextId && this.streamingTextAnimating;
+        const content =
+          part.id === this.streamingTextId ? this.streamingText : part.text;
         return html`<i-chat-text-part
           data-part-id=${part.id}
           data-part-type=${part.type}
@@ -325,7 +351,7 @@ export class ChatPartHost extends LitElement {
 
     const liveCustomIds = new Set<string>();
     for (const p of this.parts ?? []) {
-      if (!p.type.startsWith('x-')) continue;
+      if (!p.type.startsWith("x-")) continue;
       const renderer = this._partRenderer(p);
       if (!renderer || renderer.element || !renderer.render) continue;
       liveCustomIds.add(p.id);
@@ -336,9 +362,9 @@ export class ChatPartHost extends LitElement {
         rawHtml = renderer.render(p as CustomPart);
       } catch (error) {
         this._dispatchRendererError({
-          kind: 'part',
+          kind: "part",
           renderer: renderer.name,
-          phase: 'render',
+          phase: "render",
           error,
           partId: p.id,
           partType: p.type,
@@ -362,11 +388,19 @@ export class ChatPartHost extends LitElement {
     }
 
     this.dispatchEvent(
-      new CustomEvent('chat-part-host-updated', { bubbles: true, composed: true }),
+      new CustomEvent("chat-part-host-updated", {
+        bubbles: true,
+        composed: true,
+      }),
     );
 
     if (didMorph && !this.message?.parentId) {
-      this.dispatchEvent(new CustomEvent('chat-content-resize', { bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent("chat-content-resize", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
     }
   }
 
@@ -381,6 +415,6 @@ export class ChatPartHost extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-part-host': ChatPartHost;
+    "i-chat-part-host": ChatPartHost;
   }
 }

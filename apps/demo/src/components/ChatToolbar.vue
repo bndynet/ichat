@@ -1,15 +1,10 @@
 <script setup>
-import { computed, unref } from 'vue'
-import {
-  Warning,
-  Bell,
-  Delete,
-  CircleClose,
-} from '@element-plus/icons-vue'
-import { textPart } from '@bndynet/ichat'
-import { cancelPendingStreamPlayback } from '../composables/demo-data.js'
+import { computed, unref } from "vue";
+import { Warning, Bell, Delete, CircleClose } from "@element-plus/icons-vue";
+import { textPart } from "@bndynet/ichat";
+import { cancelPendingStreamPlayback } from "../composables/demo-data.js";
 
-const CANCEL_HINT = '*— Response stopped —*'
+const CANCEL_HINT = "*— Response stopped —*";
 
 const props = defineProps({
   streaming: { type: Boolean, default: false },
@@ -21,62 +16,69 @@ const props = defineProps({
   chatRef: {
     required: false,
     default: null,
-    validator: (v) => v == null || typeof v === 'object',
+    validator: (v) => v == null || typeof v === "object",
   },
-})
+});
 
 /** Resolved host element (template `:chat-ref="r"` unwraps `r`, so it is not `r.value`). */
-const chatEl = computed(() => unref(props.chatRef))
+const chatEl = computed(() => unref(props.chatRef));
 
-let msgSeq = 0
+let msgSeq = 0;
 function nextMsgId() {
-  return `msg-${++msgSeq}`
+  return `msg-${++msgSeq}`;
 }
 
 function onErrorMessage() {
-  const chat = chatEl.value
-  if (!chat) return
+  const chat = chatEl.value;
+  if (!chat) return;
   chat.addMessage({
     id: nextMsgId(),
-    role: 'self',
-    parts: [textPart('Tell me about quantum computing')],
+    role: "self",
+    parts: [textPart("Tell me about quantum computing")],
     timestamp: Date.now(),
-  })
+  });
   setTimeout(() => {
     chat.addMessage({
       id: nextMsgId(),
-      role: 'assistant',
+      role: "assistant",
       parts: [],
-      error: 'Service temporarily unavailable. Please try again later.',
+      error: "Service temporarily unavailable. Please try again later.",
       timestamp: Date.now(),
-    })
-  }, 500)
+    });
+  }, 500);
 }
 
 function onErrorBanner() {
-  chatEl.value?.showError('Network lost. Reconnecting…', {
+  chatEl.value?.showError("Network lost. Reconnecting…", {
     duration: 5000,
-  })
+  });
 }
 
 function onCancelStream() {
   if (!cancelPendingStreamPlayback(CANCEL_HINT)) {
-    chatEl.value?.cancel(CANCEL_HINT)
+    chatEl.value?.cancel(CANCEL_HINT);
   }
 }
 
 function onClear() {
-  chatEl.value?.clear()
+  chatEl.value?.clear();
 }
 </script>
 
 <template>
   <div class="demo-chat-toolbar">
-    <el-button size="small" :disabled="streaming" :icon="Warning" @click="onErrorMessage">
+    <el-button
+      size="small"
+      :disabled="streaming"
+      :icon="Warning"
+      @click="onErrorMessage"
+    >
       Error Message
     </el-button>
 
-    <el-button size="small" :icon="Bell" @click="onErrorBanner"> Error Banner </el-button>
+    <el-button size="small" :icon="Bell" @click="onErrorBanner">
+      Error Banner
+    </el-button>
 
     <el-button
       size="small"
@@ -88,7 +90,9 @@ function onClear() {
       Cancel
     </el-button>
 
-    <el-button size="small" type="danger" plain :icon="Delete" @click="onClear"> Clear </el-button>
+    <el-button size="small" type="danger" plain :icon="Delete" @click="onClear">
+      Clear
+    </el-button>
   </div>
 </template>
 

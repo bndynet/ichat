@@ -1,15 +1,24 @@
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue';
-import { cancelPendingStreamPlayback, reply, nextId } from '../composables/demo-data.js';
-import '@bndynet/ichat';
-import { textPart, reasoningPart, getMessageText, makeDaysAgo } from '@bndynet/ichat';
-import ChatToolbar from '../components/ChatToolbar.vue';
+import { ref, computed, nextTick, onMounted } from "vue";
+import {
+  cancelPendingStreamPlayback,
+  reply,
+  nextId,
+} from "../composables/demo-data.js";
+import "@bndynet/ichat";
+import {
+  textPart,
+  reasoningPart,
+  getMessageText,
+  makeDaysAgo,
+} from "@bndynet/ichat";
+import ChatToolbar from "../components/ChatToolbar.vue";
 
 const loading = ref(true);
 const chatRef = ref(null);
 
 const replyDialogVisible = ref(false);
-const replyContent = ref('');
+const replyContent = ref("");
 const replyTargetMessage = ref(null);
 
 /**
@@ -17,38 +26,38 @@ const replyTargetMessage = ref(null);
  * shows full RTL layout + an `Intl.PluralRules`-aware `daysAgo` via `makeDaysAgo`.
  */
 const LOCALE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'zh-CN', label: '简体中文' },
-  { value: 'ar', label: 'العربية (RTL)' },
+  { value: "en", label: "English" },
+  { value: "zh-CN", label: "简体中文" },
+  { value: "ar", label: "العربية (RTL)" },
 ];
 
 /** Arabic overrides — no built-in dictionary ships for `ar`, so supply labels here. */
 const AR_LABELS = {
   composer: {
-    placeholder: 'اكتب رسالة…',
-    voiceListening: 'يستمع…',
-    send: 'إرسال',
-    sendTitle: 'إرسال الرسالة',
+    placeholder: "اكتب رسالة…",
+    voiceListening: "يستمع…",
+    send: "إرسال",
+    sendTitle: "إرسال الرسالة",
   },
-  reasoning: { thinking: 'يفكر...', reasoning: 'ملخص التفكير' },
+  reasoning: { thinking: "يفكر...", reasoning: "ملخص التفكير" },
   toolCall: {
-    running: 'قيد التشغيل…',
-    success: 'نجاح',
-    error: 'خطأ',
-    argumentsSection: 'الوسائط',
-    resultSection: 'النتيجة',
-    approve: 'موافقة',
-    reject: 'رفض',
-    approved: 'تمت الموافقة',
-    rejected: 'تم الرفض',
+    running: "قيد التشغيل…",
+    success: "نجاح",
+    error: "خطأ",
+    argumentsSection: "الوسائط",
+    resultSection: "النتيجة",
+    approve: "موافقة",
+    reject: "رفض",
+    approved: "تمت الموافقة",
+    rejected: "تم الرفض",
   },
-  messages: { empty: 'لا توجد رسائل بعد. ابدأ محادثة!' },
+  messages: { empty: "لا توجد رسائل بعد. ابدأ محادثة!" },
   dateSeparator: {
-    today: 'اليوم',
-    yesterday: 'أمس',
-    older: 'أقدم',
+    today: "اليوم",
+    yesterday: "أمس",
+    older: "أقدم",
     // Arabic has multiple plural forms — Intl.PluralRules picks the right one.
-    daysAgo: makeDaysAgo('ar', {
+    daysAgo: makeDaysAgo("ar", {
       few: (n) => `قبل ${n} أيام`,
       many: (n) => `قبل ${n} يومًا`,
       other: (n) => `قبل ${n} يوم`,
@@ -56,29 +65,32 @@ const AR_LABELS = {
   },
 };
 
-const locale = ref('zh-CN');
+const locale = ref("zh-CN");
 
 const PENDING_OPTIONS = [
-  { value: 'dots', label: 'Dots' },
-  { value: 'spinner', label: 'Spinner' },
-  { value: 'none', label: 'None' },
+  { value: "dots", label: "Dots" },
+  { value: "spinner", label: "Spinner" },
+  { value: "none", label: "None" },
 ];
-const pendingIndicator = ref('dots');
+const pendingIndicator = ref("dots");
 const pendingDelay = ref(200);
 
 const chatConfig = computed(() => {
-  const base = locale.value === 'ar' ? { locale: 'ar', labels: AR_LABELS } : { locale: locale.value };
+  const base =
+    locale.value === "ar"
+      ? { locale: "ar", labels: AR_LABELS }
+      : { locale: locale.value };
   return {
     ...base,
     pendingIndicator: pendingIndicator.value,
     pendingDelay: pendingDelay.value,
   };
 });
-const dir = computed(() => (locale.value === 'ar' ? 'rtl' : 'ltr'));
+const dir = computed(() => (locale.value === "ar" ? "rtl" : "ltr"));
 
 /** 64×64 PNG (person silhouette) — valid `data:image/png;base64,…` for avatar demo */
 const DEMO_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA9klEQVR42u3ZQQ6DIBCF4blXb9fj9D69Sre4bZqiKAzO8P6XsBR8nxI1mhFCyI0p71eRKts6ZIsvB9FTPj3CiPJpEUaWT4fgUT4Ngmf5FAjSADPKh0YAAAAAdAFmlgeBLQBADIDH81O+x0yA37UBiAAwC+HfulLbIEz5O+6CUFe/BuCFUFsr3NPAAyFs+T2AUQh784cH6EU4mjvMW+DRiZ6FaJkv1GtwywnXUK4euwRAzwj3MSRdHgAA5iGE/jMEgDqAN4JliDyAF4JlCgDqAKMRLGMAUAcYhWCZA4A6QC+CrRAA1AGuIthKAUAd4CyCEUIIIe7ZAFXVGuWAntoXAAAAAElFTkSuQmCC';
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA9klEQVR42u3ZQQ6DIBCF4blXb9fj9D69Sre4bZqiKAzO8P6XsBR8nxI1mhFCyI0p71eRKts6ZIsvB9FTPj3CiPJpEUaWT4fgUT4Ngmf5FAjSADPKh0YAAAAAdAFmlgeBLQBADIDH81O+x0yA37UBiAAwC+HfulLbIEz5O+6CUFe/BuCFUFsr3NPAAyFs+T2AUQh784cH6EU4mjvMW+DRiZ6FaJkv1GtwywnXUK4euwRAzwj3MSRdHgAA5iGE/jMEgDqAN4JliDyAF4JlCgDqAKMRLGMAUAcYhWCZA4A6QC+CrRAA1AGuIthKAUAd4CyCEUIIIe7ZAFXVGuWAntoXAAAAAElFTkSuQmCC";
 
 const DEMO_INLINE_SVG_AVATAR =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="14" fill="#f59e0b"/><text x="16" y="20" text-anchor="middle" font-size="12" fill="#fff" font-family="system-ui,sans-serif">S</text></svg>';
@@ -97,80 +109,80 @@ onMounted(async () => {
   setTimeout(() => {
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
+      role: "peer",
       parts: [
         textPart(
-          '**Date separators** — this message is **8+ calendar days** old, so the divider shows **Older**. English is the default; set **config.locale** to **zh-CN** for Chinese labels.',
+          "**Date separators** — this message is **8+ calendar days** old, so the divider shows **Older**. English is the default; set **config.locale** to **zh-CN** for Chinese labels.",
         ),
       ],
       timestamp: timestampDaysAgo(12),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
+      role: "peer",
       parts: [
         textPart(
-          '**7 days ago** — dividers update when the day bucket changes (see **7 days ago** label).',
+          "**7 days ago** — dividers update when the day bucket changes (see **7 days ago** label).",
         ),
       ],
       timestamp: timestampDaysAgo(7),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
+      role: "peer",
       parts: [
         textPart(
-          '**3 days ago** — between **2** and **7** days the label is **N days ago**.',
+          "**3 days ago** — between **2** and **7** days the label is **N days ago**.",
         ),
       ],
       timestamp: timestampDaysAgo(3),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
-      parts: [textPart('**Yesterday** — previous calendar day.')],
+      role: "peer",
+      parts: [textPart("**Yesterday** — previous calendar day.")],
       timestamp: timestampDaysAgo(1),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'assistant',
+      role: "assistant",
       parts: [
         textPart(
-          'Hi there! This is the **complete `<i-chat>`** component. It bundles messages, input, and all renderers in one tag. Try typing a message below!\n\n' +
-            'The next **three self rows** demo per-message `avatar`: HTTP URL, `data:image/png;base64,…`, and inline `<svg>`.',
+          "Hi there! This is the **complete `<i-chat>`** component. It bundles messages, input, and all renderers in one tag. Try typing a message below!\n\n" +
+            "The next **three self rows** demo per-message `avatar`: HTTP URL, `data:image/png;base64,…`, and inline `<svg>`.",
         ),
       ],
       timestamp: Date.now(),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'assistant',
+      role: "assistant",
       parts: [
         reasoningPart(
-          '**Summary:** Treat this as a compact planning trace, not the main answer. Keep it easy to scan, then let the final response carry the user-facing result.\n\n' +
-            '<!-- bid:summary-demo -->\n1. [done] **Intent** — Show a completed reasoning part without making it compete with the answer.\n2. [done] **Hierarchy** — Use a neutral row, a thin accent rail, and secondary text.\n3. [done] **Disclosure** — Collapse by default; expand only when the user asks for detail.\n\n' +
-            '> Some providers return summaries, empty thought blocks, or redacted thinking. The UI should stay calm in all three cases.\n',
-          { status: 'complete' },
+          "**Summary:** Treat this as a compact planning trace, not the main answer. Keep it easy to scan, then let the final response carry the user-facing result.\n\n" +
+            "<!-- bid:summary-demo -->\n1. [done] **Intent** — Show a completed reasoning part without making it compete with the answer.\n2. [done] **Hierarchy** — Use a neutral row, a thin accent rail, and secondary text.\n3. [done] **Disclosure** — Collapse by default; expand only when the user asks for detail.\n\n" +
+            "> Some providers return summaries, empty thought blocks, or redacted thinking. The UI should stay calm in all three cases.\n",
+          { status: "complete" },
         ),
         textPart(
-          'The conclusion goes in the main bubble; the **thought summary** above stays collapsed by default — expand it to see the brief steps and notes. Type `all` to see the full streaming demo.',
+          "The conclusion goes in the main bubble; the **thought summary** above stays collapsed by default — expand it to see the brief steps and notes. Type `all` to see the full streaming demo.",
         ),
       ],
       timestamp: Date.now(),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'self',
-      parts: [textPart('**HTTP URL** — `avatar` is an image URL.')],
+      role: "self",
+      parts: [textPart("**HTTP URL** — `avatar` is an image URL.")],
       timestamp: Date.now(),
-      avatar: 'https://static.bndy.net/images/logo.png',
+      avatar: "https://static.bndy.net/images/logo.png",
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
+      role: "peer",
       parts: [
         textPart(
-          '**Data URL** — `data:image/png;base64,…` (embedded 64×64 person icon).',
+          "**Data URL** — `data:image/png;base64,…` (embedded 64×64 person icon).",
         ),
       ],
       timestamp: Date.now(),
@@ -178,14 +190,16 @@ onMounted(async () => {
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
-      parts: [textPart('**Inline SVG** — `avatar` is a full `<svg>…</svg>` string.')],
+      role: "peer",
+      parts: [
+        textPart("**Inline SVG** — `avatar` is a full `<svg>…</svg>` string."),
+      ],
       timestamp: Date.now(),
       avatar: DEMO_INLINE_SVG_AVATAR,
     });
     chat.addMessage({
       id: nextId(),
-      role: 'peer',
+      role: "peer",
       parts: [
         textPart(
           '**Peer** — `role: "peer"` is for another human (left-aligned). Theme with `--chat-peer-*` (defaults match assistant until overridden).',
@@ -195,17 +209,17 @@ onMounted(async () => {
     });
     chat.addMessage({
       id: nextId(),
-      role: 'assistant',
+      role: "assistant",
       parts: [
         textPart(
-          '**Custom protocol link** — [Open app example](myapp://example) emits `link-click`; this page intercepts `myapp:` and keeps navigation inside the app.',
+          "**Custom protocol link** — [Open app example](myapp://example) emits `link-click`; this page intercepts `myapp:` and keeps navigation inside the app.",
         ),
       ],
       timestamp: Date.now(),
     });
     chat.addMessage({
       id: nextId(),
-      role: 'assistant',
+      role: "assistant",
       parts: [
         textPart(
           '**Embedded form** — submit the fields below. The page listens for **`part-action`** with `kind: "form"` on `<i-chat>` and echoes the payload as the next row.\n\n```form\n{\n  "id": "demo-contact",\n  "title": "Quick feedback",\n  "submitLabel": "Send",\n  "fields": [\n    { "name": "topic", "label": "Topic", "type": "text", "placeholder": "e.g. UI" },\n    { "name": "note", "label": "Note", "type": "textarea" }\n  ]\n}\n```',
@@ -214,7 +228,7 @@ onMounted(async () => {
       timestamp: Date.now(),
     });
 
-    reply(chatRef, 'all');
+    reply(chatRef, "all");
     loading.value = false;
   }, 3000);
 });
@@ -225,20 +239,20 @@ function handleSend(e) {
 }
 
 function handleCancel() {
-  const hint = '*— Response stopped —*';
+  const hint = "*— Response stopped —*";
   if (!cancelPendingStreamPlayback(hint)) chatRef.value.cancel(hint);
 }
 
 function openReplyDialog(message) {
   replyTargetMessage.value = message;
-  replyContent.value = '';
+  replyContent.value = "";
   replyDialogVisible.value = true;
 }
 
 function cancelReplyDialog() {
   replyDialogVisible.value = false;
   replyTargetMessage.value = null;
-  replyContent.value = '';
+  replyContent.value = "";
 }
 
 function confirmReplyDialog() {
@@ -251,7 +265,7 @@ function confirmReplyDialog() {
     id: nextId(),
     parts: [textPart(content)],
     avatar: isSelf ? DEMO_PNG_DATA_URL : DEMO_INLINE_SVG_AVATAR,
-    role: isSelf ? 'self' : 'peer',
+    role: isSelf ? "self" : "peer",
     timestamp: Date.now(),
   });
   cancelReplyDialog();
@@ -260,27 +274,31 @@ function confirmReplyDialog() {
 /** `message-action` — `data-action` from the `message-actions` slot. */
 function handleMessageAction(e) {
   const { action, message } = e.detail;
-  if (action === 'reply') {
+  if (action === "reply") {
     openReplyDialog(message);
-  } else if (action === 'copy') {
+  } else if (action === "copy") {
     navigator.clipboard?.writeText(getMessageText(message));
-  } else if (action === 'clear-reply') {
+  } else if (action === "clear-reply") {
     chatRef.value.clearReplyMessage(message.id);
   }
 }
 
 /** Web Speech API diagnostics from `<i-chat-input>` (bubbles + composed). */
 function handleVoiceInput(e) {
-  console.log('[ChatPage voice-input]', e.detail);
-  if (e.detail?.kind === 'error' && e.detail?.code === 'network') {
-    console.warn('[ChatPage] Voice `network`:', e.detail.hint ?? 'Cannot reach speech service — check network / VPN / firewall.');
+  console.log("[ChatPage voice-input]", e.detail);
+  if (e.detail?.kind === "error" && e.detail?.code === "network") {
+    console.warn(
+      "[ChatPage] Voice `network`:",
+      e.detail.hint ??
+        "Cannot reach speech service — check network / VPN / firewall.",
+    );
   }
 }
 
 /** `part-action` — unified events from rendered message parts. */
 function handlePartAction(e) {
-  if (e.detail?.kind !== 'form') return;
-  console.log('part action:', e.detail);
+  if (e.detail?.kind !== "form") return;
+  console.log("part action:", e.detail);
   const { messageId, message } = e.detail;
   const { formId, title, values } = e.detail.payload;
   const chat = chatRef.value;
@@ -288,13 +306,13 @@ function handlePartAction(e) {
   const msgMeta =
     message != null
       ? `\n\n**message** — \`id\`: \`${message.id}\`, \`role\`: \`${message.role}\``
-      : '';
+      : "";
   chat.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     parts: [
       textPart(
-        `**part-action / form** — \`${formId}\`${title ? ` — *${title}*` : ''}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
+        `**part-action / form** — \`${formId}\`${title ? ` — *${title}*` : ""}\n\n**messageId:** \`${messageId}\`${msgMeta}\n\n\`\`\`json\n${preview}\n\`\`\``,
       ),
     ],
     timestamp: Date.now(),
@@ -302,17 +320,17 @@ function handlePartAction(e) {
 }
 
 function handleLinkClick(e) {
-  console.log('link click:', e.detail);
+  console.log("link click:", e.detail);
   const { protocol, rawHref, messageId, partId } = e.detail;
-  if (protocol !== 'myapp:') return;
+  if (protocol !== "myapp:") return;
 
   e.preventDefault();
   chatRef.value.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     parts: [
       textPart(
-        `**link-click** — intercepted \`${rawHref}\`\n\n**messageId:** \`${messageId}\`${partId ? `\n\n**partId:** \`${partId}\`` : ''}`,
+        `**link-click** — intercepted \`${rawHref}\`\n\n**messageId:** \`${messageId}\`${partId ? `\n\n**partId:** \`${partId}\`` : ""}`,
       ),
     ],
     timestamp: Date.now(),
@@ -325,7 +343,11 @@ function handleLinkClick(e) {
     <div class="demo-chat-bar__locale">
       <span class="demo-chat-bar__label">Language</span>
       <el-radio-group v-model="locale" size="small">
-        <el-radio-button v-for="opt in LOCALE_OPTIONS" :key="opt.value" :value="opt.value">
+        <el-radio-button
+          v-for="opt in LOCALE_OPTIONS"
+          :key="opt.value"
+          :value="opt.value"
+        >
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -333,7 +355,11 @@ function handleLinkClick(e) {
     <div class="demo-chat-bar__pending">
       <span class="demo-chat-bar__label">Pending</span>
       <el-radio-group v-model="pendingIndicator" size="small">
-        <el-radio-button v-for="opt in PENDING_OPTIONS" :key="opt.value" :value="opt.value">
+        <el-radio-button
+          v-for="opt in PENDING_OPTIONS"
+          :key="opt.value"
+          :value="opt.value"
+        >
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -357,7 +383,7 @@ function handleLinkClick(e) {
       <h2 v-if="loading">Fetching history messages...</h2>
       <h2 v-else>Start chatting...</h2>
     </div>
-    <div slot="message-actions" style="position: relative; top: -3px;">
+    <div slot="message-actions" style="position: relative; top: -3px">
       <span data-action="reply" title="Reply">Reply</span>
       <span data-action="copy" title="Copy">Copy</span>
       <span data-action="clear-reply" title="Clear Reply">Clear Reply</span>
@@ -381,7 +407,11 @@ function handleLinkClick(e) {
     />
     <template #footer>
       <el-button @click="cancelReplyDialog">Cancel</el-button>
-      <el-button type="primary" :disabled="!replyContent.trim()" @click="confirmReplyDialog">
+      <el-button
+        type="primary"
+        :disabled="!replyContent.trim()"
+        @click="confirmReplyDialog"
+      >
         Send reply
       </el-button>
     </template>

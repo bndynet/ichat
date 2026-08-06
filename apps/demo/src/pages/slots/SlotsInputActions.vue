@@ -1,11 +1,11 @@
 <script setup>
-import { ElButton } from 'element-plus';
-import { Paperclip } from '@element-plus/icons-vue';
-import { nextTick, onMounted, ref } from 'vue';
-import '@bndynet/ichat';
-import { reply } from '../../composables/demo-data.js';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import inputActionsExample from '../../examples/slots/input-actions.md?raw';
+import { ElButton } from "element-plus";
+import { Paperclip } from "@element-plus/icons-vue";
+import { nextTick, onMounted, ref } from "vue";
+import "@bndynet/ichat";
+import { reply } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import inputActionsExample from "../../examples/slots/input-actions.md?raw";
 
 const chatRef = ref(null);
 
@@ -15,7 +15,7 @@ function handleSend(e) {
 }
 
 function onAttachDemo() {
-  console.info('[SlotsInputActions] Attach requested');
+  console.info("[SlotsInputActions] Attach requested");
 }
 
 onMounted(async () => {
@@ -26,8 +26,13 @@ onMounted(async () => {
 <template>
   <i-chat ref="chatRef" @send="handleSend">
     <div slot="actions">
-      <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo">Attach</el-button>
+      <el-button size="small" :icon="Paperclip" text bg @click="onAttachDemo"
+        >Attach</el-button
+      >
     </div>
   </i-chat>
-  <ExampleCodeDrawer title="Input actions code example" :content="inputActionsExample" />
+  <ExampleCodeDrawer
+    title="Input actions code example"
+    :content="inputActionsExample"
+  />
 </template>

@@ -1,7 +1,7 @@
-@use 'variables' as *;
-@use 'chat-host-tokens';
-@use 'chat-disclosure-panel' as disclosure;
-@use 'chat-progress' as progress;
+@use "variables" as *;
+@use "chat-host-tokens";
+@use "chat-disclosure-panel" as disclosure;
+@use "chat-progress" as progress;
 
 :host {
   display: block;
@@ -40,12 +40,15 @@
     border-color var(--chat-transition-normal, #{$transition-normal});
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
     width: 2px;
-    background: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary}));
+    background: var(
+      --chat-reasoning-accent,
+      var(--chat-primary, #{$color-primary})
+    );
     opacity: 0.72;
   }
 
@@ -58,14 +61,26 @@
   @include disclosure.header(
     $background: var(
         --chat-reasoning-header-bg,
-        var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+        var(
+          --chat-disclosure-header-bg,
+          var(--chat-surface-alt, #{$color-surface-alt})
+        )
       ),
     $hover-background: var(
         --chat-reasoning-header-hover-bg,
-        var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+        var(
+          --chat-disclosure-header-hover-bg,
+          #{disclosure.$header-hover-background}
+        )
       ),
-    $color: var(--chat-reasoning-text, var(--chat-text-secondary, #{$color-text-secondary})),
-    $focus-color: var(--chat-reasoning-accent, var(--chat-primary, #{$color-primary})),
+    $color: var(
+        --chat-reasoning-text,
+        var(--chat-text-secondary, #{$color-text-secondary})
+      ),
+    $focus-color: var(
+        --chat-reasoning-accent,
+        var(--chat-primary, #{$color-primary})
+      ),
     $focus-outline-offset: 2px
   );
 
@@ -153,7 +168,8 @@
 }
 
 .reasoning-body {
-  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md})
+  padding: var(--chat-spacing-sm, #{$spacing-sm})
+    var(--chat-spacing-md, #{$spacing-md})
     var(--chat-spacing-sm, #{$spacing-sm});
   font-size: var(--chat-font-size-sm, #{$font-size-sm});
   line-height: var(--chat-line-height, #{$line-height-base});
@@ -182,7 +198,8 @@
 
     code {
       display: block;
-      padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+      padding: var(--chat-spacing-sm, #{$spacing-sm})
+        var(--chat-spacing-md, #{$spacing-md});
       background: var(--chat-code-bg, #{$color-code-bg});
       color: var(--chat-code-text, #{$color-code-text});
     }
@@ -190,7 +207,8 @@
 
   blockquote {
     margin: var(--chat-spacing-sm, #{$spacing-sm}) 0;
-    padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+    padding: var(--chat-spacing-xs, #{$spacing-xs})
+      var(--chat-spacing-sm, #{$spacing-sm});
     border-inline-start: 3px solid var(--chat-border, #{$color-border});
     color: var(--chat-text-secondary, #{$color-text-secondary});
     background: var(--chat-blockquote-bg, #{$color-blockquote-bg});

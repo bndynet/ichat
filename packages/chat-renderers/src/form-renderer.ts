@@ -5,24 +5,24 @@
  * The <i-chat-form> custom element (form UI, validation, submission) lives
  * in chat-form.ts to keep this file focused on BlockRenderer registration.
  */
-import type { BlockRenderer } from '@bndynet/ichat-messages';
+import type { BlockRenderer } from "@bndynet/ichat-messages";
 import {
   renderCodeFallback,
   wrapWithCodeToggle,
   type RendererOptions,
-} from '@bndynet/ichat-messages';
-import './chat-form.js';
+} from "@bndynet/ichat-messages";
+import "./chat-form.js";
 
 export type FormFieldType =
-  | 'text'
-  | 'number'
-  | 'email'
-  | 'password'
-  | 'textarea'
-  | 'select'
-  | 'checkbox'
-  | 'radio'
-  | 'date-range';
+  | "text"
+  | "number"
+  | "email"
+  | "password"
+  | "textarea"
+  | "select"
+  | "checkbox"
+  | "radio"
+  | "date-range";
 
 export interface FormField {
   name: string;
@@ -75,11 +75,11 @@ function nextFormId(): string {
 
 function escapeAttr(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function renderForm(code: string, opts: RendererOptions = {}): string {
@@ -87,10 +87,11 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
   try {
     schema = JSON.parse(code) as FormSchema;
   } catch {
-    return renderCodeFallback('form', code);
+    return renderCodeFallback("form", code);
   }
   // JSON.parse("null") / JSON.parse("123") → not an object
-  if (!schema || typeof schema !== 'object') return renderCodeFallback('form', code);
+  if (!schema || typeof schema !== "object")
+    return renderCodeFallback("form", code);
 
   const formId = schema.id ?? nextFormId();
   const safeData = escapeAttr(JSON.stringify(schema));
@@ -101,17 +102,23 @@ function renderForm(code: string, opts: RendererOptions = {}): string {
   }
 
   const html = `<i-chat-form ${attrs}></i-chat-form>`;
-  return opts.codeToggle !== false ? wrapWithCodeToggle('form', code, html) : html;
+  return opts.codeToggle !== false
+    ? wrapWithCodeToggle("form", code, html)
+    : html;
 }
 
-export function createFormRenderer(options: RendererOptions = {}): BlockRenderer {
+export function createFormRenderer(
+  options: RendererOptions = {},
+): BlockRenderer {
   return {
-    name: 'form',
-    mode: 'trusted',
+    name: "form",
+    mode: "trusted",
     trusted: true,
-    test: (lang: string) => lang === 'form',
+    test: (lang: string) => lang === "form",
     render: (code: string, _lang: string) => renderForm(code, options),
   };
 }
 
-export const formRenderer: BlockRenderer = createFormRenderer({ codeToggle: false });
+export const formRenderer: BlockRenderer = createFormRenderer({
+  codeToggle: false,
+});

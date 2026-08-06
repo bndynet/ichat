@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // Only **non-theme** scale on :host — spacing, radius, transitions, layout.
 // Theme (`--chat-bg`, `--chat-text`, fonts, shadows, …) must come from an ancestor

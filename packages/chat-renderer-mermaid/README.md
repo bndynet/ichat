@@ -13,14 +13,14 @@ npm install @bndynet/ichat-renderer-mermaid
 Import **before** the first `<i-chat>` element connects to the DOM — auto-registers on import:
 
 ```typescript
-import '@bndynet/ichat-renderer-mermaid';
+import "@bndynet/ichat-renderer-mermaid";
 ```
 
 Or register manually with custom options:
 
 ```typescript
-import { registerCodeRenderer } from '@bndynet/ichat';
-import { createMermaidRenderer } from '@bndynet/ichat-renderer-mermaid';
+import { registerCodeRenderer } from "@bndynet/ichat";
+import { createMermaidRenderer } from "@bndynet/ichat-renderer-mermaid";
 
 registerCodeRenderer(createMermaidRenderer({ codeToggle: false }));
 ```

@@ -1,4 +1,4 @@
-import { svg, type TemplateResult } from 'lit';
+import { svg, type TemplateResult } from "lit";
 
 export interface ChatInputIconOptions {
   className?: string;
@@ -8,7 +8,7 @@ export interface ChatInputIconOptions {
 
 function strokeIcon(
   paths: TemplateResult,
-  { className = '', size = 12, strokeWidth = 2 }: ChatInputIconOptions = {},
+  { className = "", size = 12, strokeWidth = 2 }: ChatInputIconOptions = {},
 ): TemplateResult {
   return svg`
     <svg
@@ -30,7 +30,7 @@ function strokeIcon(
 
 function filledIcon(
   paths: TemplateResult,
-  { className = '', size = 12 }: ChatInputIconOptions = {},
+  { className = "", size = 12 }: ChatInputIconOptions = {},
 ): TemplateResult {
   return svg`
     <svg
@@ -80,6 +80,9 @@ export const chatInputIcons = {
   },
 
   cancel(options?: ChatInputIconOptions): TemplateResult {
-    return filledIcon(svg`<rect x="6" y="6" width="12" height="12" rx="2" />`, options);
+    return filledIcon(
+      svg`<rect x="6" y="6" width="12" height="12" rx="2" />`,
+      options,
+    );
   },
 } as const;

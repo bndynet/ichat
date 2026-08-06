@@ -1,27 +1,28 @@
-import type { ChatMessage } from './types.js';
+import type { ChatMessage } from "./types.js";
 
 /**
  * Granular reason describing what kind of mutation produced a
  * {@link MessagesChangeDetail | `messages-change`} event.
  */
 export type MessagesChangeReason =
-  | 'message:add'
-  | 'message:update'
-  | 'message:remove'
-  | 'message:clear'
-  | 'message:cancel'
-  | 'message:error'
-  | 'part:append'
-  | 'part:update'
-  | 'tool-call:update'
-  | 'todo-item:update'
-  | 'event:message-part-update'
-  | 'event:todo-item-update';
+  | "message:add"
+  | "message:update"
+  | "message:remove"
+  | "message:clear"
+  | "message:cancel"
+  | "message:error"
+  | "part:append"
+  | "part:update"
+  | "tool-call:update"
+  | "todo-item:update"
+  | "event:message-part-update"
+  | "event:todo-item-update";
 
 /**
  * Identifies which component or subsystem originated the mutation.
  */
-export type MessagesChangeSource = 'i-chat' | 'i-chat-messages' | 'chat-run-controller';
+export type MessagesChangeSource =
+  "i-chat" | "i-chat-messages" | "chat-run-controller";
 
 /**
  * Payload of the `messages-change` custom event.

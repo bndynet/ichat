@@ -32,7 +32,7 @@ import {
   registerCodeRenderer,
   registerMarkdownPlugin,
   registerPartRenderer,
-} from '@bndynet/ichat';
+} from "@bndynet/ichat";
 ```
 
 Also re-exports commonly used types (`ChatMessage`, `ChatMessageRole`, `ChatConfig`, etc.).

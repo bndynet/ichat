@@ -1,4 +1,4 @@
-@use '../../../chat-messages/src/styles/reduced-motion';
+@use "../../../chat-messages/src/styles/reduced-motion";
 
 // Shell only: set `--chat-*` on this host or an ancestor. Inner components load
 // token SCSS via `@use 'chat-host-tokens'` / `@use 'chat-input-host-tokens'`.
@@ -16,7 +16,7 @@
     --chat-font-family,
     -apple-system,
     BlinkMacSystemFont,
-    'Segoe UI',
+    "Segoe UI",
     Roboto,
     Oxygen,
     Ubuntu,
@@ -45,5 +45,8 @@ i-chat-messages {
 // Falls back to horizontal/bottom spacing tokens.
 .chat-footer {
   flex: 0 0 auto;
-  padding: var(--chat-footer-padding, 0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px));
+  padding: var(
+    --chat-footer-padding,
+    0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px)
+  );
 }

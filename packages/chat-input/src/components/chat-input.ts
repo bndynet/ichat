@@ -1,18 +1,18 @@
-import { LitElement, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
-import { setVersionAttribute } from '../version.js';
-import { resolveComposerLabels, type ComposerLabels } from '../i18n.js';
-import { chatInputIcons } from '../icons.js';
-import styles from '../styles/chat-input.scss';
+import { LitElement, html, nothing, unsafeCSS, type PropertyValues } from "lit";
+import { customElement, property, query, state } from "lit/decorators.js";
+import { setVersionAttribute } from "../version.js";
+import { resolveComposerLabels, type ComposerLabels } from "../i18n.js";
+import { chatInputIcons } from "../icons.js";
+import styles from "../styles/chat-input.scss";
 
 type SpeechRecognitionCtor = new () => SpeechRecognition;
 
 /** Errors after which dictation cannot continue until the user retries (Chrome `network` = no reach to speech backend). */
 const VOICE_FATAL_ERROR_CODES = new Set([
-  'not-allowed',
-  'service-not-allowed',
-  'audio-capture',
-  'network',
+  "not-allowed",
+  "service-not-allowed",
+  "audio-capture",
+  "network",
 ]);
 
 /** Minimal typing for the Web Speech API (Chromium / Safari). */
@@ -47,8 +47,10 @@ interface SpeechRecognition extends EventTarget {
   interimResults: boolean;
   lang: string;
   onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onresult:
+    ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onerror:
+    ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
   onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   start(): void;
   stop(): void;
@@ -75,7 +77,7 @@ interface SpeechRecognition extends EventTarget {
  * @fires cancel - Fired when the user clicks the cancel button during streaming
  * @fires voice-input - `{ detail: { kind, … } }` — diagnostics for speech recognition (see `voiceDiagnostics`)
  */
-@customElement('i-chat-input')
+@customElement("i-chat-input")
 export class ChatInput extends LitElement {
   static styles = unsafeCSS(styles);
 
@@ -83,13 +85,13 @@ export class ChatInput extends LitElement {
    * Textarea placeholder. When empty (default), the localized placeholder from
    * `locale` / `labels` is used; set it to override that for this composer.
    */
-  @property() placeholder = '';
+  @property() placeholder = "";
 
   /**
    * BCP 47 locale for built-in composer strings. Built-ins: `en` (default),
    * `zh` / `zh-CN`. Unknown locales fall back to English.
    */
-  @property() locale = '';
+  @property() locale = "";
 
   /**
    * Partial overrides merged on top of the strings chosen via `locale`. Provide
@@ -107,34 +109,35 @@ export class ChatInput extends LitElement {
   @property({ type: Boolean, reflect: true }) disabled = false;
 
   /** BCP 47 language tag for speech recognition (e.g. `zh-CN`, `en-US`). Defaults to `navigator.language`. */
-  @property({ attribute: 'voice-lang' }) voiceLang = '';
+  @property({ attribute: "voice-lang" }) voiceLang = "";
 
   /**
    * Shown on the listening overlay while speech recognition is active. When
    * empty (default), the localized string from `locale` / `labels` is used.
    */
-  @property({ attribute: 'voice-listening-label' }) voiceListeningLabel = '';
+  @property({ attribute: "voice-listening-label" }) voiceListeningLabel = "";
 
   /**
    * When true (default), the voice button is shown **only if** the browser supports
    * the Web Speech API. When false, the button is never shown.
    */
-  @property({ type: Boolean, reflect: true, attribute: 'show-voice-input' }) showVoiceInput = true;
+  @property({ type: Boolean, reflect: true, attribute: "show-voice-input" })
+  showVoiceInput = true;
 
   /**
    * When true, logs speech-recognition milestones to the console (`console.debug`).
    * `voice-input` events are always dispatched for important kinds regardless of this flag.
    */
-  @property({ type: Boolean, reflect: true, attribute: 'voice-diagnostics' }) voiceDiagnostics =
-    false;
+  @property({ type: Boolean, reflect: true, attribute: "voice-diagnostics" })
+  voiceDiagnostics = false;
 
-  @state() private _value = '';
+  @state() private _value = "";
   @state() private _listening = false;
-  @query('.chat-input-textarea') private _textarea!: HTMLTextAreaElement;
+  @query(".chat-input-textarea") private _textarea!: HTMLTextAreaElement;
 
   private _recognition: SpeechRecognition | null = null;
   /** Text before the current browser recognition segment; refreshed on each `onend` when dictation stays on. */
-  private _voiceSnapshot = '';
+  private _voiceSnapshot = "";
 
   /**
    * Effective composer strings: built-ins from `locale`, host `labels`
@@ -142,7 +145,10 @@ export class ChatInput extends LitElement {
    * attributes (kept for backward compatibility) win when non-empty.
    */
   private get _labels(): ComposerLabels {
-    const resolved = resolveComposerLabels({ locale: this.locale, labels: this.labels });
+    const resolved = resolveComposerLabels({
+      locale: this.locale,
+      labels: this.labels,
+    });
     return {
       ...resolved,
       placeholder: this.placeholder || resolved.placeholder,
@@ -164,7 +170,9 @@ export class ChatInput extends LitElement {
     if (
       this._listening &&
       (this.disabled || this.busy || this.streaming) &&
-      (changed.has('disabled') || changed.has('busy') || changed.has('streaming'))
+      (changed.has("disabled") ||
+        changed.has("busy") ||
+        changed.has("streaming"))
     ) {
       this._stopVoiceRecognition(true);
     }
@@ -191,10 +199,10 @@ export class ChatInput extends LitElement {
   private _voiceEmit(kind: string, detail: Record<string, unknown> = {}): void {
     const payload = { kind, ...detail };
     if (this.voiceDiagnostics) {
-      console.debug('[i-chat-input] voice-input', payload);
+      console.debug("[i-chat-input] voice-input", payload);
     }
     this.dispatchEvent(
-      new CustomEvent('voice-input', {
+      new CustomEvent("voice-input", {
         detail: payload,
         bubbles: true,
         composed: true,
@@ -225,18 +233,18 @@ export class ChatInput extends LitElement {
     const r = new Ctor();
     r.continuous = true;
     r.interimResults = true;
-    r.lang = this.voiceLang.trim() || navigator.language || 'en-US';
+    r.lang = this.voiceLang.trim() || navigator.language || "en-US";
 
     r.onstart = () => {
       if (this._recognition !== r) return;
-      this._voiceEmit('recognition-started', { lang: r.lang });
+      this._voiceEmit("recognition-started", { lang: r.lang });
     };
 
     r.onresult = (ev: SpeechRecognitionEvent) => {
       if (this._recognition !== r || !this._listening) return;
-      let line = '';
+      let line = "";
       for (let i = 0; i < ev.results.length; i++) {
-        line += ev.results[i][0]?.transcript ?? '';
+        line += ev.results[i][0]?.transcript ?? "";
       }
       const merged = this._voiceSnapshot + line;
       this._value = merged;
@@ -244,7 +252,7 @@ export class ChatInput extends LitElement {
       this._autoResize();
       this.requestUpdate();
       if (this.voiceDiagnostics) {
-        this._voiceEmit('result', {
+        this._voiceEmit("result", {
           transcriptLength: merged.length,
           transcriptPreview: merged.slice(-120),
           resultIndex: ev.resultIndex,
@@ -254,19 +262,19 @@ export class ChatInput extends LitElement {
     };
 
     r.onerror = (ev: SpeechRecognitionErrorEvent) => {
-      console.error('[i-chat-input] voice-error', ev);
+      console.error("[i-chat-input] voice-error", ev);
       if (this._recognition !== r) return;
       const code = ev.error;
       const hint =
-        code === 'network'
-          ? 'Speech recognition needs network access (Chrome uses a cloud service). Check Wi‑Fi/VPN, firewall, or corporate proxy blocking Google.'
+        code === "network"
+          ? "Speech recognition needs network access (Chrome uses a cloud service). Check Wi‑Fi/VPN, firewall, or corporate proxy blocking Google."
           : undefined;
-      this._voiceEmit('error', hint ? { code, hint } : { code });
-      if (code === 'aborted') return;
+      this._voiceEmit("error", hint ? { code, hint } : { code });
+      if (code === "aborted") return;
       if (VOICE_FATAL_ERROR_CODES.has(code)) {
         this._listening = false;
         this._recognition = null;
-        this._voiceEmit('session-ended', { reason: code });
+        this._voiceEmit("session-ended", { reason: code });
       }
     };
 
@@ -277,7 +285,7 @@ export class ChatInput extends LitElement {
         return;
       }
       if (this.voiceDiagnostics) {
-        this._voiceEmit('recognition-segment-ended', { willRestart: true });
+        this._voiceEmit("recognition-segment-ended", { willRestart: true });
       }
       this._voiceSnapshot = this._value;
       this._scheduleVoiceRecognitionRestart();
@@ -298,7 +306,7 @@ export class ChatInput extends LitElement {
       } catch (e) {
         this._listening = false;
         this._recognition = null;
-        this._voiceEmit('restart-failed', { error: String(e) });
+        this._voiceEmit("restart-failed", { error: String(e) });
       }
     });
   }
@@ -312,16 +320,16 @@ export class ChatInput extends LitElement {
     this._disposeRecognitionInstance();
     const r = this._getOrCreateRecognition();
     if (!r) return;
-    r.lang = this.voiceLang.trim() || navigator.language || 'en-US';
+    r.lang = this.voiceLang.trim() || navigator.language || "en-US";
     this._voiceSnapshot = this._value;
     try {
       r.start();
       this._listening = true;
-      this._voiceEmit('session-started', { lang: r.lang });
+      this._voiceEmit("session-started", { lang: r.lang });
     } catch (e) {
       this._listening = false;
       this._recognition = null;
-      this._voiceEmit('start-failed', { error: String(e) });
+      this._voiceEmit("start-failed", { error: String(e) });
     }
   }
 
@@ -338,7 +346,7 @@ export class ChatInput extends LitElement {
     }
     if (abort) this._recognition = null;
     if (wasListening) {
-      this._voiceEmit('session-stopped', { aborted: abort });
+      this._voiceEmit("session-stopped", { aborted: abort });
     }
   }
 
@@ -363,7 +371,7 @@ export class ChatInput extends LitElement {
 
   private _handleKeydown(e: KeyboardEvent): void {
     if (this._listening) return;
-    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
       e.preventDefault();
       this._submit();
     }
@@ -371,26 +379,33 @@ export class ChatInput extends LitElement {
 
   private _submit(): void {
     const content = this._value.trim();
-    if (!content || this.busy || this.streaming || this.disabled || this._listening) return;
+    if (
+      !content ||
+      this.busy ||
+      this.streaming ||
+      this.disabled ||
+      this._listening
+    )
+      return;
 
     this.dispatchEvent(
-      new CustomEvent('send', {
+      new CustomEvent("send", {
         detail: { content },
         bubbles: true,
         composed: true,
       }),
     );
 
-    this._value = '';
+    this._value = "";
     if (this._textarea) {
-      this._textarea.value = '';
+      this._textarea.value = "";
       this._autoResize();
     }
   }
 
   private _cancel(): void {
     this.dispatchEvent(
-      new CustomEvent('cancel', {
+      new CustomEvent("cancel", {
         bubbles: true,
         composed: true,
       }),
@@ -400,7 +415,7 @@ export class ChatInput extends LitElement {
   private _autoResize(): void {
     const ta = this._textarea;
     if (!ta) return;
-    ta.style.height = 'auto';
+    ta.style.height = "auto";
     ta.style.height = `${ta.scrollHeight}px`;
   }
 
@@ -411,17 +426,22 @@ export class ChatInput extends LitElement {
       !this.streaming &&
       !this.disabled &&
       !this._listening;
-    const showVoiceButton = this.showVoiceInput && ChatInput.isVoiceInputSupported();
+    const showVoiceButton =
+      this.showVoiceInput && ChatInput.isVoiceInputSupported();
     const fieldLocked = this.disabled || this._listening;
     const L = this._labels;
 
     return html`
-      <div class="chat-input-wrapper ${fieldLocked ? 'chat-input-wrapper--locked' : ''}">
-        <div class="chat-input-field ${this._listening ? 'chat-input-field--listening' : ''}">
+      <div
+        class="chat-input-wrapper ${fieldLocked ? "chat-input-wrapper--locked" : ""}"
+      >
+        <div
+          class="chat-input-field ${this._listening ? "chat-input-field--listening" : ""}"
+        >
           <textarea
             class="chat-input-textarea"
             rows="1"
-            placeholder=${this._listening ? '' : L.placeholder}
+            placeholder=${this._listening ? "" : L.placeholder}
             ?disabled=${fieldLocked}
             .value=${this._value}
             @input=${this._handleInput}
@@ -430,10 +450,16 @@ export class ChatInput extends LitElement {
           ${
             this._listening
               ? html`
-                <div class="chat-input-listening-overlay" role="status" aria-live="polite">
-                  <span class="chat-input-listening-overlay__label">${L.voiceListening}</span>
-                </div>
-              `
+                  <div
+                    class="chat-input-listening-overlay"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span class="chat-input-listening-overlay__label"
+                      >${L.voiceListening}</span
+                    >
+                  </div>
+                `
               : nothing
           }
         </div>
@@ -441,7 +467,7 @@ export class ChatInput extends LitElement {
           <div
             class="chat-input-toolbar-start"
             ?inert=${this.disabled || this.busy || this.streaming}
-            aria-disabled=${this.disabled || this.busy || this.streaming ? 'true' : 'false'}
+            aria-disabled=${this.disabled || this.busy || this.streaming ? "true" : "false"}
           >
             <slot name="actions"></slot>
           </div>
@@ -449,43 +475,43 @@ export class ChatInput extends LitElement {
             ${
               this.streaming
                 ? html`
-                  <button
-                    class="chat-input-btn chat-input-cancel"
-                    @click=${this._cancel}
-                    aria-label=${L.cancel}
-                    title=${L.cancelTitle}
-                  >
-                    ${chatInputIcons.cancel()}
-                  </button>
-                `
+                    <button
+                      class="chat-input-btn chat-input-cancel"
+                      @click=${this._cancel}
+                      aria-label=${L.cancel}
+                      title=${L.cancelTitle}
+                    >
+                      ${chatInputIcons.cancel()}
+                    </button>
+                  `
                 : html`
-                  ${
-                    showVoiceButton
-                      ? html`
-                        <button
-                          type="button"
-                          class="chat-input-btn chat-input-voice ${this._listening ? 'chat-input-voice--active' : ''}"
-                          @click=${this._toggleVoice}
-                          ?disabled=${this.disabled || this.busy}
-                          aria-label=${this._listening ? L.voiceStop : L.voiceStart}
-                          aria-pressed=${this._listening}
-                          title=${this._listening ? L.voiceStopTitle : L.voiceStartTitle}
-                        >
-                          ${this._listening ? chatInputIcons.stopDictation() : chatInputIcons.microphone()}
-                        </button>
-                      `
-                      : nothing
-                  }
-                  <button
-                    class="chat-input-btn chat-input-send"
-                    @click=${this._submit}
-                    ?disabled=${!canSend}
-                    aria-label=${L.send}
-                    title=${L.sendTitle}
-                  >
-                    ${chatInputIcons.send()}
-                  </button>
-                `
+                    ${
+                      showVoiceButton
+                        ? html`
+                            <button
+                              type="button"
+                              class="chat-input-btn chat-input-voice ${this._listening ? "chat-input-voice--active" : ""}"
+                              @click=${this._toggleVoice}
+                              ?disabled=${this.disabled || this.busy}
+                              aria-label=${this._listening ? L.voiceStop : L.voiceStart}
+                              aria-pressed=${this._listening}
+                              title=${this._listening ? L.voiceStopTitle : L.voiceStartTitle}
+                            >
+                              ${this._listening ? chatInputIcons.stopDictation() : chatInputIcons.microphone()}
+                            </button>
+                          `
+                        : nothing
+                    }
+                    <button
+                      class="chat-input-btn chat-input-send"
+                      @click=${this._submit}
+                      ?disabled=${!canSend}
+                      aria-label=${L.send}
+                      title=${L.sendTitle}
+                    >
+                      ${chatInputIcons.send()}
+                    </button>
+                  `
             }
           </div>
         </div>
@@ -496,6 +522,6 @@ export class ChatInput extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-input': ChatInput;
+    "i-chat-input": ChatInput;
   }
 }

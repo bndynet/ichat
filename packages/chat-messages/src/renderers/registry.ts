@@ -1,4 +1,4 @@
-import type { BlockRenderer } from '../types.js';
+import type { BlockRenderer } from "../types.js";
 
 const changeListeners = new Set<() => void>();
 
@@ -21,7 +21,7 @@ class RendererRegistry {
     if (existing) {
       console.warn(
         `[i-chat] Block renderer "${renderer.name}" is already registered with a different object. ` +
-          'Keeping the first registration.',
+          "Keeping the first registration.",
       );
       return;
     }

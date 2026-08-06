@@ -7,14 +7,14 @@
 Scrolls the `<i-chat-message>` element whose `data-message-id` matches `id` into view using `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`.
 
 ```js
-const chat = document.querySelector('i-chat')
+const chat = document.querySelector("i-chat");
 
 // Scroll to a specific message
-const found = chat.scrollToMessage('msg-10')
-console.log(found) // true if the message is rendered
+const found = chat.scrollToMessage("msg-10");
+console.log(found); // true if the message is rendered
 
 // Returns false if the message ID doesn't exist or isn't rendered yet
-chat.scrollToMessage('nonexistent') // → false
+chat.scrollToMessage("nonexistent"); // → false
 ```
 
 ## scrollToPart(partId)
@@ -23,44 +23,44 @@ Scrolls any element inside the messages shadow DOM with a matching `data-part-id
 
 ```js
 // Scroll to a specific part within a message
-chat.scrollToPart('part-5')
+chat.scrollToPart("part-5");
 
 // Returns false if the part isn't found
-chat.scrollToPart('nope') // → false
+chat.scrollToPart("nope"); // → false
 ```
 
 ## Vue example
 
 ```vue
 <script setup>
-import '@bndynet/ichat'
-import { textPart } from '@bndynet/ichat'
-import { ref, onMounted, nextTick } from 'vue'
+import "@bndynet/ichat";
+import { textPart } from "@bndynet/ichat";
+import { ref, onMounted, nextTick } from "vue";
 
-const chatRef = ref(null)
+const chatRef = ref(null);
 
 onMounted(async () => {
-  await nextTick()
-  const chat = chatRef.value
-  if (!chat) return
+  await nextTick();
+  const chat = chatRef.value;
+  if (!chat) return;
 
   // Add messages with known IDs
   for (let i = 1; i <= 20; i++) {
     chat.addMessage({
       id: `msg-${i}`,
-      role: i % 2 ? 'self' : 'assistant',
+      role: i % 2 ? "self" : "assistant",
       parts: [textPart(`Message ${i}`, { id: `part-${i}` })],
       timestamp: Date.now(),
-    })
+    });
   }
-})
+});
 
 function goToMessage(id) {
-  chatRef.value?.scrollToMessage(id)
+  chatRef.value?.scrollToMessage(id);
 }
 
 function goToPart(partId) {
-  chatRef.value?.scrollToPart(partId)
+  chatRef.value?.scrollToPart(partId);
 }
 </script>
 

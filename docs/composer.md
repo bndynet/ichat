@@ -16,12 +16,12 @@ Listen to `busy-change` when extra UI or a custom composer needs the same lock. 
 let busy = chatEl.busy;
 let streaming = false;
 
-chatEl.addEventListener('busy-change', (e) => {
+chatEl.addEventListener("busy-change", (e) => {
   busy = e.detail.busy;
   customSendButton.disabled = busy;
 });
 
-chatEl.addEventListener('streaming-change', (e) => {
+chatEl.addEventListener("streaming-change", (e) => {
   streaming = e.detail.streaming;
   customCancelButton.hidden = !streaming;
 });
@@ -34,20 +34,22 @@ function sendFromCustomInput(content) {
   const text = content.trim();
   if (!text || busy) return;
 
-  customInputEl.dispatchEvent(new CustomEvent('send', {
-    detail: { content: text },
-    bubbles: true,
-    composed: true,
-  }));
+  customInputEl.dispatchEvent(
+    new CustomEvent("send", {
+      detail: { content: text },
+      bubbles: true,
+      composed: true,
+    }),
+  );
 }
 ```
 
 In the host `send` listener, create the streaming assistant placeholder before the first network `await`. This hands the lock from submission preprocessing to streaming without briefly unlocking the composer:
 
 ```javascript
-chatEl.addEventListener('send', async (e) => {
+chatEl.addEventListener("send", async (e) => {
   const run = chatEl.createRunController();
-  run.start([textPart('', { id: 'body', status: 'streaming' })]);
+  run.start([textPart("", { id: "body", status: "streaming" })]);
 
   // Network work starts only after run.start().
   await streamReply(e.detail.content, run);
@@ -57,17 +59,17 @@ chatEl.addEventListener('send', async (e) => {
 Use the same lifecycle for a backend that returns one complete response. `start()` does not require initial parts; it keeps the chat busy while the request is pending, and `complete()` supplies the final message in one update:
 
 ```javascript
-chatEl.addEventListener('send', async (e) => {
+chatEl.addEventListener("send", async (e) => {
   const run = chatEl.createRunController();
   run.start();
 
   try {
     const answer = await fetchReply(e.detail.content);
     run.complete({
-      parts: [textPart(answer, { id: 'body', status: 'complete' })],
+      parts: [textPart(answer, { id: "body", status: "complete" })],
     });
   } catch {
-    run.fail('Request failed');
+    run.fail("Request failed");
   }
 });
 ```
@@ -88,9 +90,9 @@ Blocks reuse `<i-chat-message>` in quote mode (charts, forms, Mermaid fences, et
 **`message-action` example** (listen on `<i-chat>`; `detail.message` is the row that was acted on):
 
 ```javascript
-chat.addEventListener('message-action', (e) => {
+chat.addEventListener("message-action", (e) => {
   const { action, message } = e.detail;
-  if (action === 'reply') {
+  if (action === "reply") {
     chat.replyMessage(message.id, {
       id: message.id,
       parts: message.parts,
@@ -98,7 +100,7 @@ chat.addEventListener('message-action', (e) => {
       avatar: message.avatar,
       timestamp: message.timestamp,
     });
-  } else if (action === 'clear-reply') {
+  } else if (action === "clear-reply") {
     chat.clearReplyMessage(message.id);
   }
 });
@@ -164,7 +166,7 @@ When using `<i-chat-input>` directly, the same properties are available:
 Enable extra logging: set **`voice-diagnostics`** on `<i-chat>` or `<i-chat-input>` (property `voiceDiagnostics`). That turns on `console.debug` lines (in Chrome you may need **Default levels → Verbose** to see them).
 
 ```javascript
-document.querySelector('i-chat').addEventListener('voice-input', (e) => {
-  console.log('voice-input', e.detail);
+document.querySelector("i-chat").addEventListener("voice-input", (e) => {
+  console.log("voice-input", e.detail);
 });
 ```

@@ -1,13 +1,16 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue';
-import { Paperclip, Promotion } from '@element-plus/icons-vue';
-import '@bndynet/ichat';
-import { cancelPendingStreamPlayback, reply } from '../../composables/demo-data.js';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import inputExample from '../../examples/slots/input.md?raw';
+import { ref, nextTick, onMounted } from "vue";
+import { Paperclip, Promotion } from "@element-plus/icons-vue";
+import "@bndynet/ichat";
+import {
+  cancelPendingStreamPlayback,
+  reply,
+} from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import inputExample from "../../examples/slots/input.md?raw";
 
-const draft = ref('');
-const model = ref('');
+const draft = ref("");
+const model = ref("");
 const inputRootRef = ref(null);
 const textareaRef = ref(null);
 const busyUi = ref(false);
@@ -28,23 +31,23 @@ function emitSendToHost() {
   const inputRoot = inputRootRef.value;
   if (!inputRoot) return;
   inputRoot.dispatchEvent(
-    new CustomEvent('send', {
+    new CustomEvent("send", {
       bubbles: true,
       composed: true,
       detail: { content },
     }),
   );
-  draft.value = '';
+  draft.value = "";
 }
 
 function handleCancel() {
-  const hint = '*— Response stopped —*';
+  const hint = "*— Response stopped —*";
   if (!cancelPendingStreamPlayback(hint)) chatRef.value.cancel(hint);
 }
 
 /** Left “actions” area: plain Vue, same role as the default i-chat-input left column */
 function onAttachDemo() {
-  draft.value += (draft.value ? '\n' : '') + '[attachment placeholder]';
+  draft.value += (draft.value ? "\n" : "") + "[attachment placeholder]";
   textareaRef.value?.focus();
 }
 
@@ -104,12 +107,20 @@ onMounted(async () => {
               <el-option value="gpt-4o-mini" label="GPT-4o-mini" />
               <el-option value="gpt-4" label="GPT-4" />
               <el-option value="gpt-3.5-turbo" label="GPT-3.5-turbo" />
-              <el-option value="gpt-3.5-turbo-mini" label="GPT-3.5-turbo-mini" />
+              <el-option
+                value="gpt-3.5-turbo-mini"
+                label="GPT-3.5-turbo-mini"
+              />
             </el-select>
           </div>
         </div>
         <div class="slots-input-end">
-          <el-button v-if="streamingUi" size="small" type="warning" @click="handleCancel">
+          <el-button
+            v-if="streamingUi"
+            size="small"
+            type="warning"
+            @click="handleCancel"
+          >
             Stop
           </el-button>
           <el-button
@@ -126,7 +137,10 @@ onMounted(async () => {
       </div>
     </div>
   </i-chat>
-  <ExampleCodeDrawer title="Custom input code example" :content="inputExample" />
+  <ExampleCodeDrawer
+    title="Custom input code example"
+    :content="inputExample"
+  />
 </template>
 
 <style scoped>

@@ -1,12 +1,15 @@
-import type { ChatMessage, MessagePart, ToolCallPart } from './types.js';
-import { isMessagePart, isToolCallPart } from './part-guards.js';
-import type { MessagePartUpdate } from './message-part-events.js';
-import { patchToolCallPart } from './tool-call-state.js';
-import type { MessagePartUpdateFailureReason, PartLookupFailureReason } from './update-results.js';
+import type { ChatMessage, MessagePart, ToolCallPart } from "./types.js";
+import { isMessagePart, isToolCallPart } from "./part-guards.js";
+import type { MessagePartUpdate } from "./message-part-events.js";
+import { patchToolCallPart } from "./tool-call-state.js";
+import type {
+  MessagePartUpdateFailureReason,
+  PartLookupFailureReason,
+} from "./update-results.js";
 
 export type MessagePartLookupFailureReason = Extract<
   PartLookupFailureReason,
-  'message-not-found' | 'part-not-found'
+  "message-not-found" | "part-not-found"
 >;
 
 export type MessagePartLookupResult =
@@ -38,10 +41,10 @@ export function findMessagePart(
   partId: string,
 ): MessagePartLookupResult {
   const message = messages.find((candidate) => candidate.id === messageId);
-  if (!message) return { ok: false, reason: 'message-not-found' };
+  if (!message) return { ok: false, reason: "message-not-found" };
 
   const part = message.parts.find((candidate) => candidate.id === partId);
-  if (!part) return { ok: false, reason: 'part-not-found' };
+  if (!part) return { ok: false, reason: "part-not-found" };
 
   return { ok: true, message, part };
 }
@@ -76,7 +79,9 @@ export function replaceMessagePart(
     if (message.id !== messageId) return message;
     return {
       ...message,
-      parts: message.parts.map((part) => (part.id === partId ? nextPart : part)),
+      parts: message.parts.map((part) =>
+        part.id === partId ? nextPart : part,
+      ),
     };
   });
 
@@ -112,7 +117,10 @@ export function applyMessagePartUpdate(
   const { part } = lookup;
   let nextPart: MessagePart;
   if (isToolCallPart(part)) {
-    const result = patchToolCallPart(part, update.patch as Partial<ToolCallPart>);
+    const result = patchToolCallPart(
+      part,
+      update.patch as Partial<ToolCallPart>,
+    );
     if (!result.ok) {
       return {
         ok: false,
@@ -125,7 +133,7 @@ export function applyMessagePartUpdate(
       return {
         ok: false,
         messages: [...messages],
-        reason: 'invalid-part',
+        reason: "invalid-part",
         part: result.part,
       };
     }
@@ -141,13 +149,18 @@ export function applyMessagePartUpdate(
       return {
         ok: false,
         messages: [...messages],
-        reason: 'invalid-part',
+        reason: "invalid-part",
         part,
       };
     }
   }
 
-  const replacement = replaceMessagePart(messages, update.messageId, update.partId, nextPart);
+  const replacement = replaceMessagePart(
+    messages,
+    update.messageId,
+    update.partId,
+    nextPart,
+  );
   if (!replacement.ok) {
     return {
       ok: false,

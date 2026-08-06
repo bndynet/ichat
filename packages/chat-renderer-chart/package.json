@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderer-chart",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Chart fenced-code renderer for @bndynet/ichat: bar, line, area, pie, and gauge charts via @bndynet/icharts.",
   "keywords": [
     "ai-chat",
@@ -36,7 +36,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^3.1.0",
+    "@bndynet/ichat-messages": "^3.2.0",
     "markdown-it": ">=14"
   },
   "dependencies": {

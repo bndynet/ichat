@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderer-katex",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "KaTeX math rendering plugin for @bndynet/ichat: $inline$ and $$display$$ LaTeX math via markdown-it-katex.",
   "keywords": [
     "ai-chat",
@@ -36,7 +36,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^3.1.0",
+    "@bndynet/ichat-messages": "^3.2.0",
     "markdown-it": ">=14"
   },
   "dependencies": {

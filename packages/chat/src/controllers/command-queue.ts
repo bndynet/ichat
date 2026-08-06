@@ -5,14 +5,14 @@
  * replayed in FIFO order once the component has rendered.
  */
 
-import type { ChatMessage } from '@bndynet/ichat-messages';
+import type { ChatMessage } from "@bndynet/ichat-messages";
 
 /** A command that was queued before the child `<i-chat-messages>` was ready. */
 export type PendingCommand =
-  | { kind: 'show-error'; text: string; options?: { duration?: number } }
-  | { kind: 'dismiss-error' }
-  | { kind: 'reply-message'; id: string; info?: Partial<ChatMessage> }
-  | { kind: 'clear-reply-message'; idOrKey?: string };
+  | { kind: "show-error"; text: string; options?: { duration?: number } }
+  | { kind: "dismiss-error" }
+  | { kind: "reply-message"; id: string; info?: Partial<ChatMessage> }
+  | { kind: "clear-reply-message"; idOrKey?: string };
 
 export class CommandQueue {
   private _queue: PendingCommand[] = [];
@@ -37,7 +37,7 @@ export class CommandQueue {
   }
 
   /** Remove commands of the given kinds (used for error deduplication). */
-  removeByKind(...kinds: Array<PendingCommand['kind']>): void {
+  removeByKind(...kinds: Array<PendingCommand["kind"]>): void {
     this._queue = this._queue.filter((c) => !kinds.includes(c.kind));
   }
 

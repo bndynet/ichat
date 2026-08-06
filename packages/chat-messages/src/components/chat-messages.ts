@@ -1,52 +1,58 @@
-import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-import { repeat } from 'lit/directives/repeat.js';
-import { setVersionAttribute } from '../version.js';
+import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
+import { setVersionAttribute } from "../version.js";
 import type {
   ChatMessage,
   ChatConfig,
   MessagePart,
   TodoItemPatch,
   ToolCallPart,
-} from '../types.js';
-import { DEFAULT_CONFIG, textPart } from '../types.js';
-import { isTodoPart, isToolCallPart } from '../part-guards.js';
-import { patchTodoItem, normalizeTodoItemUpdateEvent } from '../todo-state.js';
-import { patchToolCallPart } from '../tool-call-state.js';
+} from "../types.js";
+import { DEFAULT_CONFIG, textPart } from "../types.js";
+import { isTodoPart, isToolCallPart } from "../part-guards.js";
+import { patchTodoItem, normalizeTodoItemUpdateEvent } from "../todo-state.js";
+import { patchToolCallPart } from "../tool-call-state.js";
 import {
   applyMessagePartUpdate,
   appendMessagePart,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
-} from '../message-part-state.js';
-import { normalizeMessagePartUpdateEvent } from '../message-part-events.js';
-import { getDateSeparatorInfo } from '../date-separator.js';
-import { resolveLabels, type ChatLabels } from '../i18n.js';
-import type { ProgressStatus } from '../renderers/progress-plugin.js';
+} from "../message-part-state.js";
+import { normalizeMessagePartUpdateEvent } from "../message-part-events.js";
+import { getDateSeparatorInfo } from "../date-separator.js";
+import { resolveLabels, type ChatLabels } from "../i18n.js";
+import type { ProgressStatus } from "../renderers/progress-plugin.js";
 import type {
   MessagePartUpdateEventResult,
   MessagePartUpdateResult,
   TodoItemUpdateEventResult,
   TodoItemUpdateResult,
   ToolCallUpdateResult,
-} from '../update-results.js';
-import { chatIcons } from '../icons.js';
-import type { MessagesChangeDetail, MessagesChangeReason } from '../messages-change-types.js';
-import { buildMessagesChangeDetail } from '../messages-change-types.js';
+} from "../update-results.js";
+import { chatIcons } from "../icons.js";
+import type {
+  MessagesChangeDetail,
+  MessagesChangeReason,
+} from "../messages-change-types.js";
+import { buildMessagesChangeDetail } from "../messages-change-types.js";
 import {
   addMessage,
   patchMessageById,
   removeMessageById,
   clearMessages,
   cancelMessageData,
-} from '../message-collection-state.js';
-import styles from '../styles/chat-messages.scss';
-import './chat-message.js';
-import type { ChatMessageElement } from './chat-message.js';
-import { injectPluginCss, injectGlobalPluginCss } from '../renderers/plugin-styles.js';
-import { ScrollController } from '../controllers/scroll-controller.js';
-import { ErrorBannerController } from '../controllers/error-banner-controller.js';
+} from "../message-collection-state.js";
+import styles from "../styles/chat-messages.scss";
+import "./chat-message.js";
+import type { ChatMessageElement } from "./chat-message.js";
+import {
+  injectPluginCss,
+  injectGlobalPluginCss,
+} from "../renderers/plugin-styles.js";
+import { ScrollController } from "../controllers/scroll-controller.js";
+import { ErrorBannerController } from "../controllers/error-banner-controller.js";
 
 /**
  * Message list container. Bubbles `streaming-change`, `message-action` (from actions template),
@@ -59,30 +65,34 @@ import { ErrorBannerController } from '../controllers/error-banner-controller.js
  *   Detail: {@link MessagesChangeDetail}. Direct external `messages = […]` assignments do
  *   **not** emit this event.
  */
-@customElement('i-chat-messages')
+@customElement("i-chat-messages")
 export class ChatMessages extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ type: Array }) messages: ChatMessage[] = [];
   @property({ type: Object }) config: ChatConfig = {};
-  @property() emptyText = '';
+  @property() emptyText = "";
 
-  @property({ type: Boolean, reflect: true, attribute: 'streaming' })
+  @property({ type: Boolean, reflect: true, attribute: "streaming" })
   readonly streaming = false;
 
-  @state() private _selfAvatarHtml = '';
-  @state() private _peerAvatarHtml = '';
-  @state() private _assistantAvatarHtml = '';
-  @state() private _messageActionsHtml = '';
-  @state() private _reasoningHeaderHtml = '';
+  @state() private _selfAvatarHtml = "";
+  @state() private _peerAvatarHtml = "";
+  @state() private _assistantAvatarHtml = "";
+  @state() private _messageActionsHtml = "";
+  @state() private _reasoningHeaderHtml = "";
   /** Active reply blocks. Multiple blocks may share the same `id` (stacked under one message). */
-  @state() private _replies: Array<{ key: string; id: string; data: Partial<ChatMessage> }> = [];
+  @state() private _replies: Array<{
+    key: string;
+    id: string;
+    data: Partial<ChatMessage>;
+  }> = [];
   /** Monotonic counter for unique reply-block keys. */
   private _replyKeySeq = 0;
 
   // ── Controllers ──────────────────────────────────────────────────
 
-  private _scrollCtrl = new ScrollController(this, '.chat-messages');
+  private _scrollCtrl = new ScrollController(this, ".chat-messages");
   private _errorCtrl = new ErrorBannerController(this);
 
   private get _config() {
@@ -113,11 +123,16 @@ export class ChatMessages extends LitElement {
     this.__labelsCache = { locale, labelsRef, value };
     return value;
   }
-  private __labelsCache?: { locale: string; labelsRef: object | undefined; value: ChatLabels };
+  private __labelsCache?: {
+    locale: string;
+    labelsRef: object | undefined;
+    value: ChatLabels;
+  };
 
   /** Flat list of separators + messages for rendering (date divider when bucket changes). */
   private _messageRenderItems(): Array<
-    { kind: 'sep'; key: string; label: string } | { kind: 'msg'; key: string; message: ChatMessage }
+    | { kind: "sep"; key: string; label: string }
+    | { kind: "msg"; key: string; message: ChatMessage }
   > {
     const msgs = this.messages;
 
@@ -129,27 +144,27 @@ export class ChatMessages extends LitElement {
     }
 
     const items: Array<
-      | { kind: 'sep'; key: string; label: string }
-      | { kind: 'msg'; key: string; message: ChatMessage }
+      | { kind: "sep"; key: string; label: string }
+      | { kind: "msg"; key: string; message: ChatMessage }
     > = [];
     const sepLabels = this._labels.dateSeparator;
     const onlyToday =
       msgs.length > 0 &&
       msgs.every((m) => {
         const ts = m.timestamp ?? Date.now();
-        return getDateSeparatorInfo(ts, sepLabels).key === 'today';
+        return getDateSeparatorInfo(ts, sepLabels).key === "today";
       });
     let prevKey: string | undefined;
     for (const m of msgs) {
       const ts = m.timestamp ?? Date.now();
       const { key, label } = getDateSeparatorInfo(ts, sepLabels);
       if (prevKey === undefined || key !== prevKey) {
-        if (!(onlyToday && key === 'today')) {
-          items.push({ kind: 'sep', key: `sep-${m.id}`, label });
+        if (!(onlyToday && key === "today")) {
+          items.push({ kind: "sep", key: `sep-${m.id}`, label });
         }
         prevKey = key;
       }
-      items.push({ kind: 'msg', key: m.id, message: m });
+      items.push({ kind: "msg", key: m.id, message: m });
     }
 
     this.__renderItemsCache = { ref: msgs, value: items };
@@ -158,8 +173,8 @@ export class ChatMessages extends LitElement {
   private __renderItemsCache?: {
     ref: readonly ChatMessage[];
     value: Array<
-      | { kind: 'sep'; key: string; label: string }
-      | { kind: 'msg'; key: string; message: ChatMessage }
+      | { kind: "sep"; key: string; label: string }
+      | { kind: "msg"; key: string; message: ChatMessage }
     >;
   };
 
@@ -191,39 +206,41 @@ export class ChatMessages extends LitElement {
    * light-DOM children of `<i-chat-messages>` when nested under `<i-chat>`.
    */
   private _syncSlotTemplatesFromAssignedNodes(): void {
-    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>('.template-slots slot[name]');
+    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>(
+      ".template-slots slot[name]",
+    );
     if (!slots) return;
     slots.forEach((slot) => {
-      const name = slot.getAttribute('name');
+      const name = slot.getAttribute("name");
       if (!name) return;
       const nodes = slot.assignedElements({ flatten: true });
-      const content = nodes.map((n) => (n as HTMLElement).outerHTML).join('');
+      const content = nodes.map((n) => (n as HTMLElement).outerHTML).join("");
       this._applySlotTemplateHtml(name, content);
     });
   }
 
   private _applySlotTemplateHtml(name: string, content: string): void {
     switch (name) {
-      case 'self-avatar':
+      case "self-avatar":
         this._selfAvatarHtml = content;
         break;
-      case 'peer-avatar':
+      case "peer-avatar":
         this._peerAvatarHtml = content;
         break;
-      case 'assistant-avatar':
+      case "assistant-avatar":
         this._assistantAvatarHtml = content;
         break;
-      case 'message-actions':
+      case "message-actions":
         this._messageActionsHtml = content;
         break;
-      case 'reasoning-header':
+      case "reasoning-header":
         this._reasoningHeaderHtml = content;
         break;
     }
   }
 
   updated(changed: Map<string, unknown>): void {
-    if (changed.has('messages')) {
+    if (changed.has("messages")) {
       const nowStreaming = this.messages.some((m) => m.streaming && !m.error);
       if (nowStreaming !== this.streaming) {
         (this as Record<string, unknown>).streaming = nowStreaming;
@@ -231,7 +248,7 @@ export class ChatMessages extends LitElement {
           this._errorCtrl.dismissOnStreamingStart();
         }
         this.dispatchEvent(
-          new CustomEvent('streaming-change', {
+          new CustomEvent("streaming-change", {
             detail: { streaming: nowStreaming },
             bubbles: true,
             composed: true,
@@ -248,7 +265,7 @@ export class ChatMessages extends LitElement {
   private _handleSlotChange(name: string, e: Event): void {
     const slot = e.target as HTMLSlotElement;
     const nodes = slot.assignedElements({ flatten: true });
-    const content = nodes.map((n) => (n as HTMLElement).outerHTML).join('');
+    const content = nodes.map((n) => (n as HTMLElement).outerHTML).join("");
     this._applySlotTemplateHtml(name, content);
   }
 
@@ -286,10 +303,10 @@ export class ChatMessages extends LitElement {
     const previousMessages = this.messages;
     this.messages = next;
     this.dispatchEvent(
-      new CustomEvent<MessagesChangeDetail>('messages-change', {
+      new CustomEvent<MessagesChangeDetail>("messages-change", {
         detail: buildMessagesChangeDetail(next, previousMessages, {
           ...context,
-          source: 'i-chat-messages',
+          source: "i-chat-messages",
         }),
         bubbles: true,
         composed: true,
@@ -299,14 +316,14 @@ export class ChatMessages extends LitElement {
 
   addMessage(message: ChatMessage): void {
     this._commitMessages(addMessage(this.messages, message), {
-      reason: 'message:add',
+      reason: "message:add",
       messageId: message.id,
     });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
     this._commitMessages(patchMessageById(this.messages, id, partial), {
-      reason: 'message:update',
+      reason: "message:update",
       messageId: id,
     });
   }
@@ -317,7 +334,7 @@ export class ChatMessages extends LitElement {
    */
   appendPart(messageId: string, part: MessagePart): void {
     this._commitMessages(appendMessagePart(this.messages, messageId, part), {
-      reason: 'part:append',
+      reason: "part:append",
       messageId,
       partId: part.id,
     });
@@ -328,11 +345,15 @@ export class ChatMessages extends LitElement {
    * part; stateful elements (e.g. `<i-chat-tool-call>`) are preserved because
    * parts are rendered keyed by `id`.
    */
-  updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
+  updatePart(
+    messageId: string,
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): void {
     const result = patchMessagePart(this.messages, messageId, partId, patch);
     if (result.ok) {
       this._commitMessages(result.messages, {
-        reason: 'part:update',
+        reason: "part:update",
         messageId,
         partId,
       });
@@ -348,13 +369,17 @@ export class ChatMessages extends LitElement {
     partId: string,
     patch: Partial<MessagePart>,
   ): MessagePartUpdateResult {
-    const result = applyMessagePartUpdate(this.messages, { messageId, partId, patch });
+    const result = applyMessagePartUpdate(this.messages, {
+      messageId,
+      partId,
+      patch,
+    });
     if (!result.ok) {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
     this._commitMessages(result.messages, {
-      reason: 'part:update',
+      reason: "part:update",
       messageId,
       partId,
     });
@@ -375,7 +400,7 @@ export class ChatMessages extends LitElement {
 
     const { part } = lookup;
     if (!isToolCallPart(part)) {
-      return { ok: false, reason: 'part-type-mismatch', part };
+      return { ok: false, reason: "part-type-mismatch", part };
     }
 
     const result = patchToolCallPart(part, patch);
@@ -383,11 +408,16 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    const replacement = replaceMessagePart(
+      this.messages,
+      messageId,
+      partId,
+      result.part,
+    );
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, {
-      reason: 'tool-call:update',
+      reason: "tool-call:update",
       messageId,
       partId,
     });
@@ -410,7 +440,7 @@ export class ChatMessages extends LitElement {
 
     const { part } = lookup;
     if (!isTodoPart(part)) {
-      return { ok: false, reason: 'part-type-mismatch', part };
+      return { ok: false, reason: "part-type-mismatch", part };
     }
 
     const result = patchTodoItem(part, itemId, patch, revision);
@@ -418,11 +448,16 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    const replacement = replaceMessagePart(
+      this.messages,
+      messageId,
+      partId,
+      result.part,
+    );
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, {
-      reason: 'todo-item:update',
+      reason: "todo-item:update",
       messageId,
       partId,
       itemId,
@@ -441,7 +476,13 @@ export class ChatMessages extends LitElement {
     if (!result.ok) return { ok: false, reason: result.reason };
 
     const { messageId, partId, itemId, patch, revision } = result.update;
-    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+    const update = this.tryUpdateTodoItem(
+      messageId,
+      partId,
+      itemId,
+      patch,
+      revision,
+    );
     if (!update.ok) {
       return {
         ok: false,
@@ -480,7 +521,7 @@ export class ChatMessages extends LitElement {
 
   removeMessage(id: string): void {
     this._commitMessages(removeMessageById(this.messages, id), {
-      reason: 'message:remove',
+      reason: "message:remove",
       messageId: id,
     });
     this.clearReplyMessage(id);
@@ -519,7 +560,9 @@ export class ChatMessages extends LitElement {
       this._replies = [];
       return;
     }
-    const next = this._replies.filter((r) => r.id !== idOrKey && r.key !== idOrKey);
+    const next = this._replies.filter(
+      (r) => r.id !== idOrKey && r.key !== idOrKey,
+    );
     if (next.length !== this._replies.length) this._replies = next;
   }
 
@@ -552,7 +595,7 @@ export class ChatMessages extends LitElement {
     if (next === this.messages) return; // no-op: id not found or already terminal
 
     // 3. Commit.
-    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
+    this._commitMessages(next, { reason: "message:cancel", messageId: id });
   }
 
   /**
@@ -585,7 +628,7 @@ export class ChatMessages extends LitElement {
       `i-chat-message[data-message-id="${CSS.escape(id)}"]`,
     );
     if (!msgEl) return false;
-    msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    msgEl.scrollIntoView({ behavior: "smooth", block: "start" });
     this._highlightElement(msgEl);
     return true;
   }
@@ -599,9 +642,11 @@ export class ChatMessages extends LitElement {
    * @returns `true` if the part element was found and scrolled into view.
    */
   scrollToPart(partId: string): boolean {
-    const partEl = this.shadowRoot?.querySelector(`[data-part-id="${CSS.escape(partId)}"]`);
+    const partEl = this.shadowRoot?.querySelector(
+      `[data-part-id="${CSS.escape(partId)}"]`,
+    );
     if (!partEl) return false;
-    partEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    partEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
     this._highlightElement(partEl);
     return true;
   }
@@ -614,14 +659,18 @@ export class ChatMessages extends LitElement {
    * `chat-messages.scss`).  The class self-removes on `animationend`.
    */
   private _highlightElement(el: Element): void {
-    el.classList.add('scroll-highlight');
-    el.addEventListener('animationend', () => el.classList.remove('scroll-highlight'), {
-      once: true,
-    });
+    el.classList.add("scroll-highlight");
+    el.addEventListener(
+      "animationend",
+      () => el.classList.remove("scroll-highlight"),
+      {
+        once: true,
+      },
+    );
   }
 
   clear(): void {
-    this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    this._commitMessages(clearMessages(), { reason: "message:clear" });
     this._clearPresentation();
   }
 
@@ -667,10 +716,10 @@ export class ChatMessages extends LitElement {
    * Convenience: add a message with `role: 'assistant'` and `error` set.
    * @param text  Optional markdown body shown beneath the error indicator.
    */
-  addErrorMessage(error: string, text = ''): void {
+  addErrorMessage(error: string, text = ""): void {
     this.addMessage({
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      role: 'assistant',
+      role: "assistant",
       parts: text ? [textPart(text)] : [],
       error,
       timestamp: Date.now(),
@@ -681,7 +730,10 @@ export class ChatMessages extends LitElement {
     const cfg = this._config;
     const labels = this._labels;
 
-    const replyBlocks = new Map<string, Array<{ key: string; data: Partial<ChatMessage> }>>();
+    const replyBlocks = new Map<
+      string,
+      Array<{ key: string; data: Partial<ChatMessage> }>
+    >();
     for (const r of this._replies) {
       const list = replyBlocks.get(r.id);
       if (list) list.push({ key: r.key, data: r.data });
@@ -690,97 +742,125 @@ export class ChatMessages extends LitElement {
 
     return html`
       <div class="template-slots" hidden>
-        <slot name="self-avatar" @slotchange=${(e: Event) => this._handleSlotChange('self-avatar', e)}></slot>
-        <slot name="peer-avatar" @slotchange=${(e: Event) => this._handleSlotChange('peer-avatar', e)}></slot>
-        <slot name="assistant-avatar" @slotchange=${(e: Event) => this._handleSlotChange('assistant-avatar', e)}></slot>
-        <slot name="message-actions" @slotchange=${(e: Event) => this._handleSlotChange('message-actions', e)}></slot>
-        <slot name="reasoning-header" @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}></slot>
+        <slot
+          name="self-avatar"
+          @slotchange=${(e: Event) => this._handleSlotChange("self-avatar", e)}
+        ></slot>
+        <slot
+          name="peer-avatar"
+          @slotchange=${(e: Event) => this._handleSlotChange("peer-avatar", e)}
+        ></slot>
+        <slot
+          name="assistant-avatar"
+          @slotchange=${(e: Event) => this._handleSlotChange("assistant-avatar", e)}
+        ></slot>
+        <slot
+          name="message-actions"
+          @slotchange=${(e: Event) => this._handleSlotChange("message-actions", e)}
+        ></slot>
+        <slot
+          name="reasoning-header"
+          @slotchange=${(e: Event) => this._handleSlotChange("reasoning-header", e)}
+        ></slot>
       </div>
-      <div class="chat-messages-wrapper" role="log" aria-live="polite" aria-label=${labels.messages.chatMessages}>
+      <div
+        class="chat-messages-wrapper"
+        role="log"
+        aria-live="polite"
+        aria-label=${labels.messages.chatMessages}
+      >
         ${
           this._errorCtrl.text
             ? html`<div class="error-banner" role="alert">
-              ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}
-              <span class="error-banner-text">${this._errorCtrl.text}</span>
-              <button
-                class="error-banner-dismiss"
-                @click=${() => this.dismissError()}
-                aria-label=${labels.messages.dismissError}
-              >
-                ${chatIcons.x({ size: 14, strokeWidth: 2.4 })}
-              </button>
-            </div>`
-            : ''
+                ${chatIcons.alertTriangleFilled({ className: "error-banner-icon" })}
+                <span class="error-banner-text">${this._errorCtrl.text}</span>
+                <button
+                  class="error-banner-dismiss"
+                  @click=${() => this.dismissError()}
+                  aria-label=${labels.messages.dismissError}
+                >
+                  ${chatIcons.x({ size: 14, strokeWidth: 2.4 })}
+                </button>
+              </div>`
+            : ""
         }
         <div class="chat-messages" @scroll=${this._handleScroll}>
           ${
             this.messages.length === 0
               ? html`<div class="chat-empty">
-                <slot name="empty">
-                  ${this.emptyText || labels.messages.empty}
-                </slot>
-              </div>`
+                  <slot name="empty">
+                    ${this.emptyText || labels.messages.empty}
+                  </slot>
+                </div>`
               : html`
-                <div
-                  class="chat-messages-inner"
-                  @chat-content-resize=${this._onChatContentResize}
-                >
-                  ${repeat(
-                    this._messageRenderItems(),
-                    (item) => item.key,
-                    (item) =>
-                      item.kind === 'sep'
-                        ? html`
-                            <div class="chat-date-separator" role="separator" aria-label=${item.label}>
-                              <span class="chat-date-separator-line"></span>
-                              <span class="chat-date-separator-label">${item.label}</span>
-                              <span class="chat-date-separator-line"></span>
-                            </div>
-                          `
-                        : html`
-                            <i-chat-message
-                              data-message-id=${item.message.id}
-                              .message=${item.message}
-                              .locale=${cfg.locale}
-                              .labels=${labels}
-                              .allowedLinkProtocols=${cfg.allowedLinkProtocols}
-                              .highlightJs=${cfg.highlightJs}
-                              .speed=${cfg.streamingSpeed}
-                              .selfAvatar=${cfg.selfAvatar}
-                              .peerAvatar=${cfg.peerAvatar}
-                              .assistantAvatar=${cfg.assistantAvatar}
-                              .selfAvatarHtml=${this._selfAvatarHtml}
-                              .peerAvatarHtml=${this._peerAvatarHtml}
-                              .assistantAvatarHtml=${this._assistantAvatarHtml}
-                              .actionsHtml=${this._messageActionsHtml}
-                              .reasoningHeaderHtml=${this._reasoningHeaderHtml}
-                              .pendingIndicator=${cfg.pendingIndicator}
-                              .pendingDelay=${cfg.pendingDelay}
-                              .replyTargets=${replyBlocks.get(item.message.id)}
-                              @message-cancel=${(e: CustomEvent<{ id: string }>) =>
-                                this.updateMessage(e.detail.id, {
-                                  streaming: false,
-                                  cancelled: true,
-                                })}
-                            ></i-chat-message>
-                          `,
-                  )}
-                </div>
-              `
+                  <div
+                    class="chat-messages-inner"
+                    @chat-content-resize=${this._onChatContentResize}
+                  >
+                    ${repeat(
+                      this._messageRenderItems(),
+                      (item) => item.key,
+                      (item) =>
+                        item.kind === "sep"
+                          ? html`
+                              <div
+                                class="chat-date-separator"
+                                role="separator"
+                                aria-label=${item.label}
+                              >
+                                <span class="chat-date-separator-line"></span>
+                                <span class="chat-date-separator-label"
+                                  >${item.label}</span
+                                >
+                                <span class="chat-date-separator-line"></span>
+                              </div>
+                            `
+                          : html`
+                              <i-chat-message
+                                data-message-id=${item.message.id}
+                                .message=${item.message}
+                                .locale=${cfg.locale}
+                                .labels=${labels}
+                                .allowedLinkProtocols=${cfg.allowedLinkProtocols}
+                                .highlightJs=${cfg.highlightJs}
+                                .speed=${cfg.streamingSpeed}
+                                .selfAvatar=${cfg.selfAvatar}
+                                .peerAvatar=${cfg.peerAvatar}
+                                .assistantAvatar=${cfg.assistantAvatar}
+                                .selfAvatarHtml=${this._selfAvatarHtml}
+                                .peerAvatarHtml=${this._peerAvatarHtml}
+                                .assistantAvatarHtml=${this._assistantAvatarHtml}
+                                .actionsHtml=${this._messageActionsHtml}
+                                .reasoningHeaderHtml=${this._reasoningHeaderHtml}
+                                .pendingIndicator=${cfg.pendingIndicator}
+                                .pendingDelay=${cfg.pendingDelay}
+                                .replyTargets=${replyBlocks.get(item.message.id)}
+                                @message-cancel=${(
+                                  e: CustomEvent<{ id: string }>,
+                                ) =>
+                                  this.updateMessage(e.detail.id, {
+                                    streaming: false,
+                                    cancelled: true,
+                                  })}
+                              ></i-chat-message>
+                            `,
+                    )}
+                  </div>
+                `
           }
         </div>
         ${
           this._scrollCtrl.hasNewContent
             ? html`
-              <button
-                class="scroll-down-btn"
-                @click=${this._handleScrollToBottom}
-                aria-label=${labels.messages.scrollToLatest}
-              >
-                ${chatIcons.chevronDown({ size: 20, strokeWidth: 2.4 })}
-              </button>
-            `
-            : ''
+                <button
+                  class="scroll-down-btn"
+                  @click=${this._handleScrollToBottom}
+                  aria-label=${labels.messages.scrollToLatest}
+                >
+                  ${chatIcons.chevronDown({ size: 20, strokeWidth: 2.4 })}
+                </button>
+              `
+            : ""
         }
       </div>
     `;
@@ -789,6 +869,6 @@ export class ChatMessages extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-messages': ChatMessages;
+    "i-chat-messages": ChatMessages;
   }
 }

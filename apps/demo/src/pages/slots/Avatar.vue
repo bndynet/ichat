@@ -1,10 +1,10 @@
 <script setup>
-import '@bndynet/ichat';
-import { ref, nextTick, onMounted } from 'vue';
-import { textPart } from '@bndynet/ichat';
-import { nextId, reply } from '../../composables/demo-data.js';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import avatarExample from '../../examples/slots/avatar.md?raw';
+import "@bndynet/ichat";
+import { ref, nextTick, onMounted } from "vue";
+import { textPart } from "@bndynet/ichat";
+import { nextId, reply } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import avatarExample from "../../examples/slots/avatar.md?raw";
 
 const chatRef = ref(null);
 
@@ -12,19 +12,19 @@ onMounted(async () => {
   await nextTick();
   chatRef.value.addMessage({
     id: nextId(),
-    role: 'assistant',
-    parts: [textPart('Hello from assistant')],
+    role: "assistant",
+    parts: [textPart("Hello from assistant")],
   });
   chatRef.value.addMessage({
     id: nextId(),
-    role: 'peer',
-    parts: [textPart('Hello from peer')],
+    role: "peer",
+    parts: [textPart("Hello from peer")],
   });
   chatRef.value.addMessage({
     id: nextId(),
-    avatar: 'https://static.bndy.net/images/logo_white_blue_circle.svg',
-    role: 'peer',
-    parts: [textPart('Hello from your friend')],
+    avatar: "https://static.bndy.net/images/logo_white_blue_circle.svg",
+    role: "peer",
+    parts: [textPart("Hello from your friend")],
   });
   setTimeout(() => {}, 5000);
 });
@@ -35,12 +35,16 @@ function handleSend(e) {
 }
 
 function handleMessageAction(e) {
-  console.log('[Avatar message-action]', e.detail);
+  console.log("[Avatar message-action]", e.detail);
 }
 </script>
 
 <template>
-  <i-chat ref="chatRef" @send="handleSend" @message-action="handleMessageAction">
+  <i-chat
+    ref="chatRef"
+    @send="handleSend"
+    @message-action="handleMessageAction"
+  >
     <!-- avatar slots -->
     <div slot="self-avatar">
       <img
@@ -86,8 +90,8 @@ function handleMessageAction(e) {
     <div slot="empty" style="text-align: center">
       <h2>Welcome!</h2>
       <p>
-        Start a conversation below. You will see your avatar on the right side and the other user's
-        avatar on the left side.
+        Start a conversation below. You will see your avatar on the right side
+        and the other user's avatar on the left side.
       </p>
     </div>
   </i-chat>

@@ -5,7 +5,7 @@ Use a structured `todo` message part for an ordered plan that must remain visibl
 ## Data model
 
 ```typescript
-type TodoItemStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped';
+type TodoItemStatus = "pending" | "active" | "done" | "error" | "skipped";
 
 interface TodoItem {
   id: string;
@@ -16,13 +16,13 @@ interface TodoItem {
 
 interface TodoPart {
   id: string;
-  type: 'todo';
+  type: "todo";
   title?: string;
   items: TodoItem[];
   revision: number;
   defaultCollapsed?: boolean;
   interactive?: boolean;
-  status?: 'pending' | 'streaming' | 'complete' | 'error' | 'cancelled';
+  status?: "pending" | "streaming" | "complete" | "error" | "cancelled";
 }
 ```
 
@@ -31,20 +31,20 @@ The header count and completed progress are derived from `items`. Expanded state
 ## Create a todo
 
 ```javascript
-import { textPart, todoPart } from '@bndynet/ichat';
+import { textPart, todoPart } from "@bndynet/ichat";
 
 chat.addMessage({
-  id: 'assistant-42',
-  role: 'assistant',
+  id: "assistant-42",
+  role: "assistant",
   parts: [
-    textPart('I will follow this plan:'),
+    textPart("I will follow this plan:"),
     todoPart(
       [
-        { id: 'model', title: 'Define the data model', status: 'done' },
-        { id: 'panel', title: 'Build the panel', status: 'active' },
-        { id: 'verify', title: 'Verify the build', status: 'pending' },
+        { id: "model", title: "Define the data model", status: "done" },
+        { id: "panel", title: "Build the panel", status: "active" },
+        { id: "verify", title: "Verify the build", status: "pending" },
       ],
-      { id: 'plan', status: 'streaming' },
+      { id: "plan", status: "streaming" },
     ),
   ],
 });
@@ -56,7 +56,7 @@ Set `interactive: false` when the panel is display-only. `defaultCollapsed` affe
 
 `tryUpdateTodoItem(messageId, partId, itemId, patch, revision?)` replaces the item and `items` array immutably. It returns `{ ok, reason? }` — `ok: false` when the message, part, or item is missing, when a status/revision is invalid, or when an explicit revision is stale.
 
-```javascript
+````javascript
 const r1 = chat.tryUpdateTodoItem('assistant-42', 'plan', 'panel', { status: 'done' }, 3);
 if (!r1.ok) console.warn('Todo update ignored:', r1.reason);
 
@@ -77,7 +77,7 @@ For backend streaming, send stable IDs and a monotonic revision:
   "revision": 3,
   "sequence_number": 18
 }
-```
+````
 
 `sequence_number` orders the stream event itself. `revision` belongs to the todo
 part and is used to reject stale item updates; keep both monotonic, but do not
@@ -86,10 +86,10 @@ reuse one as the other.
 Then route the event through the same reducer as UI changes:
 
 ```javascript
-source.addEventListener('todo.item.updated', (event) => {
+source.addEventListener("todo.item.updated", (event) => {
   const result = chat.tryApplyTodoItemUpdateEvent(event);
   if (!result.ok) {
-    console.warn('Todo event ignored:', result.reason);
+    console.warn("Todo event ignored:", result.reason);
   }
 });
 ```
@@ -101,10 +101,12 @@ For custom adapters, `normalizeTodoItemUpdateEvent(event)` is exported separatel
 Clicking a status icon requests the next status but does not mutate the component's input. Handle the bubbling `part-action` event and apply the update locally, persist it remotely, or reject it.
 
 ```javascript
-chat.addEventListener('part-action', (event) => {
-  if (event.detail.kind !== 'todo') return;
+chat.addEventListener("part-action", (event) => {
+  if (event.detail.kind !== "todo") return;
   const { messageId, partId, payload } = event.detail;
-  chat.tryUpdateTodoItem(messageId, partId, payload.itemId, { status: payload.status });
+  chat.tryUpdateTodoItem(messageId, partId, payload.itemId, {
+    status: payload.status,
+  });
 });
 ```
 

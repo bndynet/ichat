@@ -1,14 +1,14 @@
-import type MarkdownIt from 'markdown-it';
-import type { BlockRenderer } from '@bndynet/ichat-messages';
-import type { ChartData, ChartOptions } from '@bndynet/icharts';
-import { switchTheme } from '@bndynet/icharts';
-import '@bndynet/icharts'; // registers <i-chart>
+import type MarkdownIt from "markdown-it";
+import type { BlockRenderer } from "@bndynet/ichat-messages";
+import type { ChartData, ChartOptions } from "@bndynet/icharts";
+import { switchTheme } from "@bndynet/icharts";
+import "@bndynet/icharts"; // registers <i-chart>
 import {
   escapeHtml,
   renderCodeFallback,
   wrapWithCodeToggle,
   type RendererOptions,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,10 +53,10 @@ export interface ChartInput {
 
 /** Returns true when the document is currently in dark mode. */
 function isDarkTheme(): boolean {
-  if (typeof document === 'undefined') return false;
+  if (typeof document === "undefined") return false;
   const html = document.documentElement;
-  if (html.classList.contains('dark')) return true;
-  return (html.getAttribute('data-theme') ?? '').includes('dark');
+  if (html.classList.contains("dark")) return true;
+  return (html.getAttribute("data-theme") ?? "").includes("dark");
 }
 
 /**
@@ -66,13 +66,17 @@ function isDarkTheme(): boolean {
  * setTheme() on every IChart instance already in the registry.
  */
 function setupThemeObserver(): void {
-  if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return;
+  if (
+    typeof MutationObserver === "undefined" ||
+    typeof document === "undefined"
+  )
+    return;
 
   new MutationObserver(() => {
-    switchTheme(isDarkTheme() ? 'dark' : 'light');
+    switchTheme(isDarkTheme() ? "dark" : "light");
   }).observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['data-theme', 'class'],
+    attributeFilter: ["data-theme", "class"],
   });
 }
 
@@ -85,10 +89,11 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
   try {
     input = JSON.parse(code) as ChartInput;
   } catch {
-    return renderCodeFallback('chart', code);
+    return renderCodeFallback("chart", code);
   }
   // JSON.parse("null") / JSON.parse("123") → not an object
-  if (!input || typeof input !== 'object') return renderCodeFallback('chart', code);
+  if (!input || typeof input !== "object")
+    return renderCodeFallback("chart", code);
 
   const options: ChartOptions = { ...(input.options ?? {}) };
 
@@ -97,14 +102,16 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
   // pick up whichever theme is currently active via switchTheme().
   // Only inject options.theme when the caller explicitly requested one.
   const serializedData = JSON.stringify(input.data);
-  if (serializedData === undefined) return renderCodeFallback('chart', code);
-  const escapedType = escapeHtml(String(input.type ?? ''));
+  if (serializedData === undefined) return renderCodeFallback("chart", code);
+  const escapedType = escapeHtml(String(input.type ?? ""));
   const escapedData = escapeHtml(serializedData);
   const escapedOptions = escapeHtml(JSON.stringify(options));
 
   const html = `<i-chart type="${escapedType}" data='${escapedData}' options='${escapedOptions}' style="display:block;width:100%;height:320px"></i-chart>`;
 
-  return opts.codeToggle !== false ? wrapWithCodeToggle('chart', code, html) : html;
+  return opts.codeToggle !== false
+    ? wrapWithCodeToggle("chart", code, html)
+    : html;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -122,12 +129,14 @@ function renderChart(code: string, opts: RendererOptions = {}): string {
  * // Disable toggle
  * registry.register(createChartRenderer({ codeToggle: false }))
  */
-export function createChartRenderer(options: RendererOptions = {}): BlockRenderer {
+export function createChartRenderer(
+  options: RendererOptions = {},
+): BlockRenderer {
   return {
-    name: 'chart',
-    mode: 'trusted',
+    name: "chart",
+    mode: "trusted",
     trusted: true,
-    test: (lang: string) => lang === 'chart',
+    test: (lang: string) => lang === "chart",
     render: (code: string, _lang: string) => renderChart(code, options),
   };
 }
@@ -145,7 +154,10 @@ export const chartRenderer: BlockRenderer = createChartRenderer();
  * To customise options pass them as the second argument to `md.use()`:
  * `md.use(chartPlugin, { codeToggle: false })`
  */
-export function chartPlugin(mdInstance: MarkdownIt, options: RendererOptions = {}): void {
+export function chartPlugin(
+  mdInstance: MarkdownIt,
+  options: RendererOptions = {},
+): void {
   const originalFence =
     mdInstance.renderer.rules.fence ||
     function (tokens, idx, opts, _env, self) {
@@ -154,7 +166,7 @@ export function chartPlugin(mdInstance: MarkdownIt, options: RendererOptions = {
 
   mdInstance.renderer.rules.fence = (tokens, idx, opts, env, self) => {
     const token = tokens[idx];
-    if (token.info.trim() === 'chart') {
+    if (token.info.trim() === "chart") {
       return renderChart(token.content, options);
     }
     return originalFence(tokens, idx, opts, env, self);

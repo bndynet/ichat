@@ -46,42 +46,44 @@ Drop in `<i-chat>` and wire one streaming response with **`createRunController()
 
 ```html
 <script type="module">
-  import '@bndynet/ichat';
+  import "@bndynet/ichat";
 </script>
 
 <i-chat id="chat"></i-chat>
 
 <script type="module">
-  import { textPart } from '@bndynet/ichat';
+  import { textPart } from "@bndynet/ichat";
 
-  const chat = document.getElementById('chat');
+  const chat = document.getElementById("chat");
   let run = null;
 
-  chat.addEventListener('send', async (e) => {
+  chat.addEventListener("send", async (e) => {
     chat.addMessage({
       id: crypto.randomUUID(),
-      role: 'self',
+      role: "self",
       parts: [textPart(e.detail.content)],
       timestamp: Date.now(),
     });
 
     run = chat.createRunController();
-    run.start([textPart('', { id: 'body', status: 'streaming' })]);
+    run.start([textPart("", { id: "body", status: "streaming" })]);
 
     try {
       // TODO: replace with your fetch/SSE/WebSocket/SDK adapter — it yields
       // text chunks and should pass `run.signal` to the request.
-      for await (const chunk of streamAssistantReply(e.detail.content, { signal: run.signal })) {
-        run.appendText('body', chunk);
+      for await (const chunk of streamAssistantReply(e.detail.content, {
+        signal: run.signal,
+      })) {
+        run.appendText("body", chunk);
       }
-      run.updatePart('body', { status: 'complete' });
+      run.updatePart("body", { status: "complete" });
       run.complete();
     } catch (error) {
       run.fail(error instanceof Error ? error.message : String(error));
     }
   });
 
-  chat.addEventListener('cancel', () => run?.cancel('*— Response stopped —*'));
+  chat.addEventListener("cancel", () => run?.cancel("*— Response stopped —*"));
 </script>
 ```
 
@@ -94,9 +96,9 @@ That is the whole integration. `run.signal` is aborted as soon as the run ends, 
 Chart, KPI, form, Mermaid, and math fences live in separate packages. Import them at startup or lazily when their UI is first needed:
 
 ```js
-import '@bndynet/ichat-renderers';
-import '@bndynet/ichat-renderer-chart';
-import '@bndynet/ichat-renderer-mermaid';
+import "@bndynet/ichat-renderers";
+import "@bndynet/ichat-renderer-chart";
+import "@bndynet/ichat-renderer-mermaid";
 ```
 
 Extension registration is global and remains available after components mount.
@@ -115,7 +117,7 @@ extra security or performance configuration is required for normal use.
 When the user first opens a chat, load historical messages as completed content:
 
 ```js
-import { normalizeHistoryMessages } from '@bndynet/ichat';
+import { normalizeHistoryMessages } from "@bndynet/ichat";
 
 const history = await fetchHistory();
 chat.messages = normalizeHistoryMessages(history.messages);
@@ -132,7 +134,7 @@ A message body is an ordered array of typed **`parts`** (there is no plain `cont
 By default **`<i-chat>` owns its own message state**. Listen to `messages-change` for side effects like logging or persistence:
 
 ```js
-chat.addEventListener('messages-change', (e) => {
+chat.addEventListener("messages-change", (e) => {
   console.log(e.detail.reason, e.detail.messages);
 });
 ```
@@ -141,8 +143,8 @@ When you need a **single source of truth** shared across multiple components (e.
 
 ```js
 // Vue example — messages lives in a reactive store
-chat.messageMode = 'controlled';
-chat.addEventListener('messages-change', (e) => {
+chat.messageMode = "controlled";
+chat.addEventListener("messages-change", (e) => {
   if (e.detail.committed) return;
   messages.value = e.detail.messages; // framework propagation may be async
 });
@@ -193,22 +195,27 @@ In uncontrolled mode `chat.messages` is immediately up-to-date after any mutatio
 <summary>Full hand-written streaming loop</summary>
 
 ```js
-import { textPart } from '@bndynet/ichat';
+import { textPart } from "@bndynet/ichat";
 
-const chat = document.getElementById('chat');
+const chat = document.getElementById("chat");
 let activeStream = null;
 
-chat.addEventListener('send', async (e) => {
+chat.addEventListener("send", async (e) => {
   const text = e.detail.content;
   const assistantId = crypto.randomUUID();
-  const bodyPartId = 'body';
-  const stream = { assistantId, bodyPartId, abort: new AbortController(), cancelled: false };
+  const bodyPartId = "body";
+  const stream = {
+    assistantId,
+    bodyPartId,
+    abort: new AbortController(),
+    cancelled: false,
+  };
 
   activeStream = stream;
 
   chat.addMessage({
     id: crypto.randomUUID(),
-    role: 'self',
+    role: "self",
     parts: [textPart(text)],
     timestamp: Date.now(),
   });
@@ -218,34 +225,39 @@ chat.addEventListener('send', async (e) => {
   // until the response finishes.
   chat.addMessage({
     id: assistantId,
-    role: 'assistant',
-    parts: [textPart('', { id: bodyPartId, status: 'streaming' })],
+    role: "assistant",
+    parts: [textPart("", { id: bodyPartId, status: "streaming" })],
     streaming: true,
     timestamp: Date.now(),
   });
 
-  let answer = '';
+  let answer = "";
   try {
     // TODO: Replace this with your fetch/SSE/WebSocket/SDK adapter.
     // It should yield text chunks and respect the AbortSignal when possible.
-    for await (const chunk of streamAssistantReply(text, { signal: stream.abort.signal })) {
+    for await (const chunk of streamAssistantReply(text, {
+      signal: stream.abort.signal,
+    })) {
       if (stream.abort.signal.aborted) break;
       answer += chunk;
-      chat.updatePart(assistantId, bodyPartId, { text: answer, status: 'streaming' });
+      chat.updatePart(assistantId, bodyPartId, {
+        text: answer,
+        status: "streaming",
+      });
     }
 
     if (stream.abort.signal.aborted) {
-      chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
+      chat.updatePart(assistantId, bodyPartId, { status: "cancelled" });
       chat.updateMessage(assistantId, { cancelled: true });
     } else {
-      chat.updatePart(assistantId, bodyPartId, { status: 'complete' });
+      chat.updatePart(assistantId, bodyPartId, { status: "complete" });
     }
   } catch (error) {
     if (stream.abort.signal.aborted) {
-      chat.updatePart(assistantId, bodyPartId, { status: 'cancelled' });
+      chat.updatePart(assistantId, bodyPartId, { status: "cancelled" });
       chat.updateMessage(assistantId, { cancelled: true });
     } else {
-      chat.updatePart(assistantId, bodyPartId, { status: 'error' });
+      chat.updatePart(assistantId, bodyPartId, { status: "error" });
       chat.updateMessage(assistantId, {
         error: error instanceof Error ? error.message : String(error),
       });
@@ -258,11 +270,11 @@ chat.addEventListener('send', async (e) => {
   }
 });
 
-chat.addEventListener('cancel', () => {
+chat.addEventListener("cancel", () => {
   if (!activeStream || activeStream.cancelled) return;
   activeStream.cancelled = true;
   activeStream.abort.abort();
-  chat.cancelMessage(activeStream.assistantId, '*— Response stopped —*');
+  chat.cancelMessage(activeStream.assistantId, "*— Response stopped —*");
 });
 ```
 
@@ -279,9 +291,9 @@ npm install highlight.js
 Pass your own pre-configured instance via `config.highlightJs` (only the languages you register are included):
 
 ```js
-import hljs from 'highlight.js/lib/core';
-import ts from 'highlight.js/lib/languages/typescript';
-hljs.registerLanguage('typescript', ts);
+import hljs from "highlight.js/lib/core";
+import ts from "highlight.js/lib/languages/typescript";
+hljs.registerLanguage("typescript", ts);
 
 chat.config = { ...chat.config, highlightJs: hljs };
 ```
@@ -295,17 +307,17 @@ Intercept or transform messages with middleware, or package reusable logic as pl
 ```js
 // Middleware — transform content before send
 chat.use({
-  name: 'trim',
+  name: "trim",
   beforeSend: (content) => content.trim(),
 });
 
 // Plugin — packaged logic with install/teardown
 chat.use({
-  name: 'logger',
+  name: "logger",
   install(chat) {
-    const onSend = (e) => console.log('send:', e.detail.content);
-    chat.addEventListener('send', onSend);
-    return () => chat.removeEventListener('send', onSend);
+    const onSend = (e) => console.log("send:", e.detail.content);
+    chat.addEventListener("send", onSend);
+    return () => chat.removeEventListener("send", onSend);
   },
 });
 ```
@@ -349,18 +361,18 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 
 Detailed design and reference docs live in [`docs/`](docs/README.md):
 
-| Doc                                              | Covers                                                                                                       |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| [React integration](docs/react.md)               | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
-| [Message model](docs/message-model.md)           | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
-| [`<i-chat>` API](docs/component-api.md)          | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
-| [Parts](docs/parts.md)                           | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
-| [Custom renderers](docs/renderers.md)            | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers                                     |
-| [Progress](docs/progress.md)                     | `[status]` lists, block IDs, programmatic updates                                                            |
-| [Todo panel](docs/todo.md)                       | Structured items, collapse behavior, status events, updates                                                  |
-| [Theming](docs/theming.md)                       | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference                          |
-| [Localization (i18n)](docs/localization.md)      | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL                                              |
-| [Composer & interaction](docs/composer.md)       | Streaming, reply blocks, voice input                                                                         |
+| Doc                                         | Covers                                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [React integration](docs/react.md)          | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
+| [Message model](docs/message-model.md)      | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
+| [`<i-chat>` API](docs/component-api.md)     | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
+| [Parts](docs/parts.md)                      | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
+| [Custom renderers](docs/renderers.md)       | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers                                     |
+| [Progress](docs/progress.md)                | `[status]` lists, block IDs, programmatic updates                                                            |
+| [Todo panel](docs/todo.md)                  | Structured items, collapse behavior, status events, updates                                                  |
+| [Theming](docs/theming.md)                  | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference                          |
+| [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL                                              |
+| [Composer & interaction](docs/composer.md)  | Streaming, reply blocks, voice input                                                                         |
 
 ## Development
 

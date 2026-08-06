@@ -1,7 +1,7 @@
-import type { ToolCallPart } from './types.js';
-import { isToolCallState } from './part-guards.js';
+import type { ToolCallPart } from "./types.js";
+import { isToolCallState } from "./part-guards.js";
 
-export type ToolCallPatchFailureReason = 'invalid-state';
+export type ToolCallPatchFailureReason = "invalid-state";
 
 export type ToolCallPatchResult =
   | { ok: true; part: ToolCallPart }
@@ -16,7 +16,7 @@ export function patchToolCallPart(
   patch: Partial<ToolCallPart>,
 ): ToolCallPatchResult {
   if (patch.state !== undefined && !isToolCallState(patch.state)) {
-    return { ok: false, part, reason: 'invalid-state' };
+    return { ok: false, part, reason: "invalid-state" };
   }
 
   return {
@@ -25,7 +25,7 @@ export function patchToolCallPart(
       ...part,
       ...patch,
       id: part.id,
-      type: 'tool-call',
+      type: "tool-call",
       toolCallId: part.toolCallId,
     },
   };

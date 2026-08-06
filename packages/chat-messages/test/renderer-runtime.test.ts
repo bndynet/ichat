@@ -1,9 +1,13 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import type { RendererErrorDetail } from '../src/types.js';
-import { md, renderMarkdownLight, resolveAsyncBlocks } from '../src/renderers/markdown-renderer.js';
-import { rendererRegistry } from '../src/renderers/registry.js';
-import { partRendererRegistry } from '../src/renderers/part-registry.js';
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { RendererErrorDetail } from "../src/types.js";
+import {
+  md,
+  renderMarkdownLight,
+  resolveAsyncBlocks,
+} from "../src/renderers/markdown-renderer.js";
+import { rendererRegistry } from "../src/renderers/registry.js";
+import { partRendererRegistry } from "../src/renderers/part-registry.js";
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -35,7 +39,7 @@ function fakeContainer(id: string): {
   container: HTMLElement;
   placeholder: FakePlaceholder;
 } {
-  const placeholder: FakePlaceholder = { outerHTML: '' };
+  const placeholder: FakePlaceholder = { outerHTML: "" };
   const container = {
     querySelector(selector: string) {
       return selector === `#${id}` ? placeholder : null;
@@ -44,15 +48,15 @@ function fakeContainer(id: string): {
   return { container, placeholder };
 }
 
-test('sync block renderer errors fall back without breaking markdown', () => {
-  const name = 'runtime-sync-error';
+test("sync block renderer errors fall back without breaking markdown", () => {
+  const name = "runtime-sync-error";
   const errors: RendererErrorDetail[] = [];
   rendererRegistry.register({
     name,
     trusted: true,
     test: (language) => language === name,
     render: () => {
-      throw new Error('sync failure');
+      throw new Error("sync failure");
     },
   });
 
@@ -64,21 +68,21 @@ test('sync block renderer errors fall back without breaking markdown', () => {
     assert.match(html, /ichat-code-block/);
     assert.equal(errors.length, 1);
     assert.equal(errors[0].renderer, name);
-    assert.equal(errors[0].phase, 'render');
+    assert.equal(errors[0].phase, "render");
   } finally {
     rendererRegistry.unregister(name);
   }
 });
 
-test('throwing matcher is isolated and matching continues', () => {
-  const throwingName = 'runtime-match-error';
-  const succeedingName = 'runtime-match-success';
-  const language = 'runtime-match-language';
+test("throwing matcher is isolated and matching continues", () => {
+  const throwingName = "runtime-match-error";
+  const succeedingName = "runtime-match-success";
+  const language = "runtime-match-language";
   const errors: RendererErrorDetail[] = [];
   rendererRegistry.register({
     name: throwingName,
     test: (candidate) => {
-      if (candidate === language) throw new Error('match failure');
+      if (candidate === language) throw new Error("match failure");
       return false;
     },
   });
@@ -96,15 +100,15 @@ test('throwing matcher is isolated and matching continues', () => {
     assert.match(html, /match-success/);
     assert.equal(errors.length, 1);
     assert.equal(errors[0].renderer, throwingName);
-    assert.equal(errors[0].phase, 'match');
+    assert.equal(errors[0].phase, "match");
   } finally {
     rendererRegistry.unregister(throwingName);
     rendererRegistry.unregister(succeedingName);
   }
 });
 
-test('async renderer work is deferred until terminal render', () => {
-  const name = 'runtime-streaming-async';
+test("async renderer work is deferred until terminal render", () => {
+  const name = "runtime-streaming-async";
   let asyncCalls = 0;
   rendererRegistry.register({
     name,
@@ -113,7 +117,7 @@ test('async renderer work is deferred until terminal render', () => {
     render: () => '<div class="safe-placeholder">loading</div>',
     renderAsync: async () => {
       asyncCalls += 1;
-      return '<div>done</div>';
+      return "<div>done</div>";
     },
   });
 
@@ -126,8 +130,8 @@ test('async renderer work is deferred until terminal render', () => {
   }
 });
 
-test('async blocks are container-scoped and receive lifecycle signals', async () => {
-  const name = 'runtime-async-scope';
+test("async blocks are container-scoped and receive lifecycle signals", async () => {
+  const name = "runtime-async-scope";
   const first = deferred<string>();
   const second = deferred<string>();
   let calls = 0;
@@ -159,58 +163,66 @@ test('async blocks are container-scoped and receive lifecycle signals', async ()
     first.resolve('<div class="stale">old</div>');
     second.resolve('<div class="fresh">new</div>');
 
-    const [firstResult, secondResult] = await Promise.all([firstResolution, secondResolution]);
+    const [firstResult, secondResult] = await Promise.all([
+      firstResolution,
+      secondResolution,
+    ]);
     assert.equal(firstResult.changed, false);
-    assert.equal(firstTarget.placeholder.outerHTML, '');
+    assert.equal(firstTarget.placeholder.outerHTML, "");
     assert.equal(secondResult.resolved, 1);
     assert.match(secondTarget.placeholder.outerHTML, /class="fresh"/);
     assert.notEqual(placeholderId(firstHtml), placeholderId(secondHtml));
   } finally {
-    first.resolve('');
-    second.resolve('');
+    first.resolve("");
+    second.resolve("");
     rendererRegistry.unregister(name);
   }
 });
 
-test('async rejection restores an escaped source fallback', async () => {
-  const name = 'runtime-async-reject';
+test("async rejection restores an escaped source fallback", async () => {
+  const name = "runtime-async-reject";
   rendererRegistry.register({
     name,
     trusted: true,
     test: (language) => language === name,
     renderAsync: async () => {
-      throw new Error('async failure');
+      throw new Error("async failure");
     },
   });
 
   try {
-    const html = md.render(`\`\`\`${name}\nfallback <script>source</script>\n\`\`\``);
+    const html = md.render(
+      `\`\`\`${name}\nfallback <script>source</script>\n\`\`\``,
+    );
     const target = fakeContainer(placeholderId(html));
     const result = await resolveAsyncBlocks(target.container);
     assert.equal(result.failed, 1);
-    assert.match(target.placeholder.outerHTML, /fallback &lt;script&gt;source&lt;\/script&gt;/);
+    assert.match(
+      target.placeholder.outerHTML,
+      /fallback &lt;script&gt;source&lt;\/script&gt;/,
+    );
     assert.doesNotMatch(target.placeholder.outerHTML, /Render failed/);
   } finally {
     rendererRegistry.unregister(name);
   }
 });
 
-test('part renderer matcher errors are isolated', () => {
-  const throwingName = 'runtime-part-match-error';
-  const succeedingName = 'runtime-part-match-success';
-  const type = 'x-runtime-part';
+test("part renderer matcher errors are isolated", () => {
+  const throwingName = "runtime-part-match-error";
+  const succeedingName = "runtime-part-match-success";
+  const type = "x-runtime-part";
   const errors: string[] = [];
   partRendererRegistry.register({
     name: throwingName,
     test: (candidate) => {
-      if (candidate === type) throw new Error('part match failure');
+      if (candidate === type) throw new Error("part match failure");
       return false;
     },
   });
   partRendererRegistry.register({
     name: succeedingName,
     test: (candidate) => candidate === type,
-    render: () => '<div>ok</div>',
+    render: () => "<div>ok</div>",
   });
 
   try {

@@ -3,17 +3,18 @@
 The progress renderer reads a Markdown list with status markers. Use a block id when you plan to update a specific progress block later.
 
 ```js
-import '@bndynet/ichat'
-import { textPart } from '@bndynet/ichat'
+import "@bndynet/ichat";
+import { textPart } from "@bndynet/ichat";
 
-const chat = document.querySelector('i-chat-messages')
-const messageId = crypto.randomUUID()
+const chat = document.querySelector("i-chat-messages");
+const messageId = crypto.randomUUID();
 
 chat.addMessage({
   id: messageId,
-  role: 'assistant',
+  role: "assistant",
   timestamp: Date.now(),
-  parts: [textPart(`## Deployment Pipeline
+  parts: [
+    textPart(`## Deployment Pipeline
 
 ### BUILD
 <!-- bid:build -->
@@ -25,8 +26,9 @@ chat.addMessage({
 <!-- bid:deploy -->
 1. [done] Deploy to staging
 2. [error] Run smoke tests
-3. [pending] Promote to production`)],
-})
+3. [pending] Promote to production`),
+  ],
+});
 ```
 
 ## Update an item
@@ -34,7 +36,7 @@ chat.addMessage({
 Use the message id, one-based step number, next status, and block id to apply a live update.
 
 ```js
-chat.updateProgressStep(messageId, 1, 'active', 'build')
-chat.updateProgressStep(messageId, 2, 'done', 'build')
-chat.updateProgressStep(messageId, 1, 'active', 'deploy')
+chat.updateProgressStep(messageId, 1, "active", "build");
+chat.updateProgressStep(messageId, 2, "done", "build");
+chat.updateProgressStep(messageId, 1, "active", "deploy");
 ```

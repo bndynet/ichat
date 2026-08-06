@@ -1,5 +1,5 @@
-@use 'variables' as *;
-@use 'chat-disclosure-panel' as disclosure;
+@use "variables" as *;
+@use "chat-disclosure-panel" as disclosure;
 
 // ── CSS custom property defaults (overridable on :host / ancestor) ────────────
 // --chat-details-bg            outer background    (default: --chat-panel-bg)
@@ -13,7 +13,10 @@
 @mixin styles {
   .chat-details {
     @include disclosure.surface(
-      $background: var(--chat-details-bg, var(--chat-panel-bg, var(--chat-surface))),
+      $background: var(
+          --chat-details-bg,
+          var(--chat-panel-bg, var(--chat-surface))
+        ),
       $border: var(
           --chat-details-border,
           var(
@@ -38,11 +41,17 @@
     @include disclosure.header(
       $background: var(
           --chat-details-summary-bg,
-          var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+          var(
+            --chat-disclosure-header-bg,
+            var(--chat-surface-alt, #{$color-surface-alt})
+          )
         ),
       $hover-background: var(
           --chat-details-summary-hover-bg,
-          var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+          var(
+            --chat-disclosure-header-hover-bg,
+            #{disclosure.$header-hover-background}
+          )
         ),
       $color: var(
           --chat-details-summary-text,
@@ -73,7 +82,10 @@
 
   .chat-details__chevron {
     @include disclosure.chevron(
-      $color: var(--chat-details-chevron-color, var(--chat-text-muted, #{$color-text-muted}))
+      $color: var(
+          --chat-details-chevron-color,
+          var(--chat-text-muted, #{$color-text-muted})
+        )
     );
   }
 
@@ -88,18 +100,25 @@
   .chat-details__body {
     @include disclosure.body(
       $border: var(--chat-details-border, var(--chat-border, #{$color-border})),
-      $background: var(--chat-details-body-bg, var(--chat-disclosure-body-bg, transparent)),
+      $background: var(
+          --chat-details-body-bg,
+          var(--chat-disclosure-body-bg, transparent)
+        ),
       $color: var(--chat-details-text, var(--chat-text, #{$color-text}))
     );
 
-    animation: chat-details-open var(--chat-transition-fast, #{$transition-fast}) ease both;
+    animation: chat-details-open
+      var(--chat-transition-fast, #{$transition-fast}) ease both;
 
     @include disclosure.trim-body-edges;
   }
 
   // ── Nested details ────────────────────────────────────────────────────────────
   .chat-details .chat-details {
-    border-color: var(--chat-details-border, var(--chat-border, #{$color-border}));
+    border-color: var(
+      --chat-details-border,
+      var(--chat-border, #{$color-border})
+    );
 
     .chat-details__summary {
       min-height: 30px;

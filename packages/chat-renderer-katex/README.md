@@ -13,7 +13,7 @@ npm install @bndynet/ichat-renderer-katex
 Import **before** any `<i-chat>` or `<i-chat-messages>` element connects to the DOM:
 
 ```typescript
-import '@bndynet/ichat-renderer-katex';
+import "@bndynet/ichat-renderer-katex";
 ```
 
 That's it — no manual `registerMarkdownPlugin` call needed. Inline (`$x^2$`) and display (`$$...$$`) math now render automatically.

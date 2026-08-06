@@ -1,6 +1,6 @@
-import tseslint from 'typescript-eslint';
-import lit from 'eslint-plugin-lit';
-import importX from 'eslint-plugin-import-x';
+import tseslint from "typescript-eslint";
+import lit from "eslint-plugin-lit";
+import importX from "eslint-plugin-import-x";
 
 // Deliberately narrow: this config does NOT extend eslint:recommended or
 // typescript-eslint:recommended. `tsc` already runs with `strict`,
@@ -9,20 +9,20 @@ import importX from 'eslint-plugin-import-x';
 // Only rules covering what the compiler structurally cannot see are enabled.
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/demo-dist/**', '**/coverage/**'],
+    ignores: ["**/dist/**", "**/demo-dist/**", "**/coverage/**"],
   },
 
   // 1. Lit templates. Contents of html`` are opaque string literals to tsc:
   //    a misspelled binding or a malformed tag fails silently at runtime.
   {
-    files: ['packages/*/src/**/*.ts'],
-    extends: [lit.configs['flat/recommended']],
+    files: ["packages/*/src/**/*.ts"],
+    extends: [lit.configs["flat/recommended"]],
   },
 
   // 2. Promise misuse. Needs type information, so it is scoped to the files
   //    covered by each package's tsconfig (`src/**/*.ts`).
   {
-    files: ['packages/*/src/**/*.ts'],
+    files: ["packages/*/src/**/*.ts"],
     extends: [tseslint.configs.base],
     languageOptions: {
       parserOptions: {
@@ -31,8 +31,8 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
     },
   },
 
@@ -40,13 +40,13 @@ export default tseslint.config(
   //    from the manifest, type-checks fine locally but breaks consumers after
   //    publish. `validate:pack` checks the file list, not the import graph.
   {
-    files: ['packages/*/src/**/*.ts'],
+    files: ["packages/*/src/**/*.ts"],
     extends: [importX.flatConfigs.recommended, importX.flatConfigs.typescript],
     settings: {
-      'import-x/resolver': {
+      "import-x/resolver": {
         typescript: {
           alwaysTryTypes: true,
-          project: 'packages/*/tsconfig.json',
+          project: "packages/*/tsconfig.json",
           noWarnOnMultipleProjects: true,
         },
       },
@@ -54,11 +54,18 @@ export default tseslint.config(
     rules: {
       // recommended brings rules that overlap with tsc; keep only the manifest check.
       ...Object.fromEntries(
-        Object.keys(importX.flatConfigs.recommended.rules ?? {}).map((rule) => [rule, 'off']),
+        Object.keys(importX.flatConfigs.recommended.rules ?? {}).map((rule) => [
+          rule,
+          "off",
+        ]),
       ),
-      'import-x/no-extraneous-dependencies': [
-        'error',
-        { devDependencies: false, peerDependencies: true, optionalDependencies: false },
+      "import-x/no-extraneous-dependencies": [
+        "error",
+        {
+          devDependencies: false,
+          peerDependencies: true,
+          optionalDependencies: false,
+        },
       ],
     },
   },

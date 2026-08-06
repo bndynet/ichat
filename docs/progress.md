@@ -28,11 +28,13 @@ When a message contains multiple progress blocks, add a `<!-- bid:xxx -->` comme
 
 ```markdown
 <!-- bid:build -->
+
 1. [pending] Build Docker image
 2. [pending] Run test suite
 3. [pending] Push to registry
 
 <!-- bid:deploy -->
+
 1. [pending] Deploy to staging
 2. [pending] Run smoke tests
 3. [pending] Promote to production
@@ -49,8 +51,8 @@ Use **`updateProgressStep()`** on **`<i-chat>`** (same method as the inner list)
 chatEl.updateProgressStep(messageId, step, status);
 
 // Multiple progress blocks — use bid to target the right one
-chatEl.updateProgressStep(messageId, 1, 'done', 'build');
-chatEl.updateProgressStep(messageId, 2, 'active', 'deploy');
+chatEl.updateProgressStep(messageId, 1, "done", "build");
+chatEl.updateProgressStep(messageId, 2, "active", "deploy");
 ```
 
 | Parameter   | Type             | Description                                                       |
@@ -82,7 +84,12 @@ data: {"progress": {"bid": "agent", "step": 1, "status": "active"}}
 The frontend parses these events and calls on **`<i-chat>`**:
 
 ```javascript
-chatEl.updateProgressStep(messageId, ev.progress.step, ev.progress.status, ev.progress.bid);
+chatEl.updateProgressStep(
+  messageId,
+  ev.progress.step,
+  ev.progress.status,
+  ev.progress.bid,
+);
 ```
 
 For single-progress messages, `bid` can be omitted in both phases.

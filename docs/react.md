@@ -26,16 +26,16 @@ npm install @bndynet/ichat
 Importing the package registers `<i-chat>` with `customElements`. Do this **once**, at module scope in your entry file or in the module that renders the chat — never inside a callback that runs after the element is already in the DOM:
 
 ```tsx
-import '@bndynet/ichat';
+import "@bndynet/ichat";
 ```
 
 Optional fenced-block renderers are separate side-effect imports:
 
 ```tsx
-import '@bndynet/ichat-renderers';        // KPI cards, forms
-import '@bndynet/ichat-renderer-chart';   // bar / line / area / pie / gauge
-import '@bndynet/ichat-renderer-katex';   // $inline$ and $$display$$ math
-import '@bndynet/ichat-renderer-mermaid'; // diagrams
+import "@bndynet/ichat-renderers"; // KPI cards, forms
+import "@bndynet/ichat-renderer-chart"; // bar / line / area / pie / gauge
+import "@bndynet/ichat-renderer-katex"; // $inline$ and $$display$$ math
+import "@bndynet/ichat-renderer-mermaid"; // diagrams
 ```
 
 Registration order matters for React 19 prop assignment: React checks `'messages' in element` to decide between a property and an attribute, and that check only passes once the custom element has been upgraded. A top-level `import` guarantees `customElements.define()` has run before React commits anything.
@@ -48,16 +48,16 @@ A complete, uncontrolled chat panel with streaming, cancellation, and error hand
 
 ```tsx
 // ChatPanel.tsx
-import { useEffect, useRef } from 'react';
-import '@bndynet/ichat';
+import { useEffect, useRef } from "react";
+import "@bndynet/ichat";
 import {
   textPart,
   type Chat,
   type ChatConfig,
   type ChatRunController,
-} from '@bndynet/ichat';
+} from "@bndynet/ichat";
 
-const config: ChatConfig = { locale: 'en', pendingIndicator: 'dots' };
+const config: ChatConfig = { locale: "en", pendingIndicator: "dots" };
 
 export function ChatPanel() {
   const chatRef = useRef<Chat>(null);
@@ -71,17 +71,19 @@ export function ChatPanel() {
     chat.config = config;
 
     const onSend = (event: Event) => {
-      void handleSend((event as CustomEvent<{ content: string }>).detail.content);
+      void handleSend(
+        (event as CustomEvent<{ content: string }>).detail.content,
+      );
     };
     const onCancel = () => {
-      runRef.current?.cancel('*— Response stopped —*');
+      runRef.current?.cancel("*— Response stopped —*");
     };
 
-    chat.addEventListener('send', onSend);
-    chat.addEventListener('cancel', onCancel);
+    chat.addEventListener("send", onSend);
+    chat.addEventListener("cancel", onCancel);
     return () => {
-      chat.removeEventListener('send', onSend);
-      chat.removeEventListener('cancel', onCancel);
+      chat.removeEventListener("send", onSend);
+      chat.removeEventListener("cancel", onCancel);
       runRef.current?.cancel();
     };
   }, []);
@@ -92,7 +94,7 @@ export function ChatPanel() {
 
     chat.addMessage({
       id: crypto.randomUUID(),
-      role: 'self',
+      role: "self",
       parts: [textPart(content)],
       timestamp: Date.now(),
     });
@@ -102,12 +104,12 @@ export function ChatPanel() {
 
     // Create the placeholder before the first await so the composer locks
     // immediately and Send switches to Cancel.
-    run.start([textPart('', { id: 'body', status: 'streaming' })]);
+    run.start([textPart("", { id: "body", status: "streaming" })]);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
         signal: run.signal,
       });
@@ -115,16 +117,18 @@ export function ChatPanel() {
         throw new Error(`Request failed with ${response.status}`);
       }
 
-      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      const reader = response.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
       for (;;) {
         const { value, done } = await reader.read();
         if (done) break;
-        run.appendText('body', value);
+        run.appendText("body", value);
       }
       run.complete();
     } catch (error) {
       // A cancelled run is already terminal — do not overwrite it with an error.
-      if (run.status !== 'streaming') return;
+      if (run.status !== "streaming") return;
       run.fail(error instanceof Error ? error.message : String(error));
     } finally {
       if (runRef.current === run) runRef.current = null;
@@ -132,7 +136,7 @@ export function ChatPanel() {
   }
 
   return (
-    <div style={{ height: '100%', minHeight: 0, display: 'flex' }}>
+    <div style={{ height: "100%", minHeight: 0, display: "flex" }}>
       <i-chat ref={chatRef} placeholder="Message…" />
     </div>
   );
@@ -150,7 +154,7 @@ Everything imperative goes through a ref to the element instance. The ref holds 
 ```tsx
 const chatRef = useRef<Chat>(null);
 // …
-<i-chat ref={chatRef} />
+<i-chat ref={chatRef} />;
 ```
 
 Two rules:
@@ -167,7 +171,9 @@ useEffect(() => {
   void chat.ready.then(() => {
     if (!cancelled) chat.focusInput();
   });
-  return () => { cancelled = true; };
+  return () => {
+    cancelled = true;
+  };
 }, []);
 ```
 
@@ -179,7 +185,7 @@ const attach = useCallback((el: Chat | null) => {
   el.config = config;
 }, []);
 
-<i-chat ref={attach} />
+<i-chat ref={attach} />;
 ```
 
 ---
@@ -209,7 +215,7 @@ useEffect(() => {
   const chat = chatRef.current;
   if (!chat) return;
   chat.config = config;
-  chat.placeholder = 'Message…';
+  chat.placeholder = "Message…";
   chat.disabled = disabled;
 }, [config, disabled]);
 ```
@@ -222,11 +228,11 @@ Assigning `config` triggers a Lit update. A fresh object literal on every render
 
 ```tsx
 // Wrong — new object identity on every render
-<i-chat config={{ locale, pendingIndicator: 'dots' }} />
+<i-chat config={{ locale, pendingIndicator: "dots" }} />;
 
 // Right
-const config = useMemo(() => ({ locale, pendingIndicator: 'dots' }), [locale]);
-<i-chat config={config} />
+const config = useMemo(() => ({ locale, pendingIndicator: "dots" }), [locale]);
+<i-chat config={config} />;
 ```
 
 Define truly static config at module scope, outside the component.
@@ -272,8 +278,8 @@ React 19 registers a listener for any prop starting with `on` whose value is a f
 By default `<i-chat>` owns its messages and `chat.messages` is up to date immediately after every mutation — just read it. Reach for controlled mode only when an external store must be the single source of truth (a sidebar, an export view, and the chat all reading one array).
 
 ```tsx
-import { useRef, useState, useEffect } from 'react';
-import type { ChatMessage } from '@bndynet/ichat';
+import { useRef, useState, useEffect } from "react";
+import type { ChatMessage } from "@bndynet/ichat";
 
 export function ControlledChat() {
   const chatRef = useRef<Chat>(null);
@@ -284,14 +290,14 @@ export function ControlledChat() {
     if (!chat) return;
     const handler = (event: Event) => {
       const e = event as CustomEvent;
-      if (e.detail.reason === 'message:add' && !hasCredits()) {
+      if (e.detail.reason === "message:add" && !hasCredits()) {
         event.preventDefault();
         return;
       }
       setMessages(e.detail.messages);
     };
-    chat.addEventListener('messages-change', handler);
-    return () => chat.removeEventListener('messages-change', handler);
+    chat.addEventListener("messages-change", handler);
+    return () => chat.removeEventListener("messages-change", handler);
   }, []);
 
   return <i-chat ref={chatRef} messageMode="controlled" messages={messages} />;
@@ -349,7 +355,7 @@ import type {
   ExtendedChatMessage,
   MessagesChangeDetail,
   RendererErrorDetail,
-} from '@bndynet/ichat';
+} from "@bndynet/ichat";
 
 export type { ChatMessage, ChatConfig };
 
@@ -362,17 +368,17 @@ export type IChatParts = {};
 
 /** Every event `<i-chat>` dispatches, mapped to its concrete event type. */
 export interface IChatEventMap {
-  'send': CustomEvent<{ content: string }>;
-  'cancel': CustomEvent<null>;
-  'messages-change': CustomEvent<MessagesChangeDetail>;
-  'streaming-change': CustomEvent<{ streaming: boolean }>;
-  'busy-change': CustomEvent<{ busy: boolean }>;
-  'message-action': CustomEvent<{ action: string; message: ChatMessage }>;
-  'part-action': CustomEvent<ChatPartActionDetail>;
-  'link-click': CustomEvent<ChatLinkClickDetail>;
-  'chat-renderer-error': CustomEvent<RendererErrorDetail>;
-  'confirmation-change': CustomEvent<ChatConfirmationChangeDetail>;
-  'confirmation-decision': CustomEvent<ChatConfirmationResult>;
+  send: CustomEvent<{ content: string }>;
+  cancel: CustomEvent<null>;
+  "messages-change": CustomEvent<MessagesChangeDetail>;
+  "streaming-change": CustomEvent<{ streaming: boolean }>;
+  "busy-change": CustomEvent<{ busy: boolean }>;
+  "message-action": CustomEvent<{ action: string; message: ChatMessage }>;
+  "part-action": CustomEvent<ChatPartActionDetail>;
+  "link-click": CustomEvent<ChatLinkClickDetail>;
+  "chat-renderer-error": CustomEvent<RendererErrorDetail>;
+  "confirmation-change": CustomEvent<ChatConfirmationChangeDetail>;
+  "confirmation-decision": CustomEvent<ChatConfirmationResult>;
 }
 
 /**
@@ -385,7 +391,10 @@ export interface IChatElement<
 > extends Chat<TExtraParts> {
   addEventListener<K extends keyof IChatEventMap>(
     type: K,
-    listener: (this: IChatElement<TExtraParts>, event: IChatEventMap[K]) => void,
+    listener: (
+      this: IChatElement<TExtraParts>,
+      event: IChatEventMap[K],
+    ) => void,
     options?: boolean | AddEventListenerOptions,
   ): void;
   addEventListener(
@@ -396,7 +405,10 @@ export interface IChatElement<
 
   removeEventListener<K extends keyof IChatEventMap>(
     type: K,
-    listener: (this: IChatElement<TExtraParts>, event: IChatEventMap[K]) => void,
+    listener: (
+      this: IChatElement<TExtraParts>,
+      event: IChatEventMap[K],
+    ) => void,
     options?: boolean | EventListenerOptions,
   ): void;
   removeEventListener(
@@ -412,7 +424,8 @@ type IChatEventProps = {
 };
 
 export interface IChatProps
-  extends React.DetailedHTMLProps<
+  extends
+    React.DetailedHTMLProps<
       React.HTMLAttributes<IChatElement<IChatParts>>,
       IChatElement<IChatParts>
     >,
@@ -430,10 +443,10 @@ export interface IChatProps
 }
 
 // React 19 (@types/react ^19): the JSX namespace lives inside the `react` module.
-declare module 'react' {
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
-      'i-chat': IChatProps;
+      "i-chat": IChatProps;
     }
   }
 }
@@ -444,21 +457,20 @@ Import the file once so the augmentation is loaded — importing `IChatElement` 
 **React 18 and earlier** (`@types/react` ^18) use the _global_ JSX namespace, and only string attributes survive the render. Keep `IChatEventMap` and `IChatElement` exactly as above, then replace `IChatProps` and the augmentation with:
 
 ```ts
-export interface IChatProps
-  extends React.DetailedHTMLProps<
-    React.HTMLAttributes<IChatElement<IChatParts>>,
-    IChatElement<IChatParts>
-  > {
+export interface IChatProps extends React.DetailedHTMLProps<
+  React.HTMLAttributes<IChatElement<IChatParts>>,
+  IChatElement<IChatParts>
+> {
   placeholder?: string;
-  emptytext?: string;                                  // Lit lowercases `emptyText`
-  'message-mode'?: 'uncontrolled' | 'controlled';
-  'voice-lang'?: string;
+  emptytext?: string; // Lit lowercases `emptyText`
+  "message-mode"?: "uncontrolled" | "controlled";
+  "voice-lang"?: string;
 }
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'i-chat': IChatProps;
+      "i-chat": IChatProps;
     }
   }
 }
@@ -474,8 +486,8 @@ The tempting shortcut is:
 // Don't do this
 declare global {
   interface HTMLElementEventMap {
-    'send': CustomEvent<{ content: string }>;
-    'cancel': CustomEvent<null>;
+    send: CustomEvent<{ content: string }>;
+    cancel: CustomEvent<null>;
   }
 }
 ```
@@ -489,23 +501,27 @@ Fill in the `IChatParts` alias from `src/ichat.ts`. Write it as a **type alias**
 ```ts
 // src/ichat.ts
 export type IChatParts = {
-  'x-weather': { temp: number; unit: 'C' | 'F' };
+  "x-weather": { temp: number; unit: "C" | "F" };
 };
 ```
 
 That one edit flows through `IChatProps`, the ref, and `messages`, so `part.type` narrows to a concrete `data` shape everywhere:
 
 ```tsx
-import { useEffect, useRef } from 'react';
-import type { ExtendedChatMessage } from '@bndynet/ichat';
-import type { IChatElement, IChatParts } from './ichat';
+import { useEffect, useRef } from "react";
+import type { ExtendedChatMessage } from "@bndynet/ichat";
+import type { IChatElement, IChatParts } from "./ichat";
 
-function Weather({ messages }: { messages: ExtendedChatMessage<IChatParts>[] }) {
+function Weather({
+  messages,
+}: {
+  messages: ExtendedChatMessage<IChatParts>[];
+}) {
   const ref = useRef<IChatElement<IChatParts>>(null);
 
   useEffect(() => {
     for (const part of ref.current?.messages[0]?.parts ?? []) {
-      if (part.type === 'x-weather') {
+      if (part.type === "x-weather") {
         console.log(part.data.temp, part.data.unit); // number, 'C' | 'F'
       }
     }
@@ -528,13 +544,17 @@ return <i-chat ref={ref} />;
 If you receive messages as plain `ChatMessage` — for example from a shared API layer you do not control — filter to custom parts and view them through `CustomPartOf` instead:
 
 ```ts
-import { isCustomMessagePartType, type ChatMessage, type CustomPartOf } from '@bndynet/ichat';
+import {
+  isCustomMessagePartType,
+  type ChatMessage,
+  type CustomPartOf,
+} from "@bndynet/ichat";
 
 function readWeatherLoose(message: ChatMessage) {
   for (const part of message.parts) {
     if (!isCustomMessagePartType(part.type)) continue;
     const custom = part as CustomPartOf<IChatParts>;
-    if (custom.type === 'x-weather') {
+    if (custom.type === "x-weather") {
       console.log(custom.data.temp, custom.data.unit);
     }
   }
@@ -551,15 +571,23 @@ Slotted content is plain JSX — put `slot="…"` on direct children of `<i-chat
 
 ```tsx
 <i-chat ref={chatRef}>
-  <div slot="empty" style={{ textAlign: 'center' }}>
+  <div slot="empty" style={{ textAlign: "center" }}>
     <h2>How can I help?</h2>
   </div>
   <div slot="self-avatar">
-    <img src={user.avatarUrl} alt="" style={{ width: '100%', borderRadius: '50%' }} />
+    <img
+      src={user.avatarUrl}
+      alt=""
+      style={{ width: "100%", borderRadius: "50%" }}
+    />
   </div>
   <div slot="message-actions">
-    <button type="button" data-action="copy">Copy</button>
-    <button type="button" data-action="reply">Reply</button>
+    <button type="button" data-action="copy">
+      Copy
+    </button>
+    <button type="button" data-action="reply">
+      Reply
+    </button>
   </div>
 </i-chat>
 ```
@@ -569,9 +597,10 @@ Slotted nodes stay in the light DOM, so your app's CSS (including CSS Modules an
 One exception: `message-actions` is read as a **template**. Its markup is serialized to an HTML string and re-rendered under every message row, so React event handlers attached to those buttons are lost. Use `data-action` and handle the resulting `message-action` event on the chat element instead:
 
 ```tsx
-chatRef.current?.addEventListener('message-action', (event) => {
+chatRef.current?.addEventListener("message-action", (event) => {
   const { action, message } = (event as CustomEvent).detail;
-  if (action === 'copy') void navigator.clipboard.writeText(getMessageText(message));
+  if (action === "copy")
+    void navigator.clipboard.writeText(getMessageText(message));
 });
 ```
 
@@ -585,10 +614,10 @@ Importing `@bndynet/ichat` calls `customElements.define()` at module evaluation.
 
 ```tsx
 // app/chat/page.tsx
-'use client';
-import dynamic from 'next/dynamic';
+"use client";
+import dynamic from "next/dynamic";
 
-const ChatPanel = dynamic(() => import('./ChatPanel'), {
+const ChatPanel = dynamic(() => import("./ChatPanel"), {
   ssr: false,
   loading: () => <div>Loading chat…</div>,
 });
@@ -609,7 +638,7 @@ Keep the `import '@bndynet/ichat'` inside `ChatPanel.tsx` so it is only ever rea
 | Nothing renders / zero height         | `<i-chat>` is `height: 100%`; the parent has no resolved height              | Give the container an explicit height or a flex layout with `min-height: 0`               |
 | `config="[object Object]"` in the DOM | React ≤ 18 stringifies unknown props                                         | Assign objects through the ref                                                            |
 | Props land as attributes on React 19  | The element had not upgraded when React committed                            | Move `import '@bndynet/ichat'` to module scope                                            |
-| Handler never fires                   | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `addEventListener` with exact lowercase names                                              |
+| Handler never fires                   | `onSend` instead of `onsend`, or `onCancel` hitting React's synthetic system | Use `addEventListener` with exact lowercase names                                         |
 | Duplicate seed messages in dev        | StrictMode runs mount effects twice, and `addMessage` is additive            | Seed with `chat.messages = normalizeHistoryMessages(history)` — assignment is idempotent  |
 | Message list re-renders constantly    | A new `config` object literal each render                                    | `useMemo` the config, or hoist it to module scope                                         |
 | `TypeError: Cannot set property busy` | `busy` is a getter                                                           | Read it, or listen for `busy-change`                                                      |

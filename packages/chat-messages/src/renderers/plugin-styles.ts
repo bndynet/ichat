@@ -2,17 +2,17 @@ import {
   getMarkdownPluginStyles,
   getMarkdownPluginGlobalStyles,
   onPluginCssChange,
-} from './markdown-plugins.js';
+} from "./markdown-plugins.js";
 
-const PLUGIN_ATTR = 'data-ichat-plugin';
-const GLOBAL_PLUGIN_ATTR = 'data-ichat-plugin-global';
+const PLUGIN_ATTR = "data-ichat-plugin";
+const GLOBAL_PLUGIN_ATTR = "data-ichat-plugin-global";
 
 // ── Track injected <style> elements so they stay in sync ─────────────────────
 
 const trackedStyles = new Set<HTMLStyleElement>();
 
 onPluginCssChange(() => {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
 
   const css = getMarkdownPluginStyles();
   for (const style of trackedStyles) {
@@ -25,8 +25,8 @@ onPluginCssChange(() => {
   ) as HTMLStyleElement | null;
   if (globalCss) {
     if (!globalStyle) {
-      globalStyle = document.createElement('style');
-      globalStyle.setAttribute(GLOBAL_PLUGIN_ATTR, '');
+      globalStyle = document.createElement("style");
+      globalStyle.setAttribute(GLOBAL_PLUGIN_ATTR, "");
       document.head.insertBefore(globalStyle, document.head.firstChild);
     }
     globalStyle.textContent = globalCss;
@@ -50,11 +50,13 @@ onPluginCssChange(() => {
 export function injectPluginCss(parent: ParentNode): () => void {
   const css = getMarkdownPluginStyles();
 
-  let style = parent.querySelector(`style[${PLUGIN_ATTR}]`) as HTMLStyleElement | null;
+  let style = parent.querySelector(
+    `style[${PLUGIN_ATTR}]`,
+  ) as HTMLStyleElement | null;
 
   if (!style) {
-    style = document.createElement('style');
-    style.setAttribute(PLUGIN_ATTR, '');
+    style = document.createElement("style");
+    style.setAttribute(PLUGIN_ATTR, "");
     parent.insertBefore(style, parent.firstChild);
   }
 
@@ -91,8 +93,8 @@ export function injectGlobalPluginCss(): void {
   }
 
   if (!style) {
-    style = document.createElement('style');
-    style.setAttribute(GLOBAL_PLUGIN_ATTR, '');
+    style = document.createElement("style");
+    style.setAttribute(GLOBAL_PLUGIN_ATTR, "");
     document.head.insertBefore(style, document.head.firstChild);
   }
 

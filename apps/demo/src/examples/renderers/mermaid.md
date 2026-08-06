@@ -3,11 +3,11 @@
 Import the renderer package before rendering a Mermaid fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
-import '@bndynet/ichat'
-import '@bndynet/ichat-renderer-mermaid' // Auto-registers the Mermaid renderer
-import { textPart } from '@bndynet/ichat'
+import "@bndynet/ichat";
+import "@bndynet/ichat-renderer-mermaid"; // Auto-registers the Mermaid renderer
+import { textPart } from "@bndynet/ichat";
 
-const chat = document.querySelector('i-chat-messages')
+const chat = document.querySelector("i-chat-messages");
 ```
 
 ## Send the page's diagrams
@@ -44,12 +44,12 @@ graph TD
   E --> B
   D --> F[Save Image and Code]
   F --> B
-\`\`\``
+\`\`\``;
 
 chat.addMessage({
   id: crypto.randomUUID(),
-  role: 'assistant',
+  role: "assistant",
   timestamp: Date.now(),
   parts: [textPart(diagram)],
-})
+});
 ```

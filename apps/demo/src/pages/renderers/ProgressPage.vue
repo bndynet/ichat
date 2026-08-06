@@ -1,61 +1,63 @@
 <script setup>
-import '@bndynet/ichat';
-import { onMounted, onUnmounted, nextTick, ref } from 'vue'
-import { textPart } from '@bndynet/ichat'
-import { demoData, nextId } from '../../composables/demo-data.js'
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue'
-import progressExample from '../../examples/renderers/progress.md?raw'
+import "@bndynet/ichat";
+import { onMounted, onUnmounted, nextTick, ref } from "vue";
+import { textPart } from "@bndynet/ichat";
+import { demoData, nextId } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import progressExample from "../../examples/renderers/progress.md?raw";
 
-const chatRef = ref(null)
+const chatRef = ref(null);
 
 /** `<i-chat-messages>` ref can lag one or more ticks after mount (custom element upgrade). */
 async function waitForChatHost(maxTicks = 30) {
   for (let i = 0; i < maxTicks; i++) {
-    const el = chatRef.value
-    if (el) return el
-    await nextTick()
+    const el = chatRef.value;
+    if (el) return el;
+    await nextTick();
   }
-  return chatRef.value
+  return chatRef.value;
 }
 
-let progressTimer
+let progressTimer;
 
 onMounted(async () => {
-  const host = await waitForChatHost()
-  if (!host) return
+  const host = await waitForChatHost();
+  if (!host) return;
 
-  const id = nextId()
+  const id = nextId();
   host.addMessage({
     id,
-    role: 'assistant',
+    role: "assistant",
     parts: [textPart(demoData.progress)],
     timestamp: Date.now(),
-  })
+  });
 
-  const steps = ['active', 'done', 'error'].flatMap((s) =>
-    ['build', 'deploy'].flatMap((bid) => [1, 2, 3].map((step) => ({ bid, step, s }))),
-  )
-  let si = 0
+  const steps = ["active", "done", "error"].flatMap((s) =>
+    ["build", "deploy"].flatMap((bid) =>
+      [1, 2, 3].map((step) => ({ bid, step, s })),
+    ),
+  );
+  let si = 0;
   progressTimer = setInterval(() => {
     if (si >= steps.length) {
-      clearInterval(progressTimer)
-      progressTimer = undefined
-      return
+      clearInterval(progressTimer);
+      progressTimer = undefined;
+      return;
     }
-    const current = chatRef.value
+    const current = chatRef.value;
     if (!current) {
-      clearInterval(progressTimer)
-      progressTimer = undefined
-      return
+      clearInterval(progressTimer);
+      progressTimer = undefined;
+      return;
     }
-    const { bid, step, s } = steps[si++]
-    current.updateProgressStep(id, step, s, bid)
-  }, 500)
-})
+    const { bid, step, s } = steps[si++];
+    current.updateProgressStep(id, step, s, bid);
+  }, 500);
+});
 
 onUnmounted(() => {
-  if (progressTimer != null) clearInterval(progressTimer)
-})
+  if (progressTimer != null) clearInterval(progressTimer);
+});
 </script>
 
 <template>

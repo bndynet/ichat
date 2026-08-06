@@ -10,7 +10,7 @@
  *   import { chatDetailsStyles } from '../styles/chat-details-result.js';
  *   static styles = [unsafeCSS(ownStyles), chatDetailsStyles];
  */
-import { unsafeCSS } from 'lit';
-import styles from './chat-details-standalone.scss';
+import { unsafeCSS } from "lit";
+import styles from "./chat-details-standalone.scss";
 
 export const chatDetailsStyles = unsafeCSS(styles);

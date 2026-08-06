@@ -8,19 +8,22 @@
  * require a browser — use Playwright or @web/test-runner.
  */
 
-import assert from 'node:assert/strict';
-import '../src/components/chat-input.js';
+import assert from "node:assert/strict";
+import "../src/components/chat-input.js";
 
 // Module & registration
-assert.ok(customElements.get('i-chat-input'), 'i-chat-input should be registered');
+assert.ok(
+  customElements.get("i-chat-input"),
+  "i-chat-input should be registered",
+);
 
-const Ctor = customElements.get('i-chat-input')!;
-assert.doesNotThrow(() => new Ctor(), 'constructor should not throw');
+const Ctor = customElements.get("i-chat-input")!;
+assert.doesNotThrow(() => new Ctor(), "constructor should not throw");
 
 // Default property values
 const el = new Ctor() as HTMLElement & Record<string, unknown>;
-assert.equal(el.placeholder, '');
-assert.equal(el.locale, '');
+assert.equal(el.placeholder, "");
+assert.equal(el.locale, "");
 assert.equal(el.streaming, false);
 assert.equal(el.busy, false);
 assert.equal(el.disabled, false);
@@ -35,11 +38,11 @@ assert.equal(el.voiceDiagnostics, false);
     _submit(): void;
   };
   let sends = 0;
-  input.addEventListener('send', () => {
+  input.addEventListener("send", () => {
     sends += 1;
   });
 
-  input.setValue('hello');
+  input.setValue("hello");
   input.busy = true;
   input._submit();
   assert.equal(sends, 0);

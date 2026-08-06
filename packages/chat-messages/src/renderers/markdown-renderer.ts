@@ -1,16 +1,16 @@
-import MarkdownIt from 'markdown-it';
-import DOMPurify from 'dompurify';
-import { rendererRegistry } from './registry.js';
-import { progressPlugin } from './progress-plugin.js';
-import { collapsiblePlugin } from './collapsible-plugin.js';
+import MarkdownIt from "markdown-it";
+import DOMPurify from "dompurify";
+import { rendererRegistry } from "./registry.js";
+import { progressPlugin } from "./progress-plugin.js";
+import { collapsiblePlugin } from "./collapsible-plugin.js";
 import {
   isAllowedLinkHref,
   normalizeAllowedLinkProtocols,
   uriRegexpForAllowedLinkProtocols,
-} from '../link-protocols.js';
-import { chatIconStrings } from '../icons.js';
-import { getSharedMd } from './md-instance.js';
-import type { RendererErrorDetail, HighlightJs } from '../types.js';
+} from "../link-protocols.js";
+import { chatIconStrings } from "../icons.js";
+import { getSharedMd } from "./md-instance.js";
+import type { RendererErrorDetail, HighlightJs } from "../types.js";
 
 export interface MarkdownRenderOptions {
   /**
@@ -43,7 +43,7 @@ export interface MarkdownRenderOptions {
 /** Active highlight.js instance for the current render pass (set per-render). */
 let activeHighlightJs: HighlightJs | undefined;
 let activeRenderOptions: MarkdownRenderOptions | undefined;
-let activeRenderMode: 'full' | 'streaming' = 'full';
+let activeRenderMode: "full" | "streaming" = "full";
 
 const md = getSharedMd(() => {
   const instance = new MarkdownIt({
@@ -83,10 +83,11 @@ const md = getSharedMd(() => {
     self: any,
   ) => string = instance.renderer.rules.link_open
     ? instance.renderer.rules.link_open.bind(instance.renderer)
-    : (tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options);
+    : (tokens, idx, options, _env, self) =>
+        self.renderToken(tokens, idx, options);
   instance.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-    tokens[idx].attrPush(['target', '_blank']);
-    tokens[idx].attrPush(['rel', 'noopener noreferrer']);
+    tokens[idx].attrPush(["target", "_blank"]);
+    tokens[idx].attrPush(["rel", "noopener noreferrer"]);
     return defaultLinkOpen(tokens, idx, options, env, self);
   };
 
@@ -100,60 +101,62 @@ type DOMPurifyConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>;
 const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
   ADD_TAGS: [
     // SVG elements used by chart / custom renderers
-    'svg',
-    'path',
-    'rect',
-    'circle',
-    'line',
-    'text',
-    'g',
-    'defs',
-    'pattern',
-    'polyline',
-    'polygon',
-    'ellipse',
+    "svg",
+    "path",
+    "rect",
+    "circle",
+    "line",
+    "text",
+    "g",
+    "defs",
+    "pattern",
+    "polyline",
+    "polygon",
+    "ellipse",
     // Native disclosure widget — safe, no script execution
-    'details',
-    'summary',
+    "details",
+    "summary",
   ],
   ADD_ATTR: [
     // SVG presentation attributes
-    'viewBox',
-    'd',
-    'fill',
-    'stroke',
-    'stroke-width',
-    'cx',
-    'cy',
-    'r',
-    'x',
-    'y',
-    'x1',
-    'y1',
-    'x2',
-    'y2',
-    'width',
-    'height',
-    'transform',
-    'text-anchor',
-    'dominant-baseline',
-    'font-size',
-    'opacity',
-    'points',
-    'stroke-linecap',
-    'stroke-linejoin',
+    "viewBox",
+    "d",
+    "fill",
+    "stroke",
+    "stroke-width",
+    "cx",
+    "cy",
+    "r",
+    "x",
+    "y",
+    "x1",
+    "y1",
+    "x2",
+    "y2",
+    "width",
+    "height",
+    "transform",
+    "text-anchor",
+    "dominant-baseline",
+    "font-size",
+    "opacity",
+    "points",
+    "stroke-linecap",
+    "stroke-linejoin",
   ],
 };
 
 const domPurifyConfigCache = new Map<string, DOMPurifyConfig>();
 
 function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
-  const protocols = normalizeAllowedLinkProtocols(options?.allowedLinkProtocols);
-  const key = protocols.length === 0 ? '@default' : protocols.join('|');
+  const protocols = normalizeAllowedLinkProtocols(
+    options?.allowedLinkProtocols,
+  );
+  const key = protocols.length === 0 ? "@default" : protocols.join("|");
   const cached = domPurifyConfigCache.get(key);
   if (cached) return cached;
 
@@ -171,8 +174,11 @@ function domPurifyConfig(options?: MarkdownRenderOptions): DOMPurifyConfig {
 // replaced with the escaped default code-block rendering.
 
 /** Resolve the effective trust mode: `mode` wins over deprecated `trusted`. */
-function isRendererTrusted(r: { mode?: 'sanitized' | 'trusted'; trusted?: boolean }): boolean {
-  if (r.mode !== undefined) return r.mode === 'trusted';
+function isRendererTrusted(r: {
+  mode?: "sanitized" | "trusted";
+  trusted?: boolean;
+}): boolean {
+  if (r.mode !== undefined) return r.mode === "trusted";
   return r.trusted === true;
 }
 
@@ -186,7 +192,7 @@ let blockPlaceholderCounter = 0;
 
 function reportBlockRendererError(
   renderer: string,
-  phase: RendererErrorDetail['phase'],
+  phase: RendererErrorDetail["phase"],
   error: unknown,
   code: string,
   language: string,
@@ -195,7 +201,7 @@ function reportBlockRendererError(
 ): void {
   try {
     options?.onRendererError?.({
-      kind: 'block',
+      kind: "block",
       renderer,
       phase,
       error,
@@ -217,13 +223,13 @@ function reportBlockRendererError(
 // supported — they will fall back to a plain highlighted code block. Plugin-
 // based renderers (e.g. the progress ordered-list syntax) work fine.
 rendererRegistry.register({
-  name: 'chat-details',
-  mode: 'trusted',
+  name: "chat-details",
+  mode: "trusted",
   trusted: true,
   test: (lang: string) => /^details\b/i.test(lang),
-  render: (content: string, _lang: string, info = ''): string => {
+  render: (content: string, _lang: string, info = ""): string => {
     // Extract title: everything after the first word ("details")
-    const title = info.replace(/^details\s*/i, '').trim() || 'Details';
+    const title = info.replace(/^details\s*/i, "").trim() || "Details";
     const safeTitle = md.utils.escapeHtml(title);
 
     // Render the body through the full markdown pipeline (supports progress,
@@ -254,9 +260,19 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx];
   const info = token.info.trim();
   const lang = info.split(/\s+/)[0];
-  const customRenderer = rendererRegistry.getRenderer(lang, (renderer, error) => {
-    reportBlockRendererError(renderer.name, 'match', error, token.content, lang, info);
-  });
+  const customRenderer = rendererRegistry.getRenderer(
+    lang,
+    (renderer, error) => {
+      reportBlockRendererError(
+        renderer.name,
+        "match",
+        error,
+        token.content,
+        lang,
+        info,
+      );
+    },
+  );
 
   if (customRenderer) {
     const trusted = isRendererTrusted(customRenderer);
@@ -264,17 +280,25 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     // DOMPurify is intentionally absent from the hot streaming path. Defer
     // untrusted rich output until the terminal render rather than injecting it
     // unsanitised or paying a full DOM sanitisation cost for every token.
-    if (activeRenderMode === 'streaming' && !trusted) {
-      return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
+    if (activeRenderMode === "streaming" && !trusted) {
+      return wrapCodeBlock(
+        defaultFence(tokens, idx, options, env, self),
+        token.content,
+        lang,
+      );
     }
 
     // Async work is terminal-only. Starting promises on every trusted
     // streaming snapshot creates request storms and stale-result races. A
     // trusted synchronous placeholder may still render during streaming.
     if (customRenderer.renderAsync) {
-      if (activeRenderMode === 'streaming') {
+      if (activeRenderMode === "streaming") {
         if (!customRenderer.render) {
-          return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
+          return wrapCodeBlock(
+            defaultFence(tokens, idx, options, env, self),
+            token.content,
+            lang,
+          );
         }
         try {
           const html = customRenderer.render(token.content, lang, info);
@@ -282,7 +306,14 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
           pendingBlockHTML.set(id, { html, trusted });
           return `<div id="${id}"></div>`;
         } catch (error) {
-          reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
+          reportBlockRendererError(
+            customRenderer.name,
+            "render",
+            error,
+            token.content,
+            lang,
+            info,
+          );
           return safeRendererFallback(token.content, lang);
         }
       }
@@ -296,7 +327,14 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         try {
           placeholderHtml = customRenderer.render(token.content, lang, info);
         } catch (error) {
-          reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
+          reportBlockRendererError(
+            customRenderer.name,
+            "render",
+            error,
+            token.content,
+            lang,
+            info,
+          );
         }
       }
 
@@ -310,7 +348,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
       } catch (error) {
         reportBlockRendererError(
           customRenderer.name,
-          'render-async',
+          "render-async",
           error,
           token.content,
           lang,
@@ -348,7 +386,14 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         pendingBlockHTML.set(id, { html, trusted });
         return `<div id="${id}"></div>`;
       } catch (error) {
-        reportBlockRendererError(customRenderer.name, 'render', error, token.content, lang, info);
+        reportBlockRendererError(
+          customRenderer.name,
+          "render",
+          error,
+          token.content,
+          lang,
+          info,
+        );
         return safeRendererFallback(token.content, lang);
       }
     }
@@ -357,7 +402,11 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   }
 
   // Built-in code copy button: wrap every code block
-  return wrapCodeBlock(defaultFence(tokens, idx, options, env, self), token.content, lang);
+  return wrapCodeBlock(
+    defaultFence(tokens, idx, options, env, self),
+    token.content,
+    lang,
+  );
 };
 
 // ── Code copy button (built-in) ──────────────────────────────────────────────
@@ -365,16 +414,20 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 const COPY_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 
 const BTN_STYLE =
-  'position:absolute;top:-14px;right:1rem;z-index:1;' +
-  'display:flex;align-items:center;justify-content:center;' +
-  'width:28px;height:28px;padding:0;' +
-  'color:var(--chat-text-secondary,#6b7280);' +
-  'background:var(--chat-surface,#fff);' +
-  'border:1px solid var(--chat-border,#e8e8e8);' +
-  'border-radius:4px;cursor:pointer;' +
-  'opacity:0;transition:opacity 0.15s;';
+  "position:absolute;top:-14px;right:1rem;z-index:1;" +
+  "display:flex;align-items:center;justify-content:center;" +
+  "width:28px;height:28px;padding:0;" +
+  "color:var(--chat-text-secondary,#6b7280);" +
+  "background:var(--chat-surface,#fff);" +
+  "border:1px solid var(--chat-border,#e8e8e8);" +
+  "border-radius:4px;cursor:pointer;" +
+  "opacity:0;transition:opacity 0.15s;";
 
-function wrapCodeBlock(highlighted: string, rawCode: string, lang: string): string {
+function wrapCodeBlock(
+  highlighted: string,
+  rawCode: string,
+  lang: string,
+): string {
   const encoded = encodeURIComponent(rawCode);
   return (
     `<div class="ichat-code-block" style="position:relative;margin:0.5em 0;overflow:visible;">` +
@@ -388,7 +441,7 @@ function wrapCodeBlock(highlighted: string, rawCode: string, lang: string): stri
 
 function safeRendererFallback(rawCode: string, lang: string): string {
   const safeLanguage = md.utils.escapeHtml(lang);
-  const languageClass = safeLanguage ? ` class="language-${safeLanguage}"` : '';
+  const languageClass = safeLanguage ? ` class="language-${safeLanguage}"` : "";
   return wrapCodeBlock(
     `<pre><code${languageClass}>${md.utils.escapeHtml(rawCode)}</code></pre>`,
     rawCode,
@@ -425,7 +478,7 @@ function enqueueAsyncBlock(block: PendingAsyncBlock): void {
   if (block.signal) {
     const remove = () => pendingAsyncBlocks.delete(id);
     if (block.signal.aborted) remove();
-    else block.signal.addEventListener('abort', remove, { once: true });
+    else block.signal.addEventListener("abort", remove, { once: true });
   }
 
   while (pendingAsyncBlocks.size > MAX_PENDING_ASYNC_BLOCKS) {
@@ -483,7 +536,7 @@ export async function resolveAsyncBlocks(
         if (options.signal?.aborted || block.signal?.aborted) return;
         reportBlockRendererError(
           block.renderer,
-          'render-async',
+          "render-async",
           error,
           block.code,
           block.language,
@@ -511,16 +564,22 @@ export { md };
  * Sanitise a trusted-but-not-guaranteed HTML string with the same DOMPurify
  * config used for markdown output. Used by string-mode custom part renderers.
  */
-export function sanitizeHtml(html: string, options?: MarkdownRenderOptions): string {
+export function sanitizeHtml(
+  html: string,
+  options?: MarkdownRenderOptions,
+): string {
   return DOMPurify.sanitize(html, domPurifyConfig(options));
 }
 
-export function renderMarkdown(content: string, options?: MarkdownRenderOptions): string {
+export function renderMarkdown(
+  content: string,
+  options?: MarkdownRenderOptions,
+): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
   const previousMode = activeRenderMode;
   activeRenderOptions = options;
-  activeRenderMode = 'full';
+  activeRenderMode = "full";
   activeHighlightJs = options?.highlightJs;
 
   try {
@@ -566,12 +625,15 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
  *
  * @internal Not exported as public API — used internally by `i-chat-text-part`.
  */
-export function renderMarkdownLight(content: string, options?: MarkdownRenderOptions): string {
+export function renderMarkdownLight(
+  content: string,
+  options?: MarkdownRenderOptions,
+): string {
   pendingBlockHTML.clear();
   const previousOptions = activeRenderOptions;
   const previousMode = activeRenderMode;
   activeRenderOptions = options;
-  activeRenderMode = 'streaming';
+  activeRenderMode = "streaming";
   activeHighlightJs = options?.highlightJs;
 
   try {
@@ -597,11 +659,11 @@ export function renderMarkdownLight(content: string, options?: MarkdownRenderOpt
 
 /** Allow optional whitespace before `>` and case-insensitive tag names so model output still matches. */
 function reasoningTagToOpenRe(tag: string): RegExp {
-  return new RegExp(escapeRegExp(tag).replace(/>$/, '\\s*>'), 'i');
+  return new RegExp(escapeRegExp(tag).replace(/>$/, "\\s*>"), "i");
 }
 
 function reasoningTagToCloseRe(tag: string): RegExp {
-  return new RegExp(escapeRegExp(tag).replace(/>$/, '\\s*>'), 'i');
+  return new RegExp(escapeRegExp(tag).replace(/>$/, "\\s*>"), "i");
 }
 
 function extractReasoningWithRegex(
@@ -636,14 +698,14 @@ function extractReasoningWithRegex(
  */
 export function extractReasoning(
   content: string,
-  tags = { open: '<redacted_thinking>', close: '</redacted_thinking>' },
+  tags = { open: "<redacted_thinking>", close: "</redacted_thinking>" },
 ): { reasoning: string; content: string } {
   const openRe = reasoningTagToOpenRe(tags.open);
   const closeRe = reasoningTagToCloseRe(tags.close);
   const result = extractReasoningWithRegex(content, openRe, closeRe);
   if (result) return result;
 
-  return { reasoning: '', content };
+  return { reasoning: "", content };
 }
 
 /** True if `content` has an opening reasoning tag but no closing tag yet (streaming). */

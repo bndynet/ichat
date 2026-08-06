@@ -1,6 +1,6 @@
-@use 'variables' as *;
-@use 'chat-host-tokens';
-@use 'reduced-motion';
+@use "variables" as *;
+@use "chat-host-tokens";
+@use "reduced-motion";
 
 :host {
   display: flex;
@@ -26,7 +26,7 @@
   /* Soft bottom fade into the input area: eases the edge so message chrome
      does not visually compete with the text field focus ring below. */
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     right: 0;
@@ -34,7 +34,11 @@
     height: var(--chat-messages-bottom-fade-height, 28px);
     pointer-events: none;
     z-index: 1;
-    background: linear-gradient(to bottom, transparent, var(--chat-bg, #{$color-bg}));
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--chat-bg, #{$color-bg})
+    );
   }
 }
 
@@ -42,7 +46,8 @@
   display: flex;
   align-items: center;
   gap: var(--chat-spacing-sm, #{$spacing-sm});
-  padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+  padding: var(--chat-spacing-sm, #{$spacing-sm})
+    var(--chat-spacing-md, #{$spacing-md});
   background: var(
     --chat-error-bg,
     color-mix(
@@ -91,7 +96,11 @@
 
   &:hover {
     opacity: 1;
-    background: color-mix(in srgb, var(--chat-error, #{$color-error}) 10%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--chat-error, #{$color-error}) 10%,
+      transparent
+    );
   }
 }
 
@@ -182,12 +191,22 @@
   100% {
     box-shadow:
       var(--chat-shadow-md, #{$shadow-md}),
-      0 0 0 0 color-mix(in srgb, var(--chat-primary, #{$color-primary}) 50%, transparent);
+      0 0 0 0
+        color-mix(
+          in srgb,
+          var(--chat-primary, #{$color-primary}) 50%,
+          transparent
+        );
   }
   50% {
     box-shadow:
       var(--chat-shadow-md, #{$shadow-md}),
-      0 0 0 7px color-mix(in srgb, var(--chat-primary, #{$color-primary}) 0%, transparent);
+      0 0 0 7px
+        color-mix(
+          in srgb,
+          var(--chat-primary, #{$color-primary}) 0%,
+          transparent
+        );
   }
 }
 
@@ -247,7 +266,7 @@
 }
 
 .scroll-highlight::before {
-  content: '';
+  content: "";
   position: absolute;
   left: calc(-4px - var(--_gap));
   top: 0;

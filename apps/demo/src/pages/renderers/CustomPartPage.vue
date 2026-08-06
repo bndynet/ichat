@@ -1,19 +1,22 @@
 <script setup>
-import '@bndynet/ichat';
-import { onMounted, nextTick, ref } from 'vue';
-import { registerPartRenderer, textPart } from '@bndynet/ichat';
-import { nextId } from '../../composables/demo-data.js';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import customPartExample from '../../examples/renderers/custom-part.md?raw';
-import { weatherElementRenderer, weatherStringRenderer } from '../../renderers/weather';
+import "@bndynet/ichat";
+import { onMounted, nextTick, ref } from "vue";
+import { registerPartRenderer, textPart } from "@bndynet/ichat";
+import { nextId } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import customPartExample from "../../examples/renderers/custom-part.md?raw";
+import {
+  weatherElementRenderer,
+  weatherStringRenderer,
+} from "../../renderers/weather";
 
 registerPartRenderer(weatherElementRenderer);
 registerPartRenderer(weatherStringRenderer);
 
 const chatRef = ref(null);
 
-const ELEMENT_MSG_ID = 'custom-part-element';
-const ELEMENT_PART_ID = 'x-weather-live';
+const ELEMENT_MSG_ID = "custom-part-element";
+const ELEMENT_PART_ID = "x-weather-live";
 
 onMounted(async () => {
   await nextTick();
@@ -21,58 +24,58 @@ onMounted(async () => {
 
   chat.addMessage({
     id: ELEMENT_MSG_ID,
-    role: 'assistant',
+    role: "assistant",
     timestamp: Date.now(),
     parts: [
       textPart(
-        '**Element mode** — `registerPartRenderer({ test, element })`. The library renders `<x-weather-card .data .part>`; the element instance is preserved across `updatePart`, so streaming updates do not rebuild the DOM. Click the button below to patch `data` live.',
+        "**Element mode** — `registerPartRenderer({ test, element })`. The library renders `<x-weather-card .data .part>`; the element instance is preserved across `updatePart`, so streaming updates do not rebuild the DOM. Click the button below to patch `data` live.",
       ),
       {
         id: ELEMENT_PART_ID,
-        type: 'x-weather',
-        data: { city: 'Shanghai', temp: 22, unit: '°C', condition: 'Cloudy' },
+        type: "x-weather",
+        data: { city: "Shanghai", temp: 22, unit: "°C", condition: "Cloudy" },
       },
     ],
   });
 
   chat.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     timestamp: Date.now(),
     parts: [
       textPart(
-        '**String mode** — `registerPartRenderer({ test, render })`. The renderer returns an HTML string, sanitised with DOMPurify and patched in place via morphdom (same channel as `text` parts).',
+        "**String mode** — `registerPartRenderer({ test, render })`. The renderer returns an HTML string, sanitised with DOMPurify and patched in place via morphdom (same channel as `text` parts).",
       ),
       {
-        id: 'x-weather-html-1',
-        type: 'x-weather-html',
-        data: { city: 'Tokyo', temp: 18, unit: '°C', condition: 'Light rain' },
+        id: "x-weather-html-1",
+        type: "x-weather-html",
+        data: { city: "Tokyo", temp: 18, unit: "°C", condition: "Light rain" },
       },
     ],
   });
 
   chat.addMessage({
     id: nextId(),
-    role: 'assistant',
+    role: "assistant",
     timestamp: Date.now(),
     parts: [
       textPart(
-        '**Unregistered fallback** — a custom `x-*` part with no matching renderer is shown as a readable JSON dump.',
+        "**Unregistered fallback** — a custom `x-*` part with no matching renderer is shown as a readable JSON dump.",
       ),
       {
-        id: 'x-unknown-1',
-        type: 'x-product-card',
-        data: { sku: 'A-1024', name: 'Wireless Mouse', price: 29.9 },
+        id: "x-unknown-1",
+        type: "x-product-card",
+        data: { sku: "A-1024", name: "Wireless Mouse", price: 29.9 },
       },
     ],
   });
 });
 
 const conditions = [
-  { temp: 22, condition: 'Cloudy' },
-  { temp: 27, condition: 'Sunny' },
-  { temp: 16, condition: 'Thunderstorm' },
-  { temp: 9, condition: 'Snow' },
+  { temp: 22, condition: "Cloudy" },
+  { temp: 27, condition: "Sunny" },
+  { temp: 16, condition: "Thunderstorm" },
+  { temp: 9, condition: "Snow" },
 ];
 let tick = 0;
 
@@ -82,7 +85,12 @@ function updateWeather() {
   tick = (tick + 1) % conditions.length;
   const next = conditions[tick];
   chat.updatePart(ELEMENT_MSG_ID, ELEMENT_PART_ID, {
-    data: { city: 'Shanghai', temp: next.temp, unit: '°C', condition: next.condition },
+    data: {
+      city: "Shanghai",
+      temp: next.temp,
+      unit: "°C",
+      condition: next.condition,
+    },
   });
 }
 </script>
@@ -94,7 +102,10 @@ function updateWeather() {
     </button>
     <i-chat-messages ref="chatRef" />
   </div>
-  <ExampleCodeDrawer title="Custom part code example" :content="customPartExample" />
+  <ExampleCodeDrawer
+    title="Custom part code example"
+    :content="customPartExample"
+  />
 </template>
 
 <style scoped>

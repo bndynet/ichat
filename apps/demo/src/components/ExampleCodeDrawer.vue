@@ -1,6 +1,6 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import MarkdownIt from 'markdown-it'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import MarkdownIt from "markdown-it";
 
 const props = defineProps({
   content: {
@@ -9,38 +9,42 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '示例代码',
+    default: "示例代码",
   },
-})
+});
 
-const isOpen = ref(false)
-const closeButton = ref(null)
-const renderer = new MarkdownIt({ html: false, linkify: true, typographer: true })
-const renderedContent = computed(() => renderer.render(props.content))
+const isOpen = ref(false);
+const closeButton = ref(null);
+const renderer = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+});
+const renderedContent = computed(() => renderer.render(props.content));
 
 function openDrawer() {
-  isOpen.value = true
+  isOpen.value = true;
 }
 
 function closeDrawer() {
-  isOpen.value = false
+  isOpen.value = false;
 }
 
 function handleKeydown(event) {
-  if (event.key === 'Escape') closeDrawer()
+  if (event.key === "Escape") closeDrawer();
 }
 
 watch(isOpen, async (open) => {
-  document.body.classList.toggle('example-code-drawer-open', open)
+  document.body.classList.toggle("example-code-drawer-open", open);
   if (open) {
-    await nextTick()
-    closeButton.value?.focus()
+    await nextTick();
+    closeButton.value?.focus();
   }
-})
+});
 
 onBeforeUnmount(() => {
-  document.body.classList.remove('example-code-drawer-open')
-})
+  document.body.classList.remove("example-code-drawer-open");
+});
 </script>
 
 <template>
@@ -99,7 +103,10 @@ onBeforeUnmount(() => {
             </button>
           </header>
 
-          <div class="example-code-drawer-content markdown-body" v-html="renderedContent"></div>
+          <div
+            class="example-code-drawer-content markdown-body"
+            v-html="renderedContent"
+          ></div>
         </aside>
       </div>
     </Transition>
@@ -116,7 +123,8 @@ onBeforeUnmount(() => {
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--color-link) 32%, var(--color-border));
+  border: 1px solid
+    color-mix(in srgb, var(--color-link) 32%, var(--color-border));
   border-radius: 50%;
   place-items: center;
   color: var(--color-link);

@@ -3,10 +3,10 @@
 Wrap Markdown in a `details` fence to render a collapsible section with a title.
 
 ```js
-import '@bndynet/ichat'
-import { textPart } from '@bndynet/ichat'
+import "@bndynet/ichat";
+import { textPart } from "@bndynet/ichat";
 
-const chat = document.querySelector('i-chat-messages')
+const chat = document.querySelector("i-chat-messages");
 
 const content = `\`\`\`details 📋 Project Overview
 A modern chat interface with rich Markdown support.
@@ -25,14 +25,14 @@ A modern chat interface with rich Markdown support.
 | Markdown | markdown-it |
 | Charts | ECharts via @bndynet/icharts |
 | Sanitisation | DOMPurify |
-\`\`\``
+\`\`\``;
 
 chat.addMessage({
   id: crypto.randomUUID(),
-  role: 'assistant',
+  role: "assistant",
   timestamp: Date.now(),
   parts: [textPart(content)],
-})
+});
 ```
 
 ## Use container syntax
@@ -55,12 +55,12 @@ A modern chat interface with rich markdown support.
 | UI | Lit / Web Components |
 | Markdown | markdown-it |
 | Charts | ECharts |
-:::`
+:::`;
 
 chat.addMessage({
   id: crypto.randomUUID(),
-  role: 'assistant',
+  role: "assistant",
   timestamp: Date.now(),
   parts: [textPart(content)],
-})
+});
 ```

@@ -1,7 +1,7 @@
-declare module 'markdown-it-katex' {
-  import type MarkdownIt from 'markdown-it';
+declare module "markdown-it-katex" {
+  import type MarkdownIt from "markdown-it";
   interface KatexOptions {
-    output?: 'html' | 'mathml' | 'htmlAndMathml';
+    output?: "html" | "mathml" | "htmlAndMathml";
     throwOnError?: boolean;
     errorColor?: string;
     displayMode?: boolean;

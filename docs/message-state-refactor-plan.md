@@ -142,23 +142,21 @@ Change 1 introduces the following public types. The implementation may adjust th
 
 ```ts
 export type MessagesChangeReason =
-  | 'message:add'
-  | 'message:update'
-  | 'message:remove'
-  | 'message:clear'
-  | 'message:cancel'
-  | 'message:error'
-  | 'part:append'
-  | 'part:update'
-  | 'tool-call:update'
-  | 'todo-item:update'
-  | 'event:message-part-update'
-  | 'event:todo-item-update';
+  | "message:add"
+  | "message:update"
+  | "message:remove"
+  | "message:clear"
+  | "message:cancel"
+  | "message:error"
+  | "part:append"
+  | "part:update"
+  | "tool-call:update"
+  | "todo-item:update"
+  | "event:message-part-update"
+  | "event:todo-item-update";
 
 export type MessagesChangeSource =
-  | 'i-chat'
-  | 'i-chat-messages'
-  | 'chat-run-controller';
+  "i-chat" | "i-chat-messages" | "chat-run-controller";
 
 export interface MessagesChangeDetail {
   messages: ChatMessage[];
@@ -771,15 +769,11 @@ Provide a UI orchestration helper for one AI response run. It manages message an
 
 ```ts
 export type ChatRunStatus =
-  | 'idle'
-  | 'streaming'
-  | 'completed'
-  | 'cancelled'
-  | 'error';
+  "idle" | "streaming" | "completed" | "cancelled" | "error";
 
 export interface ChatRunOptions {
   messageId?: string;
-  role?: 'assistant';
+  role?: "assistant";
   timestamp?: number;
   onCancel?: () => void;
 }
@@ -790,7 +784,10 @@ export class ChatRunController {
 
   start(initialParts?: MessagePart[]): void;
   appendPart(part: MessagePart): void;
-  updatePart(partId: string, patch: Partial<MessagePart>): MessagePartUpdateResult;
+  updatePart(
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): MessagePartUpdateResult;
   appendText(partId: string, delta: string): MessagePartUpdateResult;
   complete(patch?: Partial<ChatMessage>): void;
   fail(error: string, text?: string): void;

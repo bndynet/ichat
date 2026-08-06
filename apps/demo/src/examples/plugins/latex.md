@@ -8,7 +8,7 @@ npm install @bndynet/ichat-renderer-katex
 
 ```typescript
 // Application entry or lazy route module — auto-registers on import
-import '@bndynet/ichat-renderer-katex'
+import "@bndynet/ichat-renderer-katex";
 ```
 
 That's it. `$...$` for inline math and `$$...$$` for display math just work in subsequent chat renders.

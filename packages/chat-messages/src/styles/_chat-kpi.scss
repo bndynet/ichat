@@ -1,11 +1,14 @@
-@use 'variables' as *;
-@use 'chat-panel' as panel;
+@use "variables" as *;
+@use "chat-panel" as panel;
 
 @mixin styles {
   // ── Single KPI card ────────────────────────────────────────────────────────
   .chat-kpi {
     @include panel.surface(
-      $background: var(--chat-kpi-bg, var(--chat-panel-bg, var(--chat-surface, #{$color-surface}))),
+      $background: var(
+          --chat-kpi-bg,
+          var(--chat-panel-bg, var(--chat-surface, #{$color-surface}))
+        ),
       $border: var(
           --chat-kpi-border,
           var(
@@ -13,7 +16,10 @@
             color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)
           )
         ),
-      $radius: var(--chat-kpi-radius, var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))),
+      $radius: var(
+          --chat-kpi-radius,
+          var(--chat-panel-radius, var(--chat-radius, #{$radius-md}))
+        ),
       $shadow: var(
           --chat-kpi-shadow,
           var(--chat-panel-shadow, var(--chat-shadow-sm, #{$shadow-sm}))
@@ -106,7 +112,8 @@
       width: 1px;
       background: var(--chat-border, #{$color-border});
       align-self: stretch;
-      margin: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-lg, #{$spacing-lg});
+      margin: var(--chat-spacing-xs, #{$spacing-xs})
+        var(--chat-spacing-lg, #{$spacing-lg});
     }
   }
 }

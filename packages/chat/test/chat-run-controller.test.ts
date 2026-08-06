@@ -6,12 +6,16 @@
  * no-op guards outside the streaming state.
  */
 
-import assert from 'node:assert/strict';
-import type { ChatMessage, MessagePart, TextPart } from '@bndynet/ichat-messages';
-import { textPart } from '@bndynet/ichat-messages';
-import { ChatRunController } from '../src/controllers/chat-run-controller.js';
-import type { ChatMessageStorePort } from '../src/controllers/chat-run-controller.js';
-import type { ChatMutationOutcome } from '../src/state/mutation-outcome.js';
+import assert from "node:assert/strict";
+import type {
+  ChatMessage,
+  MessagePart,
+  TextPart,
+} from "@bndynet/ichat-messages";
+import { textPart } from "@bndynet/ichat-messages";
+import { ChatRunController } from "../src/controllers/chat-run-controller.js";
+import type { ChatMessageStorePort } from "../src/controllers/chat-run-controller.js";
+import type { ChatMutationOutcome } from "../src/state/mutation-outcome.js";
 
 // ── mock store ────────────────────────────────────────────────────────
 
@@ -45,7 +49,10 @@ function createMockStore(): ChatMessageStorePort & {
       messages.push(msg);
       return applied;
     },
-    updateMessage(id: string, partial: Partial<ChatMessage>): ChatMutationOutcome {
+    updateMessage(
+      id: string,
+      partial: Partial<ChatMessage>,
+    ): ChatMutationOutcome {
       if (flags.reject) return rejected;
       const idx = messages.findIndex((m) => m.id === id);
       if (idx === -1) return noOp;
@@ -56,7 +63,11 @@ function createMockStore(): ChatMessageStorePort & {
       const msg = messages.find((m) => m.id === messageId);
       if (msg) msg.parts = [...(msg.parts ?? []), part];
     },
-    updatePart(_messageId: string, _partId: string, _patch: Partial<MessagePart>) {
+    updatePart(
+      _messageId: string,
+      _partId: string,
+      _patch: Partial<MessagePart>,
+    ) {
       // unused by ChatRunController directly — uses tryUpdatePart
     },
     cancelMessage(id: string, hint?: string): ChatMutationOutcome {
@@ -68,11 +79,17 @@ function createMockStore(): ChatMessageStorePort & {
       if (hint) msg.parts = [...(msg.parts ?? []), textPart(hint)];
       return applied;
     },
-    tryUpdatePart(messageId: string, partId: string, patch: Partial<MessagePart>) {
+    tryUpdatePart(
+      messageId: string,
+      partId: string,
+      patch: Partial<MessagePart>,
+    ) {
       const msg = messages.find((m) => m.id === messageId);
-      if (!msg) return { ok: false as const, reason: 'message-not-found' as const };
+      if (!msg)
+        return { ok: false as const, reason: "message-not-found" as const };
       const part = msg.parts?.find((p) => p.id === partId);
-      if (!part) return { ok: false as const, reason: 'part-not-found' as const };
+      if (!part)
+        return { ok: false as const, reason: "part-not-found" as const };
       Object.assign(part, patch);
       return { ok: true as const, part };
     },
@@ -80,7 +97,9 @@ function createMockStore(): ChatMessageStorePort & {
 }
 
 /** A port written against the older `void`-returning signature. */
-function createLegacyVoidStore(): ChatMessageStorePort & { _messages: ChatMessage[] } {
+function createLegacyVoidStore(): ChatMessageStorePort & {
+  _messages: ChatMessage[];
+} {
   const inner = createMockStore();
   return {
     _messages: inner._messages,
@@ -102,15 +121,22 @@ function createLegacyVoidStore(): ChatMessageStorePort & { _messages: ChatMessag
     updatePart(messageId: string, partId: string, patch: Partial<MessagePart>) {
       inner.updatePart(messageId, partId, patch);
     },
-    tryUpdatePart(messageId: string, partId: string, patch: Partial<MessagePart>) {
+    tryUpdatePart(
+      messageId: string,
+      partId: string,
+      patch: Partial<MessagePart>,
+    ) {
       return inner.tryUpdatePart(messageId, partId, patch);
     },
   };
 }
 
-function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): string {
+function getMsgText(
+  store: ReturnType<typeof createMockStore>,
+  partId: string,
+): string {
   const part = store._messages[0]?.parts?.find((p) => p.id === partId);
-  return (part as TextPart)?.text ?? '';
+  return (part as TextPart)?.text ?? "";
 }
 
 // ── tests ────────────────────────────────────────────────────────────
@@ -119,28 +145,28 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello', { id: 'p1' })]);
-  assert.equal(run.status, 'streaming');
+  run.start([textPart("hello", { id: "p1" })]);
+  assert.equal(run.status, "streaming");
   assert.equal(run.messageId.length > 0, true);
   assert.equal(store._messages.length, 1);
-  assert.equal(store._messages[0].role, 'assistant');
+  assert.equal(store._messages[0].role, "assistant");
   assert.equal(store._messages[0].streaming, true);
 }
 
 // start with custom messageId
 {
   const store = createMockStore();
-  const run = new ChatRunController(store, { messageId: 'custom-id' });
+  const run = new ChatRunController(store, { messageId: "custom-id" });
   run.start();
-  assert.equal(run.messageId, 'custom-id');
+  assert.equal(run.messageId, "custom-id");
 }
 
 // start is no-op when already started
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('first')]);
-  run.start([textPart('second')]);
+  run.start([textPart("first")]);
+  run.start([textPart("second")]);
   assert.equal(store._messages.length, 1);
 }
 
@@ -148,39 +174,39 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('', { id: 'body' })]);
-  run.appendText('body', 'Hello');
-  run.appendText('body', ' world');
-  run.appendText('body', '!');
-  assert.equal(getMsgText(store, 'body'), 'Hello world!');
+  run.start([textPart("", { id: "body" })]);
+  run.appendText("body", "Hello");
+  run.appendText("body", " world");
+  run.appendText("body", "!");
+  assert.equal(getMsgText(store, "body"), "Hello world!");
 }
 
 // appendText part-not-found
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('', { id: 'body' })]);
-  const r = run.appendText('nonexistent', 'x');
+  run.start([textPart("", { id: "body" })]);
+  const r = run.appendText("nonexistent", "x");
   assert.equal(r.ok, false);
-  if (!r.ok) assert.equal(r.reason, 'part-not-found');
+  if (!r.ok) assert.equal(r.reason, "part-not-found");
 }
 
 // appendText part-type-mismatch
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([{ type: 'reasoning', id: 'r1', text: 'thinking' }]);
-  const r = run.appendText('r1', 'x');
+  run.start([{ type: "reasoning", id: "r1", text: "thinking" }]);
+  const r = run.appendText("r1", "x");
   assert.equal(r.ok, false);
-  if (!r.ok) assert.equal(r.reason, 'part-type-mismatch');
+  if (!r.ok) assert.equal(r.reason, "part-type-mismatch");
 }
 
 // appendPart adds structured part
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
-  run.appendPart({ type: 'reasoning', id: 'r1', text: 'thinking...' });
+  run.start([textPart("hello")]);
+  run.appendPart({ type: "reasoning", id: "r1", text: "thinking..." });
   assert.equal(store._messages[0].parts!.length, 2);
 }
 
@@ -188,19 +214,19 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello', { id: 'p1', status: 'streaming' })]);
-  const r = run.updatePart('p1', { status: 'complete' });
+  run.start([textPart("hello", { id: "p1", status: "streaming" })]);
+  const r = run.updatePart("p1", { status: "complete" });
   assert.ok(r.ok);
-  assert.equal(store._messages[0].parts![0].status, 'complete');
+  assert.equal(store._messages[0].parts![0].status, "complete");
 }
 
 // complete
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   run.complete();
-  assert.equal(run.status, 'completed');
+  assert.equal(run.status, "completed");
   assert.equal(store._messages[0].streaming, false);
 }
 
@@ -208,7 +234,7 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   run.complete({ duration: 1234 });
   assert.equal(store._messages[0].duration, 1234);
 }
@@ -217,20 +243,20 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   run.complete();
   run.complete();
-  assert.equal(run.status, 'completed');
+  assert.equal(run.status, "completed");
 }
 
 // fail
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
-  run.fail('Network error', 'timed out');
-  assert.equal(run.status, 'error');
-  assert.equal(store._messages[0].error, 'Network error');
+  run.start([textPart("hello")]);
+  run.fail("Network error", "timed out");
+  assert.equal(run.status, "error");
+  assert.equal(store._messages[0].error, "Network error");
   assert.equal(store._messages[0].streaming, false);
 }
 
@@ -243,9 +269,9 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
       cancelled = true;
     },
   });
-  run.start([textPart('hello')]);
-  run.cancel('*— stopped —*');
-  assert.equal(run.status, 'cancelled');
+  run.start([textPart("hello")]);
+  run.cancel("*— stopped —*");
+  assert.equal(run.status, "cancelled");
   assert.equal(cancelled, true);
   assert.equal(store._messages[0].cancelled, true);
 }
@@ -254,7 +280,7 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   const sig = run.signal;
   assert.equal(sig.aborted, false);
   run.complete();
@@ -265,7 +291,7 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   const sig = run.signal;
   run.cancel();
   assert.equal(sig.aborted, true);
@@ -275,9 +301,9 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   const sig = run.signal;
-  run.fail('boom');
+  run.fail("boom");
   assert.equal(sig.aborted, true);
 }
 
@@ -285,11 +311,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  assert.equal(run.status, 'idle');
-  run.appendText('x', 'y');
+  assert.equal(run.status, "idle");
+  run.appendText("x", "y");
   run.complete();
   run.cancel();
-  run.fail('x');
+  run.fail("x");
   assert.equal(store._messages.length, 0);
 }
 
@@ -297,11 +323,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello', { id: 'p1' })]);
+  run.start([textPart("hello", { id: "p1" })]);
   run.complete();
-  run.appendText('p1', 'more');
-  run.appendPart({ type: 'reasoning', id: 'r1', text: 'x' });
-  assert.equal(getMsgText(store, 'p1'), 'hello');
+  run.appendText("p1", "more");
+  run.appendPart({ type: "reasoning", id: "r1", text: "x" });
+  assert.equal(getMsgText(store, "p1"), "hello");
 }
 
 // ── controlled-host rejection ─────────────────────────────────────────
@@ -311,21 +337,21 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
   const store = createMockStore();
   store.reject = true;
   const run = new ChatRunController(store);
-  const outcome = run.start([textPart('', { id: 'body' })]);
+  const outcome = run.start([textPart("", { id: "body" })]);
 
   assert.equal(outcome.accepted, false);
-  assert.equal(run.status, 'idle');
+  assert.equal(run.status, "idle");
   assert.equal(store._messages.length, 0);
   assert.equal(run.signal.aborted, false);
 
-  const appended = run.appendText('body', 'x');
+  const appended = run.appendText("body", "x");
   assert.equal(appended.ok, false);
-  if (!appended.ok) assert.equal(appended.reason, 'message-not-found');
+  if (!appended.ok) assert.equal(appended.reason, "message-not-found");
 
   // retryable once the host stops rejecting
   store.reject = false;
-  assert.equal(run.start([textPart('', { id: 'body' })]).accepted, true);
-  assert.equal(run.status, 'streaming');
+  assert.equal(run.start([textPart("", { id: "body" })]).accepted, true);
+  assert.equal(run.status, "streaming");
   assert.equal(store._messages.length, 1);
 }
 
@@ -333,21 +359,21 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello', { id: 'body' })]);
+  run.start([textPart("hello", { id: "body" })]);
   store.reject = true;
 
   assert.equal(run.complete().accepted, false);
-  assert.equal(run.status, 'streaming');
+  assert.equal(run.status, "streaming");
   assert.equal(store._messages[0].streaming, true);
   assert.equal(run.signal.aborted, false);
 
   // streaming may continue, and completing again succeeds
-  assert.ok(run.appendText('body', ' world').ok);
+  assert.ok(run.appendText("body", " world").ok);
   store.reject = false;
   assert.equal(run.complete().accepted, true);
-  assert.equal(run.status, 'completed');
+  assert.equal(run.status, "completed");
   assert.equal(store._messages[0].streaming, false);
-  assert.equal(getMsgText(store, 'body'), 'hello world');
+  assert.equal(getMsgText(store, "body"), "hello world");
   assert.equal(run.signal.aborted, true);
 }
 
@@ -355,11 +381,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   store.reject = true;
 
-  assert.equal(run.fail('boom').accepted, false);
-  assert.equal(run.status, 'streaming');
+  assert.equal(run.fail("boom").accepted, false);
+  assert.equal(run.status, "streaming");
   assert.equal(store._messages[0].error, undefined);
   assert.equal(store._messages[0].streaming, true);
   assert.equal(run.signal.aborted, false);
@@ -374,18 +400,18 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
       cancelled += 1;
     },
   });
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   store.reject = true;
 
-  assert.equal(run.cancel('stopped').accepted, false);
-  assert.equal(run.status, 'streaming');
+  assert.equal(run.cancel("stopped").accepted, false);
+  assert.equal(run.status, "streaming");
   assert.equal(cancelled, 0);
   assert.equal(store._messages[0].cancelled, undefined);
   assert.equal(run.signal.aborted, false);
 
   store.reject = false;
-  assert.equal(run.cancel('stopped').accepted, true);
-  assert.equal(run.status, 'cancelled');
+  assert.equal(run.cancel("stopped").accepted, true);
+  assert.equal(run.status, "cancelled");
   assert.equal(cancelled, 1);
 }
 
@@ -395,13 +421,13 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   store._messages.length = 0; // host removed or cleared the message
 
   const outcome = run.complete();
   assert.equal(outcome.changed, false);
   assert.equal(outcome.accepted, true);
-  assert.equal(run.status, 'completed');
+  assert.equal(run.status, "completed");
   assert.equal(run.signal.aborted, true);
 }
 
@@ -414,11 +440,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
       cancelled = true;
     },
   });
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   store._messages.length = 0;
 
   assert.equal(run.cancel().changed, false);
-  assert.equal(run.status, 'cancelled');
+  assert.equal(run.status, "cancelled");
   assert.equal(cancelled, true);
 }
 
@@ -428,7 +454,7 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createMockStore();
   const run = new ChatRunController(store);
-  run.start([textPart('hello')]);
+  run.start([textPart("hello")]);
   run.complete();
   assert.equal(run.signal.aborted, true);
 }
@@ -437,11 +463,11 @@ function getMsgText(store: ReturnType<typeof createMockStore>, partId: string): 
 {
   const store = createLegacyVoidStore();
   const run = new ChatRunController(store);
-  assert.equal(run.start([textPart('hello')]).accepted, true);
-  assert.equal(run.status, 'streaming');
+  assert.equal(run.start([textPart("hello")]).accepted, true);
+  assert.equal(run.status, "streaming");
   assert.equal(run.complete().accepted, true);
-  assert.equal(run.status, 'completed');
+  assert.equal(run.status, "completed");
   assert.equal(store._messages[0].streaming, false);
 }
 
-console.log('ChatRunController: all tests passed');
+console.log("ChatRunController: all tests passed");

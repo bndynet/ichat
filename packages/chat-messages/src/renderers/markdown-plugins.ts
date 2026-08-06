@@ -1,6 +1,6 @@
-import type MarkdownIt from 'markdown-it';
-import { md } from './markdown-renderer.js';
-import { invalidateMarkdownCache } from './markdown-morph.js';
+import type MarkdownIt from "markdown-it";
+import { md } from "./markdown-renderer.js";
+import { invalidateMarkdownCache } from "./markdown-morph.js";
 
 export interface MarkdownPlugin {
   id: string;
@@ -12,8 +12,8 @@ export interface MarkdownPlugin {
 }
 
 const registeredPlugins = new Map<string, MarkdownPlugin>();
-let combinedStyles = '';
-let combinedGlobalStyles = '';
+let combinedStyles = "";
+let combinedGlobalStyles = "";
 let onCssChange: (() => void) | null = null;
 
 /** Register a callback invoked whenever the combined plugin CSS changes. */
@@ -25,11 +25,11 @@ function recomputeCss(): void {
   combinedStyles = Array.from(registeredPlugins.values())
     .map((e) => e.styles)
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
   combinedGlobalStyles = Array.from(registeredPlugins.values())
     .map((e) => e.globalStyles)
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
   onCssChange?.();
 }
 
@@ -51,7 +51,7 @@ export function registerMarkdownPlugin(ext: MarkdownPlugin): void {
     if (existing === ext) return;
     console.warn(
       `[i-chat] Markdown plugin "${ext.id}" is already registered with a different object. ` +
-        'Keeping the first registration.',
+        "Keeping the first registration.",
     );
     return;
   }

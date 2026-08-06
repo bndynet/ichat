@@ -1,4 +1,4 @@
-import type { ChatLabels, DeepPartial } from './i18n.js';
+import type { ChatLabels, DeepPartial } from "./i18n.js";
 
 export interface BlockRendererContext {
   /** Aborted when the owning message part is re-rendered or disconnected. */
@@ -16,7 +16,7 @@ export interface BlockRendererContext {
  *   before inserting it into HTML. Restricted to audited built-ins and
  *   capabilities that have been reviewed for injection safety.
  */
-export type BlockRenderMode = 'sanitized' | 'trusted';
+export type BlockRenderMode = "sanitized" | "trusted";
 
 export interface BlockRenderer {
   /** Unique name for this renderer */
@@ -54,8 +54,8 @@ export interface BlockRenderer {
   ) => Promise<string>;
 }
 
-export type RendererErrorKind = 'block' | 'part';
-export type RendererErrorPhase = 'match' | 'render' | 'render-async';
+export type RendererErrorKind = "block" | "part";
+export type RendererErrorPhase = "match" | "render" | "render-async";
 
 /** Detail carried by the bubbling `chat-renderer-error` event. */
 export interface RendererErrorDetail {
@@ -98,7 +98,7 @@ export interface PartRenderer {
 }
 
 /** Who sent the message (layout + default styling). Viewer-relative: `self` = current user. */
-export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
+export type ChatMessageRole = "self" | "peer" | "assistant" | "system";
 
 // ── Structured message parts ──────────────────────────────────────────────────
 //
@@ -110,10 +110,11 @@ export type ChatMessageRole = 'self' | 'peer' | 'assistant' | 'system';
 // `textPart` / `reasoningPart` factories for the common cases.
 
 /** Per-part lifecycle. Optional; defaults to `complete`. */
-export type PartStatus = 'pending' | 'streaming' | 'complete' | 'error' | 'cancelled';
+export type PartStatus =
+  "pending" | "streaming" | "complete" | "error" | "cancelled";
 
 /** Shared status vocabulary for ordered work items such as progress blocks and todos. */
-export type TaskStatus = 'done' | 'active' | 'error' | 'pending' | 'skipped';
+export type TaskStatus = "done" | "active" | "error" | "pending" | "skipped";
 
 /** Fields shared by every part. `id` must be stable for keyed render + targeted updates. */
 export interface PartBase {
@@ -125,13 +126,13 @@ export interface PartBase {
 
 /** Plain markdown text segment. */
 export interface TextPart extends PartBase {
-  type: 'text';
+  type: "text";
   text: string;
 }
 
 /** Model "thinking" segment, rendered as a collapsible reasoning block. */
 export interface ReasoningPart extends PartBase {
-  type: 'reasoning';
+  type: "reasoning";
   text: string;
 }
 
@@ -140,11 +141,15 @@ export interface ReasoningPart extends PartBase {
  * map cleanly from OpenAI `tool_calls` / Anthropic `tool_use`.
  */
 export type ToolCallState =
-  'input-streaming' | 'input-available' | 'executing' | 'output-available' | 'output-error';
+  | "input-streaming"
+  | "input-available"
+  | "executing"
+  | "output-available"
+  | "output-error";
 
 /** A single tool/function invocation and its result. Addressed by part `id`. */
 export interface ToolCallPart extends PartBase {
-  type: 'tool-call';
+  type: "tool-call";
   /** Protocol id (OpenAI `tool_call.id` / Anthropic `tool_use.id`). */
   toolCallId: string;
   toolName: string;
@@ -159,13 +164,13 @@ export interface ToolCallPart extends PartBase {
   resultParts?: MessagePart[];
   error?: string;
   /** Human-in-the-loop gate for high-impact tools. */
-  approval?: 'required' | 'approved' | 'rejected';
+  approval?: "required" | "approved" | "rejected";
   durationMs?: number;
 }
 
 /** Binary/attachment part (image, pdf, audio …). */
 export interface FilePart extends PartBase {
-  type: 'file';
+  type: "file";
   mediaType: string;
   /** Remote URL or a `data:` URL. */
   url?: string;
@@ -177,7 +182,7 @@ export interface FilePart extends PartBase {
 
 /** Citation / source reference (e.g. RAG). */
 export interface SourcePart extends PartBase {
-  type: 'source';
+  type: "source";
   url: string;
   title?: string;
   snippet?: string;
@@ -195,7 +200,7 @@ export interface TodoItem {
 }
 
 /** Mutable fields accepted by `updateTodoItem()`. */
-export type TodoItemPatch = Partial<Omit<TodoItem, 'id'>>;
+export type TodoItemPatch = Partial<Omit<TodoItem, "id">>;
 
 /**
  * Structured, collapsible todo panel rendered inline with the surrounding
@@ -203,7 +208,7 @@ export type TodoItemPatch = Partial<Omit<TodoItem, 'id'>>;
  * to the element so data updates do not override the user's current view.
  */
 export interface TodoPart extends PartBase {
-  type: 'todo';
+  type: "todo";
   title?: string;
   items: TodoItem[];
   /** Monotonic version used to ignore stale async updates. */
@@ -226,28 +231,37 @@ export interface CustomPart extends PartBase {
 
 /** Discriminated union of all body parts. */
 export type MessagePart =
-  TextPart | ReasoningPart | ToolCallPart | FilePart | SourcePart | TodoPart | CustomPart;
+  | TextPart
+  | ReasoningPart
+  | ToolCallPart
+  | FilePart
+  | SourcePart
+  | TodoPart
+  | CustomPart;
 
 /** Runtime list of first-class message part types rendered by the library. */
 export const BUILT_IN_MESSAGE_PART_TYPES = [
-  'text',
-  'reasoning',
-  'tool-call',
-  'todo',
-  'file',
-  'source',
+  "text",
+  "reasoning",
+  "tool-call",
+  "todo",
+  "file",
+  "source",
 ] as const;
 
-export type BuiltInMessagePartType = (typeof BUILT_IN_MESSAGE_PART_TYPES)[number];
+export type BuiltInMessagePartType =
+  (typeof BUILT_IN_MESSAGE_PART_TYPES)[number];
 
 /** Return true for library-owned part types. Host extensions use `x-*`. */
-export function isBuiltInMessagePartType(type: string): type is BuiltInMessagePartType {
+export function isBuiltInMessagePartType(
+  type: string,
+): type is BuiltInMessagePartType {
   return (BUILT_IN_MESSAGE_PART_TYPES as readonly string[]).includes(type);
 }
 
 /** Return true for host-defined extension part types. */
 export function isCustomMessagePartType(type: string): type is `x-${string}` {
-  return type.startsWith('x-');
+  return type.startsWith("x-");
 }
 
 // ── Generic type helpers for custom part types ─────────────────────────────
@@ -289,8 +303,8 @@ export type CustomPartOf<T extends Record<`x-${string}`, unknown>> = {
  */
 export type PartOf<
   M extends { parts: readonly MessagePart[] },
-  T extends MessagePart['type'],
-> = Extract<M['parts'][number], { type: T }>;
+  T extends MessagePart["type"],
+> = Extract<M["parts"][number], { type: T }>;
 
 /**
  * Extend the standard {@link MessagePart} union with typed custom parts.
@@ -315,9 +329,9 @@ export type PartOf<
  * // TextPart | ReasoningPart | ToolCallPart | ... | CustomPart & { type: 'x-weather'; data: { temp: number } }
  * ```
  */
-export type ExtendedMessagePart<TExtraParts extends Record<`x-${string}`, unknown> = {}> = [
-  keyof TExtraParts,
-] extends [never]
+export type ExtendedMessagePart<
+  TExtraParts extends Record<`x-${string}`, unknown> = {},
+> = [keyof TExtraParts] extends [never]
   ? MessagePart
   : Exclude<MessagePart, CustomPart> | CustomPartOf<TExtraParts>;
 
@@ -331,11 +345,11 @@ export type ExtendedMessagePart<TExtraParts extends Record<`x-${string}`, unknow
  *
  * Resolves to exactly `ChatMessage` for the default empty mapping.
  */
-export type ExtendedChatMessage<TExtraParts extends Record<`x-${string}`, unknown> = {}> = [
-  keyof TExtraParts,
-] extends [never]
+export type ExtendedChatMessage<
+  TExtraParts extends Record<`x-${string}`, unknown> = {},
+> = [keyof TExtraParts] extends [never]
   ? ChatMessage
-  : Omit<ChatMessage, 'parts'> & { parts: ExtendedMessagePart<TExtraParts>[] };
+  : Omit<ChatMessage, "parts"> & { parts: ExtendedMessagePart<TExtraParts>[] };
 
 export interface ChatMessage {
   id: string;
@@ -416,7 +430,7 @@ export interface ChatFormSubmitDetail {
  * be removed in a future major version.
  */
 export interface ToolActionDetail {
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
   toolCallId: string;
   part: ToolCallPart;
   messageId: string;
@@ -431,7 +445,7 @@ export interface ToolActionDetail {
  * be removed in a future major version.
  */
 export interface TodoActionDetail {
-  action: 'change-status';
+  action: "change-status";
   itemId: string;
   previousStatus: TodoItemStatus;
   status: TodoItemStatus;
@@ -440,7 +454,7 @@ export interface TodoActionDetail {
   message: ChatMessage;
 }
 
-export type ChatPartActionKind = 'form' | 'todo' | 'tool-call';
+export type ChatPartActionKind = "form" | "todo" | "tool-call";
 
 /**
  * Unified action event detail for interactions that originate from a rendered
@@ -454,7 +468,7 @@ export interface ChatPartActionDetail<TDetail = unknown> {
   messageId: string;
   message: ChatMessage;
   partId?: string;
-  partType?: MessagePart['type'];
+  partType?: MessagePart["type"];
   part?: MessagePart;
   payload: TDetail;
 }
@@ -472,7 +486,7 @@ export interface ChatLinkClickDetail {
   messageId: string;
   message: ChatMessage;
   partId?: string;
-  partType?: MessagePart['type'];
+  partType?: MessagePart["type"];
   originalEvent: MouseEvent;
 }
 
@@ -510,7 +524,7 @@ export interface ChatConfig {
    * - `'spinner'` — rotating spinner
    * - `'none'` — no indicator
    */
-  pendingIndicator?: 'dots' | 'spinner' | 'none';
+  pendingIndicator?: "dots" | "spinner" | "none";
   /**
    * Delay (ms) before the pending indicator appears. Prevents flickering for
    * near-instant responses. Default: 200.
@@ -555,14 +569,14 @@ export interface ChatConfig {
 }
 
 export const DEFAULT_CONFIG: Required<
-  Omit<ChatConfig, 'labels' | 'allowedLinkProtocols' | 'highlightJs'>
+  Omit<ChatConfig, "labels" | "allowedLinkProtocols" | "highlightJs">
 > = {
   streamingSpeed: 3,
-  selfAvatar: '',
-  peerAvatar: '',
-  assistantAvatar: '',
-  locale: 'en',
-  pendingIndicator: 'dots',
+  selfAvatar: "",
+  peerAvatar: "",
+  assistantAvatar: "",
+  locale: "en",
+  pendingIndicator: "dots",
   pendingDelay: 200,
 };
 
@@ -572,40 +586,69 @@ export const DEFAULT_CONFIG: Required<
  */
 export function getMessageText(message: ChatMessage): string {
   return (message.parts ?? [])
-    .filter((p): p is TextPart => p.type === 'text')
+    .filter((p): p is TextPart => p.type === "text")
     .map((p) => p.text)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 let _partSeq = 0;
 /** Monotonic, collision-resistant part id (`part-<n>`). */
-export function nextPartId(prefix = 'part'): string {
+export function nextPartId(prefix = "part"): string {
   return `${prefix}-${++_partSeq}`;
 }
 
 /** Options shared by the part factories. */
-export type PartFactoryOptions = Pick<PartBase, 'id' | 'status' | 'metadata'>;
+export type PartFactoryOptions = Pick<PartBase, "id" | "status" | "metadata">;
 
 /** Optional display and lifecycle fields accepted by {@link todoPart}. */
 export type TodoPartOptions = Partial<PartFactoryOptions> &
-  Partial<Pick<TodoPart, 'title' | 'revision' | 'defaultCollapsed' | 'interactive'>>;
+  Partial<
+    Pick<TodoPart, "title" | "revision" | "defaultCollapsed" | "interactive">
+  >;
 
 /** Build a {@link TextPart}. Generates an `id` when one is not supplied. */
-export function textPart(text: string, opts: Partial<PartFactoryOptions> = {}): TextPart {
-  return { type: 'text', id: opts.id ?? nextPartId('text'), text, ...stripId(opts) };
+export function textPart(
+  text: string,
+  opts: Partial<PartFactoryOptions> = {},
+): TextPart {
+  return {
+    type: "text",
+    id: opts.id ?? nextPartId("text"),
+    text,
+    ...stripId(opts),
+  };
 }
 
 /** Build a {@link ReasoningPart}. Generates an `id` when one is not supplied. */
-export function reasoningPart(text: string, opts: Partial<PartFactoryOptions> = {}): ReasoningPart {
-  return { type: 'reasoning', id: opts.id ?? nextPartId('reasoning'), text, ...stripId(opts) };
+export function reasoningPart(
+  text: string,
+  opts: Partial<PartFactoryOptions> = {},
+): ReasoningPart {
+  return {
+    type: "reasoning",
+    id: opts.id ?? nextPartId("reasoning"),
+    text,
+    ...stripId(opts),
+  };
 }
 
 /** Build a {@link TodoPart}. Generates an `id` and starts at revision `0`. */
-export function todoPart(items: TodoItem[], opts: TodoPartOptions = {}): TodoPart {
-  const { id, title, revision = 0, defaultCollapsed, interactive, status, metadata } = opts;
+export function todoPart(
+  items: TodoItem[],
+  opts: TodoPartOptions = {},
+): TodoPart {
+  const {
+    id,
+    title,
+    revision = 0,
+    defaultCollapsed,
+    interactive,
+    status,
+    metadata,
+  } = opts;
   return {
-    type: 'todo',
-    id: id ?? nextPartId('todo'),
+    type: "todo",
+    id: id ?? nextPartId("todo"),
     items,
     revision,
     title,
@@ -616,7 +659,9 @@ export function todoPart(items: TodoItem[], opts: TodoPartOptions = {}): TodoPar
   };
 }
 
-function stripId(opts: Partial<PartFactoryOptions>): Omit<Partial<PartFactoryOptions>, 'id'> {
+function stripId(
+  opts: Partial<PartFactoryOptions>,
+): Omit<Partial<PartFactoryOptions>, "id"> {
   const { id: _ignored, ...rest } = opts;
   return rest;
 }

@@ -1,7 +1,7 @@
-import { md, renderMarkdownLight } from '../src/renderers/markdown-renderer.js';
+import { md, renderMarkdownLight } from "../src/renderers/markdown-renderer.js";
 
 interface BenchmarkScenario {
-  kind: 'plain' | 'markdown';
+  kind: "plain" | "markdown";
   sizeKiB: 2 | 10 | 50;
   updatesPerSecond: 15 | 30 | 60;
 }
@@ -15,8 +15,8 @@ interface BenchmarkResult extends BenchmarkScenario {
 }
 
 interface ValidationComparison {
-  sizeKiB: BenchmarkScenario['sizeKiB'];
-  updatesPerSecond: BenchmarkScenario['updatesPerSecond'];
+  sizeKiB: BenchmarkScenario["sizeKiB"];
+  updatesPerSecond: BenchmarkScenario["updatesPerSecond"];
   legacyMedianMs: number;
   secureMedianMs: number;
   overheadPct: number;
@@ -27,24 +27,27 @@ const MEASURED_RUNS = 7;
 const FRAME_BUDGET_MS = 1000 / 60;
 
 const PLAIN_BLOCK =
-  'Streaming chat content should remain responsive while tokens are appended to the current message. ';
+  "Streaming chat content should remain responsive while tokens are appended to the current message. ";
 const MARKDOWN_BLOCK = [
-  '## Streaming response',
-  '',
-  '- Parse **Markdown** incrementally',
-  '- Keep [safe links](https://example.test/docs) interactive',
-  '- Preserve `inline code` and lists',
-  '',
-  '```ts',
-  'const next = previous + token;',
-  '```',
-  '',
-].join('\n');
+  "## Streaming response",
+  "",
+  "- Parse **Markdown** incrementally",
+  "- Keep [safe links](https://example.test/docs) interactive",
+  "- Preserve `inline code` and lists",
+  "",
+  "```ts",
+  "const next = previous + token;",
+  "```",
+  "",
+].join("\n");
 
-function contentOfSize(kind: BenchmarkScenario['kind'], sizeKiB: number): string {
+function contentOfSize(
+  kind: BenchmarkScenario["kind"],
+  sizeKiB: number,
+): string {
   const targetBytes = sizeKiB * 1024;
-  const block = kind === 'plain' ? PLAIN_BLOCK : MARKDOWN_BLOCK;
-  let value = '';
+  const block = kind === "plain" ? PLAIN_BLOCK : MARKDOWN_BLOCK;
+  let value = "";
 
   // Fixtures are ASCII-only, so string length and UTF-8 byte length match.
   while (value.length < targetBytes) value += block;
@@ -53,7 +56,9 @@ function contentOfSize(kind: BenchmarkScenario['kind'], sizeKiB: number): string
 
 function percentile(values: readonly number[], fraction: number): number {
   const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * fraction) - 1)];
+  return sorted[
+    Math.min(sorted.length - 1, Math.ceil(sorted.length * fraction) - 1)
+  ];
 }
 
 function renderBatch(content: string, updates: number): number[] {
@@ -84,7 +89,9 @@ function measureScenario(scenario: BenchmarkScenario): BenchmarkResult {
     batchTimings.push(timings.reduce((total, value) => total + value, 0));
   }
 
-  const withinFrame = renderTimings.filter((value) => value <= FRAME_BUDGET_MS).length;
+  const withinFrame = renderTimings.filter(
+    (value) => value <= FRAME_BUDGET_MS,
+  ).length;
   return {
     ...scenario,
     bytes: content.length,
@@ -95,7 +102,9 @@ function measureScenario(scenario: BenchmarkScenario): BenchmarkResult {
   };
 }
 
-function measureValidationComparison(scenario: BenchmarkScenario): ValidationComparison {
+function measureValidationComparison(
+  scenario: BenchmarkScenario,
+): ValidationComparison {
   const content = contentOfSize(scenario.kind, scenario.sizeKiB);
   const secureValidator = md.validateLink;
   const legacyValidator = () => true;
@@ -103,7 +112,10 @@ function measureValidationComparison(scenario: BenchmarkScenario): ValidationCom
   const legacySamples: number[] = [];
 
   const batchTotal = () =>
-    renderBatch(content, scenario.updatesPerSecond).reduce((total, value) => total + value, 0);
+    renderBatch(content, scenario.updatesPerSecond).reduce(
+      (total, value) => total + value,
+      0,
+    );
 
   try {
     for (let run = 0; run < WARMUP_RUNS; run += 1) {
@@ -117,11 +129,13 @@ function measureValidationComparison(scenario: BenchmarkScenario): ValidationCom
     // implementation and the legacy `validateLink = () => true` baseline.
     for (let run = 0; run < MEASURED_RUNS; run += 1) {
       const order =
-        run % 2 === 0 ? (['legacy', 'secure'] as const) : (['secure', 'legacy'] as const);
+        run % 2 === 0
+          ? (["legacy", "secure"] as const)
+          : (["secure", "legacy"] as const);
 
       for (const mode of order) {
-        md.validateLink = mode === 'secure' ? secureValidator : legacyValidator;
-        (mode === 'secure' ? secureSamples : legacySamples).push(batchTotal());
+        md.validateLink = mode === "secure" ? secureValidator : legacyValidator;
+        (mode === "secure" ? secureSamples : legacySamples).push(batchTotal());
       }
     }
   } finally {
@@ -140,7 +154,7 @@ function measureValidationComparison(scenario: BenchmarkScenario): ValidationCom
 }
 
 const scenarios: BenchmarkScenario[] = [];
-for (const kind of ['plain', 'markdown'] as const) {
+for (const kind of ["plain", "markdown"] as const) {
   for (const sizeKiB of [2, 10, 50] as const) {
     for (const updatesPerSecond of [15, 30, 60] as const) {
       scenarios.push({ kind, sizeKiB, updatesPerSecond });
@@ -150,7 +164,11 @@ for (const kind of ['plain', 'markdown'] as const) {
 
 const results = scenarios.map(measureScenario);
 const validationComparisons = ([10, 50] as const).map((sizeKiB) =>
-  measureValidationComparison({ kind: 'markdown', sizeKiB, updatesPerSecond: 60 }),
+  measureValidationComparison({
+    kind: "markdown",
+    sizeKiB,
+    updatesPerSecond: 60,
+  }),
 );
 const runtimeProcess = (
   globalThis as typeof globalThis & {
@@ -159,29 +177,33 @@ const runtimeProcess = (
 ).process;
 
 if (runtimeProcess) {
-  console.log(`Node ${runtimeProcess.version} · ${runtimeProcess.platform}/${runtimeProcess.arch}`);
+  console.log(
+    `Node ${runtimeProcess.version} · ${runtimeProcess.platform}/${runtimeProcess.arch}`,
+  );
 }
 console.log(
-  'Scope: markdown-it + streaming renderer only; browser DOM patch/layout and terminal DOMPurify are excluded.',
+  "Scope: markdown-it + streaming renderer only; browser DOM patch/layout and terminal DOMPurify are excluded.",
 );
 console.table(
   results.map((result) => ({
     kind: result.kind,
     size: `${result.sizeKiB} KiB`,
-    'updates/s': result.updatesPerSecond,
-    'median batch (ms)': result.medianBatchMs.toFixed(2),
-    'p95 batch (ms)': result.p95BatchMs.toFixed(2),
-    'median render (ms)': result.medianRenderMs.toFixed(3),
-    '<=16.7ms': `${result.rendersWithinFramePct.toFixed(1)}%`,
+    "updates/s": result.updatesPerSecond,
+    "median batch (ms)": result.medianBatchMs.toFixed(2),
+    "p95 batch (ms)": result.p95BatchMs.toFixed(2),
+    "median render (ms)": result.medianRenderMs.toFixed(3),
+    "<=16.7ms": `${result.rendersWithinFramePct.toFixed(1)}%`,
   })),
 );
-console.log('URI validation overhead vs legacy unsafe validateLink = () => true:');
+console.log(
+  "URI validation overhead vs legacy unsafe validateLink = () => true:",
+);
 console.table(
   validationComparisons.map((comparison) => ({
     size: `${comparison.sizeKiB} KiB`,
-    'updates/s': comparison.updatesPerSecond,
-    'legacy batch (ms)': comparison.legacyMedianMs.toFixed(2),
-    'secure batch (ms)': comparison.secureMedianMs.toFixed(2),
-    overhead: `${comparison.overheadPct >= 0 ? '+' : ''}${comparison.overheadPct.toFixed(2)}%`,
+    "updates/s": comparison.updatesPerSecond,
+    "legacy batch (ms)": comparison.legacyMedianMs.toFixed(2),
+    "secure batch (ms)": comparison.secureMedianMs.toFixed(2),
+    overhead: `${comparison.overheadPct >= 0 ? "+" : ""}${comparison.overheadPct.toFixed(2)}%`,
   })),
 );

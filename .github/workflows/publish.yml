@@ -6,12 +6,12 @@ on:
   workflow_dispatch:
     inputs:
       publish_enabled:
-        description: 'Whether to publish to npm'
+        description: "Whether to publish to npm"
         required: false
         default: false
         type: boolean
       publish-version:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: false
         default: none
         type: choice
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
       - run: npm ci
 
@@ -61,11 +61,11 @@ jobs:
     needs: gate
     uses: bndynet/gh.flows/.github/workflows/npm.yml@main
     with:
-      publish-enabled: ${{ github.event_name == 'release' || inputs.publish_enabled }} 
+      publish-enabled: ${{ github.event_name == 'release' || inputs.publish_enabled }}
       publish-version: ${{ inputs['publish-version'] }}
-      publish-auth-method: 'oidc'
+      publish-auth-method: "oidc"
       publish-version-command: ${{ format('npm run version -- {0}', inputs['publish-version']) }}
-      publish-command: 'npm run publish:packages'
-      deploy-folder: 'apps/demo/demo-dist'
+      publish-command: "npm run publish:packages"
+      deploy-folder: "apps/demo/demo-dist"
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

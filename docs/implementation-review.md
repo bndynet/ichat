@@ -155,7 +155,7 @@ import {
   invalidateMarkdownCache,
   resolveAsyncBlocks,
   renderMarkdownInto,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
 ```
 
 ---
@@ -166,7 +166,7 @@ import {
 | ---------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
 | highlight.js removed from bundle         | Medium   | Consumers must pass `highlightJs` via config; fallback renders plain `<pre><code>` |
 | Markdown cache could serve stale content | Low      | Cache keyed by raw content string; `invalidateMarkdownCache()` available           |
-| Breaking changes in v3                   | High     | All completed in v3; removed APIs documented in this file                |
+| Breaking changes in v3                   | High     | All completed in v3; removed APIs documented in this file                          |
 
 ---
 

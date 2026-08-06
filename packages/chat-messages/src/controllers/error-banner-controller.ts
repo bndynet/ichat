@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 /**
  * Manages a transient error banner displayed at the top of the chat area.
@@ -13,10 +13,10 @@ export class ErrorBannerController implements ReactiveController {
     dispatchEvent(event: Event): boolean;
   };
 
-  private _text = '';
+  private _text = "";
   private _dismissTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(host: ErrorBannerController['_host']) {
+  constructor(host: ErrorBannerController["_host"]) {
     this._host = host;
     host.addController(this);
   }
@@ -39,7 +39,7 @@ export class ErrorBannerController implements ReactiveController {
       this._dismissTimer = setTimeout(() => this.dismiss(), duration);
     }
     this._host.dispatchEvent(
-      new CustomEvent('error', {
+      new CustomEvent("error", {
         detail: { message: text },
         bubbles: true,
         composed: true,
@@ -53,7 +53,7 @@ export class ErrorBannerController implements ReactiveController {
     clearTimeout(this._dismissTimer);
     this._dismissTimer = undefined;
     if (this._text) {
-      this._text = '';
+      this._text = "";
       this._host.requestUpdate();
     }
   }

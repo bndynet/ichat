@@ -1,10 +1,10 @@
-import type { BlockRenderer } from '@bndynet/ichat-messages';
+import type { BlockRenderer } from "@bndynet/ichat-messages";
 import {
   escapeHtml,
   renderCodeFallback,
   wrapWithCodeToggle,
   type RendererOptions,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";
 
 interface KpiData {
   label: string;
@@ -15,15 +15,15 @@ interface KpiData {
 
 /** Builds the inner HTML for one KPI item using `.chat-kpi` classes. */
 function buildKpiItemHtml(data: KpiData): string {
-  const label = escapeHtml(data.label ?? '');
-  const value = escapeHtml(data.value ?? '');
+  const label = escapeHtml(data.label ?? "");
+  const value = escapeHtml(data.value ?? "");
 
-  let trendHtml = '';
+  let trendHtml = "";
   if (data.trend !== undefined && data.trend !== null) {
-    const unit = data.unit ?? '%';
+    const unit = data.unit ?? "%";
     const isDown = data.trend < 0;
-    const arrow = isDown ? '▼' : '▲';
-    const cls = isDown ? 'chat-kpi__trend--down' : 'chat-kpi__trend--up';
+    const arrow = isDown ? "▼" : "▲";
+    const cls = isDown ? "chat-kpi__trend--down" : "chat-kpi__trend--up";
     trendHtml = `<span class="chat-kpi__trend ${cls}">${arrow} ${escapeHtml(String(Math.abs(data.trend)))}${escapeHtml(unit)}</span>`;
   }
 
@@ -36,9 +36,11 @@ function renderKpi(code: string, opts: RendererOptions = {}): string {
   try {
     const data = JSON.parse(code) as KpiData;
     const html = `<div class="chat-kpi">${buildKpiItemHtml(data)}</div>`;
-    return opts.codeToggle !== false ? wrapWithCodeToggle('kpi', code, html) : html;
+    return opts.codeToggle !== false
+      ? wrapWithCodeToggle("kpi", code, html)
+      : html;
   } catch {
-    return renderCodeFallback('kpi', code);
+    return renderCodeFallback("kpi", code);
   }
 }
 
@@ -50,18 +52,22 @@ function renderKpi(code: string, opts: RendererOptions = {}): string {
  * @example
  * registry.register(createKpiRenderer({ codeToggle: false }))
  */
-export function createKpiRenderer(options: RendererOptions = {}): BlockRenderer {
+export function createKpiRenderer(
+  options: RendererOptions = {},
+): BlockRenderer {
   return {
-    name: 'kpi',
-    mode: 'trusted',
+    name: "kpi",
+    mode: "trusted",
     trusted: true,
-    test: (lang: string) => lang === 'kpi',
+    test: (lang: string) => lang === "kpi",
     render: (code: string, _lang: string) => renderKpi(code, options),
   };
 }
 
 /** Pre-built `BlockRenderer` with default options (code toggle enabled). */
-export const kpiRenderer: BlockRenderer = createKpiRenderer({ codeToggle: false });
+export const kpiRenderer: BlockRenderer = createKpiRenderer({
+  codeToggle: false,
+});
 
 // ── KPI group — horizontal strip ─────────────────────────────────────────────
 
@@ -69,20 +75,23 @@ function renderKpis(code: string, opts: RendererOptions = {}): string {
   try {
     const items = JSON.parse(code) as KpiData[];
     if (!Array.isArray(items) || items.length === 0) {
-      return renderCodeFallback('kpis', code);
+      return renderCodeFallback("kpis", code);
     }
 
     const inner = items
       .map((data, i) => {
-        const divider = i < items.length - 1 ? '<div class="chat-kpis__divider"></div>' : '';
+        const divider =
+          i < items.length - 1 ? '<div class="chat-kpis__divider"></div>' : "";
         return `<div class="chat-kpi">${buildKpiItemHtml(data)}</div>${divider}`;
       })
-      .join('');
+      .join("");
 
     const html = `<div class="chat-kpis">${inner}</div>`;
-    return opts.codeToggle !== false ? wrapWithCodeToggle('kpis', code, html) : html;
+    return opts.codeToggle !== false
+      ? wrapWithCodeToggle("kpis", code, html)
+      : html;
   } catch {
-    return renderCodeFallback('kpis', code);
+    return renderCodeFallback("kpis", code);
   }
 }
 
@@ -91,15 +100,19 @@ function renderKpis(code: string, opts: RendererOptions = {}): string {
  *
  * @param options.codeToggle  Show the "view source" toggle icon.  Default: `true`.
  */
-export function createKpisRenderer(options: RendererOptions = {}): BlockRenderer {
+export function createKpisRenderer(
+  options: RendererOptions = {},
+): BlockRenderer {
   return {
-    name: 'kpis',
-    mode: 'trusted',
+    name: "kpis",
+    mode: "trusted",
     trusted: true,
-    test: (lang: string) => lang === 'kpis',
+    test: (lang: string) => lang === "kpis",
     render: (code: string, _lang: string) => renderKpis(code, options),
   };
 }
 
 /** Pre-built `BlockRenderer` with default options (code toggle enabled). */
-export const kpisRenderer: BlockRenderer = createKpisRenderer({ codeToggle: false });
+export const kpisRenderer: BlockRenderer = createKpisRenderer({
+  codeToggle: false,
+});

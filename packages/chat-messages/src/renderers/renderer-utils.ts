@@ -6,7 +6,7 @@
  * `@bndynet/ichat-renderers`, `@bndynet/ichat-renderer-chart`, and
  * `@bndynet/ichat-renderer-mermaid` all share a single copy.
  */
-import { setVersionAttribute } from '../version.js';
+import { setVersionAttribute } from "../version.js";
 
 // ── SVG icon strings (inline so renderer packages don't need their own icons module) ──
 
@@ -18,7 +18,11 @@ interface RendererIconOptions {
 
 function strokeIcon(
   paths: string,
-  { size = 13, strokeWidth = 2.2, viewBox = '0 0 24 24' }: RendererIconOptions = {},
+  {
+    size = 13,
+    strokeWidth = 2.2,
+    viewBox = "0 0 24 24",
+  }: RendererIconOptions = {},
 ): string {
   return (
     `<svg width="${size}" height="${size}" viewBox="${viewBox}" fill="none" ` +
@@ -43,11 +47,11 @@ const rendererIcons = {
 /** Escapes HTML special characters to prevent XSS when inserting raw strings into HTML attributes or text nodes. */
 export function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 // ── Shared renderer options ───────────────────────────────────────────────────
@@ -68,7 +72,7 @@ export interface RendererOptions {
 // ── <i-chat-code-toggle> custom element ──────────────────────────────────────
 
 /** Light-DOM holder for fence source (attributes cannot hold long / multiline code reliably). */
-export const CHAT_TOGGLE_SOURCE_CLASS = 'i-chat-toggle__src';
+export const CHAT_TOGGLE_SOURCE_CLASS = "i-chat-toggle__src";
 
 // Theme `--chat-*`: `chat-host-tokens.scss` is `@use`d into chat-messages / chat-message / chat-reasoning styles.
 
@@ -149,7 +153,7 @@ const TOGGLE_STYLES = `
 // `wrapWithCodeToggle` and `renderCodeFallback` produce HTML strings that
 // reference the tag name — they work in all environments.
 
-if (typeof HTMLElement !== 'undefined') {
+if (typeof HTMLElement !== "undefined") {
   class ChatCodeToggle extends HTMLElement {
     private _shadowCodeEl: HTMLElement | null = null;
     private _srcObserver: MutationObserver | null = null;
@@ -170,44 +174,44 @@ if (typeof HTMLElement !== 'undefined') {
     }
 
     private _initShadow(): void {
-      const shadow = this.attachShadow({ mode: 'open' });
+      const shadow = this.attachShadow({ mode: "open" });
 
       // ── Style ──
-      const styleEl = document.createElement('style');
+      const styleEl = document.createElement("style");
       styleEl.textContent = TOGGLE_STYLES;
 
-      const renderedView = document.createElement('div');
-      renderedView.className = 'rendered-view';
-      renderedView.appendChild(document.createElement('slot'));
+      const renderedView = document.createElement("div");
+      renderedView.className = "rendered-view";
+      renderedView.appendChild(document.createElement("slot"));
 
-      const codeView = document.createElement('pre');
-      codeView.className = 'code-view chat-code-fallback';
-      const codeEl = document.createElement('code');
+      const codeView = document.createElement("pre");
+      codeView.className = "code-view chat-code-fallback";
+      const codeEl = document.createElement("code");
       codeView.appendChild(codeEl);
       this._shadowCodeEl = codeEl;
 
-      const btn = document.createElement('button');
-      btn.className = 'toggle-btn';
-      btn.type = 'button';
-      btn.title = 'View source';
-      btn.setAttribute('aria-label', 'View source');
+      const btn = document.createElement("button");
+      btn.className = "toggle-btn";
+      btn.type = "button";
+      btn.title = "View source";
+      btn.setAttribute("aria-label", "View source");
       btn.innerHTML = rendererIcons.code;
 
-      btn.addEventListener('click', () => {
-        const isCode = this.getAttribute('data-view') === 'code';
+      btn.addEventListener("click", () => {
+        const isCode = this.getAttribute("data-view") === "code";
         if (isCode) {
-          codeView.style.height = '';
-          this.removeAttribute('data-view');
-          btn.title = 'View source';
-          btn.setAttribute('aria-label', 'View source');
+          codeView.style.height = "";
+          this.removeAttribute("data-view");
+          btn.title = "View source";
+          btn.setAttribute("aria-label", "View source");
           btn.innerHTML = rendererIcons.code;
         } else {
           // Snapshot the rendered height before hiding it, so the code panel
           // occupies exactly the same space — no layout jump on toggle.
-          codeView.style.height = renderedView.offsetHeight + 'px';
-          this.setAttribute('data-view', 'code');
-          btn.title = 'View rendered';
-          btn.setAttribute('aria-label', 'View rendered');
+          codeView.style.height = renderedView.offsetHeight + "px";
+          this.setAttribute("data-view", "code");
+          btn.title = "View rendered";
+          btn.setAttribute("aria-label", "View rendered");
           btn.innerHTML = rendererIcons.eye;
         }
       });
@@ -222,8 +226,8 @@ if (typeof HTMLElement !== 'undefined') {
     private _syncCodeFromLightDom(): void {
       const code =
         this.querySelector(`pre.${CHAT_TOGGLE_SOURCE_CLASS}`)?.textContent ??
-        this.getAttribute('data-code') ??
-        '';
+        this.getAttribute("data-code") ??
+        "";
       if (this._shadowCodeEl) {
         this._shadowCodeEl.textContent = code;
       }
@@ -231,7 +235,7 @@ if (typeof HTMLElement !== 'undefined') {
 
     /** Keep shadow code view in sync when morphdom patches the light-DOM `<pre>` (streaming). */
     private _ensureSrcObserver(): void {
-      if (this._srcObserver || typeof MutationObserver === 'undefined') return;
+      if (this._srcObserver || typeof MutationObserver === "undefined") return;
       this._srcObserver = new MutationObserver(() => {
         if (this._mutationFlush) return;
         this._mutationFlush = true;
@@ -240,12 +244,16 @@ if (typeof HTMLElement !== 'undefined') {
           this._syncCodeFromLightDom();
         });
       });
-      this._srcObserver.observe(this, { childList: true, subtree: true, characterData: true });
+      this._srcObserver.observe(this, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
     }
   }
 
-  if (!customElements.get('i-chat-code-toggle')) {
-    customElements.define('i-chat-code-toggle', ChatCodeToggle);
+  if (!customElements.get("i-chat-code-toggle")) {
+    customElements.define("i-chat-code-toggle", ChatCodeToggle);
   }
 } // typeof HTMLElement !== 'undefined'
 
@@ -256,7 +264,11 @@ if (typeof HTMLElement !== 'undefined') {
  * The element overlays a small icon that lets the user switch between the rich
  * rendered view and the raw source code.
  */
-export function wrapWithCodeToggle(lang: string, code: string, renderedHtml: string): string {
+export function wrapWithCodeToggle(
+  lang: string,
+  code: string,
+  renderedHtml: string,
+): string {
   // Do not put `code` in a `data-code` attribute — long / multiline values truncate in practice.
   return (
     `<i-chat-code-toggle data-lang="${escapeHtml(lang)}">` +
@@ -279,30 +291,30 @@ export function renderCodeFallback(_lang: string, code: string): string {
   const escaped = escapeHtml(code);
 
   const preStyle = [
-    'position:relative',
-    'max-height:200px',
-    'overflow-y:auto',
-    'margin:0',
-    'padding:var(--chat-spacing-xs) var(--chat-spacing-sm)',
-    'border-radius:var(--chat-code-panel-radius,var(--chat-panel-radius,var(--chat-radius-sm)))',
-    'background:var(--chat-code-bg)',
-    'border:1px solid var(--chat-code-panel-border,var(--chat-panel-border,color-mix(in srgb,var(--chat-border) 70%,var(--chat-surface) 30%)))',
-    'font-family:var(--chat-font-mono)',
-    'font-size:var(--chat-font-size-sm)',
-    'line-height:1.6',
-    'tab-size:2',
-    'white-space:pre',
-    'word-break:break-all',
-    'box-shadow:var(--chat-code-panel-shadow,var(--chat-panel-shadow,var(--chat-shadow-sm)))',
-  ].join(';');
+    "position:relative",
+    "max-height:200px",
+    "overflow-y:auto",
+    "margin:0",
+    "padding:var(--chat-spacing-xs) var(--chat-spacing-sm)",
+    "border-radius:var(--chat-code-panel-radius,var(--chat-panel-radius,var(--chat-radius-sm)))",
+    "background:var(--chat-code-bg)",
+    "border:1px solid var(--chat-code-panel-border,var(--chat-panel-border,color-mix(in srgb,var(--chat-border) 70%,var(--chat-surface) 30%)))",
+    "font-family:var(--chat-font-mono)",
+    "font-size:var(--chat-font-size-sm)",
+    "line-height:1.6",
+    "tab-size:2",
+    "white-space:pre",
+    "word-break:break-all",
+    "box-shadow:var(--chat-code-panel-shadow,var(--chat-panel-shadow,var(--chat-shadow-sm)))",
+  ].join(";");
 
   const codeStyle = [
-    'color:var(--chat-code-text)',
-    'background:transparent',
-    'padding:0',
-    'font-size:inherit',
-    'font-family:inherit',
-  ].join(';');
+    "color:var(--chat-code-text)",
+    "background:transparent",
+    "padding:0",
+    "font-size:inherit",
+    "font-family:inherit",
+  ].join(";");
 
   return `<pre class="chat-code-fallback" style="${preStyle}"><code style="${codeStyle}">${escaped}</code></pre>`;
 }

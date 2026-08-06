@@ -1,43 +1,45 @@
-import { LitElement, html, unsafeCSS, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { setVersionAttribute } from '../version.js';
-import type { MessagePart, ToolCallPart, ToolCallState } from '../types.js';
-import type { ToolCallLabels } from '../i18n.js';
-import { CHAT_LABELS_EN } from '../i18n.js';
-import { renderMarkdown } from '../renderers/markdown-renderer.js';
-import { isAllowedLinkHref } from '../link-protocols.js';
-import { chatIcons } from '../icons.js';
-import styles from '../styles/chat-tool-call.scss';
-import { injectPluginCss } from '../renderers/plugin-styles.js';
+import { LitElement, html, unsafeCSS, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { setVersionAttribute } from "../version.js";
+import type { MessagePart, ToolCallPart, ToolCallState } from "../types.js";
+import type { ToolCallLabels } from "../i18n.js";
+import { CHAT_LABELS_EN } from "../i18n.js";
+import { renderMarkdown } from "../renderers/markdown-renderer.js";
+import { isAllowedLinkHref } from "../link-protocols.js";
+import { chatIcons } from "../icons.js";
+import styles from "../styles/chat-tool-call.scss";
+import { injectPluginCss } from "../renderers/plugin-styles.js";
 
 /** Map the tool-call state to a coarse visual status used for theming. */
-function statusOf(state: ToolCallState): 'pending' | 'running' | 'success' | 'error' {
+function statusOf(
+  state: ToolCallState,
+): "pending" | "running" | "success" | "error" {
   switch (state) {
-    case 'output-available':
-      return 'success';
-    case 'output-error':
-      return 'error';
-    case 'executing':
-    case 'input-streaming':
-      return 'running';
-    case 'input-available':
+    case "output-available":
+      return "success";
+    case "output-error":
+      return "error";
+    case "executing":
+    case "input-streaming":
+      return "running";
+    case "input-available":
     default:
-      return 'pending';
+      return "pending";
   }
 }
 
 function stateLabel(state: ToolCallState, labels: ToolCallLabels): string {
   switch (state) {
-    case 'input-streaming':
+    case "input-streaming":
       return labels.preparing;
-    case 'input-available':
+    case "input-available":
       return labels.ready;
-    case 'executing':
+    case "executing":
       return labels.running;
-    case 'output-available':
+    case "output-available":
       return labels.success;
-    case 'output-error':
+    case "output-error":
       return labels.error;
     default:
       return state;
@@ -45,8 +47,8 @@ function stateLabel(state: ToolCallState, labels: ToolCallLabels): string {
 }
 
 function pretty(value: unknown): string {
-  if (value == null) return '';
-  if (typeof value === 'string') return value;
+  if (value == null) return "";
+  if (typeof value === "string") return value;
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -67,7 +69,7 @@ function formatDuration(ms: number): string {
  *
  * @fires part-action - Unified action event (`kind: 'tool-call'`).
  */
-@customElement('i-chat-tool-call')
+@customElement("i-chat-tool-call")
 export class ChatToolCall extends LitElement {
   static styles = unsafeCSS(styles);
 
@@ -92,45 +94,66 @@ export class ChatToolCall extends LitElement {
   }
 
   private _linkHref(rawHref: string): string | typeof nothing {
-    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols) ? rawHref : nothing;
+    return isAllowedLinkHref(rawHref, this.allowedLinkProtocols)
+      ? rawHref
+      : nothing;
   }
 
-  private _emit(action: 'approve' | 'reject'): void {
+  private _emit(action: "approve" | "reject"): void {
     this.dispatchEvent(
-      new CustomEvent('part-action', {
-        detail: { kind: 'tool-call', action, toolCallId: this.data?.toolCallId, part: this.data },
+      new CustomEvent("part-action", {
+        detail: {
+          kind: "tool-call",
+          action,
+          toolCallId: this.data?.toolCallId,
+          part: this.data,
+        },
         bubbles: true,
         composed: true,
       }),
     );
   }
 
-  private _renderIcon(status: 'pending' | 'running' | 'success' | 'error') {
-    if (status === 'running') {
-      return html`<span class="tc__icon tc__icon--running">${chatIcons.spinner({ className: 'spin' })}</span>`;
+  private _renderIcon(status: "pending" | "running" | "success" | "error") {
+    if (status === "running") {
+      return html`<span class="tc__icon tc__icon--running"
+        >${chatIcons.spinner({ className: "spin" })}</span
+      >`;
     }
-    if (status === 'success') {
-      return html`<span class="tc__icon tc__icon--success">${chatIcons.check()}</span>`;
+    if (status === "success") {
+      return html`<span class="tc__icon tc__icon--success"
+        >${chatIcons.check()}</span
+      >`;
     }
-    if (status === 'error') {
-      return html`<span class="tc__icon tc__icon--error">${chatIcons.x()}</span>`;
+    if (status === "error") {
+      return html`<span class="tc__icon tc__icon--error"
+        >${chatIcons.x()}</span
+      >`;
     }
-    return html`<span class="tc__icon tc__icon--pending">${chatIcons.circle()}</span>`;
+    return html`<span class="tc__icon tc__icon--pending"
+      >${chatIcons.circle()}</span
+    >`;
   }
 
   private _renderResultPart(part: MessagePart) {
-    if (part.type === 'text') {
-      return html`<div>${unsafeHTML(
-        renderMarkdown(part.text, {
-          allowedLinkProtocols: this.allowedLinkProtocols,
-        }),
-      )}</div>`;
+    if (part.type === "text") {
+      return html`<div>
+        ${unsafeHTML(
+          renderMarkdown(part.text, {
+            allowedLinkProtocols: this.allowedLinkProtocols,
+          }),
+        )}
+      </div>`;
     }
-    if (part.type === 'file' && part.mediaType.startsWith('image/')) {
-      const src = part.url ?? (part.data ? `data:${part.mediaType};base64,${part.data}` : '');
-      return src ? html`<img src=${src} alt=${part.name ?? 'result image'} />` : nothing;
+    if (part.type === "file" && part.mediaType.startsWith("image/")) {
+      const src =
+        part.url ??
+        (part.data ? `data:${part.mediaType};base64,${part.data}` : "");
+      return src
+        ? html`<img src=${src} alt=${part.name ?? "result image"} />`
+        : nothing;
     }
-    if (part.type === 'source') {
+    if (part.type === "source") {
       return html`<a
         href=${this._linkHref(part.url)}
         target="_blank"
@@ -138,7 +161,8 @@ export class ChatToolCall extends LitElement {
         >${part.title ?? part.url}</a
       >`;
     }
-    return html`<pre class="tc__code">${pretty((part as { data?: unknown }).data ?? part)}</pre>`;
+    return html`<pre class="tc__code">
+${pretty((part as { data?: unknown }).data ?? part)}</pre>`;
   }
 
   render() {
@@ -148,14 +172,23 @@ export class ChatToolCall extends LitElement {
     const labels = this.labels ?? CHAT_LABELS_EN.toolCall;
     const status = statusOf(tc.state);
     const name = tc.title ?? tc.toolName;
-    const open = status === 'running' || tc.approval === 'required';
-    const hasArgs = tc.args !== undefined && tc.args !== null && pretty(tc.args).trim() !== '';
+    const open = status === "running" || tc.approval === "required";
+    const hasArgs =
+      tc.args !== undefined &&
+      tc.args !== null &&
+      pretty(tc.args).trim() !== "";
     const hasResult =
       (tc.resultParts && tc.resultParts.length > 0) ||
-      (tc.result !== undefined && tc.result !== null && pretty(tc.result).trim() !== '');
+      (tc.result !== undefined &&
+        tc.result !== null &&
+        pretty(tc.result).trim() !== "");
 
     return html`
-      <details class="tc tc--${status}" ?open=${open} aria-expanded=${open ? 'true' : 'false'}>
+      <details
+        class="tc tc--${status}"
+        ?open=${open}
+        aria-expanded=${open ? "true" : "false"}
+      >
         <span
           class="tc__sr-announce"
           aria-live="polite"
@@ -167,7 +200,7 @@ export class ChatToolCall extends LitElement {
           ${this._renderIcon(status)}
           <span class="tc__name">${name}</span>
           <span class="tc__state">
-            ${stateLabel(tc.state, labels)}${tc.durationMs != null ? ` · ${formatDuration(tc.durationMs)}` : ''}
+            ${stateLabel(tc.state, labels)}${tc.durationMs != null ? ` · ${formatDuration(tc.durationMs)}` : ""}
           </span>
           <span class="tc__chevron">
             ${chatIcons.chevronDown({ size: 14, strokeWidth: 2.4 })}
@@ -177,45 +210,61 @@ export class ChatToolCall extends LitElement {
           ${
             hasArgs
               ? html`<div class="tc__section">${labels.argumentsSection}</div>
-                <pre class="tc__code">${pretty(tc.args)}</pre>`
+                  <pre class="tc__code">${pretty(tc.args)}</pre>`
               : nothing
           }
           ${
             tc.error
               ? html`<div class="tc__section">${labels.errorSection}</div>
-                <div class="tc__error">${tc.error}</div>`
+                  <div class="tc__error">${tc.error}</div>`
               : nothing
           }
           ${
             hasResult
               ? html`<div class="tc__section">${labels.resultSection}</div>
-                ${
-                  tc.resultParts && tc.resultParts.length > 0
-                    ? html`<div class="tc__result-parts">
-                      ${tc.resultParts.map((p) => this._renderResultPart(p))}
-                    </div>`
-                    : html`<pre class="tc__code">${pretty(tc.result)}</pre>`
-                }`
+                  ${
+                    tc.resultParts && tc.resultParts.length > 0
+                      ? html`<div class="tc__result-parts">
+                          ${tc.resultParts.map((p) => this._renderResultPart(p))}
+                        </div>`
+                      : html`<pre class="tc__code">${pretty(tc.result)}</pre>`
+                  }`
               : nothing
           }
           ${
-            tc.approval === 'required'
+            tc.approval === "required"
               ? html`<div class="tc__approval">
-                <button class="tc__btn tc__btn--approve" aria-label=${labels.approve} @click=${() => this._emit('approve')}>
-                  ${labels.approve}
-                </button>
-                <button class="tc__btn" aria-label=${labels.reject} @click=${() => this._emit('reject')}>${labels.reject}</button>
-              </div>`
+                  <button
+                    class="tc__btn tc__btn--approve"
+                    aria-label=${labels.approve}
+                    @click=${() => this._emit("approve")}
+                  >
+                    ${labels.approve}
+                  </button>
+                  <button
+                    class="tc__btn"
+                    aria-label=${labels.reject}
+                    @click=${() => this._emit("reject")}
+                  >
+                    ${labels.reject}
+                  </button>
+                </div>`
               : nothing
           }
           ${
-            tc.approval === 'approved'
-              ? html`<div class="tc__approval-state">${chatIcons.check({ className: 'tc__approval-icon', size: 14 })} ${labels.approved}</div>`
+            tc.approval === "approved"
+              ? html`<div class="tc__approval-state">
+                  ${chatIcons.check({ className: "tc__approval-icon", size: 14 })}
+                  ${labels.approved}
+                </div>`
               : nothing
           }
           ${
-            tc.approval === 'rejected'
-              ? html`<div class="tc__approval-state">${chatIcons.x({ className: 'tc__approval-icon', size: 14 })} ${labels.rejected}</div>`
+            tc.approval === "rejected"
+              ? html`<div class="tc__approval-state">
+                  ${chatIcons.x({ className: "tc__approval-icon", size: 14 })}
+                  ${labels.rejected}
+                </div>`
               : nothing
           }
         </div>
@@ -226,6 +275,6 @@ export class ChatToolCall extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-tool-call': ChatToolCall;
+    "i-chat-tool-call": ChatToolCall;
   }
 }

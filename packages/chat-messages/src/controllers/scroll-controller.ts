@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 /**
  * Manages auto-scroll behaviour for a scrollable chat message list.
@@ -39,18 +39,29 @@ export class ScrollController implements ReactiveController {
    * actually changes.  This keeps the scroll-to-latest affordance (button
    * visibility) in sync without waiting for an unrelated render.
    */
-  private _applyState(updates: { autoScroll?: boolean; hasNewContent?: boolean }): void {
+  private _applyState(updates: {
+    autoScroll?: boolean;
+    hasNewContent?: boolean;
+  }): void {
     let changed = false;
-    if (updates.autoScroll !== undefined && updates.autoScroll !== this._autoScroll) {
+    if (
+      updates.autoScroll !== undefined &&
+      updates.autoScroll !== this._autoScroll
+    ) {
       this._autoScroll = updates.autoScroll;
       changed = true;
     }
-    if (updates.hasNewContent !== undefined && updates.hasNewContent !== this._hasNewContent) {
+    if (
+      updates.hasNewContent !== undefined &&
+      updates.hasNewContent !== this._hasNewContent
+    ) {
       this._hasNewContent = updates.hasNewContent;
       changed = true;
     }
     if (changed) {
-      (this._host as ReactiveControllerHost & { requestUpdate(): void }).requestUpdate();
+      (
+        this._host as ReactiveControllerHost & { requestUpdate(): void }
+      ).requestUpdate();
     }
   }
 
@@ -94,8 +105,11 @@ export class ScrollController implements ReactiveController {
   scrollToBottom(): void {
     const seq = ++this._scrollToBottomSeq;
     const apply = (): void => {
-      if (seq !== this._scrollToBottomSeq || !(this._host as any).isConnected) return;
-      const el = this._host.renderRoot?.querySelector<HTMLElement>(this._scrollSelector);
+      if (seq !== this._scrollToBottomSeq || !(this._host as any).isConnected)
+        return;
+      const el = this._host.renderRoot?.querySelector<HTMLElement>(
+        this._scrollSelector,
+      );
       if (el) el.scrollTop = el.scrollHeight;
     };
 
@@ -119,11 +133,17 @@ export class ScrollController implements ReactiveController {
   /** Handle scroll event from the scroll container. */
   handleScroll(): void {
     if (this._resizeScrollLock) return;
-    const el = this._host.renderRoot?.querySelector<HTMLElement>(this._scrollSelector);
+    const el = this._host.renderRoot?.querySelector<HTMLElement>(
+      this._scrollSelector,
+    );
     if (!el) return;
     const threshold = 60;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    this._applyState({ autoScroll: atBottom, hasNewContent: atBottom ? false : undefined });
+    const atBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    this._applyState({
+      autoScroll: atBottom,
+      hasNewContent: atBottom ? false : undefined,
+    });
   }
 
   /** Called when the "scroll to bottom" button is clicked. */
@@ -156,7 +176,7 @@ export class ScrollController implements ReactiveController {
   // ── Internal ────────────────────────────────────────────────────
 
   private _ensureResizeObserver(): void {
-    const inner = this._host.renderRoot?.querySelector('.chat-messages-inner');
+    const inner = this._host.renderRoot?.querySelector(".chat-messages-inner");
     if (inner && inner !== this._observedEl) {
       this._resizeObserver?.disconnect();
       this._resizeObserver = new ResizeObserver(() => {
@@ -165,7 +185,9 @@ export class ScrollController implements ReactiveController {
           // Sync scroll for instant response — ResizeObserver fires after layout,
           // so scrollHeight is already up-to-date.  The following scrollToBottom()
           // adds RAF multi-pass for late-arriving nested content (mermaid, forms).
-          const scrollEl = this._host.renderRoot?.querySelector<HTMLElement>(this._scrollSelector);
+          const scrollEl = this._host.renderRoot?.querySelector<HTMLElement>(
+            this._scrollSelector,
+          );
           if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
           this.scrollToBottom();
           clearTimeout(this._resizeDebounceTimer);

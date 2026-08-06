@@ -52,13 +52,13 @@ Events that originate on inner rows (e.g. `message-complete` on `<i-chat-message
 ```typescript
 const run = chat.createRunController({ onCancel: () => abortMyPipeline() });
 
-run.start([textPart('', { id: 'body', status: 'streaming' })]);
-const res = await fetch('/api/chat', { signal: run.signal });
+run.start([textPart("", { id: "body", status: "streaming" })]);
+const res = await fetch("/api/chat", { signal: run.signal });
 // … for each delta:
-run.appendText('body', delta);
+run.appendText("body", delta);
 // Flip the part out of `streaming` before the run ends so it gets the clean
 // terminal render (async fenced renderers only run on non-streaming parts).
-run.updatePart('body', { status: 'complete' });
+run.updatePart("body", { status: "complete" });
 run.complete();
 ```
 
@@ -102,7 +102,7 @@ Each method returns a `ChatMutationOutcome`:
 
 ```typescript
 interface ChatMutationOutcome {
-  changed: boolean;  // the mutation produced a new array (false = no-op)
+  changed: boolean; // the mutation produced a new array (false = no-op)
   accepted: boolean; // false only when a controlled host called preventDefault()
 }
 ```
@@ -116,9 +116,9 @@ In uncontrolled mode `accepted` is always `true` and the component writes `messa
 Putting it together for the quota case:
 
 ```js
-chat.messageMode = 'controlled';
-chat.addEventListener('messages-change', (e) => {
-  if (e.detail.reason === 'message:add' && !hasCredits()) {
+chat.messageMode = "controlled";
+chat.addEventListener("messages-change", (e) => {
+  if (e.detail.reason === "message:add" && !hasCredits()) {
     e.preventDefault();
     return;
   }
@@ -126,12 +126,12 @@ chat.addEventListener('messages-change', (e) => {
 });
 
 const run = chat.createRunController();
-if (!run.start([textPart('', { id: 'body', status: 'streaming' })]).accepted) {
-  showNotice('Out of credits');
+if (!run.start([textPart("", { id: "body", status: "streaming" })]).accepted) {
+  showNotice("Out of credits");
   return; // no placeholder was created and the run never left `idle`
 }
 
-const res = await fetch('/api/chat', { signal: run.signal });
+const res = await fetch("/api/chat", { signal: run.signal });
 // … stream into run.appendText('body', delta) …
 run.complete();
 ```
@@ -167,31 +167,36 @@ registerMarkdownPlugin({
 `<i-chat>` is generic over custom part types, enabling full type-checking and autocomplete for host-defined `x-*` extensions.
 
 ```typescript
-import type { Chat, CustomPartOf, PartOf, ExtendedChatMessage } from '@bndynet/ichat';
+import type {
+  Chat,
+  CustomPartOf,
+  PartOf,
+  ExtendedChatMessage,
+} from "@bndynet/ichat";
 
 // 1. Describe your custom part data as a **type alias**, not an interface.
 //    An interface has no implicit index signature, so it does not satisfy the
 //    `Record<`x-${string}`, unknown>` constraint that `Chat<TExtraParts>` imposes.
 type MyParts = {
-  'x-weather': { temp: number; humidity: number; unit: 'C' | 'F' };
-  'x-map': { lat: number; lng: number; zoom: number };
+  "x-weather": { temp: number; humidity: number; unit: "C" | "F" };
+  "x-map": { lat: number; lng: number; zoom: number };
 };
 
 // 2. Cast the element to Chat<YourParts>
-const chat = document.querySelector('i-chat') as Chat<MyParts>;
+const chat = document.querySelector("i-chat") as Chat<MyParts>;
 
 // 3. Custom parts are now fully typed and narrow on `part.type`
 chat.messages.forEach((msg) => {
   msg.parts.forEach((part) => {
-    if (part.type === 'x-weather') {
-      part.data.temp;    // ✅ number (autocompleted)
-      part.data.unit;    // ✅ 'C' | 'F'
+    if (part.type === "x-weather") {
+      part.data.temp; // ✅ number (autocompleted)
+      part.data.unit; // ✅ 'C' | 'F'
     }
-    if (part.type === 'x-map') {
-      part.data.lat;     // ✅ number
-      part.data.zoom;    // ✅ number
+    if (part.type === "x-map") {
+      part.data.lat; // ✅ number
+      part.data.zoom; // ✅ number
     }
-    if (part.type === 'x-unknown') {
+    if (part.type === "x-unknown") {
       // ❌ compile error — 'x-unknown' is not declared in MyParts
     }
   });
@@ -230,8 +235,8 @@ declare const typed: ExtendedChatMessage<MyParts>;
 const plain: ChatMessage = typed; // ✅ widening always works
 
 // PartOf example (works with plain ChatMessage too)
-type TextParts = PartOf<ChatMessage, 'text'>;      // TextPart
-type ToolParts = PartOf<ChatMessage, 'tool-call'>; // ToolCallPart
+type TextParts = PartOf<ChatMessage, "text">; // TextPart
+type ToolParts = PartOf<ChatMessage, "tool-call">; // ToolCallPart
 ```
 
 > **Note:** The generic parameter is purely a TypeScript-level feature — there is zero runtime cost. When `TExtraParts` is omitted (the default `{}`), all types resolve to the standard non-generic `ChatMessage` / `MessagePart` / `CustomPart`, fully backward-compatible.
@@ -241,22 +246,19 @@ type ToolParts = PartOf<ChatMessage, 'tool-call'>; // ToolCallPart
 `part-action` is the unified event for interactions that originate inside a rendered message part. `kind` names the part domain (`'form'`, `'todo'`, or `'tool-call'`), while `action` names the specific intent (`'submit'`, `'change-status'`, `'approve'`, `'reject'`).
 
 ```javascript
-chat.addEventListener('part-action', (event) => {
+chat.addEventListener("part-action", (event) => {
   const { kind, action, messageId, partId, part, payload } = event.detail;
-  if (kind === 'todo') {
-    const result = chat.tryUpdateTodoItem(
-      messageId,
-      partId,
-      payload.itemId,
-      { status: payload.status },
-    );
-    if (!result.ok) console.warn('Todo update ignored:', result.reason);
-  }
-  if (kind === 'tool-call' && action === 'approve') {
-    const result = chat.tryUpdateToolCall(messageId, partId, {
-      approval: 'approved',
+  if (kind === "todo") {
+    const result = chat.tryUpdateTodoItem(messageId, partId, payload.itemId, {
+      status: payload.status,
     });
-    if (!result.ok) console.warn('Tool update ignored:', result.reason);
+    if (!result.ok) console.warn("Todo update ignored:", result.reason);
+  }
+  if (kind === "tool-call" && action === "approve") {
+    const result = chat.tryUpdateToolCall(messageId, partId, {
+      approval: "approved",
+    });
+    if (!result.ok) console.warn("Tool update ignored:", result.reason);
   }
 });
 ```
@@ -270,12 +272,12 @@ Rendered message links emit a cancelable `link-click` event. By default, built-i
 ```javascript
 chat.config = {
   ...chat.config,
-  allowedLinkProtocols: ['https', 'mailto', 'myapp'],
+  allowedLinkProtocols: ["https", "mailto", "myapp"],
 };
 
-chat.addEventListener('link-click', (e) => {
+chat.addEventListener("link-click", (e) => {
   const { rawHref, protocol } = e.detail;
-  if (protocol === 'myapp:') {
+  if (protocol === "myapp:") {
     e.preventDefault();
     routeInsideApp(rawHref);
   }
@@ -287,12 +289,12 @@ chat.addEventListener('link-click', (e) => {
 By default, code blocks render as plain escaped `<pre><code>` without language-based highlighting. To enable highlighting, pass your own `highlight.js` instance via `config.highlightJs`. This keeps the bundle small — only the languages you register are included.
 
 ```typescript
-import hljs from 'highlight.js/lib/core';
-import typescript from 'highlight.js/lib/languages/typescript';
-import python from 'highlight.js/lib/languages/python';
+import hljs from "highlight.js/lib/core";
+import typescript from "highlight.js/lib/languages/typescript";
+import python from "highlight.js/lib/languages/python";
 
-hljs.registerLanguage('typescript', typescript);
-hljs.registerLanguage('python', python);
+hljs.registerLanguage("typescript", typescript);
+hljs.registerLanguage("python", python);
 
 chat.config = {
   ...chat.config,
@@ -308,15 +310,15 @@ Use `requestConfirmation(request)` when an AI or host action must pause for user
 
 ```javascript
 const result = await chat.requestConfirmation({
-  title: 'Delete this file?',
-  description: 'This will remove /tmp/cache.db.',
-  details: { path: '/tmp/cache.db', source: 'cleanup tool' },
-  confirmLabel: 'Delete',
-  variant: 'danger',
+  title: "Delete this file?",
+  description: "This will remove /tmp/cache.db.",
+  details: { path: "/tmp/cache.db", source: "cleanup tool" },
+  confirmLabel: "Delete",
+  variant: "danger",
 });
 
 if (result.confirmed) {
-  await deleteFile('/tmp/cache.db');
+  await deleteFile("/tmp/cache.db");
 }
 ```
 
@@ -361,10 +363,18 @@ When a composer confirmation is active, the confirmation panel temporarily repla
 ```html
 <i-chat id="chat" placeholder="Message…">
   <div slot="self-avatar">
-    <img src="user.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover" alt="" />
+    <img
+      src="user.png"
+      style="width:100%;height:100%;border-radius:50%;object-fit:cover"
+      alt=""
+    />
   </div>
   <div slot="assistant-avatar">
-    <div style="background:linear-gradient(135deg,#f093fb,#f5576c);width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;">AI</div>
+    <div
+      style="background:linear-gradient(135deg,#f093fb,#f5576c);width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;"
+    >
+      AI
+    </div>
   </div>
   <div slot="message-actions">
     <button type="button" data-action="copy">Copy</button>
@@ -392,13 +402,13 @@ Pass `avatar` on each `ChatMessage` when calling `addMessage` / assigning `messa
 Supported values: image URL, `data:image/…;base64,…`, raw base64 (defaults to PNG in the component), inline `<svg>…</svg>`, or plain text / emoji. Per-message inline SVG is sanitized before rendering; use a role-specific avatar slot when the application needs fully trusted custom DOM.
 
 ```javascript
-import { textPart } from '@bndynet/ichat';
+import { textPart } from "@bndynet/ichat";
 
 chat.addMessage({
-  id: 'u1',
-  role: 'self',
-  parts: [textPart('Hello')],
+  id: "u1",
+  role: "self",
+  parts: [textPart("Hello")],
   timestamp: Date.now(),
-  avatar: 'https://example.com/avatar.png',
+  avatar: "https://example.com/avatar.png",
 });
 ```

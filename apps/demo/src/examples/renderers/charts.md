@@ -3,11 +3,11 @@
 Import the renderer package before rendering a `chart` fence. It may be loaded from the application entry or lazily with the route.
 
 ```js
-import '@bndynet/ichat'
-import '@bndynet/ichat-renderer-chart' // Auto-registers the chart renderer
-import { textPart } from '@bndynet/ichat'
+import "@bndynet/ichat";
+import "@bndynet/ichat-renderer-chart"; // Auto-registers the chart renderer
+import { textPart } from "@bndynet/ichat";
 
-const chat = document.querySelector('i-chat-messages')
+const chat = document.querySelector("i-chat-messages");
 ```
 
 ## Send the page's chart definitions
@@ -17,68 +17,78 @@ The page streams the following seven `chart` fences. Each definition below match
 ```js
 const definitions = [
   {
-    type: 'bar',
+    type: "bar",
     data: {
-      categories: ['JS', 'Python', 'TS', 'Java', 'Rust', 'Go'],
-      series: [{ name: 'Popularity', data: [95, 88, 78, 65, 42, 38] }],
+      categories: ["JS", "Python", "TS", "Java", "Rust", "Go"],
+      series: [{ name: "Popularity", data: [95, 88, 78, 65, 42, 38] }],
     },
-    options: { title: 'Most Popular Languages 2025' },
+    options: { title: "Most Popular Languages 2025" },
   },
   {
-    type: 'bar',
+    type: "bar",
     data: {
-      categories: ['React', 'Vue', 'Angular', 'Svelte'],
-      series: [{ name: 'Stars (k)', data: [220, 207, 93, 77] }],
+      categories: ["React", "Vue", "Angular", "Svelte"],
+      series: [{ name: "Stars (k)", data: [220, 207, 93, 77] }],
     },
-    options: { title: 'Framework Stars', variant: 'horizontal' },
+    options: { title: "Framework Stars", variant: "horizontal" },
   },
   {
-    type: 'line',
+    type: "line",
     data: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      series: [{ name: 'Revenue', data: [3200, 4500, 3800, 5100, 4700, 6200] }],
+      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      series: [{ name: "Revenue", data: [3200, 4500, 3800, 5100, 4700, 6200] }],
     },
-    options: { title: 'Monthly Revenue 2025' },
+    options: { title: "Monthly Revenue 2025" },
   },
   {
-    type: 'area',
+    type: "area",
     data: {
-      categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      series: [{ name: 'Visitors', data: [820, 932, 901, 934, 1290, 1330, 1320] }],
+      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      series: [
+        { name: "Visitors", data: [820, 932, 901, 934, 1290, 1330, 1320] },
+      ],
     },
-    options: { title: 'Website Visitors' },
+    options: { title: "Website Visitors" },
   },
   {
-    type: 'pie',
+    type: "pie",
     data: [
-      { name: 'Chrome', value: 65 }, { name: 'Safari', value: 18 },
-      { name: 'Firefox', value: 7 }, { name: 'Edge', value: 5 }, { name: 'Other', value: 5 },
+      { name: "Chrome", value: 65 },
+      { name: "Safari", value: 18 },
+      { name: "Firefox", value: 7 },
+      { name: "Edge", value: 5 },
+      { name: "Other", value: 5 },
     ],
-    options: { title: 'Browser Market Share' },
+    options: { title: "Browser Market Share" },
   },
   {
-    type: 'pie',
+    type: "pie",
     data: [
-      { name: 'Chrome', value: 65 }, { name: 'Safari', value: 18 },
-      { name: 'Firefox', value: 7 }, { name: 'Other', value: 10 },
+      { name: "Chrome", value: 65 },
+      { name: "Safari", value: 18 },
+      { name: "Firefox", value: 7 },
+      { name: "Other", value: 10 },
     ],
-    options: { title: 'Browser Share — Doughnut', variant: 'doughnut' },
+    options: { title: "Browser Share — Doughnut", variant: "doughnut" },
   },
   {
-    type: 'gauge',
-    data: { value: 72, max: 100, label: 'Score' },
-    options: { title: 'Server Response Score' },
+    type: "gauge",
+    data: { value: 72, max: 100, label: "Score" },
+    options: { title: "Server Response Score" },
   },
-]
+];
 
 const markdown = definitions
-  .map((definition) => `\`\`\`chart\n${JSON.stringify(definition, null, 2)}\n\`\`\``)
-  .join('\n\n')
+  .map(
+    (definition) =>
+      `\`\`\`chart\n${JSON.stringify(definition, null, 2)}\n\`\`\``,
+  )
+  .join("\n\n");
 
 chat.addMessage({
   id: crypto.randomUUID(),
-  role: 'assistant',
+  role: "assistant",
   timestamp: Date.now(),
   parts: [textPart(markdown)],
-})
+});
 ```

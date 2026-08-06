@@ -28,10 +28,10 @@ npm install @bndynet/ichat-input
 Use `busy` for the submission lock and `streaming` to select the Cancel button:
 
 ```js
-const input = document.querySelector('i-chat-input');
+const input = document.querySelector("i-chat-input");
 
-input.busy = true;       // send/voice are locked; textarea remains editable
-input.streaming = true;  // Cancel replaces Send
+input.busy = true; // send/voice are locked; textarea remains editable
+input.streaming = true; // Cancel replaces Send
 ```
 
 When `<i-chat-input>` is bundled inside `<i-chat>`, these properties are wired automatically.

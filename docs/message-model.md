@@ -52,20 +52,26 @@ Every part has a stable **`id`** (used for keyed rendering + targeted updates) a
 Import helpers so you don’t have to hand-write `id`s:
 
 ```javascript
-import { textPart, reasoningPart, todoPart, nextPartId, getMessageText } from '@bndynet/ichat';
+import {
+  textPart,
+  reasoningPart,
+  todoPart,
+  nextPartId,
+  getMessageText,
+} from "@bndynet/ichat";
 
 chat.addMessage({
-  id: 'a1',
-  role: 'assistant',
+  id: "a1",
+  role: "assistant",
   parts: [
-    reasoningPart('Let me work through this…'),
-    textPart('The answer is **42**.'),
+    reasoningPart("Let me work through this…"),
+    textPart("The answer is **42**."),
   ],
   timestamp: Date.now(),
 });
 
 // Plain-text view (copy / search / persistence) — joins all text parts:
-const plain = getMessageText(chat.messages.find((m) => m.id === 'a1'));
+const plain = getMessageText(chat.messages.find((m) => m.id === "a1"));
 ```
 
 - `textPart(text, opts?)` / `reasoningPart(text, opts?)` — `opts` accepts `{ id?, status?, metadata? }`; an `id` is generated when omitted.
@@ -90,17 +96,23 @@ Append and patch parts by id instead of rewriting the whole message:
 The same part collection and backend-event logic is exported as pure helpers for adapters and tests that manage `messages[]` outside the Web Component: `appendMessagePart()`, `findMessagePart()`, `patchMessagePart()`, `replaceMessagePart()`, `applyMessagePartUpdate()`, and `normalizeMessagePartUpdateEvent()`.
 
 ```javascript
-const id = 'a2';
-chat.addMessage({ id, role: 'assistant', parts: [], streaming: true, timestamp: Date.now() });
+const id = "a2";
+chat.addMessage({
+  id,
+  role: "assistant",
+  parts: [],
+  streaming: true,
+  timestamp: Date.now(),
+});
 
 // Stream a text part:
-chat.appendPart(id, textPart('', { id: 'body', status: 'streaming' }));
-let acc = '';
+chat.appendPart(id, textPart("", { id: "body", status: "streaming" }));
+let acc = "";
 for await (const chunk of stream) {
   acc += chunk;
-  chat.updatePart(id, 'body', { text: acc });
+  chat.updatePart(id, "body", { text: acc });
 }
-chat.updatePart(id, 'body', { status: 'complete' });
+chat.updatePart(id, "body", { status: "complete" });
 chat.updateMessage(id, { streaming: false });
 ```
 
@@ -122,10 +134,10 @@ format mirrors OpenAI Responses streaming events so logs and replay data stay
 self-describing.
 
 ```javascript
-source.addEventListener('message.part.updated', (event) => {
+source.addEventListener("message.part.updated", (event) => {
   const result = chat.tryApplyMessagePartUpdateEvent(event);
   if (!result.ok) {
-    console.warn('Part update ignored:', result.reason);
+    console.warn("Part update ignored:", result.reason);
   }
 });
 ```

@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 @mixin styles {
   .chat-progress {
@@ -20,16 +20,19 @@
 
     // Vertical connector line: from current indicator bottom to next indicator top
     &:not(:last-child)::after {
-      content: '';
+      content: "";
       position: absolute;
       inset-inline-start: calc(
-        var(--chat-progress-indicator-size, #{$progress-indicator-size}) / 2 - 0.5px
+        var(--chat-progress-indicator-size, #{$progress-indicator-size}) / 2 -
+          0.5px
       );
       top: calc(
         (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em +
           var(--chat-progress-indicator-size, #{$progress-indicator-size})
       );
-      bottom: calc((var(--chat-line-height, #{$line-height-base}) - 1) / -2 * 1em);
+      bottom: calc(
+        (var(--chat-line-height, #{$line-height-base}) - 1) / -2 * 1em
+      );
       width: 1px;
       background: var(--chat-progress-line, #{$color-border});
       border-radius: 1px;
@@ -51,7 +54,9 @@
     position: relative;
     z-index: 1;
     transition: all var(--chat-transition-normal, #{$transition-normal});
-    margin-top: calc((var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em);
+    margin-top: calc(
+      (var(--chat-line-height, #{$line-height-base}) - 1) / 2 * 1em
+    );
   }
 
   .chat-progress-content {
@@ -73,20 +78,37 @@
 
   .chat-progress-step--done {
     .chat-progress-indicator {
-      background: var(--chat-progress-done, var(--chat-success, #{$color-success}));
-      border-color: var(--chat-progress-done, var(--chat-success, #{$color-success}));
+      background: var(
+        --chat-progress-done,
+        var(--chat-success, #{$color-success})
+      );
+      border-color: var(
+        --chat-progress-done,
+        var(--chat-success, #{$color-success})
+      );
       color: var(--chat-surface, #{$color-surface});
     }
 
     &:not(:last-child)::after {
-      background: var(--chat-progress-done, var(--chat-success, #{$color-success}));
+      background: var(
+        --chat-progress-done,
+        var(--chat-success, #{$color-success})
+      );
     }
   }
 
   .chat-progress-step--active {
     .chat-progress-indicator {
-      border: 2px solid color-mix(in srgb, var(--chat-primary, #{$color-primary}) 20%, transparent);
-      border-top-color: var(--chat-progress-active, var(--chat-primary, #{$color-primary}));
+      border: 2px solid
+        color-mix(
+          in srgb,
+          var(--chat-primary, #{$color-primary}) 20%,
+          transparent
+        );
+      border-top-color: var(
+        --chat-progress-active,
+        var(--chat-primary, #{$color-primary})
+      );
       background: transparent;
       animation: progress-spin 0.7s linear infinite;
     }
@@ -98,8 +120,14 @@
 
   .chat-progress-step--error {
     .chat-progress-indicator {
-      background: var(--chat-progress-error, var(--chat-error, #{$color-error}));
-      border-color: var(--chat-progress-error, var(--chat-error, #{$color-error}));
+      background: var(
+        --chat-progress-error,
+        var(--chat-error, #{$color-error})
+      );
+      border-color: var(
+        --chat-progress-error,
+        var(--chat-error, #{$color-error})
+      );
       color: var(--chat-surface, #{$color-surface});
     }
   }

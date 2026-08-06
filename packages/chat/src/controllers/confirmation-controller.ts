@@ -5,14 +5,14 @@
  * The host component owns the Lit `@state()` field and render methods.
  */
 
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from "lit";
 import type {
   ChatConfirmationRequest,
   ChatConfirmationResolvedRequest,
   ChatConfirmationAction,
   ChatConfirmationResult,
   ChatConfirmationChangeDetail,
-} from '../components/chat.js';
+} from "../components/chat.js";
 
 export type PendingConfirmation = {
   request: ChatConfirmationResolvedRequest;
@@ -31,7 +31,7 @@ export class ConfirmationController implements ReactiveController {
   /** The currently active (displayed) confirmation, or null. */
   active: PendingConfirmation | null = null;
 
-  constructor(host: ConfirmationController['_host']) {
+  constructor(host: ConfirmationController["_host"]) {
     this._host = host;
     host.addController(this);
   }
@@ -64,7 +64,7 @@ export class ConfirmationController implements ReactiveController {
     const normalized: ChatConfirmationResolvedRequest = {
       ...req,
       id: req.id?.trim() || this._nextId(),
-      variant: req.variant ?? 'default',
+      variant: req.variant ?? "default",
     };
 
     return new Promise((resolve) => {
@@ -93,7 +93,7 @@ export class ConfirmationController implements ReactiveController {
     const result = this._resultFor(item, action);
     item.resolve(result);
     this._host.dispatchEvent(
-      new CustomEvent<ChatConfirmationResult>('confirmation-decision', {
+      new CustomEvent<ChatConfirmationResult>("confirmation-decision", {
         detail: result,
         bubbles: true,
         composed: true,
@@ -110,7 +110,7 @@ export class ConfirmationController implements ReactiveController {
 
     this.active = null;
     this._queue = [];
-    pending.forEach((item) => item.resolve(this._resultFor(item, 'cancel')));
+    pending.forEach((item) => item.resolve(this._resultFor(item, "cancel")));
     this._emitChange();
     this._host.requestUpdate();
   }
@@ -129,14 +129,14 @@ export class ConfirmationController implements ReactiveController {
     return {
       id: item.request.id,
       action,
-      confirmed: action === 'confirm',
+      confirmed: action === "confirm",
       request: item.request,
     };
   }
 
   private _emitChange(): void {
     this._host.dispatchEvent(
-      new CustomEvent<ChatConfirmationChangeDetail>('confirmation-change', {
+      new CustomEvent<ChatConfirmationChangeDetail>("confirmation-change", {
         detail: {
           active: this.active?.request ?? null,
           queue: this._queue.map((item) => item.request),

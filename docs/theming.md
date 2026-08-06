@@ -24,8 +24,8 @@ If **neither** applies, the page is treated as **light** for these integrations.
 **Set the contract on `<html>`** so chart and Mermaid stay aligned with your app chrome. Example (JS):
 
 ```js
-document.documentElement.setAttribute('data-theme', 'dark');
-document.documentElement.classList.add('dark');
+document.documentElement.setAttribute("data-theme", "dark");
+document.documentElement.classList.add("dark");
 ```
 
 Toggling **only** `<body>` or a nested wrapper without updating `<html>` may leave charts/Mermaid on the previous palette.
@@ -130,26 +130,27 @@ With the 12-token architecture, a dark theme only needs the base tokens plus any
 
 ```css
 :root[data-theme="dark"] {
-  --chat-bg:            #242526;
-  --chat-surface:       #1b1b1d;
-  --chat-surface-alt:   rgba(255, 255, 255, 0.07);
-  --chat-border:        #444950;
-  --chat-text:          #e3e3e3;
+  --chat-bg: #242526;
+  --chat-surface: #1b1b1d;
+  --chat-surface-alt: rgba(255, 255, 255, 0.07);
+  --chat-border: #444950;
+  --chat-text: #e3e3e3;
   --chat-text-secondary: #bec3c9;
-  --chat-text-muted:    #8d9295;
-  --chat-primary:       #3578e5;
+  --chat-text-muted: #8d9295;
+  --chat-primary: #3578e5;
   --chat-primary-light: rgba(53, 120, 229, 0.18);
-  --chat-error:         #f56c6c;
-  --chat-success:       #67c23a;
-  --chat-warning:       #e6a23c;
+  --chat-error: #f56c6c;
+  --chat-success: #67c23a;
+  --chat-warning: #e6a23c;
 
   /* Design constants (not derived from base) */
   --chat-primary-hover: #538ce9;
-  --chat-code-bg:       #1c1e21;
-  --chat-code-text:     #e3e3e3;
+  --chat-code-bg: #1c1e21;
+  --chat-code-text: #e3e3e3;
   --chat-code-inline-bg: rgba(255, 255, 255, 0.1);
-  --chat-shadow-sm:     0 1px 2px rgba(0, 0, 0, 0.16);
-  --chat-shadow-md:     0 4px 12px rgba(0, 0, 0, 0.12), 0 12px 28px rgba(0, 0, 0, 0.1);
+  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16);
+  --chat-shadow-md:
+    0 4px 12px rgba(0, 0, 0, 0.12), 0 12px 28px rgba(0, 0, 0, 0.1);
 }
 ```
 

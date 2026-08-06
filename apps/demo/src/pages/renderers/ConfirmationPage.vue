@@ -1,20 +1,20 @@
 <script setup>
-import '@bndynet/ichat';
-import { nextTick, onMounted, ref } from 'vue';
-import { textPart } from '@bndynet/ichat';
-import { nextId } from '../../composables/demo-data.js';
-import ExampleCodeDrawer from '../../components/ExampleCodeDrawer.vue';
-import confirmationExample from '../../examples/renderers/confirmation.md?raw';
+import "@bndynet/ichat";
+import { nextTick, onMounted, ref } from "vue";
+import { textPart } from "@bndynet/ichat";
+import { nextId } from "../../composables/demo-data.js";
+import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
+import confirmationExample from "../../examples/renderers/confirmation.md?raw";
 
 const chatRef = ref(null);
-const draft = ref('');
+const draft = ref("");
 const useCustomInput = ref(false);
-const activeTitle = ref('');
+const activeTitle = ref("");
 const queueLength = ref(0);
-const lastDecision = ref('No confirmation yet');
+const lastDecision = ref("No confirmation yet");
 
 const chatConfig = {
-  locale: 'zh-CN',
+  locale: "zh-CN",
 };
 
 function addMessage(role, text) {
@@ -39,16 +39,16 @@ async function waitForChatHost(maxTicks = 30) {
 onMounted(async () => {
   await waitForChatHost();
   addMessage(
-    'assistant',
+    "assistant",
     'Confirmation demo. Use the switch above the chat to compare the default composer with a custom `slot="input"` composer. In both modes, the confirmation panel replaces the input area while active.',
   );
 });
 
 function handleSend(e) {
   const content = e.detail.content;
-  addMessage('self', content);
+  addMessage("self", content);
   setTimeout(() => {
-    addMessage('assistant', `Echo: ${content}`);
+    addMessage("assistant", `Echo: ${content}`);
   }, 350);
 }
 
@@ -57,17 +57,17 @@ function sendDraft() {
   const chat = chatRef.value;
   if (!content || !chat) return;
   chat.dispatchEvent(
-    new CustomEvent('send', {
+    new CustomEvent("send", {
       detail: { content },
       bubbles: true,
       composed: true,
     }),
   );
-  draft.value = '';
+  draft.value = "";
 }
 
 function handleConfirmationChange(e) {
-  activeTitle.value = e.detail.active?.title ?? '';
+  activeTitle.value = e.detail.active?.title ?? "";
   queueLength.value = e.detail.queueLength;
 }
 
@@ -81,57 +81,58 @@ async function requestAndReport(label, request) {
   if (!chat) return;
   const result = await chat.requestConfirmation(request);
   addMessage(
-    'assistant',
-    `**${label}** was **${result.confirmed ? 'confirmed' : 'cancelled'}**.\n\n\`\`\`json\n${JSON.stringify(result.request.details ?? {}, null, 2)}\n\`\`\``,
+    "assistant",
+    `**${label}** was **${result.confirmed ? "confirmed" : "cancelled"}**.\n\n\`\`\`json\n${JSON.stringify(result.request.details ?? {}, null, 2)}\n\`\`\``,
   );
 }
 
 function requestDefaultConfirmation() {
-  void requestAndReport('Data refresh', {
-    title: 'Run data refresh?',
-    description: 'The app generated this copy from a trusted action schema.',
+  void requestAndReport("Data refresh", {
+    title: "Run data refresh?",
+    description: "The app generated this copy from a trusted action schema.",
     details: {
-      action: 'refresh_dashboard',
+      action: "refresh_dashboard",
       rows: 1284,
-      source: 'warehouse.daily_metrics',
+      source: "warehouse.daily_metrics",
     },
-    confirmLabel: 'Run',
-    cancelLabel: 'Skip',
+    confirmLabel: "Run",
+    cancelLabel: "Skip",
   });
 }
 
 function requestDangerConfirmation() {
-  void requestAndReport('Delete report', {
-    title: 'Delete generated report?',
-    description: 'This is a destructive action. The primary copy is owned by the app, not the model.',
+  void requestAndReport("Delete report", {
+    title: "Delete generated report?",
+    description:
+      "This is a destructive action. The primary copy is owned by the app, not the model.",
     details: {
-      action: 'delete_file',
-      path: '/tmp/reports/q2-draft.pdf',
+      action: "delete_file",
+      path: "/tmp/reports/q2-draft.pdf",
       irreversible: true,
     },
-    confirmLabel: 'Delete',
-    variant: 'danger',
+    confirmLabel: "Delete",
+    variant: "danger",
   });
 }
 
 function requestQueuedConfirmations() {
-  void requestAndReport('Archive thread', {
-    title: 'Archive old thread?',
-    description: 'This is the first queued confirmation.',
-    details: { action: 'archive_thread', threadId: 'thread_001' },
-    confirmLabel: 'Archive',
+  void requestAndReport("Archive thread", {
+    title: "Archive old thread?",
+    description: "This is the first queued confirmation.",
+    details: { action: "archive_thread", threadId: "thread_001" },
+    confirmLabel: "Archive",
   });
-  void requestAndReport('Send summary', {
-    title: 'Send summary email?',
-    description: 'This waits behind the archive confirmation.',
-    details: { action: 'send_email', to: 'team@example.com' },
-    confirmLabel: 'Send',
+  void requestAndReport("Send summary", {
+    title: "Send summary email?",
+    description: "This waits behind the archive confirmation.",
+    details: { action: "send_email", to: "team@example.com" },
+    confirmLabel: "Send",
   });
-  void requestAndReport('Sync files', {
-    title: 'Sync files to workspace?',
-    description: 'This is the third queued confirmation.',
-    details: { action: 'sync_files', count: 6 },
-    confirmLabel: 'Sync',
+  void requestAndReport("Sync files", {
+    title: "Sync files to workspace?",
+    description: "This is the third queued confirmation.",
+    details: { action: "sync_files", count: 6 },
+    confirmLabel: "Sync",
   });
 }
 </script>
@@ -145,16 +146,26 @@ function requestQueuedConfirmations() {
         active-text="Custom input"
         inactive-text="Default input"
       />
-      <el-button size="small" type="primary" @click="requestDefaultConfirmation">
+      <el-button
+        size="small"
+        type="primary"
+        @click="requestDefaultConfirmation"
+      >
         Normal
       </el-button>
-      <el-button size="small" type="danger" @click="requestDangerConfirmation"> Danger </el-button>
-      <el-button size="small" @click="requestQueuedConfirmations"> Queue 3 </el-button>
+      <el-button size="small" type="danger" @click="requestDangerConfirmation">
+        Danger
+      </el-button>
+      <el-button size="small" @click="requestQueuedConfirmations">
+        Queue 3
+      </el-button>
     </div>
     <div class="confirmation-demo-status">
-      <span>Active: {{ activeTitle || 'none' }}</span>
+      <span>Active: {{ activeTitle || "none" }}</span>
       <span>Queue: {{ queueLength }}</span>
-      <span>Input: {{ useCustomInput ? 'custom slot' : 'default composer' }}</span>
+      <span
+        >Input: {{ useCustomInput ? "custom slot" : "default composer" }}</span
+      >
       <span>{{ lastDecision }}</span>
     </div>
   </div>
@@ -176,16 +187,29 @@ function requestQueuedConfirmations() {
         @keydown.enter.exact.prevent="sendDraft"
       />
       <div class="confirmation-composer__toolbar">
-        <el-button size="small" text bg @click="draft += (draft ? ' ' : '') + '[file]'">
+        <el-button
+          size="small"
+          text
+          bg
+          @click="draft += (draft ? ' ' : '') + '[file]'"
+        >
           Attach
         </el-button>
-        <el-button size="small" type="primary" :disabled="!draft.trim()" @click="sendDraft">
+        <el-button
+          size="small"
+          type="primary"
+          :disabled="!draft.trim()"
+          @click="sendDraft"
+        >
           Send
         </el-button>
       </div>
     </div>
   </i-chat>
-  <ExampleCodeDrawer title="Confirmation code example" :content="confirmationExample" />
+  <ExampleCodeDrawer
+    title="Confirmation code example"
+    :content="confirmationExample"
+  />
 </template>
 
 <style scoped>
@@ -249,7 +273,8 @@ function requestQueuedConfirmations() {
 .confirmation-composer__textarea:focus {
   outline: none;
   border-color: var(--chat-primary, #2563eb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-primary, #2563eb) 20%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--chat-primary, #2563eb) 20%, transparent);
 }
 
 .confirmation-composer__toolbar {

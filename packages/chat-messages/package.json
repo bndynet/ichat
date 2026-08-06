@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-messages",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Lit 3 chat message UI as Web Components: Markdown + syntax highlighting, pluggable fenced-block renderers, collapsible reasoning, and streaming previews (bring your own composer).",
   "keywords": [
     "ai-chat",
