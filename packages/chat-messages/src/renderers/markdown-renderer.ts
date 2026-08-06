@@ -71,6 +71,14 @@ const md = getSharedMd(() => {
   instance.use(progressPlugin);
   instance.use(collapsiblePlugin);
 
+  // Open all links in a new window/tab.
+  const defaultLinkOpen = instance.renderer.rules.link_open!;
+  instance.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+    tokens[idx].attrPush(['target', '_blank']);
+    tokens[idx].attrPush(['rel', 'noopener noreferrer']);
+    return defaultLinkOpen(tokens, idx, options, env, self);
+  };
+
   return instance;
 });
 
