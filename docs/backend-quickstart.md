@@ -1,6 +1,6 @@
-# Backend recipes
+# Backend quickstart
 
-Paste-and-run adapters for popular AI providers. Each recipe is a drop-in replacement for the `streamAssistantReply` stub in the [quick start](../README.md#quick-start-es-modules).
+Paste-and-run adapters for popular AI providers — each is a drop-in replacement for the `streamAssistantReply` stub in the [quick start](../README.md#quick-start-es-modules).
 
 Every recipe follows the same contract with `<i-chat>`:
 
