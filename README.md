@@ -69,8 +69,8 @@ Drop in `<i-chat>` and wire one streaming response with **`createRunController()
     run.start([textPart("", { id: "body", status: "streaming" })]);
 
     try {
-      // TODO: replace with your fetch/SSE/WebSocket/SDK adapter — it yields
-      // text chunks and should pass `run.signal` to the request.
+      // Replace with your AI provider — paste-and-run recipes:
+      // https://github.com/bndynet/ichat/blob/main/docs/backend-recipes.md
       for await (const chunk of streamAssistantReply(e.detail.content, {
         signal: run.signal,
       })) {
@@ -364,6 +364,7 @@ Detailed design and reference docs live in [`docs/`](docs/README.md):
 | Doc                                         | Covers                                                                                                       |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | [React integration](docs/react.md)          | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
+| [Backend recipes](docs/backend-recipes.md)     | Copy-paste adapters for OpenAI, Anthropic, Ollama, and custom SSE/WebSocket backends               |
 | [Message model](docs/message-model.md)      | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
 | [`<i-chat>` API](docs/component-api.md)     | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
 | [Parts](docs/parts.md)                      | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
