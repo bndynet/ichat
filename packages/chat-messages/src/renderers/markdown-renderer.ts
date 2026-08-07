@@ -143,6 +143,8 @@ const DOMPURIFY_BASE_CONFIG: DOMPurifyConfig = {
     "points",
     "stroke-linecap",
     "stroke-linejoin",
+    // Allow target on links (DOMPurify strips it by default)
+    "target",
   ],
 };
 
