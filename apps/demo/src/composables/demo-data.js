@@ -226,7 +226,8 @@ const allDemoEvents = [
   { content: demoData.detailsContainer + "\n\n" },
   {
     content:
-      "## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Thought summary** — optional collapsible context above the answer.\n- **Markdown** — headings, lists, tables, and fences.\n\n",
+      "## Markdown in the bubble\n\nUnordered list:\n\n- **Streaming** — chunks append as they arrive.\n- **Thought summary** — optional collapsible context above the answer.\n- **Markdown** — headings, lists, tables, and fences.\n\n" +
+      "Links (open in new window):\n\n- [Google](https://www.google.com)\n- [GitHub](https://github.com)\n- [Example relative link](./relative)\n- [Anchor link](#markdown-in-the-bubble)\n- [mailto link](mailto:test@example.com)\n\n",
   },
   {
     content:

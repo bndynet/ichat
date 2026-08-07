@@ -212,7 +212,7 @@ onMounted(async () => {
       role: "assistant",
       parts: [
         textPart(
-          "**Custom protocol link** — [Open app example](myapp://example) emits `link-click`; this page intercepts `myapp:` and keeps navigation inside the app.",
+          "**Custom protocol link** — [Open app example](myapp://example) emits `link-click`; this page intercepts `myapp:` and keeps navigation inside the app.\n\n**Standard links** (should open in new window): [Google](https://www.google.com) · [GitHub](https://github.com) · [mailto](mailto:test@example.com)",
         ),
       ],
       timestamp: Date.now(),
