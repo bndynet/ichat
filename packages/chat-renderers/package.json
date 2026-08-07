@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-renderers",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Lightweight fenced-code renderers for @bndynet/ichat-messages: KPI cards and interactive forms. No heavy third-party dependencies.",
   "keywords": [
     "ai-chat",
@@ -34,7 +34,7 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "@bndynet/ichat-messages": "^3.2.0"
+    "@bndynet/ichat-messages": "^3.2.1"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",

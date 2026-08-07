@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Complete Lit 3 chat Web Component: messages + input. Register optional renderers (e.g. @bndynet/ichat-renderers) in your app.",
   "keywords": [
     "ai-chat",
@@ -39,8 +39,8 @@
     "test:browser:build": "vite build --config test/browser/vite.config.ts"
   },
   "dependencies": {
-    "@bndynet/ichat-input": "^3.2.0",
-    "@bndynet/ichat-messages": "^3.2.0",
+    "@bndynet/ichat-input": "^3.2.1",
+    "@bndynet/ichat-messages": "^3.2.1",
     "lit": "^3.3.0"
   },
   "devDependencies": {
