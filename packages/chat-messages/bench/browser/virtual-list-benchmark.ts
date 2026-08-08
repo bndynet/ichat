@@ -2,6 +2,8 @@ import '../../src/components/chat-messages.js';
 import type { ChatMessages } from '../../src/components/chat-messages.js';
 import type { ChatMessage, TextPart } from '../../src/types.js';
 import type { LitVirtualizer } from '@lit-labs/virtualizer/LitVirtualizer.js';
+import { rendererRegistry } from '../../src/renderers/registry.js';
+import { MAX_MARKDOWN_CACHE_CHARS } from '../../src/renderers/markdown-cache.js';
 
 type MessageCount = 100 | 1000 | 10000;
 
@@ -36,6 +38,20 @@ interface VirtualFunctionalValidation {
   failures: string[];
 }
 
+interface RowRevisitResult {
+  messages: number;
+  spanRows: number;
+  roundTrips: number;
+  cacheBudgetChars: number;
+  /** Pipeline runs while the swept rows are seen for the first time. */
+  firstPassRenders: number;
+  /** Pipeline runs while the same rows are swept again. Zero when cached. */
+  revisitRenders: number;
+  revisitMs: number;
+  passed: boolean;
+  failures: string[];
+}
+
 interface VirtualBenchmarkReport {
   status: 'complete';
   passed: boolean;
@@ -43,6 +59,7 @@ interface VirtualBenchmarkReport {
   userAgent: string;
   validation: VirtualFunctionalValidation;
   results: VirtualScenarioResult[];
+  rowRevisit: RowRevisitResult;
 }
 
 declare global {
@@ -58,10 +75,35 @@ const BUDGETS: Record<MessageCount, number> = {
   10000: 1000,
 };
 
+// A span small enough to stay well inside the cache budget, so a revisit that
+// misses means the cache failed rather than that entries were legitimately evicted.
+const REVISIT_MESSAGES = 1000;
+const REVISIT_SPAN_ROWS = 80;
+const REVISIT_STEP_ROWS = 10;
+const REVISIT_ROUND_TRIPS = 3;
+
 const stage = requiredElement<HTMLDivElement>('stage');
 const statusElement = requiredElement<HTMLSpanElement>('status');
 const resultsElement = requiredElement<HTMLTableSectionElement>('results');
+const revisitResultsElement = requiredElement<HTMLTableSectionElement>('revisit-results');
 const jsonElement = requiredElement<HTMLPreElement>('json');
+
+/**
+ * Counts Markdown pipeline executions. A fence renderer is the only way to
+ * observe this through the public extension API: it runs when markdown-it walks
+ * the tokens, and not at all when the cached HTML is reused.
+ *
+ * Registered at module scope because the registry freezes on first mount.
+ */
+let pipelineRuns = 0;
+rendererRegistry.register({
+  name: 'bench-pipeline-counter',
+  test: (lang) => lang === 'benchcount',
+  render: (code) => {
+    pipelineRuns += 1;
+    return `<div class="bench-counter">${code.length}</div>`;
+  },
+});
 
 function requiredElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -220,6 +262,84 @@ async function runScenario(count: MessageCount): Promise<VirtualScenarioResult> 
     initialRenderMs,
     renderedRows,
     budgetMs: BUDGETS[count],
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+function countedMessagesOfSize(count: number): ChatMessage[] {
+  const timestamp = Date.now();
+  return Array.from({ length: count }, (_, index) => ({
+    id: `revisit-message-${index}`,
+    role: index % 3 === 0 ? 'self' : 'assistant',
+    timestamp,
+    parts: [
+      {
+        id: `revisit-part-${index}`,
+        type: 'text',
+        text: `Message ${index} with a counted block.\n\n\`\`\`benchcount\nrow ${index}\n\`\`\``,
+        status: 'complete',
+      } satisfies TextPart,
+    ],
+  }));
+}
+
+async function sweepToRow(element: ChatMessages, index: number): Promise<void> {
+  const id = `revisit-message-${index}`;
+  element.scrollToMessage(id);
+  await waitForMessage(element, id);
+  await nextFrame();
+  await nextFrame();
+}
+
+/** One pass down the span and back up again. */
+async function sweepSpan(element: ChatMessages): Promise<void> {
+  for (let index = 0; index <= REVISIT_SPAN_ROWS; index += REVISIT_STEP_ROWS) {
+    await sweepToRow(element, index);
+  }
+  for (let index = REVISIT_SPAN_ROWS; index >= 0; index -= REVISIT_STEP_ROWS) {
+    await sweepToRow(element, index);
+  }
+}
+
+/**
+ * Rows that leave the viewport are destroyed, so the element instance that comes
+ * back has no HTML of its own. It must be served from the per-part cache instead
+ * of re-running markdown-it (plus DOMPurify and any fence renderer).
+ */
+async function measureRowRevisit(): Promise<RowRevisitResult> {
+  const failures: string[] = [];
+  const element = createList(countedMessagesOfSize(REVISIT_MESSAGES), true);
+  stage.replaceChildren(element);
+  const virtualizer = await settleVirtualList(element);
+  if (!virtualizer) failures.push('revisit virtualizer activation');
+
+  const beforeFirstPass = pipelineRuns;
+  await sweepSpan(element);
+  const firstPassRenders = pipelineRuns - beforeFirstPass;
+
+  const revisitStartedAt = performance.now();
+  for (let trip = 0; trip < REVISIT_ROUND_TRIPS; trip += 1) {
+    await sweepSpan(element);
+  }
+  const revisitMs = performance.now() - revisitStartedAt;
+  const revisitRenders = pipelineRuns - beforeFirstPass - firstPassRenders;
+
+  if (firstPassRenders === 0) {
+    // Nothing was measured, so a zero revisit count would prove nothing.
+    failures.push('counted fence renderer never ran');
+  }
+  if (revisitRenders !== 0) failures.push('revisited rows re-ran the Markdown pipeline');
+
+  element.remove();
+  return {
+    messages: REVISIT_MESSAGES,
+    spanRows: REVISIT_SPAN_ROWS,
+    roundTrips: REVISIT_ROUND_TRIPS,
+    cacheBudgetChars: MAX_MARKDOWN_CACHE_CHARS,
+    firstPassRenders,
+    revisitRenders,
+    revisitMs,
     passed: failures.length === 0,
     failures,
   };
@@ -424,6 +544,24 @@ function appendResult(result: VirtualScenarioResult): void {
   resultsElement.appendChild(row);
 }
 
+function appendRevisitResult(result: RowRevisitResult): void {
+  const row = document.createElement('tr');
+  row.dataset.passed = String(result.passed);
+  const values = [
+    `${result.spanRows} rows × ${result.roundTrips} round trips`,
+    String(result.firstPassRenders),
+    String(result.revisitRenders),
+    `${result.revisitMs.toFixed(1)} ms`,
+    result.passed ? 'PASS · served from cache' : `FAIL · ${result.failures.join(', ')}`,
+  ];
+  for (const value of values) {
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    row.appendChild(cell);
+  }
+  revisitResultsElement.appendChild(row);
+}
+
 async function run(): Promise<void> {
   window.__ICHAT_VIRTUAL_BENCHMARK__ = {
     status: 'running',
@@ -443,15 +581,24 @@ async function run(): Promise<void> {
     appendResult(result);
   }
 
+  statusElement.textContent = 'Sweeping rows out of and back into the viewport…';
+  window.__ICHAT_VIRTUAL_BENCHMARK__ = {
+    status: 'running',
+    progress: 'row-revisit',
+  };
+  const rowRevisit = await measureRowRevisit();
+  appendRevisitResult(rowRevisit);
+
   statusElement.textContent = 'Validating scrolling and dynamic heights…';
   const validation = await validateFunctions();
   const report: VirtualBenchmarkReport = {
     status: 'complete',
-    passed: validation.passed && results.every((result) => result.passed),
+    passed: validation.passed && rowRevisit.passed && results.every((result) => result.passed),
     generatedAt: new Date().toISOString(),
     userAgent: navigator.userAgent,
     validation,
     results,
+    rowRevisit,
   };
   window.__ICHAT_VIRTUAL_BENCHMARK__ = report;
   jsonElement.textContent = JSON.stringify(report, null, 2);

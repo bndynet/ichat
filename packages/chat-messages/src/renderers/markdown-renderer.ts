@@ -10,6 +10,7 @@ import {
 } from '../link-protocols.js';
 import { chatIconStrings } from '../icons.js';
 import { getSharedMd } from './md-instance.js';
+import { ASYNC_BLOCK_ATTRIBUTE } from './markdown-cache.js';
 import type { RendererErrorDetail, HighlightJs } from '../types.js';
 
 export interface MarkdownRenderOptions {
@@ -376,7 +377,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 
       const fallbackHtml = safeRendererFallback(token.content, lang);
       pendingBlocks.set(id, {
-        html: `<div id="${id}" data-chat-async-block="true">${placeholderHtml}</div>`,
+        html: `<div id="${id}" ${ASYNC_BLOCK_ATTRIBUTE}="true">${placeholderHtml}</div>`,
         trusted,
       });
       enqueueAsyncBlock({

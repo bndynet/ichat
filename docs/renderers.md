@@ -105,6 +105,18 @@ behavior to work.
 
 For **`unregister`**, **`list`**, or other registry methods, import **`rendererRegistry`** from **`@bndynet/ichat`** (re-exported from **`@bndynet/ichat-messages`**).
 
+### Renderer output is cached
+
+Rendered HTML is cached per message part, so a renderer is invoked once per
+distinct fence content rather than once per render. A row that leaves and
+re-enters the viewport under [virtual scrolling](component-api.md#optional-virtual-scrolling)
+reuses the cached HTML instead of calling the renderer again. Write renderers as
+pure functions of `code`, `lang`, and `info`: one that varies its output for
+identical input (a timestamp, a counter, a random id) will appear frozen.
+
+Registering a renderer or a Markdown plugin at runtime flushes the cache, so
+existing parts pick up the new renderer on their next render.
+
 ## Charts, KPI, form, and Mermaid
 
 **`@bndynet/ichat`** does **not** ship or auto-register renderers. Install what you need:

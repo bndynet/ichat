@@ -2,7 +2,11 @@ import { LitElement, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { setVersionAttribute } from '../version.js';
 import type { RendererErrorDetail, TextPart } from '../types.js';
-import { renderMarkdownInto, type RenderMarkdownIntoOptions } from '../renderers/markdown-morph.js';
+import {
+  renderMarkdownInto,
+  replaceCachedMarkdownHtml,
+  type RenderMarkdownIntoOptions,
+} from '../renderers/markdown-morph.js';
 import {
   renderMarkdownLight,
   resolveAsyncBlocks,
@@ -173,6 +177,11 @@ export class ChatTextPart extends LitElement {
     if (!result.changed) return;
 
     this._htmlCache = el.innerHTML;
+    // Promote the resolved output into the shared cache. Without this the cache
+    // would keep the placeholder HTML, which is not reusable, and a row that
+    // scrolls back into view would re-run the async renderer from scratch.
+    const partId = this.data?.id;
+    if (partId) replaceCachedMarkdownHtml(partId, this.content, el.innerHTML);
     this.dispatchEvent(
       new CustomEvent('chat-text-part-updated', {
         detail: { changed: true },

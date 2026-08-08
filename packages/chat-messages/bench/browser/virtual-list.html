@@ -27,6 +27,10 @@
         margin: 0 0 8px;
         font-size: 24px;
       }
+      h2 {
+        margin: 28px 0 8px;
+        font-size: 17px;
+      }
       .meta {
         margin: 0 0 16px;
         color: #5c667a;
@@ -101,6 +105,24 @@
           </tr>
         </thead>
         <tbody id="results"></tbody>
+      </table>
+      <h2>Row revisit</h2>
+      <p class="meta">
+        Sweeps the same span of rows out of and back into the viewport, counting how often the
+        Markdown pipeline runs. Rows that re-enter should be served from the per-part cache, so
+        revisit renders must be zero.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sweep</th>
+            <th>First-pass renders</th>
+            <th>Revisit renders</th>
+            <th>Revisit time</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="revisit-results"></tbody>
       </table>
       <details>
         <summary>JSON report</summary>

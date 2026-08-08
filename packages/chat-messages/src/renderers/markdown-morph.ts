@@ -1,6 +1,13 @@
 import { renderMarkdown, type MarkdownRenderOptions } from './markdown-renderer.js';
 import { morphHtmlInto } from './dom-morph.js';
 import { onRendererRegistryChange } from './registry.js';
+import {
+  invalidateMarkdownCache,
+  lookupMarkdownCache,
+  storeMarkdownCache,
+} from './markdown-cache.js';
+
+export { invalidateMarkdownCache, replaceCachedMarkdownHtml } from './markdown-cache.js';
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
   /**
@@ -17,20 +24,20 @@ export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
 export interface RenderMarkdownIntoResult {
   changed: boolean;
   html: string;
-  /** Whether this call executed the Markdown pipeline instead of using raw-content cache. */
+  /** Whether this call executed the Markdown pipeline instead of using cached HTML. */
   rendered: boolean;
 }
-
-/** Raw markdown → rendered HTML cache (skips expensive md.render when content is identical). */
-const rawContentCache = new Map<string, string>();
 
 /**
  * Render markdown with the shared markdown pipeline and morph the result into
  * an existing host element when it changed.
  *
  * Two-level cache:
- * 1. Raw markdown content hash — if the raw string is identical to last render,
- *    the entire pipeline (markdown-it + DOMPurify) is skipped.
+ * 1. Per-part cache of content + rendered HTML — if the content and the
+ *    output-affecting render options are unchanged, the whole pipeline
+ *    (markdown-it + DOMPurify) is skipped. A fresh element instance with no
+ *    `previousHtml` of its own — which is what virtual scrolling produces when
+ *    a row re-enters the viewport — is served the cached HTML.
  * 2. HTML comparison — if the rendered HTML matches `previousHtml`, DOM morphing
  *    is skipped.
  */
@@ -41,43 +48,30 @@ export function renderMarkdownInto(
 ): RenderMarkdownIntoResult {
   const { previousHtml = '', partId, ...renderOptions } = options;
 
-  // Level 1: raw content cache — skip full pipeline when content unchanged
-  let html: string;
-  if (partId) {
-    const cached = rawContentCache.get(partId);
-    if (cached === content) {
-      // Raw content unchanged from last render of this partId.
-      // Still need to ensure the DOM element shows the correct HTML —
-      // Lit may have re-rendered the template (e.g. via `repeat` reconciling
-      // after a history prepend), creating a new empty DOM that needs patching.
-      if (previousHtml) {
-        morphHtmlInto(el, previousHtml);
-        return { changed: false, html: previousHtml, rendered: false };
-      }
-      // New element instance with no previous HTML — fall through to render.
-    }
+  // Level 1: per-part cache — skip the full pipeline when nothing that affects
+  // the output has changed.
+  const cached = lookupMarkdownCache(partId, content, previousHtml, renderOptions);
+  if (cached.reuse === 'previous') {
+    // Lit may have re-rendered the template (e.g. `repeat` reconciling after a
+    // history prepend), leaving a new empty DOM that needs patching.
+    morphHtmlInto(el, previousHtml);
+    return { changed: false, html: previousHtml, rendered: false };
+  }
+  if (cached.reuse === 'cached') {
+    morphHtmlInto(el, cached.html);
+    return { changed: true, html: cached.html, rendered: false };
   }
 
-  html = renderMarkdown(content, renderOptions);
+  const html = renderMarkdown(content, renderOptions);
 
-  // Update raw content cache
   if (partId) {
-    rawContentCache.set(partId, content);
+    storeMarkdownCache(partId, content, html, renderOptions);
   }
 
   if (html === previousHtml) return { changed: false, html, rendered: true };
 
   morphHtmlInto(el, html);
   return { changed: true, html, rendered: true };
-}
-
-/** Invalidate the raw-content cache for a specific part or entirely. */
-export function invalidateMarkdownCache(partId?: string): void {
-  if (partId) {
-    rawContentCache.delete(partId);
-  } else {
-    rawContentCache.clear();
-  }
 }
 
 // A renderer registered at runtime must be visible the next time an existing

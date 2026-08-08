@@ -54,6 +54,16 @@ All notable changes to this project are documented here. This project follows
 - `<i-chat-text-part>` resolves async block output automatically. Manual
   `resolveAsyncBlocks(container)` calls remain safe and now return resolution
   counts for diagnostics.
+- The per-part Markdown cache stores rendered HTML instead of only the raw
+  content, so a row that scrolls back into view is served from cache rather than
+  re-running markdown-it, DOMPurify, and its block renderers. Retention is capped
+  by a character budget and evicts least-recently-used parts, replacing growth
+  that was previously unbounded. Two consequences for renderer authors: `BlockRenderer` output is
+  cached per part content rather than per element instance, so a renderer whose
+  output varies for identical input is no longer re-invoked on remount; and the
+  cache is keyed on the render options that affect output, so changing
+  `highlightJs` or `allowedLinkProtocols` now re-renders existing parts instead of
+  leaving them on the previous options.
 
 ### Fixed
 
