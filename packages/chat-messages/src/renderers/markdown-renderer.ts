@@ -61,25 +61,27 @@ interface MarkdownRenderEnv {
   context: MarkdownRenderContext;
   /** Mutable per-call pending-block map (replaces former module-level `pendingBlockHTML`). */
   pendingBlockHTML: Map<string, { html: string; trusted: boolean }>;
-  blockCounter: number;
 }
 
 /**
  * Active per-render-pass context.
  *
- * Set before `md.render()` and restored in `finally`. This is the **only**
- * module-level mutable state in the render pipeline — unavoidable because
- * markdown-it's `highlight(str, lang)` and `validateLink(href)` callbacks
- * do not receive `env`.
+ * Set before `md.render()` and restored in `finally`. Keeping per-pass options
+ * at module level is unavoidable because markdown-it's `highlight(str, lang)`
+ * and `validateLink(href)` callbacks do not receive `env`.
  */
 let _activeContext: MarkdownRenderContext | null = null;
 
 /**
- * Fallback block-ID counter for fence rules triggered by direct `md.render()`
- * calls (outside of {@link renderMarkdown} / {@link renderMarkdownLight}).
- * Ensures placeholder IDs stay unique across calls when `env` is not threaded.
+ * Block-ID counter shared by every render pass.
+ *
+ * Must not be per-pass: an async placeholder outlives the render that created
+ * it, while {@link pendingAsyncBlocks} is module-level and {@link
+ * resolveAsyncBlocks} claims work by matching the placeholder id inside a
+ * container. Per-pass numbering makes two messages both emit `_br_1_0`, so one
+ * container claims — and resolves into itself — the other's pending block.
  */
-let _directRenderBlockCounter = 0;
+let _blockIdCounter = 0;
 
 const md = getSharedMd(() => {
   const instance = new MarkdownIt({
@@ -290,8 +292,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     env && typeof env === 'object' && 'context' in env ? (env as MarkdownRenderEnv) : undefined;
   const ctx: MarkdownRenderContext = renderEnv?.context ?? _activeContext ?? { mode: 'full' };
   const pendingBlocks = renderEnv?.pendingBlockHTML ?? new Map();
-  const nextBlockId = (): number =>
-    renderEnv ? ++renderEnv.blockCounter : ++_directRenderBlockCounter;
+  const nextBlockId = (): number => ++_blockIdCounter;
 
   const customRenderer = rendererRegistry.getRenderer(lang, (renderer, error) => {
     reportBlockRendererError(renderer.name, 'match', error, token.content, lang, info, ctx.options);
@@ -588,7 +589,6 @@ export function renderMarkdown(content: string, options?: MarkdownRenderOptions)
   const env: MarkdownRenderEnv = {
     context,
     pendingBlockHTML: new Map(),
-    blockCounter: 0,
   };
 
   const previousContext = _activeContext;
@@ -643,7 +643,6 @@ export function renderMarkdownLight(content: string, options?: MarkdownRenderOpt
   const env: MarkdownRenderEnv = {
     context,
     pendingBlockHTML: new Map(),
-    blockCounter: 0,
   };
 
   const previousContext = _activeContext;

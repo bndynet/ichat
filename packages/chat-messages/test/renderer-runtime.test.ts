@@ -44,6 +44,16 @@ function fakeContainer(id: string): {
   return { container, placeholder };
 }
 
+/**
+ * One `renderMarkdown()` render pass without its terminal DOMPurify step, which
+ * needs a DOM these tests do not have. Placeholder-id generation — the part
+ * under test — runs exactly as it does in production, unlike a bare
+ * `md.render()` call.
+ */
+function renderFullPass(content: string): string {
+  return md.render(content, { context: { mode: 'full' }, pendingBlockHTML: new Map() });
+}
+
 test('sync block renderer errors fall back without breaking markdown', () => {
   const name = 'runtime-sync-error';
   const errors: RendererErrorDetail[] = [];
@@ -165,6 +175,47 @@ test('async blocks are container-scoped and receive lifecycle signals', async ()
     assert.equal(secondResult.resolved, 1);
     assert.match(secondTarget.placeholder.outerHTML, /class="fresh"/);
     assert.notEqual(placeholderId(firstHtml), placeholderId(secondHtml));
+  } finally {
+    first.resolve('');
+    second.resolve('');
+    rendererRegistry.unregister(name);
+  }
+});
+
+test('async placeholder ids stay unique across render passes', async () => {
+  const name = 'runtime-async-cross-pass';
+  const first = deferred<string>();
+  const second = deferred<string>();
+  let calls = 0;
+  rendererRegistry.register({
+    name,
+    trusted: true,
+    test: (language) => language === name,
+    renderAsync: () => {
+      calls += 1;
+      return calls === 1 ? first.promise : second.promise;
+    },
+  });
+
+  try {
+    const firstId = placeholderId(renderFullPass(`\`\`\`${name}\nfirst\n\`\`\``));
+    const secondId = placeholderId(renderFullPass(`\`\`\`${name}\nsecond\n\`\`\``));
+    assert.notEqual(firstId, secondId);
+
+    const firstTarget = fakeContainer(firstId);
+    const secondTarget = fakeContainer(secondId);
+    const firstResolution = resolveAsyncBlocks(firstTarget.container);
+    const secondResolution = resolveAsyncBlocks(secondTarget.container);
+
+    // The later pass settles first: each container must still get its own block.
+    second.resolve('<div class="second-block">second</div>');
+    first.resolve('<div class="first-block">first</div>');
+
+    const [firstResult, secondResult] = await Promise.all([firstResolution, secondResolution]);
+    assert.equal(firstResult.resolved, 1);
+    assert.equal(secondResult.resolved, 1);
+    assert.match(firstTarget.placeholder.outerHTML, /class="first-block"/);
+    assert.match(secondTarget.placeholder.outerHTML, /class="second-block"/);
   } finally {
     first.resolve('');
     second.resolve('');
