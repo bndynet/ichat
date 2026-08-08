@@ -64,6 +64,10 @@ All notable changes to this project are documented here. This project follows
   cache is keyed on the render options that affect output, so changing
   `highlightJs` or `allowedLinkProtocols` now re-renders existing parts instead of
   leaving them on the previous options.
+- Corrected the documented meaning of `sequence_number`: it is carried through to
+  the result but never used to order or deduplicate events, where the previous
+  wording implied a guarantee that was never implemented. No behaviour changed —
+  a patch replaces state, so a repeated or out-of-order event is harmless.
 
 ### Fixed
 

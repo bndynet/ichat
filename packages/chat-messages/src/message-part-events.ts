@@ -10,6 +10,11 @@ export interface MessagePartUpdate {
   messageId: string;
   partId: string;
   patch: Partial<MessagePart>;
+  /**
+   * Carried through for the host; deliberately not used to order or deduplicate.
+   * A patch replaces state, so a repeated or out-of-order event is harmless,
+   * while rejecting one would stall a part whose stream restarted its count.
+   */
   sequenceNumber?: number;
 }
 

@@ -18,7 +18,9 @@ export interface TodoItemUpdate {
   partId: string;
   itemId: string;
   patch: TodoItemPatch;
+  /** Enforced: an update at or below the part's current revision is stale. */
   revision?: number;
+  /** Validated and surfaced for the host, never acted on. See `MessagePartUpdate`. */
   sequenceNumber?: number;
 }
 
