@@ -20,10 +20,10 @@ npm install openai
 ```
 
 ```javascript
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: 'sk-…',
+  apiKey: "sk-…",
   // Required in the browser so the SDK does not throw.
   dangerouslyAllowBrowser: true,
 });
@@ -34,15 +34,15 @@ const client = new OpenAI({
 async function* streamAssistantReply(prompt, { signal }) {
   const stream = await client.chat.completions.create(
     {
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
       stream: true,
     },
     { signal },
   );
 
   for await (const chunk of stream) {
-    yield chunk.choices[0]?.delta?.content ?? '';
+    yield chunk.choices[0]?.delta?.content ?? "";
   }
 }
 ```
@@ -53,16 +53,19 @@ The recipe above is single-turn — it passes one prompt. Build a message histor
 
 ```javascript
 const history = chat.messages.map((m) => ({
-  role: m.role === 'self' ? 'user' : 'assistant',
+  role: m.role === "self" ? "user" : "assistant",
   content: getMessageText(m),
 }));
-history.push({ role: 'user', content: prompt });
+history.push({ role: "user", content: prompt });
 
-const stream = await client.chat.completions.create({
-  model: 'gpt-4o',
-  messages: history,
-  stream: true,
-}, { signal });
+const stream = await client.chat.completions.create(
+  {
+    model: "gpt-4o",
+    messages: history,
+    stream: true,
+  },
+  { signal },
+);
 ```
 
 ---
@@ -74,10 +77,10 @@ npm install @anthropic-ai/sdk
 ```
 
 ```javascript
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({
-  apiKey: 'sk-ant-…',
+  apiKey: "sk-ant-…",
   // Required in the browser so the SDK does not throw.
   dangerouslyAllowBrowser: true,
 });
@@ -85,17 +88,17 @@ const client = new Anthropic({
 async function* streamAssistantReply(prompt, { signal }) {
   const stream = await client.messages.stream(
     {
-      model: 'claude-sonnet-4-20250514',
+      model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
     },
     { signal },
   );
 
   for await (const event of stream) {
     if (
-      event.type === 'content_block_delta' &&
-      event.delta.type === 'text_delta'
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
     ) {
       yield event.delta.text;
     }
@@ -116,12 +119,12 @@ ollama pull llama3.2
 
 ```javascript
 async function* streamAssistantReply(prompt, { signal }) {
-  const res = await fetch('http://localhost:11434/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch("http://localhost:11434/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: 'llama3.2',
-      messages: [{ role: 'user', content: prompt }],
+      model: "llama3.2",
+      messages: [{ role: "user", content: prompt }],
       stream: true,
     }),
     signal,
@@ -129,7 +132,7 @@ async function* streamAssistantReply(prompt, { signal }) {
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = '';
+  let buffer = "";
 
   while (true) {
     const { done, value } = await reader.read();
@@ -137,13 +140,13 @@ async function* streamAssistantReply(prompt, { signal }) {
     buffer += decoder.decode(value, { stream: true });
 
     // Ollama delivers one JSON object per line.
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
     for (const line of lines) {
       if (!line.trim()) continue;
       try {
         const parsed = JSON.parse(line);
-        yield parsed.message?.content ?? '';
+        yield parsed.message?.content ?? "";
       } catch {
         // Non‑JSON keepalive line — ignore.
       }
@@ -161,31 +164,31 @@ directly from `fetch`:
 
 ```javascript
 async function* streamAssistantReply(prompt, { signal }) {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),
     signal,
   });
 
   // Server-Sent Events (SSE) — standard `text/event-stream`.
-  if (res.headers.get('content-type')?.includes('text/event-stream')) {
+  if (res.headers.get("content-type")?.includes("text/event-stream")) {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let buffer = '';
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
+        if (line.startsWith("data: ")) {
           const data = line.slice(6);
-          if (data === '[DONE]') return;
+          if (data === "[DONE]") return;
           try {
-            yield JSON.parse(data).delta ?? '';
+            yield JSON.parse(data).delta ?? "";
           } catch {
             // Keepalive or comment — ignore.
           }
@@ -197,10 +200,10 @@ async function* streamAssistantReply(prompt, { signal }) {
 
   // Newline-delimited JSON (NDJSON) — one JSON object per line.
   const text = await res.text();
-  for (const line of text.split('\n')) {
+  for (const line of text.split("\n")) {
     if (!line.trim()) continue;
     try {
-      yield JSON.parse(line).content ?? '';
+      yield JSON.parse(line).content ?? "";
     } catch {
       // Ignore malformed lines.
     }
@@ -216,20 +219,22 @@ All recipes rely on `run.signal` to auto-cancel in-flight requests on cancel
 or error — no manual `AbortController` bookkeeping is needed:
 
 ```javascript
-chat.addEventListener('send', async (e) => {
+chat.addEventListener("send", async (e) => {
   const run = chat.createRunController();
-  run.start([textPart('', { id: 'body', status: 'streaming' })]);
+  run.start([textPart("", { id: "body", status: "streaming" })]);
 
   try {
-    for await (const chunk of streamAssistantReply(e.detail.content, { signal: run.signal })) {
-      run.appendText('body', chunk);
+    for await (const chunk of streamAssistantReply(e.detail.content, {
+      signal: run.signal,
+    })) {
+      run.appendText("body", chunk);
     }
-    run.updatePart('body', { status: 'complete' });
+    run.updatePart("body", { status: "complete" });
     run.complete();
   } catch (error) {
     // AbortError from run.cancel() / run.signal is expected — do not treat it
     // as a real failure. Anything else is a genuine error.
-    if (error instanceof DOMException && error.name === 'AbortError') return;
+    if (error instanceof DOMException && error.name === "AbortError") return;
     run.fail(error instanceof Error ? error.message : String(error));
   }
 });

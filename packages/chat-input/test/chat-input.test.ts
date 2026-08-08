@@ -48,7 +48,10 @@ function create(): Input {
 
 // ── Module & registration ─────────────────────────────────────────────
 
-assert.ok(customElements.get("i-chat-input"), "i-chat-input should be registered");
+assert.ok(
+  customElements.get("i-chat-input"),
+  "i-chat-input should be registered",
+);
 assert.doesNotThrow(() => new Ctor(), "constructor should not throw");
 
 // ── Default property values ────────────────────────────────────────────
@@ -95,7 +98,9 @@ assert.doesNotThrow(() => new Ctor(), "constructor should not throw");
 
   // After send + clear, submitting again should not fire
   let secondSend = false;
-  input.addEventListener("send", () => { secondSend = true; });
+  input.addEventListener("send", () => {
+    secondSend = true;
+  });
   input._submit();
   assert.equal(secondSend, false, "empty value after send should not re-fire");
 }
@@ -279,7 +284,11 @@ assert.doesNotThrow(() => new Ctor(), "constructor should not throw");
 
 {
   const input = create();
-  assert.equal(typeof input.setValue, "function", "setValue should be a function");
+  assert.equal(
+    typeof input.setValue,
+    "function",
+    "setValue should be a function",
+  );
   assert.equal(typeof input.focus, "function", "focus should be a function");
 }
 
@@ -324,4 +333,3 @@ assert.doesNotThrow(() => new Ctor(), "constructor should not throw");
   input._cancel();
   assert.equal(count, 3, "cancel should dispatch outside streaming state");
 }
-

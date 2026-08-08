@@ -300,10 +300,8 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     env && typeof env === "object" && "context" in env
       ? (env as MarkdownRenderEnv)
       : undefined;
-  const ctx: MarkdownRenderContext =
-    renderEnv?.context ??
-    _activeContext ??
-    { mode: "full" };
+  const ctx: MarkdownRenderContext = renderEnv?.context ??
+    _activeContext ?? { mode: "full" };
   const pendingBlocks = renderEnv?.pendingBlockHTML ?? new Map();
   const nextBlockId = (): number =>
     renderEnv ? ++renderEnv.blockCounter : ++_directRenderBlockCounter;

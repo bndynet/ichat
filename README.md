@@ -361,19 +361,19 @@ The demo app registers **`@bndynet/ichat-renderers`** in **`apps/demo/bootstrap.
 
 Detailed design and reference docs live in [`docs/`](docs/README.md):
 
-| Doc                                         | Covers                                                                                                       |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [React integration](docs/react.md)          | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
-| [Backend quickstart](docs/backend-quickstart.md)     | Copy-paste adapters for OpenAI, Anthropic, Ollama, and custom SSE/WebSocket backends               |
-| [Message model](docs/message-model.md)      | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
-| [`<i-chat>` API](docs/component-api.md)     | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
-| [Parts](docs/parts.md)                      | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
-| [Custom renderers](docs/renderers.md)       | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers                                     |
-| [Progress](docs/progress.md)                | `[status]` lists, block IDs, programmatic updates                                                            |
-| [Todo panel](docs/todo.md)                  | Structured items, collapse behavior, status events, updates                                                  |
-| [Theming](docs/theming.md)                  | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference                          |
-| [Localization (i18n)](docs/localization.md) | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL                                              |
-| [Composer & interaction](docs/composer.md)  | Streaming, reply blocks, voice input                                                                         |
+| Doc                                              | Covers                                                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [React integration](docs/react.md)               | Ref binding, props (React 19 vs ≤ 18), event listening, controlled mode, TS declaration merging, Next.js/SSR |
+| [Backend quickstart](docs/backend-quickstart.md) | Copy-paste adapters for OpenAI, Anthropic, Ollama, and custom SSE/WebSocket backends                         |
+| [Message model](docs/message-model.md)           | Roles (`ChatMessageRole`), `ChatMessage` fields, the `parts[]` body, factories, streaming/updating           |
+| [`<i-chat>` API](docs/component-api.md)          | Properties, methods, events, slots, confirmations, highlight.js, ChatRunController, middleware               |
+| [Parts](docs/parts.md)                           | `reasoning`, `tool-call`, `file`, `source`, and `x-*` custom parts                                           |
+| [Custom renderers](docs/renderers.md)            | `registerCodeRenderer` + built-in chart / KPI / form / Mermaid renderers                                     |
+| [Progress](docs/progress.md)                     | `[status]` lists, block IDs, programmatic updates                                                            |
+| [Todo panel](docs/todo.md)                       | Structured items, collapse behavior, status events, updates                                                  |
+| [Theming](docs/theming.md)                       | 12 base tokens, derivation, light/dark contract, Mermaid tokens, full CSS reference                          |
+| [Localization (i18n)](docs/localization.md)      | `config.locale` / `config.labels`, plurals (`makeDaysAgo`), RTL                                              |
+| [Composer & interaction](docs/composer.md)       | Streaming, reply blocks, voice input                                                                         |
 
 ## Development
 
