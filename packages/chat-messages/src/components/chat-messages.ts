@@ -480,7 +480,7 @@ export class ChatMessages extends LitElement {
 
     if (anchor.atBottom) {
       this._autoScroll = true;
-      this._scrollToBottom();
+      this._scrollToBottom(true);
       return;
     }
 
@@ -655,7 +655,7 @@ export class ChatMessages extends LitElement {
    * layout after the first frame — a single rAF can leave `_autoScroll` true
    * while the viewport is still above new content (scroll-down button hidden).
    */
-  private _scrollToBottom(): void {
+  private _scrollToBottom(force = false): void {
     const seq = ++this._scrollToBottomSeq;
     const apply = (): void => {
       if (seq !== this._scrollToBottomSeq || !this.isConnected) return;
@@ -686,7 +686,18 @@ export class ChatMessages extends LitElement {
 
     const layoutComplete = this._virtualizer?.layoutComplete;
     if (layoutComplete) {
-      void layoutComplete.then(() => requestAnimationFrame(apply)).catch(() => undefined);
+      // Unlike the frames above, this pass has no time bound: it waits for the
+      // virtualizer to settle, so it can land long after the reader scrolled
+      // away. `seq` only cancels it when another scroll-to-bottom starts, which
+      // never happens once `_autoScroll` is off, so check that too. `force`
+      // keeps an explicit request (the button, a restored bottom anchor) from
+      // being abandoned if a height correction drops `_autoScroll` mid-flight.
+      void layoutComplete
+        .then(() => {
+          if (!force && !this._autoScroll) return;
+          requestAnimationFrame(apply);
+        })
+        .catch(() => undefined);
     }
     this._hasNewContent = false;
   }
@@ -700,7 +711,7 @@ export class ChatMessages extends LitElement {
 
   private _handleScrollToBottom(): void {
     this._autoScroll = true;
-    this._scrollToBottom();
+    this._scrollToBottom(true);
   }
 
   private _handleScroll(): void {

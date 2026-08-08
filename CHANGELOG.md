@@ -102,6 +102,10 @@ All notable changes to this project are documented here. This project follows
   `updatePart()` returns nothing, a rejected patch is dropped and reported to the
   console; a missing message or part stays silent, because that races with
   ordinary message removal. Use `tryUpdatePart()` to receive the reason instead.
+- Scrolling up during streaming is no longer undone once the virtual list
+  finishes measuring its rows. The last scroll-to-bottom pass waits for layout to
+  settle, so it could land long after the reader took over; it now yields to
+  them, while the scroll-to-latest button and a restored bottom anchor still win.
 
 ### Compatibility
 
