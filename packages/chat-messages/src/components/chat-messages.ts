@@ -44,8 +44,6 @@ import styles from '../styles/chat-messages.scss';
 import './chat-message.js';
 import type { ChatMessageElement } from './chat-message.js';
 import { injectPluginCss, injectGlobalPluginCss } from '../renderers/plugin-styles.js';
-import { freezeMarkdownPlugins } from '../renderers/markdown-plugins.js';
-import { rendererRegistry } from '../renderers/registry.js';
 import {
   buildMessageRenderItems,
   findMessageRenderIndex,
@@ -282,10 +280,6 @@ export class ChatMessages extends LitElement {
     super.connectedCallback();
     setVersionAttribute(this);
     if (this._virtualScrollEnabled()) void this._ensureVirtualizerLoaded();
-    // Freeze both registries on first mount — after this point, registering
-    // renderers or markdown plugins will throw a clear error.
-    rendererRegistry.freeze();
-    freezeMarkdownPlugins();
     this._pluginCleanup = injectPluginCss(this.shadowRoot!);
     // Global CSS is injected once per document, never removed.
     injectGlobalPluginCss();

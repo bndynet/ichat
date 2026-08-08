@@ -14,16 +14,8 @@ function notifyChange(): void {
 
 class RendererRegistry {
   private _renderers = new Map<string, BlockRenderer>();
-  private _frozen = false;
 
   register(renderer: BlockRenderer): void {
-    if (this._frozen) {
-      throw new Error(
-        `[i-chat] Cannot register block renderer "${renderer.name}" after i-chat-messages has mounted. ` +
-          'Register all renderers before the first render.',
-      );
-    }
-
     const existing = this._renderers.get(renderer.name);
     if (existing === renderer) return;
     if (existing) {
@@ -39,18 +31,7 @@ class RendererRegistry {
   }
 
   unregister(name: string): void {
-    if (this._frozen) {
-      console.warn(
-        `[i-chat] Cannot unregister block renderer "${name}" after i-chat-messages has mounted.`,
-      );
-      return;
-    }
     if (this._renderers.delete(name)) notifyChange();
-  }
-
-  /** Freeze the registry so no further renderers can be registered. */
-  freeze(): void {
-    this._frozen = true;
   }
 
   getRenderer(
