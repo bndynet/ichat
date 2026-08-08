@@ -21,8 +21,6 @@ export type MessagePartReplaceResult =
       reason: MessagePartLookupFailureReason;
     };
 
-export type MessagePartPatchResult = MessagePartReplaceResult;
-
 export type MessagePartUpdateApplyResult =
   | { ok: true; messages: ChatMessage[]; part: MessagePart }
   | {
@@ -31,6 +29,19 @@ export type MessagePartUpdateApplyResult =
       reason: MessagePartUpdateFailureReason;
       part?: MessagePart;
     };
+
+export type MessagePartPatchResult = MessagePartUpdateApplyResult;
+
+/**
+ * The target is gone rather than the patch being wrong. This races with
+ * removing a message while an update is in flight, so it is expected rather
+ * than a caller mistake.
+ */
+const PART_LOOKUP_FAILURES: ReadonlySet<MessagePartUpdateFailureReason> = new Set([
+  'message-not-found',
+  'part-not-found',
+  'part-type-mismatch',
+]);
 
 export function findMessagePart(
   messages: readonly ChatMessage[],
@@ -83,21 +94,34 @@ export function replaceMessagePart(
   return { ok: true, messages: nextMessages, part: nextPart };
 }
 
+/**
+ * Shallow-merge `patch` into the identified part under the same validation
+ * `applyMessagePartUpdate` performs: `id` and `type` are preserved, the result
+ * must still be a well-formed part, and tool-call parts go through their state
+ * machine.
+ *
+ * Callers that need to react to a rejection should use `applyMessagePartUpdate`
+ * (or `tryUpdatePart`) instead. Because this variant exists for callers that
+ * discard the result, an invalid patch is reported to the console — silently
+ * dropping it would leave a caller bug invisible. A missing message or part is
+ * not reported, since that races with ordinary message removal.
+ */
 export function patchMessagePart(
   messages: readonly ChatMessage[],
   messageId: string,
   partId: string,
   patch: Partial<MessagePart>,
 ): MessagePartPatchResult {
-  const lookup = findMessagePart(messages, messageId, partId);
-  if (!lookup.ok) {
-    return { ok: false, messages: [...messages], reason: lookup.reason };
+  const result = applyMessagePartUpdate(messages, { messageId, partId, patch });
+
+  if (!result.ok && !PART_LOOKUP_FAILURES.has(result.reason)) {
+    console.warn(
+      `[i-chat] Ignored an invalid patch for part "${partId}" of message "${messageId}": ` +
+        `${result.reason}. Use tryUpdatePart() to receive this result instead.`,
+    );
   }
 
-  return replaceMessagePart(messages, messageId, partId, {
-    ...lookup.part,
-    ...patch,
-  } as MessagePart);
+  return result;
 }
 
 export function applyMessagePartUpdate(

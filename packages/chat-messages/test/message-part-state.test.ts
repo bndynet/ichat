@@ -208,6 +208,129 @@ test('patchMessagePart preserves unpatched fields', () => {
   }
 });
 
+// ── patchMessagePart validation ────────────────────────────────────────
+// `updatePart()` routes through here and discards the result, so anything this
+// lets through is committed to the authoritative message array unnoticed.
+
+function captureWarnings(run: () => void): string[] {
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (...args: unknown[]) => {
+    warnings.push(args.map(String).join(' '));
+  };
+  try {
+    run();
+  } finally {
+    console.warn = original;
+  }
+  return warnings;
+}
+
+test('patchMessagePart refuses to change a part id', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const result = patchMessagePart([msg], 'm1', original.id, {
+    id: 'hijacked',
+  } as Partial<MessagePart>);
+
+  assert.ok(result.ok);
+  if (result.ok) {
+    assert.equal(result.part.id, original.id, 'keyed rendering depends on a stable part id');
+  }
+});
+
+test('patchMessagePart refuses to change a part type', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const result = patchMessagePart([msg], 'm1', original.id, {
+    type: 'tool-call',
+  } as Partial<MessagePart>);
+
+  assert.ok(result.ok);
+  if (result.ok) assert.equal(result.part.type, 'text');
+});
+
+test('patchMessagePart rejects a patch that malforms the part', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const result = patchMessagePart([msg], 'm1', original.id, {
+    text: 42,
+  } as unknown as Partial<MessagePart>);
+
+  assert.ok(!result.ok);
+  if (!result.ok) assert.equal(result.reason, 'invalid-part');
+});
+
+test('a rejected patch leaves the messages untouched', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const result = patchMessagePart([msg], 'm1', original.id, {
+    text: 42,
+  } as unknown as Partial<MessagePart>);
+
+  const part = result.messages[0].parts[0];
+  assert.equal(part.type === 'text' && part.text, 'hello');
+});
+
+test('patchMessagePart rejects an unknown tool-call state', () => {
+  const toolCall: MessagePart = {
+    id: 'tc1',
+    type: 'tool-call',
+    toolCallId: 'call_1',
+    toolName: 'search',
+    state: 'output-available',
+  };
+  const msg = makeMsg('m1', [toolCall]);
+
+  const result = patchMessagePart([msg], 'm1', 'tc1', {
+    state: 'bogus',
+  } as unknown as Partial<MessagePart>);
+
+  assert.ok(!result.ok);
+  if (!result.ok) assert.equal(result.reason, 'invalid-state');
+});
+
+test('an invalid patch is reported, since updatePart cannot return the reason', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const warnings = captureWarnings(() => {
+    patchMessagePart([msg], 'm1', original.id, {
+      text: 42,
+    } as unknown as Partial<MessagePart>);
+  });
+
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /invalid-part/);
+  assert.match(warnings[0], /tryUpdatePart/);
+});
+
+test('a missing target is not reported, because it races with message removal', () => {
+  const msg = makeMsg('m1');
+
+  const warnings = captureWarnings(() => {
+    patchMessagePart([msg], 'm1', 'missing', { text: 'x' });
+    patchMessagePart([msg], 'missing-msg', 'p1', { text: 'x' });
+  });
+
+  assert.deepEqual(warnings, []);
+});
+
+test('a valid patch is not reported', () => {
+  const original = textPart('hello');
+  const msg = makeMsg('m1', [original]);
+
+  const warnings = captureWarnings(() => {
+    patchMessagePart([msg], 'm1', original.id, { text: 'world' });
+  });
+
+  assert.deepEqual(warnings, []);
+});
+
 // ── applyMessagePartUpdate ─────────────────────────────────────────────
 
 test('applyMessagePartUpdate applies patch to text part', () => {

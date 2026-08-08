@@ -88,6 +88,16 @@ All notable changes to this project are documented here. This project follows
 - Type-only re-exports from `@bndynet/ichat-messages` are marked `export type`,
   so consuming the package as unbundled source (e.g. a Vite dev server) no longer
   fails with a missing runtime export.
+- `updatePart()` no longer bypasses part validation. It shared a name and a
+  purpose with `tryUpdatePart()` but not its safety: the underlying
+  `patchMessagePart()` merged the patch straight into the part, so a patch could
+  change a part's `id` (breaking keyed rendering and every later lookup), change
+  its `type` into a shape the renderer cannot handle, or set an unknown
+  tool-call `state` — and the result was committed to the authoritative message
+  array. Both now run the same validation as `applyMessagePartUpdate()`. Since
+  `updatePart()` returns nothing, a rejected patch is dropped and reported to the
+  console; a missing message or part stays silent, because that races with
+  ordinary message removal. Use `tryUpdatePart()` to receive the reason instead.
 
 ### Compatibility
 
