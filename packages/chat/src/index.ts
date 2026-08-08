@@ -16,6 +16,7 @@ export type {
 export type { ChatMutationOutcome } from "./state/mutation-outcome.js";
 export type { ChatMiddleware } from "./middleware/chat-middleware.js";
 export type { ChatPlugin } from "./middleware/chat-plugin.js";
+/** @internal Middleware-chain factory — used internally by {@link Chat}. */
 export { createMiddlewareChain } from "./middleware/chat-middleware.js";
 export type {
   MessagesChangeDetail,

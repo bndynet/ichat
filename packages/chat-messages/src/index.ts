@@ -1,22 +1,33 @@
+/** Public: standalone message-list Web Component. */
 export { ChatMessages } from "./components/chat-messages.js";
+/** @internal Individual message element — rendered by {@link ChatMessages}. */
 export { ChatMessageElement } from "./components/chat-message.js";
+/** @internal Part-routing host — rendered by {@link ChatMessageElement}. */
 export { ChatPartHost } from "./components/chat-part-host.js";
 export { ChatReasoning } from "./components/chat-reasoning.js";
+/** @internal Loading-dots placeholder. */
 export { ChatDots } from "./components/chat-dots.js";
+/** @internal Spinner placeholder. */
 export { ChatSpinner } from "./components/chat-spinner.js";
+/** @internal Text-part renderer — rendered by {@link ChatPartHost}. */
 export { ChatTextPart } from "./components/chat-text-part.js";
 export { ChatToolCall } from "./components/chat-tool-call.js";
 export { ChatTodo } from "./components/chat-todo.js";
 
+/** @internal Lit reactive controller for typewriter animation. */
 export { StreamingController } from "./controllers/streaming-controller.js";
+/** @internal Lit reactive controller for auto-scroll behaviour. */
 export { ScrollController } from "./controllers/scroll-controller.js";
+/** @internal Lit reactive controller for inline error banners. */
 export { ErrorBannerController } from "./controllers/error-banner-controller.js";
 
 export { rendererRegistry } from "./renderers/registry.js";
 export { partRendererRegistry } from "./renderers/part-registry.js";
 export {
+  /** @internal Raw markdown-it instance — prefer {@link registerMarkdownPlugin}. */
   md,
   renderMarkdown,
+  /** @internal Streaming-optimised light pipeline — used internally by {@link ChatTextPart}. */
   renderMarkdownLight,
   sanitizeHtml,
   extractReasoning,
@@ -35,8 +46,11 @@ export {
 export type { RenderMarkdownIntoOptions } from "./renderers/markdown-morph.js";
 export { registerMarkdownPlugin } from "./renderers/markdown-plugins.js";
 export type { MarkdownPlugin } from "./renderers/markdown-plugins.js";
+/** @internal Progress-step status helper — used internally by {@link ChatMessages}. */
 export { updateProgressStepStatus } from "./renderers/progress-plugin.js";
+/** @internal Progress-step status enum. */
 export type { ProgressStatus } from "./renderers/progress-plugin.js";
+/** @internal Built-in collapsible-details markdown-it plugin. */
 export { collapsiblePlugin } from "./renderers/collapsible-plugin.js";
 
 export {
@@ -47,6 +61,7 @@ export {
 } from "./renderers/renderer-utils.js";
 export type { RendererOptions } from "./renderers/renderer-utils.js";
 
+/** @internal Context passed by {@link ChatPartHost} to custom part renderers. */
 export type { ChatPartRenderContext } from "./components/chat-part-host.js";
 
 export type {
@@ -54,6 +69,7 @@ export type {
   MessagesChangeReason,
   MessagesChangeSource,
 } from "./messages-change-types.js";
+/** @internal Event-detail builder — used internally by {@link ChatMessages} and {@link Chat}. */
 export { buildMessagesChangeDetail } from "./messages-change-types.js";
 
 export type {
