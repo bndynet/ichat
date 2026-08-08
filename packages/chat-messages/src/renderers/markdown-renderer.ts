@@ -40,10 +40,45 @@ export interface MarkdownRenderOptions {
   onRendererError?: (detail: RendererErrorDetail) => void;
 }
 
-/** Active highlight.js instance for the current render pass (set per-render). */
-let activeHighlightJs: HighlightJs | undefined;
-let activeRenderOptions: MarkdownRenderOptions | undefined;
-let activeRenderMode: "full" | "streaming" = "full";
+/**
+ * Per-render-pass context threaded through the markdown pipeline.
+ *
+ * markdown-it's `highlight` and `validateLink` callbacks do not receive `env`,
+ * so a single module-level slot bridges the gap. All other consumers (fence
+ * rule, details renderer, async blocks) read from `env` directly.
+ *
+ * @internal — callers use {@link renderMarkdown} / {@link renderMarkdownLight}.
+ */
+interface MarkdownRenderContext {
+  highlightJs?: HighlightJs;
+  options?: MarkdownRenderOptions;
+  mode: "full" | "streaming";
+}
+
+/** Payload threaded through markdown-it's `env` parameter. */
+interface MarkdownRenderEnv {
+  context: MarkdownRenderContext;
+  /** Mutable per-call pending-block map (replaces former module-level `pendingBlockHTML`). */
+  pendingBlockHTML: Map<string, { html: string; trusted: boolean }>;
+  blockCounter: number;
+}
+
+/**
+ * Active per-render-pass context.
+ *
+ * Set before `md.render()` and restored in `finally`. This is the **only**
+ * module-level mutable state in the render pipeline — unavoidable because
+ * markdown-it's `highlight(str, lang)` and `validateLink(href)` callbacks
+ * do not receive `env`.
+ */
+let _activeContext: MarkdownRenderContext | null = null;
+
+/**
+ * Fallback block-ID counter for fence rules triggered by direct `md.render()`
+ * calls (outside of {@link renderMarkdown} / {@link renderMarkdownLight}).
+ * Ensures placeholder IDs stay unique across calls when `env` is not threaded.
+ */
+let _directRenderBlockCounter = 0;
 
 const md = getSharedMd(() => {
   const instance = new MarkdownIt({
@@ -51,7 +86,7 @@ const md = getSharedMd(() => {
     linkify: true,
     typographer: true,
     highlight(str: string, lang: string): string {
-      const hl = activeHighlightJs;
+      const hl = _activeContext?.highlightJs;
       if (hl && lang && hl.getLanguage(lang)) {
         try {
           return hl.highlight(str, { language: lang }).value;
@@ -67,7 +102,7 @@ const md = getSharedMd(() => {
   // rendering. This is substantially cheaper than running DOMPurify for every
   // streaming update and still allows host-defined schemes through options.
   instance.validateLink = (href: string) =>
-    isAllowedLinkHref(href, activeRenderOptions?.allowedLinkProtocols);
+    isAllowedLinkHref(href, _activeContext?.options?.allowedLinkProtocols);
   instance.use(progressPlugin);
   instance.use(collapsiblePlugin);
 
@@ -184,14 +219,6 @@ function isRendererTrusted(r: {
   return r.trusted === true;
 }
 
-interface PendingBlockHTML {
-  html: string;
-  trusted: boolean;
-}
-
-const pendingBlockHTML = new Map<string, PendingBlockHTML>();
-let blockPlaceholderCounter = 0;
-
 function reportBlockRendererError(
   renderer: string,
   phase: RendererErrorDetail["phase"],
@@ -199,7 +226,7 @@ function reportBlockRendererError(
   code: string,
   language: string,
   info: string,
-  options = activeRenderOptions,
+  options?: MarkdownRenderOptions,
 ): void {
   try {
     options?.onRendererError?.({
@@ -236,8 +263,10 @@ rendererRegistry.register({
 
     // Render the body through the full markdown pipeline (supports progress,
     // tables, code highlighting, etc.) then sanitise the result.
+    // _activeContext is already set by the outer renderMarkdown/renderMarkdownLight
+    // call that triggered the enclosing fence rule.
     const bodyRaw = md.render(content);
-    const bodyHtml = sanitizeHtml(bodyRaw, activeRenderOptions);
+    const bodyHtml = sanitizeHtml(bodyRaw, _activeContext?.options);
 
     return (
       `<details class="chat-details">\n` +
@@ -262,6 +291,23 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx];
   const info = token.info.trim();
   const lang = info.split(/\s+/)[0];
+
+  // All per-call state is threaded through markdown-it's env when called via
+  // renderMarkdown / renderMarkdownLight.  Direct md.render() calls (e.g. in
+  // tests or async-block resolution) receive a bare env — fall back to the
+  // module-level _activeContext (if set) or safe defaults.
+  const renderEnv: MarkdownRenderEnv | undefined =
+    env && typeof env === "object" && "context" in env
+      ? (env as MarkdownRenderEnv)
+      : undefined;
+  const ctx: MarkdownRenderContext =
+    renderEnv?.context ??
+    _activeContext ??
+    { mode: "full" };
+  const pendingBlocks = renderEnv?.pendingBlockHTML ?? new Map();
+  const nextBlockId = (): number =>
+    renderEnv ? ++renderEnv.blockCounter : ++_directRenderBlockCounter;
+
   const customRenderer = rendererRegistry.getRenderer(
     lang,
     (renderer, error) => {
@@ -272,6 +318,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         token.content,
         lang,
         info,
+        ctx.options,
       );
     },
   );
@@ -282,7 +329,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     // DOMPurify is intentionally absent from the hot streaming path. Defer
     // untrusted rich output until the terminal render rather than injecting it
     // unsanitised or paying a full DOM sanitisation cost for every token.
-    if (activeRenderMode === "streaming" && !trusted) {
+    if (ctx.mode === "streaming" && !trusted) {
       return wrapCodeBlock(
         defaultFence(tokens, idx, options, env, self),
         token.content,
@@ -294,7 +341,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     // streaming snapshot creates request storms and stale-result races. A
     // trusted synchronous placeholder may still render during streaming.
     if (customRenderer.renderAsync) {
-      if (activeRenderMode === "streaming") {
+      if (ctx.mode === "streaming") {
         if (!customRenderer.render) {
           return wrapCodeBlock(
             defaultFence(tokens, idx, options, env, self),
@@ -304,8 +351,8 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         }
         try {
           const html = customRenderer.render(token.content, lang, info);
-          const id = `_br_${++blockPlaceholderCounter}_${idx}`;
-          pendingBlockHTML.set(id, { html, trusted });
+          const id = `_br_${nextBlockId()}_${idx}`;
+          pendingBlocks.set(id, { html, trusted });
           return `<div id="${id}"></div>`;
         } catch (error) {
           reportBlockRendererError(
@@ -315,12 +362,13 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
             token.content,
             lang,
             info,
+            ctx.options,
           );
           return safeRendererFallback(token.content, lang);
         }
       }
 
-      const id = `_br_${++blockPlaceholderCounter}_${idx}`;
+      const id = `_br_${nextBlockId()}_${idx}`;
       const loadingHtml = `<div class="chat-block-loading" aria-label="Loading...">
               <span class="chat-block-loading__spinner"></span>
             </div>`;
@@ -336,6 +384,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
             token.content,
             lang,
             info,
+            ctx.options,
           );
         }
       }
@@ -344,7 +393,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
       try {
         promise = Promise.resolve(
           customRenderer.renderAsync(token.content, lang, info, {
-            signal: activeRenderOptions?.rendererSignal,
+            signal: ctx.options?.rendererSignal,
           }),
         );
       } catch (error) {
@@ -355,12 +404,13 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
           token.content,
           lang,
           info,
+          ctx.options,
         );
         return safeRendererFallback(token.content, lang);
       }
 
       const fallbackHtml = safeRendererFallback(token.content, lang);
-      pendingBlockHTML.set(id, {
+      pendingBlocks.set(id, {
         html: `<div id="${id}" data-chat-async-block="true">${placeholderHtml}</div>`,
         trusted,
       });
@@ -373,8 +423,8 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         code: token.content,
         language: lang,
         info,
-        renderOptions: activeRenderOptions,
-        signal: activeRenderOptions?.rendererSignal,
+        renderOptions: ctx.options,
+        signal: ctx.options?.rendererSignal,
       });
 
       return `<div id="${id}"></div>`;
@@ -384,8 +434,8 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     if (customRenderer.render) {
       try {
         const html = customRenderer.render(token.content, lang, info);
-        const id = `_br_${++blockPlaceholderCounter}_${idx}`;
-        pendingBlockHTML.set(id, { html, trusted });
+        const id = `_br_${nextBlockId()}_${idx}`;
+        pendingBlocks.set(id, { html, trusted });
         return `<div id="${id}"></div>`;
       } catch (error) {
         reportBlockRendererError(
@@ -395,6 +445,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
           token.content,
           lang,
           info,
+          ctx.options,
         );
         return safeRendererFallback(token.content, lang);
       }
@@ -577,20 +628,27 @@ export function renderMarkdown(
   content: string,
   options?: MarkdownRenderOptions,
 ): string {
-  pendingBlockHTML.clear();
-  const previousOptions = activeRenderOptions;
-  const previousMode = activeRenderMode;
-  activeRenderOptions = options;
-  activeRenderMode = "full";
-  activeHighlightJs = options?.highlightJs;
+  const context: MarkdownRenderContext = {
+    highlightJs: options?.highlightJs,
+    options,
+    mode: "full",
+  };
+  const env: MarkdownRenderEnv = {
+    context,
+    pendingBlockHTML: new Map(),
+    blockCounter: 0,
+  };
+
+  const previousContext = _activeContext;
+  _activeContext = context;
 
   try {
-    let raw = md.render(content);
+    let raw = md.render(content, env);
 
     // Untrusted renderer HTML joins the regular markdown output before the one
     // terminal DOMPurify pass. This keeps sanitisation safe and avoids one pass
     // per block.
-    for (const [id, block] of pendingBlockHTML) {
+    for (const [id, block] of env.pendingBlockHTML) {
       if (!block.trusted) {
         raw = raw.replace(`<div id="${id}"></div>`, block.html);
       }
@@ -599,7 +657,7 @@ export function renderMarkdown(
     let sanitized = sanitizeHtml(raw, options);
 
     // Only explicitly trusted renderer output bypasses DOMPurify.
-    for (const [id, block] of pendingBlockHTML) {
+    for (const [id, block] of env.pendingBlockHTML) {
       if (block.trusted) {
         sanitized = sanitized.replace(`<div id="${id}"></div>`, block.html);
       }
@@ -607,10 +665,7 @@ export function renderMarkdown(
 
     return sanitized;
   } finally {
-    activeRenderOptions = previousOptions;
-    activeRenderMode = previousMode;
-    activeHighlightJs = undefined;
-    pendingBlockHTML.clear();
+    _activeContext = previousContext;
   }
 }
 
@@ -631,19 +686,26 @@ export function renderMarkdownLight(
   content: string,
   options?: MarkdownRenderOptions,
 ): string {
-  pendingBlockHTML.clear();
-  const previousOptions = activeRenderOptions;
-  const previousMode = activeRenderMode;
-  activeRenderOptions = options;
-  activeRenderMode = "streaming";
-  activeHighlightJs = options?.highlightJs;
+  const context: MarkdownRenderContext = {
+    highlightJs: options?.highlightJs,
+    options,
+    mode: "streaming",
+  };
+  const env: MarkdownRenderEnv = {
+    context,
+    pendingBlockHTML: new Map(),
+    blockCounter: 0,
+  };
+
+  const previousContext = _activeContext;
+  _activeContext = context;
 
   try {
-    const raw = md.render(content);
+    const raw = md.render(content, env);
 
     // Splice trusted block-renderer HTML back in (same as full path).
     let result = raw;
-    for (const [id, block] of pendingBlockHTML) {
+    for (const [id, block] of env.pendingBlockHTML) {
       result = result.replace(`<div id="${id}"></div>`, block.html);
     }
 
@@ -652,10 +714,7 @@ export function renderMarkdownLight(
     // reaches this splice step.
     return result;
   } finally {
-    activeRenderOptions = previousOptions;
-    activeRenderMode = previousMode;
-    activeHighlightJs = undefined;
-    pendingBlockHTML.clear();
+    _activeContext = previousContext;
   }
 }
 
