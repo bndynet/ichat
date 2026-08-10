@@ -624,6 +624,24 @@ export function sanitizeHtml(
   return DOMPurify.sanitize(html, domPurifyConfig(options));
 }
 
+/**
+ * Swap a block-renderer placeholder for the renderer's HTML.
+ *
+ * The replacement must be a function: as a string it would let
+ * `String.prototype.replace` expand `$&`, `` $` ``, `$'`, and `$$` inside
+ * renderer output. That is reachable from ordinary model text, because
+ * escaping turns `'` into `&#39;` and `&` into `&amp;`, so any `$` followed by
+ * one of them yields a `$&` sequence. For trusted renderers this splice runs
+ * after DOMPurify, where an expansion would inject unsanitised markup.
+ */
+function splicePlaceholder(
+  html: string,
+  id: string,
+  replacement: string,
+): string {
+  return html.replace(`<div id="${id}"></div>`, () => replacement);
+}
+
 export function renderMarkdown(
   content: string,
   options?: MarkdownRenderOptions,
@@ -649,7 +667,7 @@ export function renderMarkdown(
     // per block.
     for (const [id, block] of env.pendingBlockHTML) {
       if (!block.trusted) {
-        raw = raw.replace(`<div id="${id}"></div>`, block.html);
+        raw = splicePlaceholder(raw, id, block.html);
       }
     }
 
@@ -658,7 +676,7 @@ export function renderMarkdown(
     // Only explicitly trusted renderer output bypasses DOMPurify.
     for (const [id, block] of env.pendingBlockHTML) {
       if (block.trusted) {
-        sanitized = sanitized.replace(`<div id="${id}"></div>`, block.html);
+        sanitized = splicePlaceholder(sanitized, id, block.html);
       }
     }
 
@@ -704,7 +722,7 @@ export function renderMarkdownLight(
     // Splice trusted block-renderer HTML back in (same as full path).
     let result = raw;
     for (const [id, block] of env.pendingBlockHTML) {
-      result = result.replace(`<div id="${id}"></div>`, block.html);
+      result = splicePlaceholder(result, id, block.html);
     }
 
     // DOMPurify remains terminal-only. The light path is safe because raw HTML

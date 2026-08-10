@@ -268,6 +268,64 @@ test("async rejection restores an escaped source fallback", async () => {
   }
 });
 
+test("renderer output containing $-substitution patterns is spliced verbatim", () => {
+  const name = "runtime-dollar-splice";
+  // `&#39;` and `&amp;` are what escaping produces for `'` and `&`, so a `$`
+  // in front of either — e.g. the accounting notation `$'000` — reaches the
+  // splice as a `$&` sequence.
+  const payload = `<span class="dollar-splice">A $&#39;000 B $&amp; C $\` D $$ E</span>`;
+  rendererRegistry.register({
+    name,
+    mode: "trusted",
+    trusted: true,
+    test: (language) => language === name,
+    render: () => payload,
+  });
+
+  try {
+    const html = renderMarkdownLight(
+      `before\n\n\`\`\`${name}\nsource\n\`\`\`\n\nafter`,
+    );
+    assert.ok(
+      html.includes(payload),
+      `expected verbatim renderer output, got: ${html}`,
+    );
+    assert.doesNotMatch(html, /_br_\d+_\d+/);
+  } finally {
+    rendererRegistry.unregister(name);
+  }
+});
+
+test("a $-substitution pattern in one block does not corrupt a later block", () => {
+  const first = "runtime-dollar-first";
+  const second = "runtime-dollar-second";
+  rendererRegistry.register({
+    name: first,
+    mode: "trusted",
+    trusted: true,
+    test: (language) => language === first,
+    render: () => `<span class="first">$&#39;000</span>`,
+  });
+  rendererRegistry.register({
+    name: second,
+    mode: "trusted",
+    trusted: true,
+    test: (language) => language === second,
+    render: () => `<span class="second">ok</span>`,
+  });
+
+  try {
+    const html = renderMarkdownLight(
+      `\`\`\`${first}\na\n\`\`\`\n\n\`\`\`${second}\nb\n\`\`\``,
+    );
+    assert.equal(html.match(/class="second"/g)?.length, 1);
+    assert.doesNotMatch(html, /_br_\d+_\d+/);
+  } finally {
+    rendererRegistry.unregister(first);
+    rendererRegistry.unregister(second);
+  }
+});
+
 test("part renderer matcher errors are isolated", () => {
   const throwingName = "runtime-part-match-error";
   const succeedingName = "runtime-part-match-success";
