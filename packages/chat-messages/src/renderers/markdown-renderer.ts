@@ -248,12 +248,9 @@ function reportBlockRendererError(
 
 // ── Built-in fence renderer: ```details Title … ``` ──────────────────────────
 // Supports an optional title extracted from the info string.
-// Inner content is rendered as full markdown and sanitised separately so that
-// any standard markdown elements (tables, lists, code blocks, progress blocks …)
-// work correctly inside the collapsible body.
-// NOTE: Nested *fence-based* custom renderers inside a details block are not
-// supported — they will fall back to a plain highlighted code block. Plugin-
-// based renderers (e.g. the progress ordered-list syntax) work fine.
+// The body runs through its own complete render pass, so standard markdown
+// (tables, lists, code blocks, progress blocks …) and nested fence-based custom
+// renderers both work inside the collapsible body.
 rendererRegistry.register({
   name: "chat-details",
   mode: "trusted",
@@ -264,12 +261,16 @@ rendererRegistry.register({
     const title = info.replace(/^details\s*/i, "").trim() || "Details";
     const safeTitle = md.utils.escapeHtml(title);
 
-    // Render the body through the full markdown pipeline (supports progress,
-    // tables, code highlighting, etc.) then sanitise the result.
-    // _activeContext is already set by the outer renderMarkdown/renderMarkdownLight
-    // call that triggered the enclosing fence rule.
-    const bodyRaw = md.render(content);
-    const bodyHtml = sanitizeHtml(bodyRaw, _activeContext?.options);
+    // A nested pass, not a bare `md.render()`: the body needs its own splice
+    // step or any block renderer inside it leaves an empty placeholder behind.
+    // This renderer is trusted, so the body is sanitised here and not again by
+    // the enclosing pass. `_activeContext` is set by the outer render that
+    // triggered this fence.
+    const bodyHtml = renderMarkdownPass(
+      content,
+      _activeContext?.mode ?? "full",
+      _activeContext?.options,
+    );
 
     return (
       `<details class="chat-details">\n` +
@@ -642,14 +643,27 @@ function splicePlaceholder(
   return html.replace(`<div id="${id}"></div>`, () => replacement);
 }
 
-export function renderMarkdown(
+/**
+ * One complete render pass: markdown-it, then the block-renderer splice that
+ * turns placeholders back into renderer HTML.
+ *
+ * Every pass owns its `pendingBlockHTML` map, so a pass must splice its own
+ * placeholders before returning — an unspliced placeholder is never picked up
+ * by an enclosing pass and its content is lost. That is why nested rendering
+ * (the `details` body) goes through here rather than calling `md.render()`
+ * directly, and why the nested pass inherits the enclosing `mode`: a nested
+ * `'full'` pass inside a streaming render would sanitise per token and start
+ * async renderers the streaming path deliberately defers.
+ */
+function renderMarkdownPass(
   content: string,
+  mode: "full" | "streaming",
   options?: MarkdownRenderOptions,
 ): string {
   const context: MarkdownRenderContext = {
     highlightJs: options?.highlightJs,
     options,
-    mode: "full",
+    mode,
   };
   const env: MarkdownRenderEnv = {
     context,
@@ -660,30 +674,47 @@ export function renderMarkdown(
   _activeContext = context;
 
   try {
-    let raw = md.render(content, env);
+    let result = md.render(content, env);
+
+    if (mode === "streaming") {
+      // Untrusted renderers never reach `pendingBlockHTML` while streaming —
+      // the fence rule returns escaped code for them — so everything here is
+      // trusted and DOMPurify stays terminal-only.
+      for (const [id, block] of env.pendingBlockHTML) {
+        result = splicePlaceholder(result, id, block.html);
+      }
+      return result;
+    }
 
     // Untrusted renderer HTML joins the regular markdown output before the one
     // terminal DOMPurify pass. This keeps sanitisation safe and avoids one pass
     // per block.
     for (const [id, block] of env.pendingBlockHTML) {
       if (!block.trusted) {
-        raw = splicePlaceholder(raw, id, block.html);
+        result = splicePlaceholder(result, id, block.html);
       }
     }
 
-    let sanitized = sanitizeHtml(raw, options);
+    result = sanitizeHtml(result, options);
 
     // Only explicitly trusted renderer output bypasses DOMPurify.
     for (const [id, block] of env.pendingBlockHTML) {
       if (block.trusted) {
-        sanitized = splicePlaceholder(sanitized, id, block.html);
+        result = splicePlaceholder(result, id, block.html);
       }
     }
 
-    return sanitized;
+    return result;
   } finally {
     _activeContext = previousContext;
   }
+}
+
+export function renderMarkdown(
+  content: string,
+  options?: MarkdownRenderOptions,
+): string {
+  return renderMarkdownPass(content, "full", options);
 }
 
 /**
@@ -703,35 +734,7 @@ export function renderMarkdownLight(
   content: string,
   options?: MarkdownRenderOptions,
 ): string {
-  const context: MarkdownRenderContext = {
-    highlightJs: options?.highlightJs,
-    options,
-    mode: "streaming",
-  };
-  const env: MarkdownRenderEnv = {
-    context,
-    pendingBlockHTML: new Map(),
-  };
-
-  const previousContext = _activeContext;
-  _activeContext = context;
-
-  try {
-    const raw = md.render(content, env);
-
-    // Splice trusted block-renderer HTML back in (same as full path).
-    let result = raw;
-    for (const [id, block] of env.pendingBlockHTML) {
-      result = splicePlaceholder(result, id, block.html);
-    }
-
-    // DOMPurify remains terminal-only. The light path is safe because raw HTML
-    // is disabled, links are protocol-filtered, and only trusted renderer HTML
-    // reaches this splice step.
-    return result;
-  } finally {
-    _activeContext = previousContext;
-  }
+  return renderMarkdownPass(content, "streaming", options);
 }
 
 /** Allow optional whitespace before `>` and case-insensitive tag names so model output still matches. */

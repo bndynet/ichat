@@ -326,6 +326,77 @@ test("a $-substitution pattern in one block does not corrupt a later block", () 
   }
 });
 
+/** A ```` ```lang ```` fence nested inside a ````` ````details ````` fence. */
+function detailsWith(language: string, source = "source"): string {
+  return ["````details My Title", "```" + language, source, "```", "````"].join(
+    "\n",
+  );
+}
+
+test("block renderers nested in a details fence are spliced, not dropped", () => {
+  const name = "runtime-details-nested";
+  rendererRegistry.register({
+    name,
+    mode: "trusted",
+    trusted: true,
+    test: (language) => language === name,
+    render: () => '<div class="nested-ok">rendered</div>',
+  });
+
+  try {
+    const html = renderMarkdownLight(detailsWith(name));
+    assert.match(html, /chat-details__body/);
+    assert.match(html, /nested-ok/);
+    assert.doesNotMatch(html, /_br_\d+_\d+/);
+  } finally {
+    rendererRegistry.unregister(name);
+  }
+});
+
+test("a details body inherits the streaming mode of the enclosing pass", () => {
+  const name = "runtime-details-mode";
+  let asyncCalls = 0;
+  rendererRegistry.register({
+    name,
+    mode: "trusted",
+    trusted: true,
+    test: (language) => language === name,
+    render: () => '<div class="nested-placeholder">loading</div>',
+    renderAsync: async () => {
+      asyncCalls += 1;
+      return '<div class="nested-resolved">done</div>';
+    },
+  });
+
+  try {
+    const html = renderMarkdownLight(detailsWith(name));
+    assert.match(html, /nested-placeholder/);
+    // A nested 'full' pass would have started the async renderer here.
+    assert.equal(asyncCalls, 0);
+  } finally {
+    rendererRegistry.unregister(name);
+  }
+});
+
+test("an untrusted renderer nested in a details fence defers while streaming", () => {
+  const name = "runtime-details-untrusted";
+  rendererRegistry.register({
+    name,
+    mode: "sanitized",
+    test: (language) => language === name,
+    render: () => '<div class="should-not-stream">rich</div>',
+  });
+
+  try {
+    const html = renderMarkdownLight(detailsWith(name, "deferred source"));
+    assert.doesNotMatch(html, /should-not-stream/);
+    assert.match(html, /deferred source/);
+    assert.doesNotMatch(html, /_br_\d+_\d+/);
+  } finally {
+    rendererRegistry.unregister(name);
+  }
+});
+
 test("part renderer matcher errors are isolated", () => {
   const throwingName = "runtime-part-match-error";
   const succeedingName = "runtime-part-match-success";
