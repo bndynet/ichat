@@ -4,7 +4,7 @@ import { nextTick, onMounted, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import { nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import confirmationExample from "../../examples/renderers/confirmation.md?raw";
+import confirmationExample from "../../examples/builtin/confirmation.md?raw";
 
 const chatRef = ref(null);
 const draft = ref("");

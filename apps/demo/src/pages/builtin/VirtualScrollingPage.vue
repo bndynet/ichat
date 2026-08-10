@@ -3,7 +3,7 @@ import "@bndynet/ichat";
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import virtualScrollingExample from "../../examples/renderers/virtual-scrolling.md?raw";
+import virtualScrollingExample from "../../examples/builtin/virtual-scrolling.md?raw";
 
 const MESSAGE_COUNTS = [100, 1000, 10000];
 const messageCache = new Map();

@@ -5,7 +5,7 @@ import { onMounted, nextTick, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import { demoData, nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import formExample from "../../examples/renderers/form.md?raw";
+import formExample from "../../examples/extensions/form.md?raw";
 
 const chatRef = ref(null);
 

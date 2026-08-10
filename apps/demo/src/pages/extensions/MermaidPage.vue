@@ -5,7 +5,7 @@ import { onMounted, nextTick, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import { demoData, nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import mermaidExample from "../../examples/renderers/mermaid.md?raw";
+import mermaidExample from "../../examples/extensions/mermaid.md?raw";
 
 const chatRef = ref(null);
 

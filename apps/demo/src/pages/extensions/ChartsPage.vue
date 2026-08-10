@@ -5,7 +5,7 @@ import { onMounted, onUnmounted, nextTick, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import { demoData, nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import chartsExample from "../../examples/renderers/charts.md?raw";
+import chartsExample from "../../examples/extensions/charts.md?raw";
 
 const chatRef = ref(null);
 let cancelled = false;

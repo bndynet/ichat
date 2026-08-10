@@ -5,7 +5,7 @@ import { onMounted, nextTick, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import { demoData, nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import kpiGroupExample from "../../examples/renderers/kpi-group.md?raw";
+import kpiCardsExample from "../../examples/extensions/kpi-cards.md?raw";
 
 const chatRef = ref(null);
 
@@ -14,7 +14,7 @@ onMounted(async () => {
   chatRef.value.addMessage({
     id: nextId(),
     role: "assistant",
-    parts: [textPart(demoData.kpiGroup)],
+    parts: [textPart(demoData.kpis)],
     timestamp: Date.now(),
   });
 });
@@ -23,7 +23,7 @@ onMounted(async () => {
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
   <ExampleCodeDrawer
-    title="KPI group code example"
-    :content="kpiGroupExample"
+    title="KPI cards code example"
+    :content="kpiCardsExample"
   />
 </template>

@@ -4,7 +4,7 @@ import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { textPart, todoPart } from "@bndynet/ichat";
 import { nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import todoExample from "../../examples/renderers/todos.md?raw";
+import todoExample from "../../examples/builtin/todos.md?raw";
 
 const chatRef = ref(null);
 const timers = [];

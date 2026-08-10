@@ -4,7 +4,7 @@ import { onMounted, nextTick, ref } from "vue";
 import { registerPartRenderer, textPart } from "@bndynet/ichat";
 import { nextId } from "../../composables/demo-data.js";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import customPartExample from "../../examples/renderers/custom-part.md?raw";
+import customPartExample from "../../examples/builtin/custom-part.md?raw";
 import {
   weatherElementRenderer,
   weatherStringRenderer,

@@ -3,7 +3,7 @@ import "@bndynet/ichat";
 import { nextTick, onMounted, ref } from "vue";
 import { textPart } from "@bndynet/ichat";
 import ExampleCodeDrawer from "../../components/ExampleCodeDrawer.vue";
-import scrollToExample from "../../examples/renderers/scroll-to.md?raw";
+import scrollToExample from "../../examples/builtin/scroll-to.md?raw";
 
 const chatRef = ref(null);
 const customMsgId = ref("");

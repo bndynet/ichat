@@ -9,96 +9,99 @@ export default defineConfig({
       icon: "message-circle",
       page: () => import("./src/pages/ChatPage.vue"),
     },
+    // Ships inside @bndynet/ichat — nothing extra to install.
+    // Ordered as: message parts, then list behaviours, then extensibility.
     {
-      label: "Plugins",
-      icon: "plug",
-      children: [
-        {
-          label: "LaTeX Math",
-          icon: "sigma",
-          page: () => import("./src/pages/plugins/LatexPage.vue"),
-        },
-      ],
-    },
-    {
-      label: "Renderers",
-      icon: "layout-list",
+      label: "Built-in",
+      icon: "box",
       children: [
         {
           label: "Tool calls",
           icon: "wrench",
-          page: () => import("./src/pages/renderers/ToolCallsPage.vue"),
+          page: () => import("./src/pages/builtin/ToolCallsPage.vue"),
         },
         {
           label: "To-dos",
           icon: "list-checks",
-          page: () => import("./src/pages/renderers/TodoPage.vue"),
+          page: () => import("./src/pages/builtin/TodoPage.vue"),
         },
         {
           label: "File & source",
           icon: "paperclip",
-          page: () => import("./src/pages/renderers/FileSourcePage.vue"),
-        },
-        {
-          label: "Custom part (x-*)",
-          icon: "puzzle",
-          page: () => import("./src/pages/renderers/CustomPartPage.vue"),
+          page: () => import("./src/pages/builtin/FileSourcePage.vue"),
         },
         {
           label: "Progress",
           icon: "git-branch",
-          page: () => import("./src/pages/renderers/ProgressPage.vue"),
-        },
-        {
-          label: "Charts",
-          icon: "bar-chart-3",
-          page: () => import("./src/pages/renderers/ChartsPage.vue"),
-        },
-        {
-          label: "Mermaid",
-          icon: "git-fork",
-          page: () => import("./src/pages/renderers/MermaidPage.vue"),
-        },
-        {
-          label: "KPI cards",
-          icon: "layout-grid",
-          page: () => import("./src/pages/renderers/KpiCardsPage.vue"),
-        },
-        {
-          label: "KPI group",
-          icon: "layers",
-          page: () => import("./src/pages/renderers/KpiGroupPage.vue"),
-        },
-        {
-          label: "Form",
-          icon: "file-text",
-          page: () => import("./src/pages/renderers/FormPage.vue"),
+          page: () => import("./src/pages/builtin/ProgressPage.vue"),
         },
         {
           label: "Confirmation",
           icon: "badge-check",
-          page: () => import("./src/pages/renderers/ConfirmationPage.vue"),
+          page: () => import("./src/pages/builtin/ConfirmationPage.vue"),
         },
         {
           label: "Details",
           icon: "panel-bottom",
-          page: () => import("./src/pages/renderers/DetailsPage.vue"),
+          page: () => import("./src/pages/builtin/DetailsPage.vue"),
         },
         {
           label: "Scroll To",
           icon: "arrow-down",
-          page: () => import("./src/pages/renderers/ScrollToPage.vue"),
+          page: () => import("./src/pages/builtin/ScrollToPage.vue"),
         },
         {
           label: "Virtual scrolling",
           icon: "list",
-          page: () => import("./src/pages/renderers/VirtualScrollingPage.vue"),
+          page: () => import("./src/pages/builtin/VirtualScrollingPage.vue"),
+        },
+        {
+          label: "Custom part (x-*)",
+          icon: "puzzle",
+          page: () => import("./src/pages/builtin/CustomPartPage.vue"),
+        },
+      ],
+    },
+    // Each needs its own npm install. Ordered by owning package.
+    {
+      label: "Extensions",
+      icon: "plug",
+      children: [
+        {
+          label: "KPI cards",
+          icon: "layout-grid",
+          page: () => import("./src/pages/extensions/KpiCardsPage.vue"),
+        },
+        {
+          label: "KPI group",
+          icon: "layers",
+          page: () => import("./src/pages/extensions/KpiGroupPage.vue"),
+        },
+        {
+          label: "Form",
+          icon: "file-text",
+          page: () => import("./src/pages/extensions/FormPage.vue"),
+        },
+        {
+          label: "Charts",
+          icon: "bar-chart-3",
+          page: () => import("./src/pages/extensions/ChartsPage.vue"),
+        },
+        {
+          label: "Mermaid",
+          icon: "git-fork",
+          page: () => import("./src/pages/extensions/MermaidPage.vue"),
+        },
+        {
+          label: "LaTeX Math",
+          icon: "sigma",
+          page: () => import("./src/pages/extensions/LatexPage.vue"),
         },
       ],
     },
     {
       label: "Slots",
-      icon: "puzzle",
+      icon: "layout-template",
       children: [
         {
           label: "Placeholder",
