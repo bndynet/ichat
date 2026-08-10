@@ -1,9 +1,9 @@
-import { LitElement, html, unsafeCSS, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { setVersionAttribute } from '../version.js';
-import type { ChatConfirmationResolvedRequest } from './chat.js';
-import type { ConfirmationLabels } from '@bndynet/ichat-messages';
-import styles from '../styles/chat-confirmation.scss';
+import { LitElement, html, unsafeCSS, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { setVersionAttribute } from "../version.js";
+import type { ChatConfirmationResolvedRequest } from "./chat.js";
+import type { ConfirmationLabels } from "@bndynet/ichat-messages";
+import styles from "../styles/chat-confirmation.scss";
 
 /**
  * `<i-chat-confirmation>` — A modal confirmation dialog that replaces the
@@ -11,7 +11,7 @@ import styles from '../styles/chat-confirmation.scss';
  *
  * @fires confirmation-settle — `{ detail: { action: 'confirm' | 'cancel' } }`
  */
-@customElement('i-chat-confirmation')
+@customElement("i-chat-confirmation")
 export class ChatConfirmation extends LitElement {
   static styles = unsafeCSS(styles);
 
@@ -29,21 +29,23 @@ export class ChatConfirmation extends LitElement {
   protected firstUpdated(): void {
     // Auto-focus the confirm button when the dialog appears
     requestAnimationFrame(() => {
-      this.renderRoot.querySelector<HTMLElement>('.chat-confirmation__btn--confirm')?.focus();
+      this.renderRoot
+        .querySelector<HTMLElement>(".chat-confirmation__btn--confirm")
+        ?.focus();
     });
   }
 
   private _handleKeydown(e: KeyboardEvent): void {
     const section = e.currentTarget as HTMLElement;
 
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
-      this._settle('cancel');
+      this._settle("cancel");
       return;
     }
 
     // Focus trap: wrap Tab / Shift+Tab within the dialog
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       const focusable = section.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
@@ -61,9 +63,9 @@ export class ChatConfirmation extends LitElement {
     }
   }
 
-  private _settle(action: 'confirm' | 'cancel'): void {
+  private _settle(action: "confirm" | "cancel"): void {
     this.dispatchEvent(
-      new CustomEvent('confirmation-settle', {
+      new CustomEvent("confirmation-settle", {
         detail: { action },
         bubbles: true,
         composed: true,
@@ -72,8 +74,8 @@ export class ChatConfirmation extends LitElement {
   }
 
   private _formatDetails(details: unknown): string {
-    if (details == null) return '';
-    if (typeof details === 'string') return details;
+    if (details == null) return "";
+    if (typeof details === "string") return details;
     try {
       return JSON.stringify(details, null, 2);
     } catch {
@@ -86,7 +88,7 @@ export class ChatConfirmation extends LitElement {
     if (!details) return nothing;
     const labels = this.labels;
 
-    if (typeof request.details === 'string') {
+    if (typeof request.details === "string") {
       return html`<div class="chat-confirmation__details-text">
         ${details}
       </div>`;
@@ -94,7 +96,7 @@ export class ChatConfirmation extends LitElement {
 
     return html`
       <details class="chat-confirmation__details">
-        <summary>${labels?.details ?? 'Details'}</summary>
+        <summary>${labels?.details ?? "Details"}</summary>
         <pre>${details}</pre>
       </details>
     `;
@@ -103,8 +105,12 @@ export class ChatConfirmation extends LitElement {
   render() {
     const request = this.request;
     const labels = this.labels;
-    const variant = request.variant ?? 'default';
-    const requiredLabel = (request.requiredLabel ?? labels?.required ?? '').trim();
+    const variant = request.variant ?? "default";
+    const requiredLabel = (
+      request.requiredLabel ??
+      labels?.required ??
+      ""
+    ).trim();
 
     return html`
       <section
@@ -136,16 +142,16 @@ export class ChatConfirmation extends LitElement {
           <button
             type="button"
             class="chat-confirmation__btn chat-confirmation__btn--cancel"
-            @click=${() => this._settle('cancel')}
+            @click=${() => this._settle("cancel")}
           >
-            ${request.cancelLabel || labels?.cancel || 'Cancel'}
+            ${request.cancelLabel || labels?.cancel || "Cancel"}
           </button>
           <button
             type="button"
             class="chat-confirmation__btn chat-confirmation__btn--confirm"
-            @click=${() => this._settle('confirm')}
+            @click=${() => this._settle("confirm")}
           >
-            ${request.confirmLabel || labels?.confirm || 'Confirm'}
+            ${request.confirmLabel || labels?.confirm || "Confirm"}
           </button>
         </div>
       </section>
@@ -155,6 +161,6 @@ export class ChatConfirmation extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-confirmation': ChatConfirmation;
+    "i-chat-confirmation": ChatConfirmation;
   }
 }

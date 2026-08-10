@@ -40,7 +40,11 @@ function handleMessageAction(e) {
 </script>
 
 <template>
-  <i-chat ref="chatRef" @send="handleSend" @message-action="handleMessageAction">
+  <i-chat
+    ref="chatRef"
+    @send="handleSend"
+    @message-action="handleMessageAction"
+  >
     <!-- avatar slots -->
     <div slot="self-avatar">
       <img
@@ -86,8 +90,8 @@ function handleMessageAction(e) {
     <div slot="empty" style="text-align: center">
       <h2>Welcome!</h2>
       <p>
-        Start a conversation below. You will see your avatar on the right side and the other user's
-        avatar on the left side.
+        Start a conversation below. You will see your avatar on the right side
+        and the other user's avatar on the left side.
       </p>
     </div>
   </i-chat>

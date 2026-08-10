@@ -1,6 +1,6 @@
-@use 'variables' as *;
-@use 'chat-host-tokens';
-@use 'chat-disclosure-panel' as disclosure;
+@use "variables" as *;
+@use "chat-host-tokens";
+@use "chat-disclosure-panel" as disclosure;
 
 :host {
   display: block;
@@ -10,7 +10,10 @@
   --_todo-bg: var(--chat-todo-bg, var(--chat-panel-bg, var(--chat-surface)));
   --_todo-border: var(
     --chat-todo-border,
-    var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))
+    var(
+      --chat-panel-border,
+      color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)
+    )
   );
   --_todo-radius: var(
     --chat-todo-radius,
@@ -21,11 +24,17 @@
   --_todo-secondary: var(--chat-todo-secondary, var(--chat-text-secondary));
   --_todo-header-bg: var(
     --chat-todo-header-bg,
-    var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+    var(
+      --chat-disclosure-header-bg,
+      var(--chat-surface-alt, #{$color-surface-alt})
+    )
   );
   --_todo-header-hover-bg: var(
     --chat-todo-header-hover-bg,
-    var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+    var(
+      --chat-disclosure-header-hover-bg,
+      #{disclosure.$header-hover-background}
+    )
   );
   --_todo-primary: var(--chat-todo-active, var(--chat-primary));
   --_todo-success: var(--chat-todo-done, var(--chat-success));

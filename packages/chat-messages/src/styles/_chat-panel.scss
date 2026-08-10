@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 @mixin surface(
   $background: var(--chat-panel-bg, var(--chat-surface)),

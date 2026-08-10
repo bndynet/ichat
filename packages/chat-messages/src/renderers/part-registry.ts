@@ -1,4 +1,4 @@
-import type { PartRenderer } from '../types.js';
+import type { PartRenderer } from "../types.js";
 
 /** Validates a custom element name (must contain a hyphen per the spec). */
 const CUSTOM_ELEMENT_NAME_RE = /^[a-z][a-z0-9]*-[a-z0-9-]*$/i;
@@ -17,7 +17,7 @@ class PartRendererRegistry {
     if (existing) {
       console.warn(
         `[i-chat] Part renderer "${renderer.name}" is already registered with a different object. ` +
-          'Keeping the first registration.',
+          "Keeping the first registration.",
       );
       return;
     }

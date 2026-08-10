@@ -1,9 +1,9 @@
-import assert from 'node:assert/strict';
-import { ChatMessages } from '../src/components/chat-messages.js';
-import { registerMarkdownPlugin } from '../src/renderers/markdown-plugins.js';
-import { rendererRegistry } from '../src/renderers/registry.js';
-import { md } from '../src/renderers/markdown-renderer.js';
-import type { BlockRenderer } from '../src/types.js';
+import assert from "node:assert/strict";
+import { ChatMessages } from "../src/components/chat-messages.js";
+import { registerMarkdownPlugin } from "../src/renderers/markdown-plugins.js";
+import { rendererRegistry } from "../src/renderers/registry.js";
+import { md } from "../src/renderers/markdown-renderer.js";
+import type { BlockRenderer } from "../src/types.js";
 
 function test(name: string, run: () => void): void {
   try {
@@ -44,7 +44,7 @@ function installFakeDocument(): void {
   if (globals.document) return;
   globals.document = {
     createElement: () => ({
-      textContent: '',
+      textContent: "",
       setAttribute() {
         /* noop */
       },
@@ -71,9 +71,13 @@ function mountMessages(): ChatMessages {
   // Lit skips `createRenderRoot()` when a render root already exists, and
   // rendering the template into it needs a DOM Node does not have. Neither is
   // what these tests cover — only the side effects of `connectedCallback`.
-  Object.defineProperty(el, 'renderRoot', { value: root, writable: true, configurable: true });
-  Object.defineProperty(el, 'shadowRoot', { value: root, configurable: true });
-  Object.defineProperty(el, 'performUpdate', {
+  Object.defineProperty(el, "renderRoot", {
+    value: root,
+    writable: true,
+    configurable: true,
+  });
+  Object.defineProperty(el, "shadowRoot", { value: root, configurable: true });
+  Object.defineProperty(el, "performUpdate", {
     value: () => {
       /* noop */
     },
@@ -89,12 +93,12 @@ function mountMessages(): ChatMessages {
 // lazy-loading renderer packages from a route. Both are only true if a mounted
 // component leaves the registries writable.
 
-test('block renderers can register after i-chat-messages has mounted', () => {
+test("block renderers can register after i-chat-messages has mounted", () => {
   mountMessages();
 
-  const language = 'test-lazy-block';
+  const language = "test-lazy-block";
   const renderer: BlockRenderer = {
-    name: 'test-lazy-block-renderer',
+    name: "test-lazy-block-renderer",
     test: (lang: string) => lang === language,
     render: (code: string) => `<pre>${code}</pre>`,
   };
@@ -103,18 +107,24 @@ test('block renderers can register after i-chat-messages has mounted', () => {
   assert.equal(rendererRegistry.getRenderer(language), renderer);
 });
 
-test('markdown plugins can register after i-chat-messages has mounted', () => {
+test("markdown plugins can register after i-chat-messages has mounted", () => {
   mountMessages();
 
-  const marker = 'lazy-markdown-plugin';
+  const marker = "lazy-markdown-plugin";
   const source = `\`${marker}\``;
   assert.doesNotMatch(md.render(source), /lazy-plugin-applied/);
 
   registerMarkdownPlugin({
-    id: 'test-lazy-markdown-plugin',
+    id: "test-lazy-markdown-plugin",
     install(instance) {
       const previous = instance.renderer.rules.code_inline;
-      instance.renderer.rules.code_inline = (tokens, index, options, env, self) => {
+      instance.renderer.rules.code_inline = (
+        tokens,
+        index,
+        options,
+        env,
+        self,
+      ) => {
         if (tokens[index].content === marker) {
           return '<span class="lazy-plugin-applied">registered</span>';
         }
@@ -128,12 +138,12 @@ test('markdown plugins can register after i-chat-messages has mounted', () => {
   assert.match(md.render(source), /lazy-plugin-applied/);
 });
 
-test('block renderers can unregister after i-chat-messages has mounted', () => {
+test("block renderers can unregister after i-chat-messages has mounted", () => {
   mountMessages();
 
-  const language = 'test-lazy-unregister';
+  const language = "test-lazy-unregister";
   const renderer: BlockRenderer = {
-    name: 'test-lazy-unregister-renderer',
+    name: "test-lazy-unregister-renderer",
     test: (lang: string) => lang === language,
     render: (code: string) => `<pre>${code}</pre>`,
   };

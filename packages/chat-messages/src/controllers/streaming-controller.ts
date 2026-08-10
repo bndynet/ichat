@@ -1,8 +1,8 @@
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 export class StreamingController implements ReactiveController {
   private _host: ReactiveControllerHost;
-  private _fullContent = '';
+  private _fullContent = "";
   private _visibleLength = 0;
   private _rafId: number | null = null;
   private _charsPerTick: number;
@@ -10,12 +10,17 @@ export class StreamingController implements ReactiveController {
   private _onComplete?: () => void;
   private readonly _reduceMotion: boolean;
 
-  constructor(host: ReactiveControllerHost, options?: { speed?: number; onComplete?: () => void }) {
+  constructor(
+    host: ReactiveControllerHost,
+    options?: { speed?: number; onComplete?: () => void },
+  ) {
     this._host = host;
     this._host.addController(this);
     this._charsPerTick = options?.speed ?? 3;
     this._onComplete = options?.onComplete;
-    this._reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
   }
 
   get displayedContent(): string {
@@ -70,7 +75,7 @@ export class StreamingController implements ReactiveController {
   }
 
   reset(): void {
-    this._fullContent = '';
+    this._fullContent = "";
     this._visibleLength = 0;
     this._active = false;
     this._cancelAnimation();
@@ -87,7 +92,10 @@ export class StreamingController implements ReactiveController {
   }
 
   private _tick = (): void => {
-    if (this._visibleLength >= this._fullContent.length || this._charsPerTick <= 0) {
+    if (
+      this._visibleLength >= this._fullContent.length ||
+      this._charsPerTick <= 0
+    ) {
       this._visibleLength = this._fullContent.length;
       this._active = false;
       this._rafId = null;

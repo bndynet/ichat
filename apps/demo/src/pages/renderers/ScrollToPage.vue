@@ -71,17 +71,30 @@ function scrollToCustomPart() {
         <span class="toolbar-label">Message:</span>
         <el-button size="small" @click="scrollToMessage('msg-1')">#1</el-button>
         <el-button size="small" @click="scrollToMessage('msg-5')">#5</el-button>
-        <el-button size="small" @click="scrollToMessage('msg-10')">#10</el-button>
-        <el-button size="small" @click="scrollToMessage('msg-15')">#15</el-button>
-        <el-button size="small" type="primary" @click="scrollToMessage('msg-20')"
+        <el-button size="small" @click="scrollToMessage('msg-10')"
+          >#10</el-button
+        >
+        <el-button size="small" @click="scrollToMessage('msg-15')"
+          >#15</el-button
+        >
+        <el-button
+          size="small"
+          type="primary"
+          @click="scrollToMessage('msg-20')"
           >#20 (last)</el-button
         >
       </div>
       <div class="toolbar-group">
         <span class="toolbar-label">Part:</span>
-        <el-button size="small" @click="scrollToPart('part-3')">Part #3</el-button>
-        <el-button size="small" @click="scrollToPart('part-8')">Part #8</el-button>
-        <el-button size="small" type="primary" @click="scrollToPart('part-18')">Part #18</el-button>
+        <el-button size="small" @click="scrollToPart('part-3')"
+          >Part #3</el-button
+        >
+        <el-button size="small" @click="scrollToPart('part-8')"
+          >Part #8</el-button
+        >
+        <el-button size="small" type="primary" @click="scrollToPart('part-18')"
+          >Part #18</el-button
+        >
       </div>
       <div class="toolbar-group">
         <span class="toolbar-label">Custom:</span>
@@ -92,7 +105,9 @@ function scrollToCustomPart() {
           style="width: 100px"
           @keyup.enter="scrollToCustomMessage"
         />
-        <el-button size="small" @click="scrollToCustomMessage">Scroll to msg</el-button>
+        <el-button size="small" @click="scrollToCustomMessage"
+          >Scroll to msg</el-button
+        >
         <el-input
           v-model="customPartId"
           size="small"
@@ -100,13 +115,18 @@ function scrollToCustomPart() {
           style="width: 100px"
           @keyup.enter="scrollToCustomPart"
         />
-        <el-button size="small" @click="scrollToCustomPart">Scroll to part</el-button>
+        <el-button size="small" @click="scrollToCustomPart"
+          >Scroll to part</el-button
+        >
       </div>
       <div v-if="lastResult" class="toolbar-result">{{ lastResult }}</div>
     </div>
     <i-chat ref="chatRef"></i-chat>
   </div>
-  <ExampleCodeDrawer title="Scroll To code example" :content="scrollToExample" />
+  <ExampleCodeDrawer
+    title="Scroll To code example"
+    :content="scrollToExample"
+  />
 </template>
 
 <style scoped>

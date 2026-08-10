@@ -1,7 +1,7 @@
 // Demo-local example of how an external consumer writes their own `x-*` part
 // renderers. The library only provides the `registerPartRenderer` capability;
 // the weather card below is application code, not shipped by the library.
-import type { PartRenderer } from '@bndynet/ichat';
+import type { PartRenderer } from "@bndynet/ichat";
 
 export interface WeatherData {
   city?: string;
@@ -12,11 +12,11 @@ export interface WeatherData {
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 const CARD_STYLES = `
@@ -38,10 +38,10 @@ const CARD_STYLES = `
 `;
 
 function cardHtml(d: WeatherData): string {
-  const temp = d.temp != null ? escapeHtml(String(d.temp)) : '--';
-  const unit = escapeHtml(d.unit ?? '');
-  const city = escapeHtml(d.city ?? 'Unknown');
-  const condition = escapeHtml(d.condition ?? '');
+  const temp = d.temp != null ? escapeHtml(String(d.temp)) : "--";
+  const unit = escapeHtml(d.unit ?? "");
+  const city = escapeHtml(d.city ?? "Unknown");
+  const condition = escapeHtml(d.condition ?? "");
   return `
     <div class="weather-card">
       <div class="weather-card__temp">${temp}${unit}</div>
@@ -75,38 +75,38 @@ class WeatherCardElement extends HTMLElement {
   }
 }
 
-if (!customElements.get('x-weather-card')) {
-  customElements.define('x-weather-card', WeatherCardElement);
+if (!customElements.get("x-weather-card")) {
+  customElements.define("x-weather-card", WeatherCardElement);
 }
 
 /** Element mode: instance is preserved across `updatePart`, so streaming patches do not rebuild the DOM. */
 export const weatherElementRenderer: PartRenderer = {
-  name: 'weather-element',
-  test: (type) => type === 'x-weather',
-  element: 'x-weather-card',
+  name: "weather-element",
+  test: (type) => type === "x-weather",
+  element: "x-weather-card",
 };
 
 /** String mode: returns HTML, sanitised with DOMPurify + patched via morphdom. Inline styles only (`<style>` is stripped). */
 export const weatherStringRenderer: PartRenderer = {
-  name: 'weather-string',
-  test: (type) => type === 'x-weather-html',
+  name: "weather-string",
+  test: (type) => type === "x-weather-html",
   render: (part) => {
     const d = part.data as WeatherData;
-    const temp = d.temp != null ? escapeHtml(String(d.temp)) : '--';
-    const unit = escapeHtml(d.unit ?? '');
-    const city = escapeHtml(d.city ?? 'Unknown');
-    const condition = escapeHtml(d.condition ?? '');
+    const temp = d.temp != null ? escapeHtml(String(d.temp)) : "--";
+    const unit = escapeHtml(d.unit ?? "");
+    const city = escapeHtml(d.city ?? "Unknown");
+    const condition = escapeHtml(d.condition ?? "");
     const card = [
-      'display:flex',
-      'align-items:center',
-      'gap:14px',
-      'padding:14px 18px',
-      'border:1px solid var(--chat-border,#e2e8f0)',
-      'border-radius:12px',
-      'background:var(--chat-surface-alt,#f8f9fa)',
-      'color:var(--chat-text,#1a202c)',
-      'max-width:320px',
-    ].join(';');
+      "display:flex",
+      "align-items:center",
+      "gap:14px",
+      "padding:14px 18px",
+      "border:1px solid var(--chat-border,#e2e8f0)",
+      "border-radius:12px",
+      "background:var(--chat-surface-alt,#f8f9fa)",
+      "color:var(--chat-text,#1a202c)",
+      "max-width:320px",
+    ].join(";");
     return `
       <div style="${card}">
         <div style="font-size:1.75rem;font-weight:700;line-height:1">${temp}${unit}</div>

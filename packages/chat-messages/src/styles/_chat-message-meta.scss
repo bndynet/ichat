@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // ── Error message ─────────────────────────────────────────────────────
 @mixin styles {
@@ -15,10 +15,15 @@
       border: 1px solid
         var(
           --chat-error-border,
-          color-mix(in srgb, var(--chat-error, #{$color-error}) 25%, transparent)
+          color-mix(
+            in srgb,
+            var(--chat-error, #{$color-error}) 25%,
+            transparent
+          )
         );
       border-radius: var(--chat-radius-lg, #{$radius-lg});
-      padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md});
+      padding: var(--chat-spacing-sm, #{$spacing-sm})
+        var(--chat-spacing-md, #{$spacing-md});
       color: var(--chat-error-color, var(--chat-error, #{$color-error}));
       word-break: break-word;
       overflow-wrap: break-word;
@@ -47,7 +52,11 @@
       border-top: 1px solid
         var(
           --chat-error-border,
-          color-mix(in srgb, var(--chat-error, #{$color-error}) 15%, transparent)
+          color-mix(
+            in srgb,
+            var(--chat-error, #{$color-error}) 15%,
+            transparent
+          )
         );
       color: var(--chat-assistant-text, var(--chat-text, #{$color-text}));
       font-size: var(--chat-font-size-sm, #{$font-size-sm});
@@ -58,7 +67,7 @@
   // ── Typing cursor ─────────────────────────────────────────────────────
 
   .typing-cursor::after {
-    content: '▊';
+    content: "▊";
     display: inline;
     animation: blink 0.7s step-end infinite;
     color: var(--chat-primary, #{$color-primary});
@@ -107,7 +116,8 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
-      padding: var(--chat-spacing-xs, #{$spacing-xs}) var(--chat-spacing-sm, #{$spacing-sm});
+      padding: var(--chat-spacing-xs, #{$spacing-xs})
+        var(--chat-spacing-sm, #{$spacing-sm});
       border: none;
       border-radius: var(--chat-radius-sm, #{$radius-sm});
       background: transparent;
@@ -143,7 +153,8 @@
     margin-top: var(--chat-spacing-xs, #{$spacing-xs});
     padding: var(--chat-spacing-xs, #{$spacing-xs});
     border-inline-start: 3px solid var(--chat-primary, #{$color-primary});
-    animation: messageIn var(--chat-transition-fast, #{$transition-fast}) forwards;
+    animation: messageIn var(--chat-transition-fast, #{$transition-fast})
+      forwards;
 
     .message--self & {
       border-inline-start: none;
@@ -179,7 +190,7 @@
     opacity: 0.75;
 
     &::before {
-      content: '·';
+      content: "·";
       margin-inline-end: var(--chat-spacing-xs, #{$spacing-xs});
       opacity: 0.6;
     }

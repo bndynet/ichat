@@ -1,6 +1,6 @@
-import type MarkdownIt from 'markdown-it';
-import type StateBlock from 'markdown-it/lib/rules_block/state_block.mjs';
-import { chatIconStrings } from '../icons.js';
+import type MarkdownIt from "markdown-it";
+import type StateBlock from "markdown-it/lib/rules_block/state_block.mjs";
+import { chatIconStrings } from "../icons.js";
 
 /**
  * Matches the opening marker: `:::details` optionally followed by a title.
@@ -54,7 +54,7 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     // In silent mode the caller only wants to know whether this rule matches.
     if (silent) return true;
 
-    const title = (openMatch[1] ?? '').trim() || 'Details';
+    const title = (openMatch[1] ?? "").trim() || "Details";
 
     // Scan forward to find the matching closing `:::`.
     let closeLine = startLine + 1;
@@ -70,7 +70,7 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     }
 
     // Emit the open token.
-    const openToken = state.push('chat_details_open', 'details', 1);
+    const openToken = state.push("chat_details_open", "details", 1);
     openToken.meta = { title };
     openToken.map = [startLine, closeLine];
     openToken.block = true;
@@ -79,7 +79,7 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     state.md.block.tokenize(state, startLine + 1, found ? closeLine : endLine);
 
     // Emit the close token.
-    const closeToken = state.push('chat_details_close', 'details', -1);
+    const closeToken = state.push("chat_details_close", "details", -1);
     closeToken.block = true;
 
     // Advance past the closing marker (or to endLine if none was found).
@@ -87,12 +87,12 @@ export function collapsiblePlugin(md: MarkdownIt): void {
     return true;
   }
 
-  md.block.ruler.before('fence', 'chat_details', detailsRule, {
-    alt: ['paragraph', 'reference', 'blockquote', 'list'],
+  md.block.ruler.before("fence", "chat_details", detailsRule, {
+    alt: ["paragraph", "reference", "blockquote", "list"],
   });
 
   md.renderer.rules.chat_details_open = (tokens, idx): string => {
-    const title = md.utils.escapeHtml(tokens[idx].meta?.title ?? 'Details');
+    const title = md.utils.escapeHtml(tokens[idx].meta?.title ?? "Details");
     return (
       `<details class="chat-details">` +
       `<summary class="chat-details__summary">` +

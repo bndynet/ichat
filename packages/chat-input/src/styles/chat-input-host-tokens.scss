@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // Private `--_input-*` tokens for internal use inside <i-chat-input>'s shadow DOM.
 //
@@ -15,15 +15,30 @@
   --_input-font-family: var(--chat-input-font-family, #{$font-family});
   --_input-font-size: var(--chat-input-font-size, #{$font-size-base});
 
-  --_input-bg: var(--chat-input-bg, var(--chat-panel-bg, var(--chat-surface, #{$color-bg})));
-  --_input-border: var(--chat-input-border, var(--chat-border, #{$color-border}));
+  --_input-bg: var(
+    --chat-input-bg,
+    var(--chat-panel-bg, var(--chat-surface, #{$color-bg}))
+  );
+  --_input-border: var(
+    --chat-input-border,
+    var(--chat-border, #{$color-border})
+  );
   --_input-text: var(--chat-input-text, var(--chat-text, #{$color-text}));
-  --_input-placeholder: var(--chat-input-placeholder, var(--chat-text-muted, #{$color-text-muted}));
+  --_input-placeholder: var(
+    --chat-input-placeholder,
+    var(--chat-text-muted, #{$color-text-muted})
+  );
 
-  --_input-primary: var(--chat-input-primary, var(--chat-primary, #{$color-primary}));
+  --_input-primary: var(
+    --chat-input-primary,
+    var(--chat-primary, #{$color-primary})
+  );
   --_input-primary-hover: var(
     --chat-input-primary-hover,
-    var(--chat-primary-hover, color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black))
+    var(
+      --chat-primary-hover,
+      color-mix(in srgb, var(--chat-primary, #{$color-primary}) 85%, black)
+    )
   );
   --_input-primary-text: var(--chat-input-primary-text, #{$color-primary-text});
 
@@ -35,9 +50,15 @@
     #{$spacing-input-inline}
   );
   --_input-gap: var(--chat-input-gap, #{$spacing-input-wrapper});
-  --_input-field-min-height: var(--chat-input-field-min-height, #{$field-min-height});
+  --_input-field-min-height: var(
+    --chat-input-field-min-height,
+    #{$field-min-height}
+  );
   --_input-send-size: var(--chat-input-send-size, #{$send-size});
-  --_input-shadow: var(--chat-input-shadow, var(--chat-shadow-sm, #{$shadow-sm}));
+  --_input-shadow: var(
+    --chat-input-shadow,
+    var(--chat-shadow-sm, #{$shadow-sm})
+  );
   --_input-transition: var(--chat-input-transition, #{$transition-fast});
   --_input-max-rows: var(--chat-input-max-rows, 6);
 }

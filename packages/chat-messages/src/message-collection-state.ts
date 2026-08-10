@@ -1,12 +1,15 @@
-import type { ChatMessage, MessagePart } from './types.js';
-import { textPart } from './types.js';
+import type { ChatMessage, MessagePart } from "./types.js";
+import { textPart } from "./types.js";
 
 /**
  * Immutably append a message to the end of the collection.
  * Caller is responsible for id uniqueness — this function does not
  * deduplicate or enforce a duplicate-id policy.
  */
-export function addMessage(messages: ChatMessage[], message: ChatMessage): ChatMessage[] {
+export function addMessage(
+  messages: ChatMessage[],
+  message: ChatMessage,
+): ChatMessage[] {
   return [...messages, message];
 }
 
@@ -32,7 +35,10 @@ export function patchMessageById(
  *
  * Returns the **original** array reference when no message matches `id`.
  */
-export function removeMessageById(messages: ChatMessage[], id: string): ChatMessage[] {
+export function removeMessageById(
+  messages: ChatMessage[],
+  id: string,
+): ChatMessage[] {
   const index = messages.findIndex((m) => m.id === id);
   if (index === -1) return messages;
   return messages.filter((m) => m.id !== id);
@@ -78,13 +84,16 @@ export function cancelMessageData(
     const parts = patched.parts ?? [];
     let lastTextIdx = -1;
     for (let i = parts.length - 1; i >= 0; i--) {
-      if (parts[i].type === 'text') {
+      if (parts[i].type === "text") {
         lastTextIdx = i;
         break;
       }
     }
     if (lastTextIdx >= 0) {
-      const target = parts[lastTextIdx] as Extract<MessagePart, { type: 'text' }>;
+      const target = parts[lastTextIdx] as Extract<
+        MessagePart,
+        { type: "text" }
+      >;
       const nextParts = parts.slice();
       nextParts[lastTextIdx] = { ...target, text: `${target.text}\n\n${hint}` };
       patched = { ...patched, parts: nextParts };

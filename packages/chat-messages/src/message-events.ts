@@ -3,7 +3,7 @@ import type {
   ChatPartActionDetail,
   ChatPartActionKind,
   MessagePart,
-} from './types.js';
+} from "./types.js";
 
 /** Build the unified `part-action` event detail. */
 export function createPartActionDetail<TDetail>(params: {

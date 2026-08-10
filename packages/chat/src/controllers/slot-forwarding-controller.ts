@@ -4,7 +4,7 @@
  * and the host can detect whether a custom input slot is in use.
  */
 
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 export class SlotForwardingController implements ReactiveController {
   private _host: ReactiveControllerHost & HTMLElement;
@@ -13,7 +13,7 @@ export class SlotForwardingController implements ReactiveController {
   /** True when a `<* slot="input">` element exists in the light DOM. */
   hasCustomInput = false;
 
-  constructor(host: SlotForwardingController['_host']) {
+  constructor(host: SlotForwardingController["_host"]) {
     this._host = host;
     host.addController(this);
   }

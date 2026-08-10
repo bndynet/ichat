@@ -1,19 +1,20 @@
-import type { ChatMessage, MessagePart } from '@bndynet/ichat-messages';
-import type { MessagePartUpdateResult } from '@bndynet/ichat-messages';
+import type { ChatMessage, MessagePart } from "@bndynet/ichat-messages";
+import type { MessagePartUpdateResult } from "@bndynet/ichat-messages";
 import {
   acceptedNoOp,
   normalizeOutcome,
   type ChatMutationOutcome,
-} from '../state/mutation-outcome.js';
+} from "../state/mutation-outcome.js";
 
 // ── public types ─────────────────────────────────────────────────────
 
-export type ChatRunStatus = 'idle' | 'streaming' | 'completed' | 'cancelled' | 'error';
+export type ChatRunStatus =
+  "idle" | "streaming" | "completed" | "cancelled" | "error";
 
 export interface ChatRunOptions {
   /** Override the generated message id (default: auto-generated). */
   messageId?: string;
-  role?: 'assistant';
+  role?: "assistant";
   timestamp?: number;
   /**
    * Called when the run is cancelled.  The consumer remains responsible for
@@ -39,10 +40,17 @@ export interface ChatRunOptions {
 export interface ChatMessageStorePort {
   readonly messages: ChatMessage[];
   addMessage(message: ChatMessage): ChatMutationOutcome | void;
-  updateMessage(id: string, partial: Partial<ChatMessage>): ChatMutationOutcome | void;
+  updateMessage(
+    id: string,
+    partial: Partial<ChatMessage>,
+  ): ChatMutationOutcome | void;
   cancelMessage(id: string, hint?: string): ChatMutationOutcome | void;
   appendPart(messageId: string, part: MessagePart): void;
-  updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void;
+  updatePart(
+    messageId: string,
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): void;
   tryUpdatePart(
     messageId: string,
     partId: string,
@@ -84,7 +92,7 @@ export class ChatRunController {
   private readonly _options: ChatRunOptions;
 
   private _messageId!: string;
-  private _status: ChatRunStatus = 'idle';
+  private _status: ChatRunStatus = "idle";
   private readonly _abortController = new AbortController();
 
   constructor(store: ChatMessageStorePort, options: ChatRunOptions = {}) {
@@ -122,7 +130,7 @@ export class ChatRunController {
    *          called again.
    */
   start(initialParts?: MessagePart[]): ChatMutationOutcome {
-    if (this._status !== 'idle') return acceptedNoOp();
+    if (this._status !== "idle") return acceptedNoOp();
 
     const messageId =
       this._options.messageId ??
@@ -131,7 +139,7 @@ export class ChatRunController {
     const outcome = normalizeOutcome(
       this._store.addMessage({
         id: messageId,
-        role: this._options.role ?? 'assistant',
+        role: this._options.role ?? "assistant",
         parts: initialParts ?? [],
         streaming: true,
         timestamp: this._options.timestamp ?? Date.now(),
@@ -140,7 +148,7 @@ export class ChatRunController {
     if (!outcome.accepted) return outcome;
 
     this._messageId = messageId;
-    this._status = 'streaming';
+    this._status = "streaming";
     return outcome;
   }
 
@@ -149,16 +157,19 @@ export class ChatRunController {
    * reasoning block).
    */
   appendPart(part: MessagePart): void {
-    if (this._status !== 'streaming') return;
+    if (this._status !== "streaming") return;
     this._store.appendPart(this._messageId, part);
   }
 
   /**
    * Patch an existing part by id.
    */
-  updatePart(partId: string, patch: Partial<MessagePart>): MessagePartUpdateResult {
-    if (this._status !== 'streaming') {
-      return { ok: false, reason: 'message-not-found' };
+  updatePart(
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): MessagePartUpdateResult {
+    if (this._status !== "streaming") {
+      return { ok: false, reason: "message-not-found" };
     }
     return this._store.tryUpdatePart(this._messageId, partId, patch);
   }
@@ -168,17 +179,18 @@ export class ChatRunController {
    * store so it never appends to a stale snapshot.
    */
   appendText(partId: string, delta: string): MessagePartUpdateResult {
-    if (this._status !== 'streaming') {
-      return { ok: false, reason: 'message-not-found' };
+    if (this._status !== "streaming") {
+      return { ok: false, reason: "message-not-found" };
     }
     const msg = this._store.messages.find((m) => m.id === this._messageId);
-    if (!msg || !msg.parts) return { ok: false, reason: 'message-not-found' };
+    if (!msg || !msg.parts) return { ok: false, reason: "message-not-found" };
 
     const part = msg.parts.find((p) => p.id === partId);
-    if (!part) return { ok: false, reason: 'part-not-found' };
-    if (part.type !== 'text') return { ok: false, reason: 'part-type-mismatch', part };
+    if (!part) return { ok: false, reason: "part-not-found" };
+    if (part.type !== "text")
+      return { ok: false, reason: "part-type-mismatch", part };
 
-    const currentText = (part as { text: string }).text ?? '';
+    const currentText = (part as { text: string }).text ?? "";
     return this._store.tryUpdatePart(this._messageId, partId, {
       text: currentText + delta,
     });
@@ -189,7 +201,7 @@ export class ChatRunController {
    * on the message and aborts the signal.  No-op if already terminal.
    */
   complete(patch?: Partial<ChatMessage>): ChatMutationOutcome {
-    if (this._status !== 'streaming') return acceptedNoOp();
+    if (this._status !== "streaming") return acceptedNoOp();
 
     const outcome = normalizeOutcome(
       this._store.updateMessage(this._messageId, {
@@ -199,7 +211,7 @@ export class ChatRunController {
     );
     if (!outcome.accepted) return outcome;
 
-    this._status = 'completed';
+    this._status = "completed";
     this._cleanup();
     return outcome;
   }
@@ -209,7 +221,7 @@ export class ChatRunController {
    * streaming, and aborts the signal.  No-op if already terminal.
    */
   fail(error: string, text?: string): ChatMutationOutcome {
-    if (this._status !== 'streaming') return acceptedNoOp();
+    if (this._status !== "streaming") return acceptedNoOp();
 
     const outcome = normalizeOutcome(
       this._store.updateMessage(this._messageId, {
@@ -218,8 +230,9 @@ export class ChatRunController {
         ...(text
           ? {
               parts: [
-                ...(this._store.messages.find((m) => m.id === this._messageId)?.parts ?? []),
-                { type: 'text' as const, id: `err-${Date.now()}`, text },
+                ...(this._store.messages.find((m) => m.id === this._messageId)
+                  ?.parts ?? []),
+                { type: "text" as const, id: `err-${Date.now()}`, text },
               ],
             }
           : {}),
@@ -227,7 +240,7 @@ export class ChatRunController {
     );
     if (!outcome.accepted) return outcome;
 
-    this._status = 'error';
+    this._status = "error";
     this._cleanup();
     return outcome;
   }
@@ -237,14 +250,16 @@ export class ChatRunController {
    * host `onCancel` callback and aborts the signal.  No-op if already terminal.
    */
   cancel(hint?: string): ChatMutationOutcome {
-    if (this._status !== 'streaming') return acceptedNoOp();
+    if (this._status !== "streaming") return acceptedNoOp();
 
-    const outcome = normalizeOutcome(this._store.cancelMessage(this._messageId, hint));
+    const outcome = normalizeOutcome(
+      this._store.cancelMessage(this._messageId, hint),
+    );
     // `onCancel` tears down the caller's in-flight request, so it must not run
     // when a controlled host rejects the cancellation.
     if (!outcome.accepted) return outcome;
 
-    this._status = 'cancelled';
+    this._status = "cancelled";
     this._options.onCancel?.();
     this._cleanup();
     return outcome;

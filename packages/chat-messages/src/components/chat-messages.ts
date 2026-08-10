@@ -1,55 +1,61 @@
-import { LitElement, html, unsafeCSS, type PropertyValues } from 'lit';
-import { customElement, property, state, query } from 'lit/decorators.js';
-import { repeat } from 'lit/directives/repeat.js';
-import type { LitVirtualizer } from '@lit-labs/virtualizer/LitVirtualizer.js';
-import { setVersionAttribute } from '../version.js';
+import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
+import { customElement, property, state, query } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
+import type { LitVirtualizer } from "@lit-labs/virtualizer/LitVirtualizer.js";
+import { setVersionAttribute } from "../version.js";
 import type {
   ChatMessage,
   ChatConfig,
   MessagePart,
   TodoItemPatch,
   ToolCallPart,
-} from '../types.js';
-import { DEFAULT_CONFIG, textPart } from '../types.js';
-import { isTodoPart, isToolCallPart } from '../part-guards.js';
-import { patchTodoItem, normalizeTodoItemUpdateEvent } from '../todo-state.js';
-import { patchToolCallPart } from '../tool-call-state.js';
+} from "../types.js";
+import { DEFAULT_CONFIG, textPart } from "../types.js";
+import { isTodoPart, isToolCallPart } from "../part-guards.js";
+import { patchTodoItem, normalizeTodoItemUpdateEvent } from "../todo-state.js";
+import { patchToolCallPart } from "../tool-call-state.js";
 import {
   applyMessagePartUpdate,
   appendMessagePart,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
-} from '../message-part-state.js';
-import { normalizeMessagePartUpdateEvent } from '../message-part-events.js';
-import { resolveLabels, type ChatLabels } from '../i18n.js';
-import type { ProgressStatus } from '../renderers/progress-plugin.js';
+} from "../message-part-state.js";
+import { normalizeMessagePartUpdateEvent } from "../message-part-events.js";
+import { resolveLabels, type ChatLabels } from "../i18n.js";
+import type { ProgressStatus } from "../renderers/progress-plugin.js";
 import type {
   MessagePartUpdateEventResult,
   MessagePartUpdateResult,
   TodoItemUpdateEventResult,
   TodoItemUpdateResult,
   ToolCallUpdateResult,
-} from '../update-results.js';
-import { chatIcons } from '../icons.js';
-import type { MessagesChangeDetail, MessagesChangeReason } from '../messages-change-types.js';
+} from "../update-results.js";
+import { chatIcons } from "../icons.js";
+import type {
+  MessagesChangeDetail,
+  MessagesChangeReason,
+} from "../messages-change-types.js";
 import {
   addMessage,
   patchMessageById,
   removeMessageById,
   clearMessages,
   cancelMessageData,
-} from '../message-collection-state.js';
-import styles from '../styles/chat-messages.scss';
-import './chat-message.js';
-import type { ChatMessageElement } from './chat-message.js';
-import { injectPluginCss, injectGlobalPluginCss } from '../renderers/plugin-styles.js';
+} from "../message-collection-state.js";
+import styles from "../styles/chat-messages.scss";
+import "./chat-message.js";
+import type { ChatMessageElement } from "./chat-message.js";
+import {
+  injectPluginCss,
+  injectGlobalPluginCss,
+} from "../renderers/plugin-styles.js";
 import {
   buildMessageRenderItems,
   findMessageRenderIndex,
   findPartRenderIndex,
   type MessageRenderItem,
-} from '../message-render-items.js';
+} from "../message-render-items.js";
 
 interface MessageListScrollAnchor {
   atBottom: boolean;
@@ -72,25 +78,25 @@ export const AUTO_VIRTUAL_THRESHOLD = 500;
  *   Detail: {@link MessagesChangeDetail}. Direct external `messages = […]` assignments do
  *   **not** emit this event.
  */
-@customElement('i-chat-messages')
+@customElement("i-chat-messages")
 export class ChatMessages extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ type: Array }) messages: ChatMessage[] = [];
   @property({ type: Object }) config: ChatConfig = {};
-  @property() emptyText = '';
+  @property() emptyText = "";
 
-  @property({ type: Boolean, reflect: true, attribute: 'streaming' })
+  @property({ type: Boolean, reflect: true, attribute: "streaming" })
   readonly streaming = false;
 
   @state() private _autoScroll = true;
   @state() private _hasNewContent = false;
-  @state() private _errorBanner = '';
-  @state() private _selfAvatarHtml = '';
-  @state() private _peerAvatarHtml = '';
-  @state() private _assistantAvatarHtml = '';
-  @state() private _messageActionsHtml = '';
-  @state() private _reasoningHeaderHtml = '';
+  @state() private _errorBanner = "";
+  @state() private _selfAvatarHtml = "";
+  @state() private _peerAvatarHtml = "";
+  @state() private _assistantAvatarHtml = "";
+  @state() private _messageActionsHtml = "";
+  @state() private _reasoningHeaderHtml = "";
   @state() private _virtualizerReady = false;
   @state() private _virtualizerFailed = false;
   /** Active reply blocks. Multiple blocks may share the same `id` (stacked under one message). */
@@ -101,8 +107,8 @@ export class ChatMessages extends LitElement {
   }> = [];
   /** Monotonic counter for unique reply-block keys. */
   private _replyKeySeq = 0;
-  @query('.chat-messages') private _scrollContainer!: HTMLElement;
-  @query('lit-virtualizer')
+  @query(".chat-messages") private _scrollContainer!: HTMLElement;
+  @query("lit-virtualizer")
   private _virtualizer?: LitVirtualizer<MessageRenderItem>;
   private _resizeObserver?: ResizeObserver;
   private _observedEl?: Element;
@@ -139,7 +145,7 @@ export class ChatMessages extends LitElement {
    */
   private _virtualScrollEnabled(): boolean {
     const vs = this._config.virtualScroll;
-    if (vs === 'auto') return this.messages.length > AUTO_VIRTUAL_THRESHOLD;
+    if (vs === "auto") return this.messages.length > AUTO_VIRTUAL_THRESHOLD;
     return !!vs;
   }
 
@@ -184,7 +190,7 @@ export class ChatMessages extends LitElement {
   }
   private __labelsCache?: {
     locale: string;
-    labels: ChatConfig['labels'];
+    labels: ChatConfig["labels"];
     value: ChatLabels;
   };
 
@@ -214,7 +220,7 @@ export class ChatMessages extends LitElement {
   }
   private __renderItemsCache?: {
     ref: readonly ChatMessage[];
-    labels: ChatLabels['dateSeparator'];
+    labels: ChatLabels["dateSeparator"];
     value: MessageRenderItem[];
   };
 
@@ -226,10 +232,11 @@ export class ChatMessages extends LitElement {
     string,
     Array<{ key: string; data: Partial<ChatMessage> }>
   >();
-  private readonly _messageItemKey = (item: MessageRenderItem): string => item.key;
+  private readonly _messageItemKey = (item: MessageRenderItem): string =>
+    item.key;
 
   private readonly _renderMessageItem = (item: MessageRenderItem) => {
-    if (item.kind === 'sep') {
+    if (item.kind === "sep") {
       return html`
         <div
           class="chat-date-separator"
@@ -286,8 +293,8 @@ export class ChatMessages extends LitElement {
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has('config') || changed.has('messages')) {
-      if (changed.has('messages')) {
+    if (changed.has("config") || changed.has("messages")) {
+      if (changed.has("messages")) {
         // Derive `streaming` before render so the reflected attribute and any
         // consumers update in the same pass. Setting it in `updated()` would
         // schedule a redundant second update (Lit's change-in-update warning).
@@ -297,7 +304,7 @@ export class ChatMessages extends LitElement {
           (this as Record<string, unknown>).streaming = nowStreaming;
           if (nowStreaming && this._errorBanner) {
             clearTimeout(this._errorDismissTimer);
-            this._errorBanner = '';
+            this._errorBanner = "";
           }
         }
         // Mirror "new content arrived while scrolled up" for virtual rows. The
@@ -327,7 +334,7 @@ export class ChatMessages extends LitElement {
       return Promise.resolve();
     }
     if (!this._virtualizerLoadPromise) {
-      this._virtualizerLoadPromise = import('@lit-labs/virtualizer')
+      this._virtualizerLoadPromise = import("@lit-labs/virtualizer")
         .then(() => {
           this._virtualizerReady = true;
         })
@@ -335,7 +342,7 @@ export class ChatMessages extends LitElement {
           this._virtualizerFailed = true;
           // The regular keyed list remains available as a no-config fallback.
           console.warn(
-            '[i-chat] Virtual scrolling could not be loaded; using the regular list.',
+            "[i-chat] Virtual scrolling could not be loaded; using the regular list.",
             error,
           );
         });
@@ -370,43 +377,45 @@ export class ChatMessages extends LitElement {
    * light-DOM children of `<i-chat-messages>` when nested under `<i-chat>`.
    */
   private _syncSlotTemplatesFromAssignedNodes(): void {
-    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>('.template-slots slot[name]');
+    const slots = this.renderRoot?.querySelectorAll<HTMLSlotElement>(
+      ".template-slots slot[name]",
+    );
     if (!slots) return;
     slots.forEach((slot) => {
-      const name = slot.getAttribute('name');
+      const name = slot.getAttribute("name");
       if (!name) return;
       const nodes = slot.assignedElements({ flatten: true });
-      const content = nodes.map((n) => (n as HTMLElement).outerHTML).join('');
+      const content = nodes.map((n) => (n as HTMLElement).outerHTML).join("");
       this._applySlotTemplateHtml(name, content);
     });
   }
 
   private _applySlotTemplateHtml(name: string, content: string): void {
     switch (name) {
-      case 'self-avatar':
+      case "self-avatar":
         this._selfAvatarHtml = content;
         break;
-      case 'peer-avatar':
+      case "peer-avatar":
         this._peerAvatarHtml = content;
         break;
-      case 'assistant-avatar':
+      case "assistant-avatar":
         this._assistantAvatarHtml = content;
         break;
-      case 'message-actions':
+      case "message-actions":
         this._messageActionsHtml = content;
         break;
-      case 'reasoning-header':
+      case "reasoning-header":
         this._reasoningHeaderHtml = content;
         break;
     }
   }
 
   override updated(changed: PropertyValues<this>): void {
-    if (changed.has('messages')) {
+    if (changed.has("messages")) {
       if (this._streamingChanged) {
         this._streamingChanged = false;
         this.dispatchEvent(
-          new CustomEvent('streaming-change', {
+          new CustomEvent("streaming-change", {
             detail: { streaming: this.streaming },
             bubbles: true,
             composed: true,
@@ -422,7 +431,8 @@ export class ChatMessages extends LitElement {
   }
 
   private _scheduleModeScrollRestore(): void {
-    if (!this._pendingModeScrollAnchor || this._modeScrollRestorePromise) return;
+    if (!this._pendingModeScrollAnchor || this._modeScrollRestorePromise)
+      return;
     const restore = this._restoreModeScrollAnchor();
     this._modeScrollRestorePromise = restore;
     const complete = (): void => {
@@ -441,16 +451,21 @@ export class ChatMessages extends LitElement {
 
     const scrollerRect = scroller.getBoundingClientRect();
     const firstVisible = Array.from(
-      this.renderRoot.querySelectorAll<HTMLElement>('i-chat-message[data-message-id]'),
+      this.renderRoot.querySelectorAll<HTMLElement>(
+        "i-chat-message[data-message-id]",
+      ),
     ).find((message) => {
       const rect = message.getBoundingClientRect();
       return rect.bottom > scrollerRect.top && rect.top < scrollerRect.bottom;
     });
     const messageId = firstVisible?.dataset.messageId;
-    const offsetPx = firstVisible ? firstVisible.getBoundingClientRect().top - scrollerRect.top : 0;
+    const offsetPx = firstVisible
+      ? firstVisible.getBoundingClientRect().top - scrollerRect.top
+      : 0;
 
     return {
-      atBottom: scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 60,
+      atBottom:
+        scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 60,
       messageId,
       offsetPx,
       scrollTop: scroller.scrollTop,
@@ -466,7 +481,11 @@ export class ChatMessages extends LitElement {
       await this._ensureVirtualizerLoaded();
     }
     await this.updateComplete;
-    if (seq !== this._modeScrollRestoreSeq || this._pendingModeScrollAnchor !== anchor) return;
+    if (
+      seq !== this._modeScrollRestoreSeq ||
+      this._pendingModeScrollAnchor !== anchor
+    )
+      return;
 
     const scroller = this._scrollContainer;
     if (!scroller) return;
@@ -480,7 +499,7 @@ export class ChatMessages extends LitElement {
 
     this._modeScrollRestoreLock = true;
     const previousScrollBehavior = scroller.style.scrollBehavior;
-    scroller.style.scrollBehavior = 'auto';
+    scroller.style.scrollBehavior = "auto";
 
     try {
       let target: HTMLElement | null = null;
@@ -489,7 +508,10 @@ export class ChatMessages extends LitElement {
         target = this.renderRoot.querySelector<HTMLElement>(selector);
 
         if (!target && this._virtualActive()) {
-          const index = findMessageRenderIndex(this._messageRenderItems(), anchor.messageId);
+          const index = findMessageRenderIndex(
+            this._messageRenderItems(),
+            anchor.messageId,
+          );
           const virtualizer = this._virtualizer;
           if (index >= 0 && virtualizer) {
             // The parent update only creates `<lit-virtualizer>`; its own
@@ -498,22 +520,26 @@ export class ChatMessages extends LitElement {
             for (let attempt = 0; attempt < 60; attempt += 1) {
               if (
                 virtualizer.clientHeight > 0 &&
-                this.renderRoot.querySelector('i-chat-message[data-message-id]')
+                this.renderRoot.querySelector("i-chat-message[data-message-id]")
               ) {
                 break;
               }
-              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              await new Promise<void>((resolve) =>
+                requestAnimationFrame(() => resolve()),
+              );
               if (seq !== this._modeScrollRestoreSeq) return;
             }
             let proxy = virtualizer.element(index);
             for (let attempt = 0; attempt < 60 && !proxy; attempt += 1) {
-              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              await new Promise<void>((resolve) =>
+                requestAnimationFrame(() => resolve()),
+              );
               if (seq !== this._modeScrollRestoreSeq) return;
               proxy = virtualizer.element(index);
             }
             this._virtualizerScrollIntoView(index, {
-              behavior: 'auto',
-              block: 'start',
+              behavior: "auto",
+              block: "start",
             });
             const layoutComplete = virtualizer.layoutComplete;
             if (layoutComplete) {
@@ -525,11 +551,13 @@ export class ChatMessages extends LitElement {
             for (let attempt = 0; attempt < 24 && !target; attempt += 1) {
               if (attempt > 0 && attempt % 4 === 0) {
                 this._virtualizerScrollIntoView(index, {
-                  behavior: 'auto',
-                  block: 'start',
+                  behavior: "auto",
+                  block: "start",
                 });
               }
-              await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+              await new Promise<void>((resolve) =>
+                requestAnimationFrame(() => resolve()),
+              );
               if (seq !== this._modeScrollRestoreSeq) return;
               target = this.renderRoot.querySelector<HTMLElement>(selector);
             }
@@ -554,7 +582,9 @@ export class ChatMessages extends LitElement {
               new Promise<void>((resolve) => setTimeout(resolve, 250)),
             ]);
           }
-          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
         }
       } else {
         // Message IDs can disappear during the same update. Absolute position
@@ -565,7 +595,8 @@ export class ChatMessages extends LitElement {
       this._hasNewContent = false;
     } finally {
       requestAnimationFrame(() => {
-        if (scroller.isConnected) scroller.style.scrollBehavior = previousScrollBehavior;
+        if (scroller.isConnected)
+          scroller.style.scrollBehavior = previousScrollBehavior;
         requestAnimationFrame(() => {
           this._modeScrollRestoreLock = false;
         });
@@ -576,12 +607,12 @@ export class ChatMessages extends LitElement {
   private _handleSlotChange(name: string, e: Event): void {
     const slot = e.target as HTMLSlotElement;
     const nodes = slot.assignedElements({ flatten: true });
-    const content = nodes.map((n) => (n as HTMLElement).outerHTML).join('');
+    const content = nodes.map((n) => (n as HTMLElement).outerHTML).join("");
     this._applySlotTemplateHtml(name, content);
   }
 
   private _ensureResizeObserver(): void {
-    const inner = this.renderRoot.querySelector('.chat-messages-inner');
+    const inner = this.renderRoot.querySelector(".chat-messages-inner");
     if (inner && inner !== this._observedEl) {
       this._resizeObserver?.disconnect();
       this._resizeObserver = new ResizeObserver(() => {
@@ -659,7 +690,7 @@ export class ChatMessages extends LitElement {
       if (this._virtualActive()) {
         const lastIndex = this._messageRenderItems().length - 1;
         if (lastIndex >= 0) {
-          this._virtualizerScrollIntoView(lastIndex, { block: 'end' });
+          this._virtualizerScrollIntoView(lastIndex, { block: "end" });
         }
       }
       el.scrollTop = el.scrollHeight;
@@ -713,7 +744,8 @@ export class ChatMessages extends LitElement {
     const el = this._scrollContainer;
     if (!el) return;
     const threshold = 60;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    const atBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     this._autoScroll = atBottom;
     if (atBottom) {
       this._hasNewContent = false;
@@ -744,13 +776,13 @@ export class ChatMessages extends LitElement {
       messages: next,
       previousMessages,
       reason: context.reason,
-      source: 'i-chat-messages',
+      source: "i-chat-messages",
       messageId: context.messageId,
       partId: context.partId,
       itemId: context.itemId,
     };
     this.dispatchEvent(
-      new CustomEvent<MessagesChangeDetail>('messages-change', {
+      new CustomEvent<MessagesChangeDetail>("messages-change", {
         detail,
         bubbles: true,
         composed: true,
@@ -760,14 +792,14 @@ export class ChatMessages extends LitElement {
 
   addMessage(message: ChatMessage): void {
     this._commitMessages(addMessage(this.messages, message), {
-      reason: 'message:add',
+      reason: "message:add",
       messageId: message.id,
     });
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
     this._commitMessages(patchMessageById(this.messages, id, partial), {
-      reason: 'message:update',
+      reason: "message:update",
       messageId: id,
     });
   }
@@ -778,7 +810,7 @@ export class ChatMessages extends LitElement {
    */
   appendPart(messageId: string, part: MessagePart): void {
     this._commitMessages(appendMessagePart(this.messages, messageId, part), {
-      reason: 'part:append',
+      reason: "part:append",
       messageId,
       partId: part.id,
     });
@@ -789,11 +821,15 @@ export class ChatMessages extends LitElement {
    * part; stateful elements (e.g. `<i-chat-tool-call>`) are preserved because
    * parts are rendered keyed by `id`.
    */
-  updatePart(messageId: string, partId: string, patch: Partial<MessagePart>): void {
+  updatePart(
+    messageId: string,
+    partId: string,
+    patch: Partial<MessagePart>,
+  ): void {
     const result = patchMessagePart(this.messages, messageId, partId, patch);
     if (result.ok) {
       this._commitMessages(result.messages, {
-        reason: 'part:update',
+        reason: "part:update",
         messageId,
         partId,
       });
@@ -819,7 +855,7 @@ export class ChatMessages extends LitElement {
     }
 
     this._commitMessages(result.messages, {
-      reason: 'part:update',
+      reason: "part:update",
       messageId,
       partId,
     });
@@ -840,7 +876,7 @@ export class ChatMessages extends LitElement {
 
     const { part } = lookup;
     if (!isToolCallPart(part)) {
-      return { ok: false, reason: 'part-type-mismatch', part };
+      return { ok: false, reason: "part-type-mismatch", part };
     }
 
     const result = patchToolCallPart(part, patch);
@@ -848,11 +884,16 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    const replacement = replaceMessagePart(
+      this.messages,
+      messageId,
+      partId,
+      result.part,
+    );
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, {
-      reason: 'tool-call:update',
+      reason: "tool-call:update",
       messageId,
       partId,
     });
@@ -875,7 +916,7 @@ export class ChatMessages extends LitElement {
 
     const { part } = lookup;
     if (!isTodoPart(part)) {
-      return { ok: false, reason: 'part-type-mismatch', part };
+      return { ok: false, reason: "part-type-mismatch", part };
     }
 
     const result = patchTodoItem(part, itemId, patch, revision);
@@ -883,11 +924,16 @@ export class ChatMessages extends LitElement {
       return { ok: false, reason: result.reason, part: result.part };
     }
 
-    const replacement = replaceMessagePart(this.messages, messageId, partId, result.part);
+    const replacement = replaceMessagePart(
+      this.messages,
+      messageId,
+      partId,
+      result.part,
+    );
     if (!replacement.ok) return { ok: false, reason: replacement.reason };
 
     this._commitMessages(replacement.messages, {
-      reason: 'todo-item:update',
+      reason: "todo-item:update",
       messageId,
       partId,
       itemId,
@@ -906,7 +952,13 @@ export class ChatMessages extends LitElement {
     if (!result.ok) return { ok: false, reason: result.reason };
 
     const { messageId, partId, itemId, patch, revision } = result.update;
-    const update = this.tryUpdateTodoItem(messageId, partId, itemId, patch, revision);
+    const update = this.tryUpdateTodoItem(
+      messageId,
+      partId,
+      itemId,
+      patch,
+      revision,
+    );
     if (!update.ok) {
       return {
         ok: false,
@@ -945,7 +997,7 @@ export class ChatMessages extends LitElement {
 
   removeMessage(id: string): void {
     this._commitMessages(removeMessageById(this.messages, id), {
-      reason: 'message:remove',
+      reason: "message:remove",
       messageId: id,
     });
     this.clearReplyMessage(id);
@@ -984,7 +1036,9 @@ export class ChatMessages extends LitElement {
       this._replies = [];
       return;
     }
-    const next = this._replies.filter((r) => r.id !== idOrKey && r.key !== idOrKey);
+    const next = this._replies.filter(
+      (r) => r.id !== idOrKey && r.key !== idOrKey,
+    );
     if (next.length !== this._replies.length) this._replies = next;
   }
 
@@ -1017,7 +1071,7 @@ export class ChatMessages extends LitElement {
     if (next === this.messages) return; // no-op: id not found or already terminal
 
     // 3. Commit.
-    this._commitMessages(next, { reason: 'message:cancel', messageId: id });
+    this._commitMessages(next, { reason: "message:cancel", messageId: id });
   }
 
   /**
@@ -1054,7 +1108,7 @@ export class ChatMessages extends LitElement {
     const messageElement = this.shadowRoot?.querySelector(selector);
     if (messageElement) {
       this._beginProgrammaticNavigation();
-      messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      messageElement.scrollIntoView({ behavior: "smooth", block: "start" });
       this._highlightElement(messageElement);
       return true;
     }
@@ -1064,7 +1118,7 @@ export class ChatMessages extends LitElement {
     this._beginProgrammaticNavigation();
     void this._scrollVirtualItem(
       index,
-      'start',
+      "start",
       () => this.shadowRoot?.querySelector(selector) ?? null,
     );
     return true;
@@ -1082,7 +1136,7 @@ export class ChatMessages extends LitElement {
     const partElement = this._findRenderedPart(partId);
     if (partElement) {
       this._beginProgrammaticNavigation();
-      partElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      partElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
       this._highlightElement(partElement);
       return true;
     }
@@ -1090,7 +1144,12 @@ export class ChatMessages extends LitElement {
     const index = findPartRenderIndex(this._messageRenderItems(), partId);
     if (index < 0 || !this._virtualRequested()) return false;
     this._beginProgrammaticNavigation();
-    void this._scrollVirtualItem(index, 'nearest', () => this._findRenderedPart(partId), true);
+    void this._scrollVirtualItem(
+      index,
+      "nearest",
+      () => this._findRenderedPart(partId),
+      true,
+    );
     return true;
   }
 
@@ -1112,7 +1171,7 @@ export class ChatMessages extends LitElement {
 
     if (!this._virtualizerReady) {
       const fallbackTarget = findTarget();
-      fallbackTarget?.scrollIntoView({ behavior: 'smooth', block });
+      fallbackTarget?.scrollIntoView({ behavior: "smooth", block });
       if (fallbackTarget) this._highlightElement(fallbackTarget);
       return;
     }
@@ -1123,7 +1182,7 @@ export class ChatMessages extends LitElement {
     // Large jumps with variable-height estimates can leave a smooth native
     // scroll short of the requested virtual item. Materialise deterministically;
     // already-rendered targets still use the smooth path above.
-    this._virtualizerScrollIntoView(index, { behavior: 'auto', block });
+    this._virtualizerScrollIntoView(index, { behavior: "auto", block });
 
     const layoutComplete = virtualizer.layoutComplete;
     if (layoutComplete) {
@@ -1137,21 +1196,25 @@ export class ChatMessages extends LitElement {
     // before the requested child is materialised.
     for (let attempt = 0; attempt < 24; attempt += 1) {
       if (attempt > 0 && attempt % 4 === 0) {
-        this._virtualizerScrollIntoView(index, { behavior: 'auto', block });
+        this._virtualizerScrollIntoView(index, { behavior: "auto", block });
       }
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
       let target = findTarget();
       if (target) {
         if (alignMountedTarget) {
-          const targetUpdateComplete = (target as Element & { updateComplete?: Promise<unknown> })
-            .updateComplete;
-          if (targetUpdateComplete) await targetUpdateComplete.catch(() => undefined);
+          const targetUpdateComplete = (
+            target as Element & { updateComplete?: Promise<unknown> }
+          ).updateComplete;
+          if (targetUpdateComplete)
+            await targetUpdateComplete.catch(() => undefined);
           target = findTarget() ?? target;
 
           // The part may be created before its markdown establishes the final
           // row height. Re-align through the virtualizer's measurement passes.
           for (let alignAttempt = 0; alignAttempt < 4; alignAttempt += 1) {
-            target.scrollIntoView({ behavior: 'auto', block });
+            target.scrollIntoView({ behavior: "auto", block });
             const targetLayoutComplete = virtualizer.layoutComplete;
             if (targetLayoutComplete) {
               await Promise.race([
@@ -1159,7 +1222,9 @@ export class ChatMessages extends LitElement {
                 new Promise<void>((resolve) => setTimeout(resolve, 250)),
               ]);
             }
-            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() => resolve()),
+            );
           }
         }
         this._highlightElement(target);
@@ -1174,7 +1239,10 @@ export class ChatMessages extends LitElement {
     return this._queryOpenShadowRoots(this.shadowRoot, selector);
   }
 
-  private _queryOpenShadowRoots(root: ParentNode, selector: string): Element | null {
+  private _queryOpenShadowRoots(
+    root: ParentNode,
+    selector: string,
+  ): Element | null {
     const directMatches = Array.from(root.querySelectorAll(selector));
     const measurable = directMatches.find((element) => {
       const rect = element.getBoundingClientRect();
@@ -1182,7 +1250,7 @@ export class ChatMessages extends LitElement {
     });
     if (measurable) return measurable;
     if (directMatches[0]) return directMatches[0];
-    for (const element of root.querySelectorAll('*')) {
+    for (const element of root.querySelectorAll("*")) {
       if (element.shadowRoot) {
         const nested = this._queryOpenShadowRoots(element.shadowRoot, selector);
         if (nested) return nested;
@@ -1202,22 +1270,22 @@ export class ChatMessages extends LitElement {
     let highlighted = el;
     let root = el.getRootNode();
     while (root instanceof ShadowRoot) {
-      if (root.host.tagName === 'I-CHAT-MESSAGE') {
+      if (root.host.tagName === "I-CHAT-MESSAGE") {
         highlighted = root.host;
         break;
       }
       root = root.host.getRootNode();
     }
-    highlighted.classList.add('scroll-highlight');
+    highlighted.classList.add("scroll-highlight");
     highlighted.addEventListener(
-      'animationend',
-      () => highlighted.classList.remove('scroll-highlight'),
+      "animationend",
+      () => highlighted.classList.remove("scroll-highlight"),
       { once: true },
     );
   }
 
   clear(): void {
-    this._commitMessages(clearMessages(), { reason: 'message:clear' });
+    this._commitMessages(clearMessages(), { reason: "message:clear" });
     this._clearPresentation();
   }
 
@@ -1249,7 +1317,7 @@ export class ChatMessages extends LitElement {
       this._errorDismissTimer = setTimeout(() => this.dismissError(), duration);
     }
     this.dispatchEvent(
-      new CustomEvent('error', {
+      new CustomEvent("error", {
         detail: { message: text },
         bubbles: true,
         composed: true,
@@ -1282,17 +1350,17 @@ export class ChatMessages extends LitElement {
   /** Dismiss the error banner. */
   dismissError(): void {
     clearTimeout(this._errorDismissTimer);
-    this._errorBanner = '';
+    this._errorBanner = "";
   }
 
   /**
    * Convenience: add a message with `role: 'assistant'` and `error` set.
    * @param text  Optional markdown body shown beneath the error indicator.
    */
-  addErrorMessage(error: string, text = ''): void {
+  addErrorMessage(error: string, text = ""): void {
     this.addMessage({
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      role: 'assistant',
+      role: "assistant",
       parts: text ? [textPart(text)] : [],
       error,
       timestamp: Date.now(),
@@ -1304,7 +1372,10 @@ export class ChatMessages extends LitElement {
     const labels = this._labels;
     const renderItems = this._messageRenderItems();
 
-    const replyBlocks = new Map<string, Array<{ key: string; data: Partial<ChatMessage> }>>();
+    const replyBlocks = new Map<
+      string,
+      Array<{ key: string; data: Partial<ChatMessage> }>
+    >();
     for (const r of this._replies) {
       const list = replyBlocks.get(r.id);
       if (list) list.push({ key: r.key, data: r.data });
@@ -1321,23 +1392,23 @@ export class ChatMessages extends LitElement {
       <div class="template-slots" hidden>
         <slot
           name="self-avatar"
-          @slotchange=${(e: Event) => this._handleSlotChange('self-avatar', e)}
+          @slotchange=${(e: Event) => this._handleSlotChange("self-avatar", e)}
         ></slot>
         <slot
           name="peer-avatar"
-          @slotchange=${(e: Event) => this._handleSlotChange('peer-avatar', e)}
+          @slotchange=${(e: Event) => this._handleSlotChange("peer-avatar", e)}
         ></slot>
         <slot
           name="assistant-avatar"
-          @slotchange=${(e: Event) => this._handleSlotChange('assistant-avatar', e)}
+          @slotchange=${(e: Event) => this._handleSlotChange("assistant-avatar", e)}
         ></slot>
         <slot
           name="message-actions"
-          @slotchange=${(e: Event) => this._handleSlotChange('message-actions', e)}
+          @slotchange=${(e: Event) => this._handleSlotChange("message-actions", e)}
         ></slot>
         <slot
           name="reasoning-header"
-          @slotchange=${(e: Event) => this._handleSlotChange('reasoning-header', e)}
+          @slotchange=${(e: Event) => this._handleSlotChange("reasoning-header", e)}
         ></slot>
       </div>
       <div
@@ -1349,7 +1420,7 @@ export class ChatMessages extends LitElement {
         ${
           this._errorBanner
             ? html`<div class="error-banner" role="alert">
-                ${chatIcons.alertTriangleFilled({ className: 'error-banner-icon' })}
+                ${chatIcons.alertTriangleFilled({ className: "error-banner-icon" })}
                 <span class="error-banner-text">${this._errorBanner}</span>
                 <button
                   class="error-banner-dismiss"
@@ -1359,7 +1430,7 @@ export class ChatMessages extends LitElement {
                   ${chatIcons.x({ size: 14, strokeWidth: 2.4 })}
                 </button>
               </div>`
-            : ''
+            : ""
         }
         ${
           this.messages.length === 0
@@ -1417,7 +1488,7 @@ export class ChatMessages extends LitElement {
                   ${chatIcons.chevronDown({ size: 20, strokeWidth: 2.4 })}
                 </button>
               `
-            : ''
+            : ""
         }
       </div>
     `;
@@ -1426,6 +1497,6 @@ export class ChatMessages extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-messages': ChatMessages;
+    "i-chat-messages": ChatMessages;
   }
 }

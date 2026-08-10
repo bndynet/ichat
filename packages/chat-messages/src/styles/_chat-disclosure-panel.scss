@@ -1,5 +1,5 @@
-@use 'variables' as *;
-@use 'chat-panel' as panel;
+@use "variables" as *;
+@use "chat-panel" as panel;
 
 $header-hover-background: color-mix(
   in srgb,
@@ -22,8 +22,14 @@ $header-hover-background: color-mix(
 }
 
 @mixin header(
-  $background: var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt})),
-  $hover-background: var(--chat-disclosure-header-hover-bg, #{$header-hover-background}),
+  $background: var(
+      --chat-disclosure-header-bg,
+      var(--chat-surface-alt, #{$color-surface-alt})
+    ),
+  $hover-background: var(
+      --chat-disclosure-header-hover-bg,
+      #{$header-hover-background}
+    ),
   $color: inherit,
   $focus-color: var(--chat-primary, #{$color-primary}),
   $focus-outline-offset: -2px
@@ -46,7 +52,7 @@ $header-hover-background: color-mix(
   }
 
   &::marker {
-    content: '';
+    content: "";
     display: none;
   }
 
@@ -91,7 +97,8 @@ $header-hover-background: color-mix(
   $border: var(--chat-border, #{$color-border}),
   $background: var(--chat-disclosure-body-bg, transparent),
   $color: inherit,
-  $padding: var(--chat-spacing-sm, #{$spacing-sm}) var(--chat-spacing-md, #{$spacing-md})
+  $padding: var(--chat-spacing-sm, #{$spacing-sm})
+    var(--chat-spacing-md, #{$spacing-md})
     var(--chat-spacing-md, #{$spacing-md})
 ) {
   padding: $padding;

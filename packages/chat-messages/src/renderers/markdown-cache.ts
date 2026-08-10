@@ -1,4 +1,4 @@
-import type { HighlightJs } from '../types.js';
+import type { HighlightJs } from "../types.js";
 
 /**
  * Marker attribute on an async block placeholder. The pending async work is
@@ -7,7 +7,7 @@ import type { HighlightJs } from '../types.js';
  *
  * Shared with the fence rule in `markdown-renderer.ts` so the two cannot drift.
  */
-export const ASYNC_BLOCK_ATTRIBUTE = 'data-chat-async-block';
+export const ASYNC_BLOCK_ATTRIBUTE = "data-chat-async-block";
 
 /**
  * Retention budget, counted in characters of cached content plus HTML.
@@ -36,11 +36,11 @@ interface MarkdownCacheEntry {
 
 export type MarkdownCacheLookup =
   /** Caller's own `previousHtml` is current; morph that. */
-  | { reuse: 'previous' }
+  | { reuse: "previous" }
   /** Cached HTML for an element instance that has none of its own. */
-  | { reuse: 'cached'; html: string }
+  | { reuse: "cached"; html: string }
   /** Run the Markdown pipeline. */
-  | { reuse: 'none' };
+  | { reuse: "none" };
 
 const cache = new Map<string, MarkdownCacheEntry>();
 /** Running total of `entryChars` for everything in `cache`. */
@@ -71,11 +71,14 @@ function evictToBudget(): void {
 
 /** `undefined` and `[]` both mean "safe defaults", so they must compare equal. */
 function normalizeLinkProtocols(protocols?: readonly string[]): string {
-  if (!protocols || protocols.length === 0) return '';
-  return protocols.join('\u0000');
+  if (!protocols || protocols.length === 0) return "";
+  return protocols.join("\u0000");
 }
 
-function optionsMatch(entry: MarkdownCacheEntry, options: MarkdownCacheOptions): boolean {
+function optionsMatch(
+  entry: MarkdownCacheEntry,
+  options: MarkdownCacheOptions,
+): boolean {
   return (
     entry.highlightJs === options.highlightJs &&
     entry.linkProtocols === normalizeLinkProtocols(options.allowedLinkProtocols)
@@ -114,18 +117,18 @@ export function lookupMarkdownCache(
   previousHtml: string,
   options: MarkdownCacheOptions,
 ): MarkdownCacheLookup {
-  if (!partId) return { reuse: 'none' };
+  if (!partId) return { reuse: "none" };
 
   const entry = cache.get(partId);
   if (!entry || entry.content !== content || !optionsMatch(entry, options)) {
-    return { reuse: 'none' };
+    return { reuse: "none" };
   }
 
   touch(partId, entry);
 
-  if (previousHtml) return { reuse: 'previous' };
-  if (isReusableHtml(entry.html)) return { reuse: 'cached', html: entry.html };
-  return { reuse: 'none' };
+  if (previousHtml) return { reuse: "previous" };
+  if (isReusableHtml(entry.html)) return { reuse: "cached", html: entry.html };
+  return { reuse: "none" };
 }
 
 export function storeMarkdownCache(
@@ -153,7 +156,11 @@ export function storeMarkdownCache(
  *
  * Ignored when the entry has since been replaced by different content.
  */
-export function replaceCachedMarkdownHtml(partId: string, content: string, html: string): void {
+export function replaceCachedMarkdownHtml(
+  partId: string,
+  content: string,
+  html: string,
+): void {
   const entry = cache.get(partId);
   if (!entry || entry.content !== content) return;
   cachedChars += html.length - entry.html.length;

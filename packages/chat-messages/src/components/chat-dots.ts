@@ -1,6 +1,6 @@
-import { LitElement, html, nothing, unsafeCSS } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import styles from '../styles/chat-dots.scss';
+import { LitElement, html, nothing, unsafeCSS } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import styles from "../styles/chat-dots.scss";
 
 /**
  * Animated bouncing dots. Used by reasoning ("Thinking…") and the pending
@@ -10,12 +10,12 @@ import styles from '../styles/chat-dots.scss';
  * @cssprop --chat-dots-size  - Dot diameter (default: 4px)
  * @cssprop --chat-dots-gap   - Gap between dots (default: 3px)
  */
-@customElement('i-chat-dots')
+@customElement("i-chat-dots")
 export class ChatDots extends LitElement {
   static styles = unsafeCSS(styles);
 
   /** Accessible label for the animation. */
-  @property() label = '';
+  @property() label = "";
 
   render() {
     return html`
@@ -30,6 +30,6 @@ export class ChatDots extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'i-chat-dots': ChatDots;
+    "i-chat-dots": ChatDots;
   }
 }

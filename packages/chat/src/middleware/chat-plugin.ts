@@ -1,4 +1,4 @@
-import type { Chat } from '../components/chat.js';
+import type { Chat } from "../components/chat.js";
 
 /**
  * Plugin interface for extending `<i-chat>` with reusable functionality.

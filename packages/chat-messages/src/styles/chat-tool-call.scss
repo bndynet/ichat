@@ -1,6 +1,6 @@
-@use 'variables' as *;
-@use 'chat-host-tokens';
-@use 'chat-disclosure-panel' as disclosure;
+@use "variables" as *;
+@use "chat-host-tokens";
+@use "chat-disclosure-panel" as disclosure;
 
 :host {
   display: block;
@@ -9,7 +9,10 @@
   --_tc-bg: var(--chat-tool-bg, var(--chat-panel-bg, var(--chat-surface)));
   --_tc-border: var(
     --chat-tool-border,
-    var(--chat-panel-border, color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%))
+    var(
+      --chat-panel-border,
+      color-mix(in srgb, var(--chat-border) 70%, var(--chat-surface) 30%)
+    )
   );
   --_tc-radius: var(
     --chat-tool-radius,
@@ -20,18 +23,27 @@
   --_tc-secondary: var(--chat-tool-secondary, var(--chat-text-secondary));
   --_tc-header-bg: var(
     --chat-tool-header-bg,
-    var(--chat-disclosure-header-bg, var(--chat-surface-alt, #{$color-surface-alt}))
+    var(
+      --chat-disclosure-header-bg,
+      var(--chat-surface-alt, #{$color-surface-alt})
+    )
   );
   --_tc-header-hover-bg: var(
     --chat-tool-header-hover-bg,
-    var(--chat-disclosure-header-hover-bg, #{disclosure.$header-hover-background})
+    var(
+      --chat-disclosure-header-hover-bg,
+      #{disclosure.$header-hover-background}
+    )
   );
   --_tc-primary: var(--chat-tool-primary, var(--chat-primary));
   --_tc-success: var(--chat-tool-success, var(--chat-success));
   --_tc-error: var(--chat-tool-error, var(--chat-error));
   --_tc-code-bg: var(--chat-code-bg);
   --_tc-code-text: var(--chat-code-text);
-  --_tc-on-primary: var(--chat-self-text, var(--chat-user-text, var(--chat-surface)));
+  --_tc-on-primary: var(
+    --chat-self-text,
+    var(--chat-user-text, var(--chat-surface))
+  );
 }
 
 .tc {
@@ -139,7 +151,10 @@ details[open] .tc__chevron {
 .tc__body {
   @include disclosure.body(
     $border: var(--_tc-border),
-    $background: var(--chat-tool-body-bg, var(--chat-disclosure-body-bg, transparent)),
+    $background: var(
+        --chat-tool-body-bg,
+        var(--chat-disclosure-body-bg, transparent)
+      ),
     $color: var(--_tc-text)
   );
 }

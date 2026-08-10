@@ -29,35 +29,35 @@ export interface ComposerLabels {
 
 /** English (default) composer strings. */
 export const COMPOSER_LABELS_EN: ComposerLabels = {
-  placeholder: 'Type a message…',
-  voiceListening: 'Listening…',
-  send: 'Send',
-  sendTitle: 'Send message',
-  cancel: 'Cancel',
-  cancelTitle: 'Stop generating',
-  voiceStart: 'Voice input',
-  voiceStartTitle: 'Voice input',
-  voiceStop: 'Stop voice input',
-  voiceStopTitle: 'Stop dictation',
+  placeholder: "Type a message…",
+  voiceListening: "Listening…",
+  send: "Send",
+  sendTitle: "Send message",
+  cancel: "Cancel",
+  cancelTitle: "Stop generating",
+  voiceStart: "Voice input",
+  voiceStartTitle: "Voice input",
+  voiceStop: "Stop voice input",
+  voiceStopTitle: "Stop dictation",
 };
 
 /** Simplified Chinese composer strings. */
 export const COMPOSER_LABELS_ZH_CN: ComposerLabels = {
-  placeholder: '输入消息…',
-  voiceListening: '正在聆听…',
-  send: '发送',
-  sendTitle: '发送消息',
-  cancel: '取消',
-  cancelTitle: '停止生成',
-  voiceStart: '语音输入',
-  voiceStartTitle: '语音输入',
-  voiceStop: '停止语音输入',
-  voiceStopTitle: '停止听写',
+  placeholder: "输入消息…",
+  voiceListening: "正在聆听…",
+  send: "发送",
+  sendTitle: "发送消息",
+  cancel: "取消",
+  cancelTitle: "停止生成",
+  voiceStart: "语音输入",
+  voiceStartTitle: "语音输入",
+  voiceStop: "停止语音输入",
+  voiceStopTitle: "停止听写",
 };
 
 function pickBuiltInComposerLabels(locale: string): ComposerLabels {
   const loc = locale.toLowerCase();
-  if (loc === 'zh' || loc.startsWith('zh-')) return COMPOSER_LABELS_ZH_CN;
+  if (loc === "zh" || loc.startsWith("zh-")) return COMPOSER_LABELS_ZH_CN;
   return COMPOSER_LABELS_EN;
 }
 
@@ -69,10 +69,12 @@ export function resolveComposerLabels(options: {
   locale?: string;
   labels?: Partial<ComposerLabels>;
 }): ComposerLabels {
-  const base = pickBuiltInComposerLabels(options.locale?.trim() || 'en');
+  const base = pickBuiltInComposerLabels(options.locale?.trim() || "en");
   if (!options.labels) return base;
   const out = { ...base };
-  for (const key of Object.keys(options.labels) as Array<keyof ComposerLabels>) {
+  for (const key of Object.keys(options.labels) as Array<
+    keyof ComposerLabels
+  >) {
     const value = options.labels[key];
     if (value !== undefined) out[key] = value;
   }

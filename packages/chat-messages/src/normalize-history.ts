@@ -1,4 +1,4 @@
-import type { ChatMessage, PartStatus } from './types.js';
+import type { ChatMessage, PartStatus } from "./types.js";
 
 /**
  * Options for {@link normalizeHistoryMessages}.
@@ -55,12 +55,13 @@ export function normalizeHistoryMessages(
   messages: ChatMessage[],
   options?: NormalizeHistoryOptions,
 ): ChatMessage[] {
-  const { interruptedStatus = 'complete', removeEmptyMessages = true } = options ?? {};
+  const { interruptedStatus = "complete", removeEmptyMessages = true } =
+    options ?? {};
 
   const normalized = messages.map((msg) => {
     const wasStreaming = msg.streaming === true;
     const hasStreamingParts = msg.parts.some(
-      (p) => p.status === 'streaming' || p.status === 'pending',
+      (p) => p.status === "streaming" || p.status === "pending",
     );
 
     // Fast path: message is already terminal — return as-is (but still
@@ -74,7 +75,7 @@ export function normalizeHistoryMessages(
       streaming: false,
       cancelled: wasStreaming ? true : msg.cancelled,
       parts: msg.parts.map((part) => {
-        if (part.status === 'streaming' || part.status === 'pending') {
+        if (part.status === "streaming" || part.status === "pending") {
           return { ...part, status: interruptedStatus };
         }
         return part;

@@ -1,5 +1,8 @@
-import type { DateSeparatorLabels } from './types.js';
-import { DATE_SEPARATOR_LABELS_EN, DATE_SEPARATOR_LABELS_ZH_CN } from './date-separator.js';
+import type { DateSeparatorLabels } from "./types.js";
+import {
+  DATE_SEPARATOR_LABELS_EN,
+  DATE_SEPARATOR_LABELS_ZH_CN,
+} from "./date-separator.js";
 
 /** Strings for the default composer (`<i-chat-input>`). */
 export interface ComposerLabels {
@@ -121,65 +124,67 @@ export interface ChatLabels {
 
 /** Recursive partial used for label overrides (functions are kept atomic). */
 export type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends (...args: never[]) => unknown ? T[K] : DeepPartial<T[K]>;
+  [K in keyof T]?: T[K] extends (...args: never[]) => unknown
+    ? T[K]
+    : DeepPartial<T[K]>;
 };
 
 /** English (default) UI strings. */
 export const CHAT_LABELS_EN: ChatLabels = {
   composer: {
-    placeholder: 'Type a message…',
-    voiceListening: 'Listening…',
-    send: 'Send',
-    sendTitle: 'Send message',
-    cancel: 'Cancel',
-    cancelTitle: 'Stop generating',
-    voiceStart: 'Voice input',
-    voiceStartTitle: 'Voice input',
-    voiceStop: 'Stop voice input',
-    voiceStopTitle: 'Stop dictation',
+    placeholder: "Type a message…",
+    voiceListening: "Listening…",
+    send: "Send",
+    sendTitle: "Send message",
+    cancel: "Cancel",
+    cancelTitle: "Stop generating",
+    voiceStart: "Voice input",
+    voiceStartTitle: "Voice input",
+    voiceStop: "Stop voice input",
+    voiceStopTitle: "Stop dictation",
   },
   reasoning: {
-    thinking: 'Thinking...',
-    reasoning: 'Thought summary',
+    thinking: "Thinking...",
+    reasoning: "Thought summary",
   },
   toolCall: {
-    preparing: 'Preparing…',
-    ready: 'Ready',
-    running: 'Running…',
-    success: 'Success',
-    error: 'Error',
-    argumentsSection: 'Arguments',
-    errorSection: 'Error',
-    resultSection: 'Result',
-    approve: 'Approve',
-    reject: 'Reject',
-    approved: 'Approved',
-    rejected: 'Rejected',
+    preparing: "Preparing…",
+    ready: "Ready",
+    running: "Running…",
+    success: "Success",
+    error: "Error",
+    argumentsSection: "Arguments",
+    errorSection: "Error",
+    resultSection: "Result",
+    approve: "Approve",
+    reject: "Reject",
+    approved: "Approved",
+    rejected: "Rejected",
   },
   todo: {
-    title: 'To-dos',
+    title: "To-dos",
     progress: (completed, total) => `${completed}/${total} completed`,
-    expand: 'Expand to-dos',
-    collapse: 'Collapse to-dos',
-    changeStatus: 'Change status',
-    pending: 'Pending',
-    active: 'In progress',
-    done: 'Completed',
-    error: 'Failed',
-    skipped: 'Skipped',
+    expand: "Expand to-dos",
+    collapse: "Collapse to-dos",
+    changeStatus: "Change status",
+    pending: "Pending",
+    active: "In progress",
+    done: "Completed",
+    error: "Failed",
+    skipped: "Skipped",
   },
   messages: {
-    empty: 'No messages yet. Start a conversation!',
-    dismissError: 'Dismiss error',
-    scrollToLatest: 'Scroll to latest message',
-    chatMessages: 'Chat messages',
-    generating: 'Generating response…',
+    empty: "No messages yet. Start a conversation!",
+    dismissError: "Dismiss error",
+    scrollToLatest: "Scroll to latest message",
+    chatMessages: "Chat messages",
+    generating: "Generating response…",
   },
   confirmation: {
-    required: 'Confirmation required',
-    confirm: 'Confirm',
-    cancel: 'Cancel',
-    details: 'Details',
+    required: "Confirmation required",
+    confirm: "Confirm",
+    cancel: "Cancel",
+    details: "Details",
   },
   dateSeparator: DATE_SEPARATOR_LABELS_EN,
 };
@@ -187,59 +192,59 @@ export const CHAT_LABELS_EN: ChatLabels = {
 /** Simplified Chinese UI strings. */
 export const CHAT_LABELS_ZH_CN: ChatLabels = {
   composer: {
-    placeholder: '输入消息…',
-    voiceListening: '正在聆听…',
-    send: '发送',
-    sendTitle: '发送消息',
-    cancel: '取消',
-    cancelTitle: '停止生成',
-    voiceStart: '语音输入',
-    voiceStartTitle: '语音输入',
-    voiceStop: '停止语音输入',
-    voiceStopTitle: '停止听写',
+    placeholder: "输入消息…",
+    voiceListening: "正在聆听…",
+    send: "发送",
+    sendTitle: "发送消息",
+    cancel: "取消",
+    cancelTitle: "停止生成",
+    voiceStart: "语音输入",
+    voiceStartTitle: "语音输入",
+    voiceStop: "停止语音输入",
+    voiceStopTitle: "停止听写",
   },
   reasoning: {
-    thinking: '正在分析...',
-    reasoning: '思考摘要',
+    thinking: "正在分析...",
+    reasoning: "思考摘要",
   },
   toolCall: {
-    preparing: '准备中…',
-    ready: '就绪',
-    running: '运行中…',
-    success: '成功',
-    error: '错误',
-    argumentsSection: '参数',
-    errorSection: '错误',
-    resultSection: '结果',
-    approve: '允许',
-    reject: '拒绝',
-    approved: '已允许',
-    rejected: '已拒绝',
+    preparing: "准备中…",
+    ready: "就绪",
+    running: "运行中…",
+    success: "成功",
+    error: "错误",
+    argumentsSection: "参数",
+    errorSection: "错误",
+    resultSection: "结果",
+    approve: "允许",
+    reject: "拒绝",
+    approved: "已允许",
+    rejected: "已拒绝",
   },
   todo: {
-    title: '待办事项',
+    title: "待办事项",
     progress: (completed, total) => `已完成 ${completed}/${total}`,
-    expand: '展开待办事项',
-    collapse: '收起待办事项',
-    changeStatus: '更改状态',
-    pending: '未开始',
-    active: '进行中',
-    done: '已完成',
-    error: '失败',
-    skipped: '已跳过',
+    expand: "展开待办事项",
+    collapse: "收起待办事项",
+    changeStatus: "更改状态",
+    pending: "未开始",
+    active: "进行中",
+    done: "已完成",
+    error: "失败",
+    skipped: "已跳过",
   },
   messages: {
-    empty: '还没有消息，开始对话吧！',
-    dismissError: '关闭错误提示',
-    scrollToLatest: '滚动到最新消息',
-    chatMessages: '聊天消息',
-    generating: '正在生成回复…',
+    empty: "还没有消息，开始对话吧！",
+    dismissError: "关闭错误提示",
+    scrollToLatest: "滚动到最新消息",
+    chatMessages: "聊天消息",
+    generating: "正在生成回复…",
   },
   confirmation: {
-    required: '需要确认',
-    confirm: '确认',
-    cancel: '取消',
-    details: '详情',
+    required: "需要确认",
+    confirm: "确认",
+    cancel: "取消",
+    details: "详情",
   },
   dateSeparator: DATE_SEPARATOR_LABELS_ZH_CN,
 };
@@ -247,7 +252,7 @@ export const CHAT_LABELS_ZH_CN: ChatLabels = {
 /** Pick the built-in dictionary for a BCP 47 tag (falls back to English). */
 function pickBuiltInLabels(locale: string): ChatLabels {
   const loc = locale.toLowerCase();
-  if (loc === 'zh' || loc.startsWith('zh-')) return CHAT_LABELS_ZH_CN;
+  if (loc === "zh" || loc.startsWith("zh-")) return CHAT_LABELS_ZH_CN;
   return CHAT_LABELS_EN;
 }
 
@@ -274,11 +279,10 @@ export function resolveLabels(options: {
   locale?: string;
   labels?: DeepPartial<ChatLabels>;
 }): ChatLabels {
-  const base = pickBuiltInLabels(options.locale?.trim() || 'en');
+  const base = pickBuiltInLabels(options.locale?.trim() || "en");
   const o = options.labels;
-  const dateSeparatorOverride: DeepPartial<DateSeparatorLabels> | undefined = o?.dateSeparator
-    ? { ...(o.dateSeparator ?? {}) }
-    : undefined;
+  const dateSeparatorOverride: DeepPartial<DateSeparatorLabels> | undefined =
+    o?.dateSeparator ? { ...(o.dateSeparator ?? {}) } : undefined;
 
   return {
     composer: mergeSection(base.composer, o?.composer),

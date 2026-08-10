@@ -22,5 +22,8 @@ onMounted(async () => {
 
 <template>
   <i-chat-messages ref="chatRef"></i-chat-messages>
-  <ExampleCodeDrawer title="KPI group code example" :content="kpiGroupExample" />
+  <ExampleCodeDrawer
+    title="KPI group code example"
+    :content="kpiGroupExample"
+  />
 </template>

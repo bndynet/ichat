@@ -31,6 +31,8 @@ export function acceptedNoOp(): ChatMutationOutcome {
  * Read an outcome from a store method that may still use the older `void`
  * signature, so custom `ChatMessageStorePort` implementations keep working.
  */
-export function normalizeOutcome(outcome: ChatMutationOutcome | void): ChatMutationOutcome {
+export function normalizeOutcome(
+  outcome: ChatMutationOutcome | void,
+): ChatMutationOutcome {
   return outcome ?? { changed: true, accepted: true };
 }

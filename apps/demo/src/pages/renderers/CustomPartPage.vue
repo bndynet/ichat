@@ -102,7 +102,10 @@ function updateWeather() {
     </button>
     <i-chat-messages ref="chatRef" />
   </div>
-  <ExampleCodeDrawer title="Custom part code example" :content="customPartExample" />
+  <ExampleCodeDrawer
+    title="Custom part code example"
+    :content="customPartExample"
+  />
 </template>
 
 <style scoped>

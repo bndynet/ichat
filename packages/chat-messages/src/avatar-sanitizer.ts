@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 
 type DOMPurifyConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>;
 
@@ -14,7 +14,7 @@ interface InlineSvgPurifier {
  */
 const INLINE_SVG_SANITIZE_CONFIG: DOMPurifyConfig = {
   USE_PROFILES: { svg: true, svgFilters: true },
-  FORBID_TAGS: ['script', 'foreignObject'],
+  FORBID_TAGS: ["script", "foreignObject"],
   ALLOW_DATA_ATTR: false,
 };
 
@@ -25,8 +25,11 @@ export function sanitizeInlineSvgAvatar(
 ): string {
   // DOMPurify is created without a DOM during SSR/Node imports. Fail closed
   // instead of passing the original markup to Lit's unsafeHTML directive.
-  if (!purifier.isSupported || typeof purifier.sanitize !== 'function') return '';
+  if (!purifier.isSupported || typeof purifier.sanitize !== "function")
+    return "";
 
-  const sanitized = String(purifier.sanitize(svgMarkup, INLINE_SVG_SANITIZE_CONFIG)).trim();
-  return /^<svg[\s>]/i.test(sanitized) ? sanitized : '';
+  const sanitized = String(
+    purifier.sanitize(svgMarkup, INLINE_SVG_SANITIZE_CONFIG),
+  ).trim();
+  return /^<svg[\s>]/i.test(sanitized) ? sanitized : "";
 }

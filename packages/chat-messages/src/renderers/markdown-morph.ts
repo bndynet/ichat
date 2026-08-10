@@ -1,13 +1,19 @@
-import { renderMarkdown, type MarkdownRenderOptions } from './markdown-renderer.js';
-import { morphHtmlInto } from './dom-morph.js';
-import { onRendererRegistryChange } from './registry.js';
+import {
+  renderMarkdown,
+  type MarkdownRenderOptions,
+} from "./markdown-renderer.js";
+import { morphHtmlInto } from "./dom-morph.js";
+import { onRendererRegistryChange } from "./registry.js";
 import {
   invalidateMarkdownCache,
   lookupMarkdownCache,
   storeMarkdownCache,
-} from './markdown-cache.js';
+} from "./markdown-cache.js";
 
-export { invalidateMarkdownCache, replaceCachedMarkdownHtml } from './markdown-cache.js';
+export {
+  invalidateMarkdownCache,
+  replaceCachedMarkdownHtml,
+} from "./markdown-cache.js";
 
 export interface RenderMarkdownIntoOptions extends MarkdownRenderOptions {
   /**
@@ -46,18 +52,23 @@ export function renderMarkdownInto(
   content: string,
   options: RenderMarkdownIntoOptions = {},
 ): RenderMarkdownIntoResult {
-  const { previousHtml = '', partId, ...renderOptions } = options;
+  const { previousHtml = "", partId, ...renderOptions } = options;
 
   // Level 1: per-part cache — skip the full pipeline when nothing that affects
   // the output has changed.
-  const cached = lookupMarkdownCache(partId, content, previousHtml, renderOptions);
-  if (cached.reuse === 'previous') {
+  const cached = lookupMarkdownCache(
+    partId,
+    content,
+    previousHtml,
+    renderOptions,
+  );
+  if (cached.reuse === "previous") {
     // Lit may have re-rendered the template (e.g. `repeat` reconciling after a
     // history prepend), leaving a new empty DOM that needs patching.
     morphHtmlInto(el, previousHtml);
     return { changed: false, html: previousHtml, rendered: false };
   }
-  if (cached.reuse === 'cached') {
+  if (cached.reuse === "cached") {
     morphHtmlInto(el, cached.html);
     return { changed: true, html: cached.html, rendered: false };
   }

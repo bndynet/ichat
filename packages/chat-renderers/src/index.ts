@@ -1,8 +1,8 @@
-export type { BlockRenderer } from '@bndynet/ichat-messages';
+export type { BlockRenderer } from "@bndynet/ichat-messages";
 
-import { rendererRegistry } from '@bndynet/ichat-messages';
-import { kpiRenderer, kpisRenderer } from './kpi-renderer.js';
-import { formRenderer } from './form-renderer.js';
+import { rendererRegistry } from "@bndynet/ichat-messages";
+import { kpiRenderer, kpisRenderer } from "./kpi-renderer.js";
+import { formRenderer } from "./form-renderer.js";
 
 // Auto-register on import — no manual setup needed.
 rendererRegistry.register(kpiRenderer);
@@ -14,7 +14,7 @@ export {
   kpisRenderer,
   createKpiRenderer,
   createKpisRenderer,
-} from './kpi-renderer.js';
+} from "./kpi-renderer.js";
 
 export type {
   FormSchema,
@@ -23,13 +23,13 @@ export type {
   FormI18n,
   FormSubmitDetail,
   DateRangeValue,
-} from './form-renderer.js';
-export { formRenderer, createFormRenderer } from './form-renderer.js';
+} from "./form-renderer.js";
+export { formRenderer, createFormRenderer } from "./form-renderer.js";
 
 // Re-export shared renderer utilities from @bndynet/ichat-messages
-export type { RendererOptions } from '@bndynet/ichat-messages';
+export type { RendererOptions } from "@bndynet/ichat-messages";
 export {
   CHAT_TOGGLE_SOURCE_CLASS,
   renderCodeFallback,
   wrapWithCodeToggle,
-} from '@bndynet/ichat-messages';
+} from "@bndynet/ichat-messages";

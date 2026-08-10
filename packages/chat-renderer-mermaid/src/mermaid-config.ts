@@ -1,4 +1,4 @@
-import type { MermaidConfig } from 'mermaid';
+import type { MermaidConfig } from "mermaid";
 
 /**
  * Layout and typography defaults. Colors come from `buildMermaidThemeVariables()`
@@ -6,12 +6,12 @@ import type { MermaidConfig } from 'mermaid';
  */
 export const DEFAULT_MERMAID_CONFIG: MermaidConfig = {
   startOnLoad: false,
-  securityLevel: 'strict',
+  securityLevel: "strict",
 
   fontSize: 13,
 
   themeVariables: {
-    fontSize: '13px',
+    fontSize: "13px",
   },
 
   // Flowchart / Graph
@@ -20,7 +20,7 @@ export const DEFAULT_MERMAID_CONFIG: MermaidConfig = {
     nodeSpacing: 24,
     rankSpacing: 28,
     diagramPadding: 4,
-    curve: 'basis',
+    curve: "basis",
   },
 
   // Sequence

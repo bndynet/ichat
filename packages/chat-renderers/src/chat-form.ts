@@ -5,10 +5,15 @@
  * Extracted from form-renderer.ts to keep the renderer file focused
  * on BlockRenderer registration.
  */
-import { rendererIcons } from './icons.js';
-import { setVersionAttribute } from './version.js';
-import { renderCodeFallback } from '@bndynet/ichat-messages';
-import type { FormSchema, FormI18n, FormField, DateRangeValue } from './form-renderer.js';
+import { rendererIcons } from "./icons.js";
+import { setVersionAttribute } from "./version.js";
+import { renderCodeFallback } from "@bndynet/ichat-messages";
+import type {
+  FormSchema,
+  FormI18n,
+  FormField,
+  DateRangeValue,
+} from "./form-renderer.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -20,11 +25,11 @@ function nextFormId(): string {
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 // ── Shadow-DOM styles ─────────────────────────────────────────────────────────
@@ -251,32 +256,38 @@ const FORM_STYLES = `
 
 // ── Field HTML builder ────────────────────────────────────────────────────────
 
-function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): string {
+function buildFieldHtml(
+  field: FormField,
+  fieldId: string,
+  i18n: FormI18n,
+): string {
   const id = escapeHtml(fieldId);
   const label = escapeHtml(field.label ?? field.name);
   const name = escapeHtml(field.name);
-  const placeholder = escapeHtml(field.placeholder ?? '');
-  const required = field.required ? ' required' : '';
+  const placeholder = escapeHtml(field.placeholder ?? "");
+  const required = field.required ? " required" : "";
   const requiredMark = field.required
     ? '<span class="chat-form__required" aria-hidden="true">*</span>'
-    : '';
+    : "";
 
   switch (field.type) {
-    case 'textarea':
+    case "textarea":
       return `
         <div class="chat-form__field">
           <label class="chat-form__label" for="${id}">${label}${requiredMark}</label>
           <textarea class="chat-form__textarea" id="${id}" name="${name}" placeholder="${placeholder}"${required}></textarea>
         </div>`;
 
-    case 'select': {
+    case "select": {
       const ph =
         i18n.selectPlaceholder != null
           ? `<option value="">${escapeHtml(i18n.selectPlaceholder)}</option>`
-          : '';
+          : "";
       const options = (field.options ?? [])
-        .map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`)
-        .join('');
+        .map(
+          (o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`,
+        )
+        .join("");
       return `
         <div class="chat-form__field">
           <label class="chat-form__label" for="${id}">${label}${requiredMark}</label>
@@ -287,7 +298,7 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
         </div>`;
     }
 
-    case 'checkbox':
+    case "checkbox":
       return `
         <div class="chat-form__field">
           <div class="chat-form__checkbox-row">
@@ -296,16 +307,16 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
           </div>
         </div>`;
 
-    case 'radio': {
+    case "radio": {
       const options = (field.options ?? [])
         .map(
           (o, i) => `
             <label class="chat-form__radio-option">
-              <input class="chat-form__radio" type="radio" name="${name}" value="${escapeHtml(o)}"${required && i === 0 ? ' required' : ''} />
+              <input class="chat-form__radio" type="radio" name="${name}" value="${escapeHtml(o)}"${required && i === 0 ? " required" : ""} />
               ${escapeHtml(o)}
             </label>`,
         )
-        .join('');
+        .join("");
       return `
         <div class="chat-form__field">
           <span class="chat-form__label">${label}${requiredMark}</span>
@@ -315,22 +326,22 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
         </div>`;
     }
 
-    case 'date-range': {
+    case "date-range": {
       const rangeLabels = field.rangeLabels ?? i18n.dateRangeLabels;
-      const startLabel = rangeLabels ? escapeHtml(rangeLabels[0]) : '';
-      const endLabel = rangeLabels ? escapeHtml(rangeLabels[1]) : '';
+      const startLabel = rangeLabels ? escapeHtml(rangeLabels[0]) : "";
+      const endLabel = rangeLabels ? escapeHtml(rangeLabels[1]) : "";
       const startSubLabel = startLabel
         ? `<label class="chat-form__date-range-sublabel" for="${id}-start">${startLabel}</label>`
-        : '';
+        : "";
       const endSubLabel = endLabel
         ? `<label class="chat-form__date-range-sublabel" for="${id}-end">${endLabel}</label>`
-        : '';
-      const minAttr = field.min ? ` min="${escapeHtml(field.min)}"` : '';
-      const maxAttr = field.max ? ` max="${escapeHtml(field.max)}"` : '';
+        : "";
+      const minAttr = field.min ? ` min="${escapeHtml(field.min)}"` : "";
+      const maxAttr = field.max ? ` max="${escapeHtml(field.max)}"` : "";
       const errorHtml =
         i18n.dateRangeError != null
           ? `<span class="chat-form__date-range-error">${escapeHtml(i18n.dateRangeError)}</span>`
-          : '';
+          : "";
       return `
         <div class="chat-form__field">
           <span class="chat-form__label">${label}${requiredMark}</span>
@@ -366,14 +377,14 @@ function buildFieldHtml(field: FormField, fieldId: string, i18n: FormI18n): stri
 
 class ChatFormElement extends HTMLElement {
   static get observedAttributes() {
-    return ['data'];
+    return ["data"];
   }
 
   private _shadow: ShadowRoot;
 
   constructor() {
     super();
-    this._shadow = this.attachShadow({ mode: 'open' });
+    this._shadow = this.attachShadow({ mode: "open" });
   }
 
   connectedCallback() {
@@ -386,11 +397,12 @@ class ChatFormElement extends HTMLElement {
   }
 
   private _parse(): { schema: FormSchema; formId: string } | null {
-    const raw = this.getAttribute('data') ?? '';
+    const raw = this.getAttribute("data") ?? "";
     if (!raw) return null;
     try {
       const schema = JSON.parse(raw) as FormSchema;
-      const formId = schema.id ?? this.getAttribute('data-form-id') ?? nextFormId();
+      const formId =
+        schema.id ?? this.getAttribute("data-form-id") ?? nextFormId();
       return { schema, formId };
     } catch {
       return null;
@@ -400,7 +412,7 @@ class ChatFormElement extends HTMLElement {
   private _render() {
     // If submitted-values attribute is present, render the submitted summary
     // instead of the interactive form (for history records).
-    const submittedRaw = this.getAttribute('submitted-values');
+    const submittedRaw = this.getAttribute("submitted-values");
     if (submittedRaw) {
       const parsed = this._parse();
       if (!parsed) return;
@@ -415,24 +427,24 @@ class ChatFormElement extends HTMLElement {
 
     const parsed = this._parse();
     if (!parsed) {
-      const raw = this.getAttribute('data') ?? '';
-      this._shadow.innerHTML = `<style>${FORM_STYLES}</style>${renderCodeFallback('form', raw)}`;
+      const raw = this.getAttribute("data") ?? "";
+      this._shadow.innerHTML = `<style>${FORM_STYLES}</style>${renderCodeFallback("form", raw)}`;
       return;
     }
 
     const { schema, formId } = parsed;
     const i18n: FormI18n = schema.i18n ?? {};
-    const title = schema.title ?? '';
-    const submitLabel = schema.submitLabel ?? i18n.submitLabel ?? '';
+    const title = schema.title ?? "";
+    const submitLabel = schema.submitLabel ?? i18n.submitLabel ?? "";
 
     const fieldsHtml = (schema.fields ?? [])
       .map((field, i) => buildFieldHtml(field, `${formId}-field-${i}`, i18n))
-      .join('');
+      .join("");
 
     this._shadow.innerHTML = `
       <style>${FORM_STYLES}</style>
       <div class="chat-form">
-        ${title ? `<h3 class="chat-form__title">${escapeHtml(title)}</h3>` : ''}
+        ${title ? `<h3 class="chat-form__title">${escapeHtml(title)}</h3>` : ""}
         <form id="${escapeHtml(formId)}" novalidate>
           ${fieldsHtml}
           <div class="chat-form__actions">
@@ -441,62 +453,71 @@ class ChatFormElement extends HTMLElement {
         </form>
       </div>`;
 
-    const formEl = this._shadow.querySelector('form');
-    formEl?.addEventListener('submit', (e: Event) => {
+    const formEl = this._shadow.querySelector("form");
+    formEl?.addEventListener("submit", (e: Event) => {
       e.preventDefault();
       if (!formEl.reportValidity()) return;
       this._handleSubmit(formEl, formId, schema);
     });
   }
 
-  private _handleSubmit(formEl: HTMLFormElement, formId: string, schema: FormSchema) {
-    const title = schema.title ?? '';
+  private _handleSubmit(
+    formEl: HTMLFormElement,
+    formId: string,
+    schema: FormSchema,
+  ) {
+    const title = schema.title ?? "";
     let hasDateRangeError = false;
     for (const field of schema.fields ?? []) {
-      if (field.type !== 'date-range') continue;
+      if (field.type !== "date-range") continue;
       const rangeEl = this._shadow.querySelector<HTMLElement>(
         `[data-range-field="${CSS.escape(field.name)}"]`,
       );
       const start =
-        formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__start')}"]`)
-          ?.value ?? '';
+        formEl.querySelector<HTMLInputElement>(
+          `[name="${CSS.escape(field.name + "__start")}"]`,
+        )?.value ?? "";
       const end =
-        formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name + '__end')}"]`)
-          ?.value ?? '';
+        formEl.querySelector<HTMLInputElement>(
+          `[name="${CSS.escape(field.name + "__end")}"]`,
+        )?.value ?? "";
       const invalid = start && end && end < start;
-      rangeEl?.toggleAttribute('data-invalid', !!invalid);
+      rangeEl?.toggleAttribute("data-invalid", !!invalid);
       if (invalid) hasDateRangeError = true;
     }
     if (hasDateRangeError) return;
 
     const data = new FormData(formEl);
-    const values: Record<string, string | boolean | string[] | DateRangeValue> = {};
+    const values: Record<string, string | boolean | string[] | DateRangeValue> =
+      {};
 
     for (const field of schema.fields ?? []) {
-      if (field.type === 'checkbox') {
+      if (field.type === "checkbox") {
         values[field.name] =
-          formEl.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.name)}"]`)?.checked ??
-          false;
-      } else if (field.type === 'radio') {
-        values[field.name] = (data.get(field.name) as string) ?? '';
-      } else if (field.type === 'date-range') {
+          formEl.querySelector<HTMLInputElement>(
+            `[name="${CSS.escape(field.name)}"]`,
+          )?.checked ?? false;
+      } else if (field.type === "radio") {
+        values[field.name] = (data.get(field.name) as string) ?? "";
+      } else if (field.type === "date-range") {
         values[field.name] = {
-          start: (data.get(field.name + '__start') as string) ?? '',
-          end: (data.get(field.name + '__end') as string) ?? '',
+          start: (data.get(field.name + "__start") as string) ?? "",
+          end: (data.get(field.name + "__end") as string) ?? "",
         };
       } else {
         const all = data.getAll(field.name);
-        values[field.name] = all.length > 1 ? (all as string[]) : ((all[0] as string) ?? '');
+        values[field.name] =
+          all.length > 1 ? (all as string[]) : ((all[0] as string) ?? "");
       }
     }
 
     this.dispatchEvent(
-      new CustomEvent('part-action', {
+      new CustomEvent("part-action", {
         bubbles: true,
         composed: true,
         detail: {
-          kind: 'form',
-          action: 'submit',
+          kind: "form",
+          action: "submit",
           formId,
           title,
           values,
@@ -511,26 +532,30 @@ class ChatFormElement extends HTMLElement {
     schema: FormSchema,
     values: Record<string, string | boolean | string[] | DateRangeValue>,
   ) {
-    const title = schema.title ?? '';
+    const title = schema.title ?? "";
     const i18n: FormI18n = schema.i18n ?? {};
     const fields = schema.fields ?? [];
     const summaryRows = fields
       .map((field) => {
         const val = values[field.name];
         let displayVal: string;
-        if (typeof val === 'boolean') {
-          displayVal = val ? (i18n.boolTrue ?? '✓') : (i18n.boolFalse ?? '✗');
+        if (typeof val === "boolean") {
+          displayVal = val ? (i18n.boolTrue ?? "✓") : (i18n.boolFalse ?? "✗");
         } else if (Array.isArray(val)) {
-          displayVal = val.join(', ');
-        } else if (val !== null && typeof val === 'object') {
+          displayVal = val.join(", ");
+        } else if (val !== null && typeof val === "object") {
           const rangeLabels = field.rangeLabels ?? i18n.dateRangeLabels;
-          const startLabel = rangeLabels?.[0] ?? '';
-          const endLabel = rangeLabels?.[1] ?? '';
-          const startPart = startLabel ? `${startLabel}: ${val.start || '—'}` : val.start || '—';
-          const endPart = endLabel ? `${endLabel}: ${val.end || '—'}` : val.end || '—';
+          const startLabel = rangeLabels?.[0] ?? "";
+          const endLabel = rangeLabels?.[1] ?? "";
+          const startPart = startLabel
+            ? `${startLabel}: ${val.start || "—"}`
+            : val.start || "—";
+          const endPart = endLabel
+            ? `${endLabel}: ${val.end || "—"}`
+            : val.end || "—";
           displayVal = `${startPart}  →  ${endPart}`;
         } else {
-          displayVal = String(val ?? '');
+          displayVal = String(val ?? "");
         }
         return `
           <div class="chat-form__summary-row">
@@ -538,12 +563,12 @@ class ChatFormElement extends HTMLElement {
             <span class="chat-form__summary-val">${escapeHtml(displayVal)}</span>
           </div>`;
       })
-      .join('');
+      .join("");
 
     this._shadow.innerHTML = `
       <style>${FORM_STYLES}</style>
       <div class="chat-form chat-form--submitted">
-        ${title ? `<h3 class="chat-form__title">${escapeHtml(title)}</h3>` : ''}
+        ${title ? `<h3 class="chat-form__title">${escapeHtml(title)}</h3>` : ""}
         <span class="chat-form__submitted-badge" role="status" aria-live="polite">
           ${rendererIcons.check}
         </span>
@@ -553,6 +578,6 @@ class ChatFormElement extends HTMLElement {
 }
 
 // Guard against double registration (HMR / multiple script loads)
-if (!customElements.get('i-chat-form')) {
-  customElements.define('i-chat-form', ChatFormElement);
+if (!customElements.get("i-chat-form")) {
+  customElements.define("i-chat-form", ChatFormElement);
 }

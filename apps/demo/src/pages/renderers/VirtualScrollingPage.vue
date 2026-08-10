@@ -206,7 +206,11 @@ onBeforeUnmount(() => {
           :disabled="loading || streaming"
           @change="handleCountChange"
         >
-          <el-radio-button v-for="count in MESSAGE_COUNTS" :key="count" :value="count">
+          <el-radio-button
+            v-for="count in MESSAGE_COUNTS"
+            :key="count"
+            :value="count"
+          >
             {{ count.toLocaleString() }}
           </el-radio-button>
         </el-radio-group>
@@ -256,7 +260,8 @@ onBeforeUnmount(() => {
     </div>
 
     <p v-if="messageCount > 500 && virtualScroll === 'auto'" class="demo-note">
-      Auto mode enables virtual scrolling when messages exceed 500. Current count:
+      Auto mode enables virtual scrolling when messages exceed 500. Current
+      count:
       {{ messageCount.toLocaleString() }} →
       {{ virtualScrollEffective() ? "Virtual" : "Regular" }}
     </p>
@@ -264,7 +269,10 @@ onBeforeUnmount(() => {
     <i-chat-messages ref="chatRef" class="message-list" />
   </div>
 
-  <ExampleCodeDrawer title="Virtual scrolling code example" :content="virtualScrollingExample" />
+  <ExampleCodeDrawer
+    title="Virtual scrolling code example"
+    :content="virtualScrollingExample"
+  />
 </template>
 
 <style scoped>

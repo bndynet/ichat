@@ -1,4 +1,4 @@
-import { svg, type TemplateResult } from 'lit';
+import { svg, type TemplateResult } from "lit";
 
 export interface ChatIconOptions {
   className?: string;
@@ -15,12 +15,12 @@ interface StrokeIconOptions extends ChatIconOptions {
 function strokeIcon(
   paths: TemplateResult,
   {
-    className = '',
+    className = "",
     size = 16,
     strokeWidth = 2,
-    viewBox = '0 0 24 24',
-    strokeLinecap = 'round',
-    strokeLinejoin = 'round',
+    viewBox = "0 0 24 24",
+    strokeLinecap = "round",
+    strokeLinejoin = "round",
   }: StrokeIconOptions = {},
 ): TemplateResult {
   return svg`
@@ -43,7 +43,7 @@ function strokeIcon(
 
 function filledIcon(
   paths: TemplateResult,
-  { className = '', size = 16, viewBox = '0 0 24 24' }: ChatIconOptions = {},
+  { className = "", size = 16, viewBox = "0 0 24 24" }: ChatIconOptions = {},
 ): TemplateResult {
   return svg`
     <svg
@@ -62,15 +62,15 @@ function filledIcon(
 function strokeIconString(
   paths: string,
   {
-    className = '',
+    className = "",
     size = 16,
     strokeWidth = 2,
-    viewBox = '0 0 24 24',
-    strokeLinecap = 'round',
-    strokeLinejoin = 'round',
+    viewBox = "0 0 24 24",
+    strokeLinecap = "round",
+    strokeLinejoin = "round",
   }: StrokeIconOptions = {},
 ): string {
-  const classAttr = className ? ` class="${className}"` : '';
+  const classAttr = className ? ` class="${className}"` : "";
   return (
     `<svg${classAttr} viewBox="${viewBox}" width="${size}" height="${size}" fill="none" ` +
     `stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="${strokeLinecap}" ` +
@@ -137,19 +137,22 @@ export const chatIcons = {
       {
         size: 20,
         strokeWidth: 1.6,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
   },
 
   todoPending(options?: ChatIconOptions): TemplateResult {
-    return strokeIcon(svg`<circle class="todo__pending-circle" cx="10" cy="10" r="7.5"></circle>`, {
-      size: 20,
-      strokeWidth: 1.6,
-      viewBox: '0 0 20 20',
-      ...options,
-    });
+    return strokeIcon(
+      svg`<circle class="todo__pending-circle" cx="10" cy="10" r="7.5"></circle>`,
+      {
+        size: 20,
+        strokeWidth: 1.6,
+        viewBox: "0 0 20 20",
+        ...options,
+      },
+    );
   },
 
   todoActive(options?: ChatIconOptions): TemplateResult {
@@ -161,7 +164,7 @@ export const chatIcons = {
       {
         size: 20,
         strokeWidth: 1.6,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -176,7 +179,7 @@ export const chatIcons = {
       {
         size: 20,
         strokeWidth: 1.6,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -191,7 +194,7 @@ export const chatIcons = {
       {
         size: 20,
         strokeWidth: 1.6,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -206,7 +209,7 @@ export const chatIcons = {
       {
         size: 20,
         strokeWidth: 1.6,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -219,7 +222,7 @@ export const chatIcons = {
     `,
       {
         size: 18,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -232,7 +235,7 @@ export const chatIcons = {
     `,
       {
         size: 16,
-        viewBox: '0 0 20 20',
+        viewBox: "0 0 20 20",
         ...options,
       },
     );
@@ -247,16 +250,16 @@ export const chatIconStrings = {
   progressDone: strokeIconString('<path d="M3.5 8.5 6.5 11.5 12.5 4.5" />', {
     size: 9,
     strokeWidth: 3,
-    viewBox: '0 0 16 16',
+    viewBox: "0 0 16 16",
   }),
   progressError: strokeIconString('<path d="M4 4 12 12M12 4 4 12" />', {
     size: 8,
     strokeWidth: 3,
-    viewBox: '0 0 16 16',
+    viewBox: "0 0 16 16",
   }),
   progressSkipped: strokeIconString('<path d="M4 8h8" />', {
     size: 8,
     strokeWidth: 3,
-    viewBox: '0 0 16 16',
+    viewBox: "0 0 16 16",
   }),
 } as const;

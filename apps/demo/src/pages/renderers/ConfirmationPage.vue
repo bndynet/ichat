@@ -146,16 +146,26 @@ function requestQueuedConfirmations() {
         active-text="Custom input"
         inactive-text="Default input"
       />
-      <el-button size="small" type="primary" @click="requestDefaultConfirmation">
+      <el-button
+        size="small"
+        type="primary"
+        @click="requestDefaultConfirmation"
+      >
         Normal
       </el-button>
-      <el-button size="small" type="danger" @click="requestDangerConfirmation"> Danger </el-button>
-      <el-button size="small" @click="requestQueuedConfirmations"> Queue 3 </el-button>
+      <el-button size="small" type="danger" @click="requestDangerConfirmation">
+        Danger
+      </el-button>
+      <el-button size="small" @click="requestQueuedConfirmations">
+        Queue 3
+      </el-button>
     </div>
     <div class="confirmation-demo-status">
       <span>Active: {{ activeTitle || "none" }}</span>
       <span>Queue: {{ queueLength }}</span>
-      <span>Input: {{ useCustomInput ? "custom slot" : "default composer" }}</span>
+      <span
+        >Input: {{ useCustomInput ? "custom slot" : "default composer" }}</span
+      >
       <span>{{ lastDecision }}</span>
     </div>
   </div>
@@ -177,16 +187,29 @@ function requestQueuedConfirmations() {
         @keydown.enter.exact.prevent="sendDraft"
       />
       <div class="confirmation-composer__toolbar">
-        <el-button size="small" text bg @click="draft += (draft ? ' ' : '') + '[file]'">
+        <el-button
+          size="small"
+          text
+          bg
+          @click="draft += (draft ? ' ' : '') + '[file]'"
+        >
           Attach
         </el-button>
-        <el-button size="small" type="primary" :disabled="!draft.trim()" @click="sendDraft">
+        <el-button
+          size="small"
+          type="primary"
+          :disabled="!draft.trim()"
+          @click="sendDraft"
+        >
           Send
         </el-button>
       </div>
     </div>
   </i-chat>
-  <ExampleCodeDrawer title="Confirmation code example" :content="confirmationExample" />
+  <ExampleCodeDrawer
+    title="Confirmation code example"
+    :content="confirmationExample"
+  />
 </template>
 
 <style scoped>

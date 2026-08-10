@@ -1,28 +1,24 @@
 /** Public: standalone message-list Web Component. */
-export { ChatMessages } from './components/chat-messages.js';
+export { ChatMessages } from "./components/chat-messages.js";
 /** @internal Individual message element — rendered by {@link ChatMessages}. */
-export { ChatMessageElement } from './components/chat-message.js';
+export { ChatMessageElement } from "./components/chat-message.js";
 /** @internal Part-routing host — rendered by {@link ChatMessageElement}. */
-export { ChatPartHost } from './components/chat-part-host.js';
-export { ChatReasoning } from './components/chat-reasoning.js';
+export { ChatPartHost } from "./components/chat-part-host.js";
+export { ChatReasoning } from "./components/chat-reasoning.js";
 /** @internal Loading-dots placeholder. */
-export { ChatDots } from './components/chat-dots.js';
+export { ChatDots } from "./components/chat-dots.js";
 /** @internal Spinner placeholder. */
-export { ChatSpinner } from './components/chat-spinner.js';
+export { ChatSpinner } from "./components/chat-spinner.js";
 /** @internal Text-part renderer — rendered by {@link ChatPartHost}. */
-export { ChatTextPart } from './components/chat-text-part.js';
-export { ChatToolCall } from './components/chat-tool-call.js';
-export { ChatTodo } from './components/chat-todo.js';
+export { ChatTextPart } from "./components/chat-text-part.js";
+export { ChatToolCall } from "./components/chat-tool-call.js";
+export { ChatTodo } from "./components/chat-todo.js";
 
 /** @internal Lit reactive controller for typewriter animation. */
-export { StreamingController } from './controllers/streaming-controller.js';
-/** @internal Lit reactive controller for auto-scroll behaviour. */
-export { ScrollController } from './controllers/scroll-controller.js';
-/** @internal Lit reactive controller for inline error banners. */
-export { ErrorBannerController } from './controllers/error-banner-controller.js';
+export { StreamingController } from "./controllers/streaming-controller.js";
 
-export { rendererRegistry } from './renderers/registry.js';
-export { partRendererRegistry } from './renderers/part-registry.js';
+export { rendererRegistry } from "./renderers/registry.js";
+export { partRendererRegistry } from "./renderers/part-registry.js";
 export {
   /** @internal Raw markdown-it instance — prefer {@link registerMarkdownPlugin}. */
   md,
@@ -33,41 +29,44 @@ export {
   extractReasoning,
   hasUnclosedReasoning,
   resolveAsyncBlocks,
-} from './renderers/markdown-renderer.js';
+} from "./renderers/markdown-renderer.js";
 export type {
   MarkdownRenderOptions,
   ResolveAsyncBlocksOptions,
   ResolveAsyncBlocksResult,
-} from './renderers/markdown-renderer.js';
-export { renderMarkdownInto, invalidateMarkdownCache } from './renderers/markdown-morph.js';
-export type { RenderMarkdownIntoOptions } from './renderers/markdown-morph.js';
-export { registerMarkdownPlugin } from './renderers/markdown-plugins.js';
-export type { MarkdownPlugin } from './renderers/markdown-plugins.js';
+} from "./renderers/markdown-renderer.js";
+export {
+  renderMarkdownInto,
+  invalidateMarkdownCache,
+} from "./renderers/markdown-morph.js";
+export type { RenderMarkdownIntoOptions } from "./renderers/markdown-morph.js";
+export { registerMarkdownPlugin } from "./renderers/markdown-plugins.js";
+export type { MarkdownPlugin } from "./renderers/markdown-plugins.js";
 /** @internal Progress-step status helper — used internally by {@link ChatMessages}. */
-export { updateProgressStepStatus } from './renderers/progress-plugin.js';
+export { updateProgressStepStatus } from "./renderers/progress-plugin.js";
 /** @internal Progress-step status enum. */
-export type { ProgressStatus } from './renderers/progress-plugin.js';
+export type { ProgressStatus } from "./renderers/progress-plugin.js";
 /** @internal Built-in collapsible-details markdown-it plugin. */
-export { collapsiblePlugin } from './renderers/collapsible-plugin.js';
+export { collapsiblePlugin } from "./renderers/collapsible-plugin.js";
 
 export {
   escapeHtml,
   CHAT_TOGGLE_SOURCE_CLASS,
   renderCodeFallback,
   wrapWithCodeToggle,
-} from './renderers/renderer-utils.js';
-export type { RendererOptions } from './renderers/renderer-utils.js';
+} from "./renderers/renderer-utils.js";
+export type { RendererOptions } from "./renderers/renderer-utils.js";
 
 /** @internal Context passed by {@link ChatPartHost} to custom part renderers. */
-export type { ChatPartRenderContext } from './components/chat-part-host.js';
+export type { ChatPartRenderContext } from "./components/chat-part-host.js";
 
 export type {
   MessagesChangeDetail,
   MessagesChangeReason,
   MessagesChangeSource,
-} from './messages-change-types.js';
+} from "./messages-change-types.js";
 /** @internal Event-detail builder — used internally by {@link ChatMessages} and {@link Chat}. */
-export { buildMessagesChangeDetail } from './messages-change-types.js';
+export { buildMessagesChangeDetail } from "./messages-change-types.js";
 
 export type {
   ChatMessage,
@@ -109,7 +108,7 @@ export type {
   ExtendedMessagePart,
   ExtendedChatMessage,
   PartFactoryOptions,
-} from './types.js';
+} from "./types.js";
 export {
   BUILT_IN_MESSAGE_PART_TYPES,
   DEFAULT_CONFIG,
@@ -120,20 +119,20 @@ export {
   reasoningPart,
   todoPart,
   nextPartId,
-} from './types.js';
+} from "./types.js";
 export {
   areTodoItemsTerminal,
   isTerminalTodoItem,
   normalizeTodoItemUpdateEvent,
   patchTodoItem,
-} from './todo-state.js';
+} from "./todo-state.js";
 export type {
   TodoItemUpdate,
   TodoItemUpdateNormalizeFailureReason,
   TodoItemUpdateNormalizeResult,
   TodoPatchFailureReason,
   TodoPatchResult,
-} from './todo-state.js';
+} from "./todo-state.js";
 export {
   TODO_ITEM_STATUSES,
   TOOL_CALL_STATES,
@@ -143,38 +142,41 @@ export {
   isTodoPart,
   isToolCallPart,
   isToolCallState,
-} from './part-guards.js';
-export { patchToolCallPart } from './tool-call-state.js';
-export type { ToolCallPatchFailureReason, ToolCallPatchResult } from './tool-call-state.js';
+} from "./part-guards.js";
+export { patchToolCallPart } from "./tool-call-state.js";
+export type {
+  ToolCallPatchFailureReason,
+  ToolCallPatchResult,
+} from "./tool-call-state.js";
 export {
   appendMessagePart,
   applyMessagePartUpdate,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,
-} from './message-part-state.js';
+} from "./message-part-state.js";
 export {
   addMessage,
   patchMessageById,
   removeMessageById,
   clearMessages,
   cancelMessageData,
-} from './message-collection-state.js';
-export { normalizeHistoryMessages } from './normalize-history.js';
-export type { NormalizeHistoryOptions } from './normalize-history.js';
+} from "./message-collection-state.js";
+export { normalizeHistoryMessages } from "./normalize-history.js";
+export type { NormalizeHistoryOptions } from "./normalize-history.js";
 export type {
   MessagePartUpdateApplyResult,
   MessagePartLookupFailureReason,
   MessagePartLookupResult,
   MessagePartPatchResult,
   MessagePartReplaceResult,
-} from './message-part-state.js';
-export { normalizeMessagePartUpdateEvent } from './message-part-events.js';
+} from "./message-part-state.js";
+export { normalizeMessagePartUpdateEvent } from "./message-part-events.js";
 export type {
   MessagePartUpdate,
   MessagePartUpdateNormalizeFailureReason,
   MessagePartUpdateNormalizeResult,
-} from './message-part-events.js';
+} from "./message-part-events.js";
 export type {
   MessagePartUpdateEventFailureReason,
   MessagePartUpdateEventResult,
@@ -187,9 +189,12 @@ export type {
   TodoItemUpdateResult,
   ToolCallUpdateFailureReason,
   ToolCallUpdateResult,
-} from './update-results.js';
-export { getTodoInitialExpanded, shouldInitializeTodoExpansion } from './todo-collapse.js';
-export { createPartActionDetail } from './message-events.js';
+} from "./update-results.js";
+export {
+  getTodoInitialExpanded,
+  shouldInitializeTodoExpansion,
+} from "./todo-collapse.js";
+export { createPartActionDetail } from "./message-events.js";
 
 export {
   calendarDaysAgo,
@@ -198,9 +203,9 @@ export {
   makeDaysAgo,
   DATE_SEPARATOR_LABELS_EN,
   DATE_SEPARATOR_LABELS_ZH_CN,
-} from './date-separator.js';
-export { formatAssistantDurationMs } from './duration-format.js';
-export type { DateSeparatorInfo, PluralForms } from './date-separator.js';
+} from "./date-separator.js";
+export { formatAssistantDurationMs } from "./duration-format.js";
+export type { DateSeparatorInfo, PluralForms } from "./date-separator.js";
 
 export type {
   ChatLabels,
@@ -211,5 +216,5 @@ export type {
   MessagesLabels,
   ConfirmationLabels,
   DeepPartial,
-} from './i18n.js';
-export { resolveLabels, CHAT_LABELS_EN, CHAT_LABELS_ZH_CN } from './i18n.js';
+} from "./i18n.js";
+export { resolveLabels, CHAT_LABELS_EN, CHAT_LABELS_ZH_CN } from "./i18n.js";

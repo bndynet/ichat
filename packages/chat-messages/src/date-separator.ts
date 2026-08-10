@@ -1,11 +1,14 @@
-import type { DateSeparatorLabels } from './types.js';
+import type { DateSeparatorLabels } from "./types.js";
 
 function startOfLocalCalendarDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
 /** Whole calendar days between message time and `now` (non-negative; message in the past or same day). */
-export function calendarDaysAgo(messageTs: number, now: Date = new Date()): number {
+export function calendarDaysAgo(
+  messageTs: number,
+  now: Date = new Date(),
+): number {
   const msgDay = startOfLocalCalendarDay(new Date(messageTs));
   const today = startOfLocalCalendarDay(now);
   return Math.round((today - msgDay) / 86400000);
@@ -20,28 +23,30 @@ export interface DateSeparatorInfo {
 
 /** English (default) */
 export const DATE_SEPARATOR_LABELS_EN: DateSeparatorLabels = {
-  today: 'Today',
-  yesterday: 'Yesterday',
+  today: "Today",
+  yesterday: "Yesterday",
   daysAgo: (days: number) => `${days} days ago`,
-  older: 'Older',
+  older: "Older",
 };
 
 /** Simplified Chinese */
 export const DATE_SEPARATOR_LABELS_ZH_CN: DateSeparatorLabels = {
-  today: '今天',
-  yesterday: '昨天',
+  today: "今天",
+  yesterday: "昨天",
   daysAgo: (days: number) => `${days}天前`,
-  older: '更久以前',
+  older: "更久以前",
 };
 
 function pickBuiltInLabels(locale: string): DateSeparatorLabels {
   const loc = locale.toLowerCase();
-  if (loc === 'zh' || loc.startsWith('zh-')) return DATE_SEPARATOR_LABELS_ZH_CN;
+  if (loc === "zh" || loc.startsWith("zh-")) return DATE_SEPARATOR_LABELS_ZH_CN;
   return DATE_SEPARATOR_LABELS_EN;
 }
 
 /** CLDR plural categories; `other` is the required fallback. */
-export type PluralForms = Partial<Record<Intl.LDMLPluralRule, (n: number) => string>> & {
+export type PluralForms = Partial<
+  Record<Intl.LDMLPluralRule, (n: number) => string>
+> & {
   other: (n: number) => string;
 };
 
@@ -62,7 +67,10 @@ export type PluralForms = Partial<Record<Intl.LDMLPluralRule, (n: number) => str
  * });
  * ```
  */
-export function makeDaysAgo(locale: string, forms: PluralForms): (days: number) => string {
+export function makeDaysAgo(
+  locale: string,
+  forms: PluralForms,
+): (days: number) => string {
   let rules: Intl.PluralRules | undefined;
   try {
     rules = new Intl.PluralRules(locale || undefined);
@@ -70,7 +78,7 @@ export function makeDaysAgo(locale: string, forms: PluralForms): (days: number) 
     rules = undefined;
   }
   return (days: number) => {
-    const category = rules ? rules.select(days) : 'other';
+    const category = rules ? rules.select(days) : "other";
     const fn = forms[category] ?? forms.other;
     return fn(days);
   };
@@ -83,7 +91,7 @@ export function resolveDateSeparatorLabels(options: {
   locale?: string;
   labels?: Partial<DateSeparatorLabels>;
 }): DateSeparatorLabels {
-  const base = pickBuiltInLabels(options.locale?.trim() || 'en');
+  const base = pickBuiltInLabels(options.locale?.trim() || "en");
   const o = options.labels;
   if (!o) return base;
   return {
@@ -104,8 +112,9 @@ export function getDateSeparatorInfo(
   now: Date = new Date(),
 ): DateSeparatorInfo {
   const days = calendarDaysAgo(messageTs, now);
-  if (days <= 0) return { key: 'today', label: labels.today };
-  if (days === 1) return { key: 'yesterday', label: labels.yesterday };
-  if (days >= 2 && days <= 7) return { key: `days-${days}`, label: labels.daysAgo(days) };
-  return { key: 'older', label: labels.older };
+  if (days <= 0) return { key: "today", label: labels.today };
+  if (days === 1) return { key: "yesterday", label: labels.yesterday };
+  if (days >= 2 && days <= 7)
+    return { key: `days-${days}`, label: labels.daysAgo(days) };
+  return { key: "older", label: labels.older };
 }
