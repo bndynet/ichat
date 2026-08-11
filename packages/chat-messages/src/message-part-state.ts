@@ -1,4 +1,9 @@
-import type { ChatMessage, MessagePart, ToolCallPart } from "./types.js";
+import type {
+  ChatMessage,
+  MessagePart,
+  PartStatus,
+  ToolCallPart,
+} from "./types.js";
 import { isMessagePart, isToolCallPart } from "./part-guards.js";
 import type { MessagePartUpdate } from "./message-part-events.js";
 import { patchToolCallPart } from "./tool-call-state.js";
@@ -42,6 +47,32 @@ export type MessagePartPatchResult = MessagePartUpdateApplyResult;
  */
 const PART_LOOKUP_FAILURES: ReadonlySet<MessagePartUpdateFailureReason> =
   new Set(["message-not-found", "part-not-found", "part-type-mismatch"]);
+
+/**
+ * Close out parts left mid-stream by assigning `status` to every part still at
+ * `'pending'` or `'streaming'`.
+ *
+ * Every terminal message transition must run this. A text part left at
+ * `'streaming'` keeps `i-chat-text-part` on its streaming path forever: the
+ * terminal DOMPurify pass never runs, async block renderers stay unresolved,
+ * and the Markdown cache is never populated — all without any visible symptom,
+ * because the typewriter stops on the message-level `streaming` flag.
+ *
+ * Returns the **original** array reference when nothing needed closing out, so
+ * callers can skip a patch that would only break referential equality.
+ */
+export function finalizeMessageParts(
+  parts: readonly MessagePart[],
+  status: PartStatus,
+): readonly MessagePart[] {
+  let changed = false;
+  const next = parts.map((part) => {
+    if (part.status !== "streaming" && part.status !== "pending") return part;
+    changed = true;
+    return { ...part, status } as MessagePart;
+  });
+  return changed ? next : parts;
+}
 
 export function findMessagePart(
   messages: readonly ChatMessage[],

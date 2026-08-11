@@ -203,6 +203,65 @@ test("cancelMessageData preserves other messages unchanged", () => {
   assert.equal(next[0].cancelled, true);
 });
 
+// ── cancelMessageData closes out interrupted parts ────────────────────
+//
+// Setting `streaming: false` on the message alone leaves the text renderer on
+// its streaming path forever: no terminal sanitised render, async block
+// renderers never resolve, and the Markdown cache is never populated.
+
+test("cancelMessageData moves streaming and pending parts to 'cancelled'", () => {
+  const arr = [
+    makeMsg("m1", {
+      streaming: true,
+      parts: [
+        textPart("a", { id: "p1", status: "streaming" }),
+        textPart("b", { id: "p2", status: "pending" }),
+      ],
+    }),
+  ];
+
+  const next = cancelMessageData(arr, "m1");
+
+  assert.deepEqual(
+    next[0].parts.map((p) => p.status),
+    ["cancelled", "cancelled"],
+  );
+});
+
+test("cancelMessageData leaves already-terminal parts untouched", () => {
+  const parts = [
+    textPart("a", { id: "p1", status: "complete" }),
+    textPart("b", { id: "p2", status: "error" }),
+  ];
+  const arr = [makeMsg("m1", { streaming: true, parts })];
+
+  const next = cancelMessageData(arr, "m1");
+
+  assert.deepEqual(
+    next[0].parts.map((p) => p.status),
+    ["complete", "error"],
+  );
+  // Nothing needed closing out, so the parts array keeps its reference.
+  assert.equal(next[0].parts, parts);
+});
+
+test("cancelMessageData closes out parts and still applies the hint", () => {
+  const arr = [
+    makeMsg("m1", {
+      streaming: true,
+      parts: [textPart("partial", { id: "p1", status: "streaming" })],
+    }),
+  ];
+
+  const next = cancelMessageData(arr, "m1", "*— stopped —*");
+
+  assert.equal(next[0].parts[0].status, "cancelled");
+  assert.match(
+    (next[0].parts[0] as { text: string }).text,
+    /partial\n\n\*— stopped —\*/,
+  );
+});
+
 // ── immutability ──────────────────────────────────────────────────────
 
 test("pure reducers never mutate input arrays", () => {

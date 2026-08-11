@@ -151,6 +151,7 @@ export type {
 export {
   appendMessagePart,
   applyMessagePartUpdate,
+  finalizeMessageParts,
   findMessagePart,
   patchMessagePart,
   replaceMessagePart,

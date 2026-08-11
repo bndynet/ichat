@@ -1,5 +1,6 @@
 import type { ChatMessage, MessagePart } from "./types.js";
 import { textPart } from "./types.js";
+import { finalizeMessageParts } from "./message-part-state.js";
 
 /**
  * Immutably append a message to the end of the collection.
@@ -55,6 +56,7 @@ export function clearMessages(): ChatMessage[] {
  * Produce cancelled message data for a streaming message.
  *
  * - Sets `streaming: false` and `cancelled: true` on the target message.
+ * - Moves parts still at `'pending'`/`'streaming'` to `'cancelled'`.
  * - When `hint` is provided, appends it to the last text part (or creates a
  *   new text part if none exists), following the same rule as
  *   {@link ChatMessages.cancelMessage}.
@@ -79,6 +81,13 @@ export function cancelMessageData(
   if (!msg.streaming || msg.error) return messages;
 
   let patched: ChatMessage = { ...msg, streaming: false, cancelled: true };
+
+  // Interrupted parts must reach a terminal status here rather than only on the
+  // message, otherwise the text renderer stays on its streaming path forever.
+  const finalized = finalizeMessageParts(patched.parts ?? [], "cancelled");
+  if (finalized !== patched.parts) {
+    patched = { ...patched, parts: finalized as MessagePart[] };
+  }
 
   if (hint) {
     const parts = patched.parts ?? [];

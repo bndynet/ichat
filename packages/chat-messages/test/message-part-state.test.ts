@@ -5,6 +5,7 @@ import {
   replaceMessagePart,
   patchMessagePart,
   applyMessagePartUpdate,
+  finalizeMessageParts,
 } from "../src/message-part-state.js";
 import { textPart, type ChatMessage, type MessagePart } from "../src/types.js";
 import type { MessagePartUpdate } from "../src/message-part-events.js";
@@ -418,4 +419,67 @@ test("all reducers never mutate input arrays", () => {
     patch: { text: "x" },
   });
   assert.deepEqual(arr, frozen);
+});
+
+// ── finalizeMessageParts ──────────────────────────────────────────────
+
+test("finalizeMessageParts closes out streaming and pending parts", () => {
+  const parts = [
+    textPart("a", { id: "p1", status: "streaming" }),
+    textPart("b", { id: "p2", status: "pending" }),
+  ];
+
+  const next = finalizeMessageParts(parts, "complete");
+
+  assert.deepEqual(
+    next.map((p) => p.status),
+    ["complete", "complete"],
+  );
+});
+
+test("finalizeMessageParts returns the same reference when nothing changes", () => {
+  // Callers fold the result into a patch only when it differs, so an unchanged
+  // reference is what keeps a terminal transition from forcing a re-render.
+  const parts = [
+    textPart("a", { id: "p1", status: "complete" }),
+    textPart("b", { id: "p2", status: "error" }),
+  ];
+
+  assert.equal(finalizeMessageParts(parts, "complete"), parts);
+});
+
+test("finalizeMessageParts treats a missing status as already terminal", () => {
+  // `PartStatus` is optional and defaults to `complete`.
+  const parts = [textPart("a", { id: "p1" })];
+
+  assert.equal(finalizeMessageParts(parts, "cancelled"), parts);
+});
+
+test("finalizeMessageParts keeps terminal siblings by reference", () => {
+  const done = textPart("a", { id: "p1", status: "complete" });
+  const live = textPart("b", { id: "p2", status: "streaming" });
+
+  const next = finalizeMessageParts([done, live], "cancelled");
+
+  assert.equal(next[0], done);
+  assert.notEqual(next[1], live);
+  assert.equal(next[1].status, "cancelled");
+});
+
+test("finalizeMessageParts preserves part identity and payload", () => {
+  const parts = [textPart("hello", { id: "p1", status: "streaming" })];
+
+  const next = finalizeMessageParts(parts, "error");
+
+  assert.equal(next[0].id, "p1");
+  assert.equal(next[0].type, "text");
+  assert.equal((next[0] as { text: string }).text, "hello");
+});
+
+test("finalizeMessageParts does not mutate its input", () => {
+  const parts = [textPart("a", { id: "p1", status: "streaming" })];
+
+  finalizeMessageParts(parts, "complete");
+
+  assert.equal(parts[0].status, "streaming");
 });

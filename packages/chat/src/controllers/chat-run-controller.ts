@@ -1,4 +1,9 @@
-import type { ChatMessage, MessagePart } from "@bndynet/ichat-messages";
+import type {
+  ChatMessage,
+  MessagePart,
+  PartStatus,
+} from "@bndynet/ichat-messages";
+import { finalizeMessageParts } from "@bndynet/ichat-messages";
 import type { MessagePartUpdateResult } from "@bndynet/ichat-messages";
 import {
   acceptedNoOp,
@@ -197,8 +202,9 @@ export class ChatRunController {
   }
 
   /**
-   * Mark the run as successfully completed.  Clears the streaming flag
-   * on the message and aborts the signal.  No-op if already terminal.
+   * Mark the run as successfully completed.  Clears the streaming flag on the
+   * message, closes out any part still streaming, and aborts the signal.
+   * No-op if already terminal.
    */
   complete(patch?: Partial<ChatMessage>): ChatMutationOutcome {
     if (this._status !== "streaming") return acceptedNoOp();
@@ -207,6 +213,7 @@ export class ChatRunController {
       this._store.updateMessage(this._messageId, {
         streaming: false,
         ...patch,
+        ...this._terminalPartsPatch(patch?.parts, "complete"),
       }),
     );
     if (!outcome.accepted) return outcome;
@@ -217,25 +224,52 @@ export class ChatRunController {
   }
 
   /**
+   * Build the `parts` half of a terminal patch.
+   *
+   * Clearing `streaming` on the message is not enough: a part left at
+   * `'streaming'` keeps the text renderer on its streaming path, so the
+   * terminal sanitised render never runs, async block renderers stay
+   * unresolved, and the Markdown cache is never populated.
+   *
+   * Returned as a patch fragment so the caller folds it into the *same*
+   * `updateMessage` call — a controlled host must see one proposal per terminal
+   * transition, not two.  Yields `{}` when nothing needs closing out, leaving
+   * the existing `parts` reference untouched.
+   */
+  private _terminalPartsPatch(
+    override: MessagePart[] | undefined,
+    status: PartStatus,
+  ): { parts?: MessagePart[] } {
+    const current =
+      override ??
+      this._store.messages.find((m) => m.id === this._messageId)?.parts;
+    if (!current) return {};
+    const next = finalizeMessageParts(current, status);
+    return next === current ? {} : { parts: next as MessagePart[] };
+  }
+
+  /**
    * Mark the run as failed.  Records the error on the message, clears
-   * streaming, and aborts the signal.  No-op if already terminal.
+   * streaming, closes out any part still streaming, and aborts the signal.
+   * No-op if already terminal.
    */
   fail(error: string, text?: string): ChatMutationOutcome {
     if (this._status !== "streaming") return acceptedNoOp();
+
+    // The appended error part must be part of the array handed to
+    // `_terminalPartsPatch`, so build it first and close out the whole result.
+    const existing =
+      this._store.messages.find((m) => m.id === this._messageId)?.parts ?? [];
+    const withError = text
+      ? [...existing, { type: "text" as const, id: `err-${Date.now()}`, text }]
+      : undefined;
 
     const outcome = normalizeOutcome(
       this._store.updateMessage(this._messageId, {
         streaming: false,
         error,
-        ...(text
-          ? {
-              parts: [
-                ...(this._store.messages.find((m) => m.id === this._messageId)
-                  ?.parts ?? []),
-                { type: "text" as const, id: `err-${Date.now()}`, text },
-              ],
-            }
-          : {}),
+        ...(withError ? { parts: withError } : {}),
+        ...this._terminalPartsPatch(withError, "error"),
       }),
     );
     if (!outcome.accepted) return outcome;

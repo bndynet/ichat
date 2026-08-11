@@ -470,4 +470,123 @@ function getMsgText(
   assert.equal(store._messages[0].streaming, false);
 }
 
+// ── terminal transitions close out streaming parts ────────────────────
+//
+// Clearing `streaming` on the message is not enough. A part left at
+// `'streaming'` keeps `i-chat-text-part` on its streaming render path, so the
+// terminal sanitised render never runs, async block renderers stay unresolved
+// and the Markdown cache is never populated — with no visible symptom.
+
+/** Statuses of the first message's parts, in order. */
+function partStatuses(
+  store: ReturnType<typeof createMockStore>,
+): Array<string | undefined> {
+  return (store._messages[0]?.parts ?? []).map((p) => p.status);
+}
+
+// complete closes out every streaming and pending part
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([
+    textPart("body", { id: "p1", status: "streaming" }),
+    textPart("more", { id: "p2", status: "pending" }),
+  ]);
+  run.complete();
+
+  assert.deepEqual(partStatuses(store), ["complete", "complete"]);
+  assert.equal(store._messages[0].streaming, false);
+}
+
+// complete leaves already-terminal parts untouched
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([
+    textPart("done", { id: "p1", status: "complete" }),
+    textPart("bad", { id: "p2", status: "error" }),
+  ]);
+  const before = store._messages[0].parts;
+  run.complete();
+
+  assert.deepEqual(partStatuses(store), ["complete", "error"]);
+  // Nothing needed closing out, so the array reference must survive — a new
+  // one would break referential equality and force a pointless re-render.
+  assert.equal(store._messages[0].parts, before);
+}
+
+// a caller-supplied parts override is closed out too
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([textPart("body", { id: "p1", status: "streaming" })]);
+  run.complete({
+    parts: [textPart("replaced", { id: "p9", status: "streaming" })],
+  });
+
+  assert.deepEqual(partStatuses(store), ["complete"]);
+  assert.equal(store._messages[0].parts?.[0].id, "p9");
+}
+
+// the whole terminal transition is a single store mutation
+{
+  const store = createMockStore();
+  let updates = 0;
+  const counting: ChatMessageStorePort = {
+    ...store,
+    get messages() {
+      return store.messages;
+    },
+    updateMessage(id: string, partial: Partial<ChatMessage>) {
+      updates += 1;
+      return store.updateMessage(id, partial);
+    },
+  };
+  const run = new ChatRunController(counting);
+  run.start([textPart("body", { id: "p1", status: "streaming" })]);
+  run.complete();
+
+  // A controlled host must see one cancelable proposal per terminal
+  // transition, not one for `streaming` and another for the parts.
+  assert.equal(updates, 1);
+  assert.deepEqual(partStatuses(store), ["complete"]);
+}
+
+// fail marks interrupted parts as errored and still appends the error text
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([textPart("partial", { id: "p1", status: "streaming" })]);
+  run.fail("boom", "Request failed");
+
+  assert.deepEqual(partStatuses(store), ["error", undefined]);
+  assert.equal(store._messages[0].error, "boom");
+  assert.equal(
+    (store._messages[0].parts?.[1] as TextPart).text,
+    "Request failed",
+  );
+}
+
+// fail without replacement text still closes out the parts
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([textPart("partial", { id: "p1", status: "streaming" })]);
+  run.fail("boom");
+
+  assert.deepEqual(partStatuses(store), ["error"]);
+}
+
+// a rejected terminal transition leaves the parts streaming
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([textPart("body", { id: "p1", status: "streaming" })]);
+  store.reject = true;
+
+  assert.equal(run.complete().accepted, false);
+  assert.equal(run.status, "streaming");
+  assert.deepEqual(partStatuses(store), ["streaming"]);
+}
+
 console.log("ChatRunController: all tests passed");
