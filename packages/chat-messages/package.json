@@ -35,7 +35,7 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "test": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test ../../node_modules/.cache/ichat-messages-tests/*.mjs",
-    "test:coverage": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-tests --clean --silent && node --test --experimental-test-coverage ../../node_modules/.cache/ichat-messages-tests/*.mjs",
+    "test:coverage": "tsup test/*.test.ts --config ../../tools/tsup-node-esm.config.ts --out-dir .coverage-tmp --clean --silent --sourcemap && node ../../tools/coverage.mjs .coverage-tmp --min-line 30 --min-branch 78 --min-func 50",
     "benchmark:streaming": "tsup bench/streaming-markdown.bench.ts --config ../../tools/tsup-node-esm.config.ts --out-dir ../../node_modules/.cache/ichat-messages-bench --clean --silent && node ../../node_modules/.cache/ichat-messages-bench/streaming-markdown.bench.mjs",
     "benchmark:streaming:browser": "vite --config bench/browser/vite.config.ts --host 127.0.0.1 --port 4178 --strictPort",
     "benchmark:streaming:browser:build": "vite build --config bench/browser/vite.config.ts",
