@@ -162,11 +162,11 @@ import {
 
 ## Risk Assessment
 
-| Risk                                     | Severity | Mitigation                                                                         |
-| ---------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
-| highlight.js removed from bundle         | Medium   | Consumers must pass `highlightJs` via config; fallback renders plain `<pre><code>` |
-| Markdown cache could serve stale content | Low      | Cache keyed by raw content string; `invalidateMarkdownCache()` available           |
-| Breaking changes in v3                   | High     | All completed in v3; removed APIs documented in this file                          |
+| Risk                                     | Severity | Mitigation                                                                                                                                       |
+| ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| highlight.js removed from bundle         | Medium   | Consumers must pass `highlightJs` via config; fallback renders plain `<pre><code>`                                                               |
+| Markdown cache could serve stale content | Low      | Keyed by part id + raw content + output-affecting render options, LRU-capped by a character budget; `invalidateMarkdownCache(partId?)` available |
+| Breaking changes in v3                   | High     | All completed in v3; removed APIs documented in this file                                                                                        |
 
 ---
 

@@ -23,12 +23,13 @@ const PACKAGES = [
   "@bndynet/ichat-renderer-mermaid",
 ];
 
-const REQUIRED_FILES = ["package.json", "README.md"];
+const REQUIRED_FILES = ["package.json", "README.md", "LICENSE"];
 const REQUIRED_EXPORTS = ["dist/index.js", "dist/index.d.ts"];
 
 let failures = 0;
 
 for (const pkg of PACKAGES) {
+  const failuresBefore = failures;
   const tmpDir = mkdtempSync(
     join(tmpdir(), `ichat-pack-${pkg.replace("/", "-")}-`),
   );
@@ -91,7 +92,9 @@ for (const pkg of PACKAGES) {
       failures++;
     }
 
-    console.log(`OK   ${pkg} (${files.length} files)`);
+    if (failures === failuresBefore) {
+      console.log(`OK   ${pkg} (${files.length} files)`);
+    }
   } catch (err) {
     console.error(`FAIL ${pkg}: ${err}`);
     failures++;

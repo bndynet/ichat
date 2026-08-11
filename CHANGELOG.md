@@ -71,7 +71,24 @@ All notable changes to this project are documented here. This project follows
 
 ### Fixed
 
-- A controlled host rejecting a `ChatRunController` proposal no longer leaves the
+- Terminal message transitions now close out parts left mid-stream.
+  `run.complete()`, `run.fail()`, `run.cancel()` and `chat.cancelMessage()`
+  cleared `streaming` on the message but left `part.status` at `'streaming'`,
+  which keeps `<i-chat-text-part>` on its light render path forever: the
+  terminal sanitised render never runs, async block renderers stay unresolved,
+  and the Markdown cache is never populated, so a virtualised row re-renders on
+  every remount. Nothing was visible on screen, because the typewriter stops on
+  the message-level flag. Parts still at `'pending'` / `'streaming'` now move to
+  `'complete'` / `'error'` / `'cancelled'` in the same mutation that clears the
+  flag, so a controlled host still sees one `messages-change` proposal per
+  transition. Hosts that already patched the status by hand can drop that call;
+  it stays harmless. Driving the lifecycle manually still requires doing this
+  yourself — the new `finalizeMessageParts(parts, status)` export does it.
+- Published packages include the MIT licence text. `npm publish -w <pkg>` packs
+  from the package directory, so the repository-root LICENSE never reached a
+  tarball even though every `package.json` declared `"license": "MIT"`.
+  `validate:pack` now requires LICENSE alongside `package.json` and `README.md`,
+  so the gap cannot reappear when a package is added.
   run and the message array in conflicting states — a rejected `start()` used to
   report `streaming` with no message to write to, and a rejected `complete()`
   used to report `completed` while the message stayed `streaming` forever.

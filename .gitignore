@@ -2,3 +2,6 @@ node_modules
 dist
 demo-dist
 .DS_Store
+
+# Build output: mirrored from the repository LICENSE by tools/copy-license.mjs
+packages/*/LICENSE
