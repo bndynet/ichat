@@ -7,6 +7,14 @@ All notable changes to this project are documented here. This project follows
 
 ### Added
 
+- `<i-chat>` now supports host-rendered Composer Interactions for temporary
+  forms, selectors, and other short workflows in the composer area. Data-only
+  `x-*` requests share one FIFO with confirmations and are exposed through
+  `requestComposerInteraction()`, completion/cancellation methods, queue/result
+  events, and `slot="composer-interaction"`. Requests support generated or
+  caller-provided IDs and `AbortSignal`; stale IDs are ignored, and an unknown
+  kind without a renderer receives a safe cancellable fallback that never
+  displays its payload.
 - `<i-chat>` now exposes a read-only `busy` state, reflected through the `busy`
   and `aria-busy` host attributes, plus a bubbling `busy-change` event for
   custom composers.
@@ -31,11 +39,12 @@ All notable changes to this project are documented here. This project follows
 ### Changed
 
 - `<i-chat>` keeps the default composer and custom `slot="input"` content
-  mounted while a composer interaction is active, hiding and inerting the
-  composer instead of removing it. Default composer drafts now survive
-  confirmations, and active voice recognition stops when an interaction takes
-  over the composer area. Every queued confirmation receives initial focus,
-  and the default composer regains focus when the interaction queue empties.
+  mounted while a confirmation or custom Composer Interaction is active,
+  hiding and inerting the composer instead of removing it. Default and custom
+  composer drafts now survive both interaction types, and active voice
+  recognition stops when an interaction takes over the composer area. Every
+  queued confirmation receives initial focus, and the default composer regains
+  focus when the interaction queue empties.
 - `ChatRunController` only advances its lifecycle once the underlying mutation
   is accepted. A controlled host that rejects a proposal with `preventDefault()`
   leaves a rejected `start()` in `idle` and a rejected
@@ -132,6 +141,17 @@ All notable changes to this project are documented here. This project follows
 
 ### Compatibility
 
+- Existing confirmation integrations require no migration:
+  `requestConfirmation()`, `ChatConfirmationResult`, `confirmation-change`,
+  and `confirmation-decision` keep their public contracts.
+  `clearConfirmations()` continues to affect confirmation items only, even
+  though confirmations and custom interactions now share one FIFO.
+- Composer Interactions do not change `busy`, which remains the submission and
+  assistant-streaming lock. An active interaction blocks ordinary Send but may
+  still complete or cancel while `busy === true`.
+- The message-level `<i-chat-form>` renderer is unchanged. It continues to emit
+  `part-action` and render its submitted summary; temporary composer workflows
+  use the separate Composer Interaction lifecycle.
 - Virtual scrolling defaults to `'auto'`, automatically enabling when messages
   exceed 500. Consumers can override with `true` (always on) or `false`
   (always off). While it is active, off-screen rows are not in the DOM, so
