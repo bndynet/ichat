@@ -26,6 +26,7 @@ import { ChatInput } from "@bndynet/ichat-input";
 import { ChatRunController } from "../controllers/chat-run-controller.js";
 import type { ChatRunOptions } from "../controllers/chat-run-controller.js";
 import { CommandQueue } from "../controllers/command-queue.js";
+import { ComposerInteractionController } from "../controllers/composer-interaction-controller.js";
 import { ConfirmationController } from "../controllers/confirmation-controller.js";
 import { SlotForwardingController } from "../controllers/slot-forwarding-controller.js";
 import {
@@ -243,7 +244,11 @@ export class Chat<
 
   // ── Controllers ──────────────────────────────────────────────────
 
-  private _confirmCtrl = new ConfirmationController(this);
+  private _composerInteractionCtrl = new ComposerInteractionController(this);
+  private _confirmCtrl = new ConfirmationController(
+    this,
+    this._composerInteractionCtrl,
+  );
 
   private _store = new ChatMessageStore({
     getMessages: () => this.messages as unknown as ChatMessage[],
