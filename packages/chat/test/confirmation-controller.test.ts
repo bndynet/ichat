@@ -13,6 +13,7 @@ import type {
   ChatConfirmationChangeDetail,
   ChatConfirmationResult,
 } from "../src/components/chat.js";
+import { ComposerInteractionController } from "../src/controllers/composer-interaction-controller.js";
 import { ConfirmationController } from "../src/controllers/confirmation-controller.js";
 
 class MockHost extends EventTarget implements ReactiveControllerHost {
@@ -41,10 +42,16 @@ class MockHost extends EventTarget implements ReactiveControllerHost {
 
 function createController(): {
   host: MockHost;
+  composer: ComposerInteractionController;
   controller: ConfirmationController;
 } {
   const host = new MockHost();
-  return { host, controller: new ConfirmationController(host) };
+  const composer = new ComposerInteractionController(host);
+  return {
+    host,
+    composer,
+    controller: new ConfirmationController(host, composer),
+  };
 }
 
 function createChat(): Chat {
@@ -70,6 +77,45 @@ test("request generates IDs, replaces blank IDs, and defaults the variant", asyn
   assert.equal(blank.variant, "default");
   controller.settle("cancel");
   await blankPromise;
+});
+
+test("delegates confirmation requests to the shared composer queue", async () => {
+  const { composer, controller } = createController();
+  const resultPromise = controller.request({
+    id: "delegated",
+    title: "Delegated confirmation",
+  });
+
+  assert.equal(composer.active?.id, "delegated");
+  assert.equal(composer.active?.kind, "confirmation");
+  assert.deepEqual(composer.active?.payload, controller.activeRequest);
+
+  controller.settle("confirm");
+  const result = await resultPromise;
+  assert.equal(result.confirmed, true);
+  assert.equal(composer.active, null);
+});
+
+test("cancelAll leaves custom composer interactions untouched", async () => {
+  const { composer, controller } = createController();
+  const customPromise = composer.request({ id: "custom", kind: "x-form" });
+  const confirmationPromise = controller.request({
+    id: "confirmation",
+    title: "Queued confirmation",
+  });
+
+  assert.equal(composer.active?.id, "custom");
+  assert.equal(controller.activeRequest, null);
+  assert.equal(controller.queueLength, 1);
+
+  controller.cancelAll();
+  const confirmation = await confirmationPromise;
+  assert.equal(confirmation.action, "cancel");
+  assert.equal(composer.active?.id, "custom");
+  assert.equal(composer.queueLength, 0);
+
+  composer.completeActive("custom", "done");
+  assert.equal((await customPromise).status, "completed");
 });
 
 test("three requests remain strict FIFO and queueLength excludes active", async () => {
