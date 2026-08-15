@@ -28,6 +28,7 @@ import type { ChatRunOptions } from "../controllers/chat-run-controller.js";
 import { CommandQueue } from "../controllers/command-queue.js";
 import { ComposerInteractionController } from "../controllers/composer-interaction-controller.js";
 import type {
+  InternalComposerInteractionChangeDetail,
   InternalComposerInteractionRequest,
   InternalComposerInteractionResult,
 } from "../controllers/composer-interaction-types.js";
@@ -180,6 +181,8 @@ export interface ChatComposerInteractionChangeDetail {
  * @fires link-click - `{ detail: ChatLinkClickDetail }` when a rendered message link is clicked; cancelable with `preventDefault()`
  * @fires confirmation-change - `{ detail: { active, queue, queueLength } }` when the active confirmation or queue changes
  * @fires confirmation-decision - `{ detail: ChatConfirmationResult }` when the user confirms or cancels the active confirmation
+ * @fires composer-interaction-change - `{ detail: ChatComposerInteractionChangeDetail }` when the shared interaction queue changes
+ * @fires composer-interaction-result - `{ detail: ChatComposerInteractionResult }` whenever an interaction completes or is cancelled
  *
  * @example
  * ```html
@@ -450,6 +453,14 @@ export class Chat<
     this._readyPromise = new Promise((resolve) => {
       this._readyResolver = resolve;
     });
+    this._composerInteractionCtrl.addEventListener(
+      "change",
+      this._handleComposerInteractionChange,
+    );
+    this._composerInteractionCtrl.addEventListener(
+      "result",
+      this._handleComposerInteractionResult,
+    );
   }
 
   // ── Message-state delegation ─────────────────────────────────────
@@ -968,6 +979,47 @@ export class Chat<
   }
 
   // ── Events ────────────────────────────────────────────────────────
+
+  private readonly _handleComposerInteractionChange = (event: Event): void => {
+    const internal = (
+      event as CustomEvent<InternalComposerInteractionChangeDetail>
+    ).detail;
+    const detail: ChatComposerInteractionChangeDetail = {
+      active: internal.active
+        ? this._toPublicComposerInteractionRequest(internal.active)
+        : null,
+      queue: internal.queue.map((request) =>
+        this._toPublicComposerInteractionRequest(request),
+      ),
+      queueLength: internal.queueLength,
+    };
+
+    this.dispatchEvent(
+      new CustomEvent<ChatComposerInteractionChangeDetail>(
+        "composer-interaction-change",
+        {
+          detail,
+          bubbles: true,
+          composed: true,
+        },
+      ),
+    );
+  };
+
+  private readonly _handleComposerInteractionResult = (event: Event): void => {
+    const internal = (event as CustomEvent<InternalComposerInteractionResult>)
+      .detail;
+    this.dispatchEvent(
+      new CustomEvent<ChatComposerInteractionResult>(
+        "composer-interaction-result",
+        {
+          detail: this._toPublicComposerInteractionResult(internal),
+          bubbles: true,
+          composed: true,
+        },
+      ),
+    );
+  };
 
   private get _sendBlocked(): boolean {
     return this.disabled || this.busy || !!this._composerInteractionCtrl.active;
