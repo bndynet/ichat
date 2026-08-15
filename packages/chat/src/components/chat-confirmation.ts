@@ -54,7 +54,9 @@ export class ChatConfirmation extends LitElement {
       const last = focusable[focusable.length - 1];
       const root = section.getRootNode();
       const activeElement =
-        root instanceof ShadowRoot ? root.activeElement : document.activeElement;
+        root instanceof ShadowRoot
+          ? root.activeElement
+          : document.activeElement;
 
       if (e.shiftKey && activeElement === first) {
         e.preventDefault();
