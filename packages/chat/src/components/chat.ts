@@ -298,6 +298,8 @@ export class Chat<
     this._composerInteractionCtrl,
   );
   private _hadActiveComposerInteraction = false;
+  private _warnedMissingRendererRequest: InternalComposerInteractionRequest | null =
+    null;
 
   private _store = new ChatMessageStore({
     getMessages: () => this.messages as unknown as ChatMessage[],
@@ -950,6 +952,7 @@ export class Chat<
     if (shouldRestoreComposerFocus) {
       this._restoreDefaultComposerFocus();
     }
+    this._warnAboutMissingComposerInteractionRenderer();
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────
@@ -1013,6 +1016,56 @@ export class Chat<
       return;
     }
     this.cancelComposerInteraction(id);
+  }
+
+  private _handleComposerInteractionSlotChange(): void {
+    this.requestUpdate();
+  }
+
+  private _handleComposerInteractionFallbackCancel(): void {
+    const active = this._composerInteractionCtrl.active;
+    if (!active || active.kind === "confirmation") return;
+    this.cancelComposerInteraction(active.id);
+  }
+
+  private _hasAssignedComposerInteractionRenderer(): boolean {
+    return Array.from(this.children).some(
+      (child) => child.getAttribute("slot") === "composer-interaction",
+    );
+  }
+
+  private _composerInteractionFallbackLabels(): {
+    message: string;
+    cancel: string;
+  } {
+    const locale = this.config.locale?.trim().toLowerCase() ?? "";
+    return {
+      message:
+        locale === "zh" || locale.startsWith("zh-")
+          ? "无法显示此交互。"
+          : "This interaction cannot be displayed.",
+      cancel: resolveLabels({
+        locale: this.config.locale,
+        labels: this.config.labels,
+      }).confirmation.cancel,
+    };
+  }
+
+  private _warnAboutMissingComposerInteractionRenderer(): void {
+    const active = this._composerInteractionCtrl.active;
+    if (
+      !active ||
+      active.kind === "confirmation" ||
+      this._hasAssignedComposerInteractionRenderer() ||
+      this._warnedMissingRendererRequest === active
+    ) {
+      return;
+    }
+
+    this._warnedMissingRendererRequest = active;
+    console.warn(
+      `[i-chat] No composer-interaction renderer is assigned for kind "${active.kind}" (request "${active.id}"). Showing the fallback.`,
+    );
   }
 
   // ── Events ────────────────────────────────────────────────────────
@@ -1194,6 +1247,12 @@ export class Chat<
     const hasActiveInteraction = activeInteraction !== null;
     const hasCustomInteraction =
       activeInteraction !== null && activeInteraction.kind !== "confirmation";
+    const hasCustomInteractionRenderer =
+      hasCustomInteraction && this._hasAssignedComposerInteractionRenderer();
+    const fallbackLabels =
+      hasCustomInteraction && !hasCustomInteractionRenderer
+        ? this._composerInteractionFallbackLabels()
+        : null;
     const confirmation = this._confirmCtrl.activeRequest;
 
     return html`
@@ -1266,10 +1325,32 @@ export class Chat<
                 ></i-chat-confirmation>`
               : hasCustomInteraction
                 ? html`<slot
-                    name="composer-interaction"
-                    @composer-interaction-complete=${this._handleComposerInteractionComplete}
-                    @composer-interaction-cancel=${this._handleComposerInteractionCancel}
-                  ></slot>`
+                      name="composer-interaction"
+                      @slotchange=${this._handleComposerInteractionSlotChange}
+                      @composer-interaction-complete=${this._handleComposerInteractionComplete}
+                      @composer-interaction-cancel=${this._handleComposerInteractionCancel}
+                    ></slot>
+                    ${
+                      fallbackLabels
+                        ? html`<div
+                            class="chat-composer-interaction__fallback"
+                            role="alert"
+                          >
+                            <span
+                              class="chat-composer-interaction__fallback-message"
+                            >
+                              ${fallbackLabels.message}
+                            </span>
+                            <button
+                              type="button"
+                              class="chat-composer-interaction__fallback-cancel"
+                              @click=${this._handleComposerInteractionFallbackCancel}
+                            >
+                              ${fallbackLabels.cancel}
+                            </button>
+                          </div>`
+                        : nothing
+                    }`
                 : nothing
           }
         </div>

@@ -60,3 +60,51 @@ i-chat-messages {
 .chat-composer-interaction[hidden] {
   display: none;
 }
+
+.chat-composer-interaction__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--chat-spacing-md, 16px);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--chat-spacing-md, 16px);
+  border: 1px solid var(--chat-panel-border, var(--chat-border, #e1e4e8));
+  border-radius: var(--chat-panel-radius, var(--chat-radius, 0.5rem));
+  background: var(
+    --chat-panel-bg,
+    var(--chat-input-bg, var(--chat-surface, #ffffff))
+  );
+  color: var(--chat-text, #1a1a2e);
+}
+
+.chat-composer-interaction__fallback-message {
+  min-width: 0;
+  color: var(--chat-text-secondary, #6b7280);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.chat-composer-interaction__fallback-cancel {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--chat-border, #d1d5db);
+  border-radius: 0.45rem;
+  background: var(--chat-surface, #ffffff);
+  color: var(--chat-text, #1a1a2e);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.chat-composer-interaction__fallback-cancel:hover {
+  background: var(--chat-surface-hover, #f3f4f6);
+}
+
+.chat-composer-interaction__fallback-cancel:focus-visible {
+  outline: 2px solid var(--chat-focus, #2563eb);
+  outline-offset: 2px;
+}

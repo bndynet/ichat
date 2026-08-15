@@ -1076,6 +1076,11 @@ test("composer interaction: slot is assigned only for an active custom request",
       !isVisuallyHidden(panel),
       "assigned custom interaction panel should be visible",
     );
+    assertEqual(
+      chat.shadowRoot?.querySelector(".chat-composer-interaction__fallback"),
+      null,
+      "assigned content should suppress the missing-renderer fallback",
+    );
     assertEqual(chat.shadowRoot?.querySelector("i-chat-confirmation"), null);
 
     chat.cancelComposerInteraction("slot-custom");
@@ -1128,6 +1133,137 @@ test("composer interaction: complete and cancel events settle the active request
       cancelled.status === "cancelled" ? cancelled.reason : undefined,
       "cancelled",
     );
+  });
+});
+
+test("composer interaction: missing renderer shows a safe cancellable fallback", async () => {
+  await withIsolatedChat(async (chat) => {
+    const payloadMarker = "secret-payload-must-not-render";
+    const warnings: string[] = [];
+    const previousWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(" "));
+    };
+
+    try {
+      const resultPromise = chat.requestComposerInteraction({
+        id: "fallback-en",
+        kind: "x-missing-renderer",
+        payload: { secret: payloadMarker },
+      });
+      await waitForUpdate(chat);
+
+      const fallback = chat.shadowRoot?.querySelector(
+        ".chat-composer-interaction__fallback",
+      ) as HTMLElement | null;
+      assert(fallback, "missing renderer fallback should be rendered");
+      assert(
+        fallback.textContent?.includes("This interaction cannot be displayed."),
+        "fallback should use the English message by default",
+      );
+      assert(
+        !chat.shadowRoot?.textContent?.includes(payloadMarker),
+        "fallback must not render the request payload",
+      );
+
+      chat.requestUpdate();
+      await waitForUpdate(chat);
+      chat.requestUpdate();
+      await waitForUpdate(chat);
+      assertEqual(
+        warnings.length,
+        1,
+        "warning should be emitted once per request",
+      );
+      assert(
+        !warnings.join(" ").includes(payloadMarker),
+        "warning must not include the request payload",
+      );
+
+      const cancel = fallback.querySelector(
+        ".chat-composer-interaction__fallback-cancel",
+      ) as HTMLButtonElement | null;
+      assert(cancel, "fallback Cancel button should be rendered");
+      assertEqual(cancel.textContent?.trim(), "Cancel");
+      cancel.click();
+
+      const result = await resultPromise;
+      assertEqual(result.status, "cancelled");
+      assertEqual(
+        result.status === "cancelled" ? result.reason : undefined,
+        "cancelled",
+      );
+      await waitForUpdate(chat);
+      assertEqual(chat.activeComposerInteraction, null);
+      assertEqual(
+        chat.shadowRoot?.querySelector(".chat-composer-interaction__fallback"),
+        null,
+      );
+    } finally {
+      console.warn = previousWarn;
+    }
+  });
+});
+
+test("composer interaction: fallback localizes to Chinese", async () => {
+  await withIsolatedChat(async (chat) => {
+    chat.config = { ...chat.config, locale: "zh-CN" };
+    const resultPromise = chat.requestComposerInteraction({
+      id: "fallback-zh",
+      kind: "x-missing-renderer",
+    });
+    await waitForUpdate(chat);
+
+    const fallback = chat.shadowRoot?.querySelector(
+      ".chat-composer-interaction__fallback",
+    ) as HTMLElement | null;
+    assert(fallback, "Chinese fallback should be rendered");
+    assert(
+      fallback.textContent?.includes("无法显示此交互。"),
+      "fallback should use the Chinese message",
+    );
+    const cancel = fallback.querySelector(
+      ".chat-composer-interaction__fallback-cancel",
+    ) as HTMLButtonElement | null;
+    assert(cancel, "Chinese Cancel button should be rendered");
+    assertEqual(cancel.textContent?.trim(), "取消");
+
+    cancel.click();
+    await resultPromise;
+  });
+});
+
+test("composer interaction: dynamically assigned renderer replaces the fallback", async () => {
+  await withIsolatedChat(async (chat) => {
+    const resultPromise = chat.requestComposerInteraction({
+      id: "fallback-dynamic",
+      kind: "x-dynamic-renderer",
+    });
+    await waitForUpdate(chat);
+    assert(
+      chat.shadowRoot?.querySelector(".chat-composer-interaction__fallback"),
+      "fallback should render before a renderer is assigned",
+    );
+
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    panel.textContent = "Dynamically assigned renderer";
+    chat.appendChild(panel);
+    await nextFrame();
+    await waitForUpdate(chat);
+
+    assertEqual(
+      chat.shadowRoot?.querySelector(".chat-composer-interaction__fallback"),
+      null,
+      "fallback should disappear after renderer assignment",
+    );
+    assert(
+      !isVisuallyHidden(panel),
+      "dynamically assigned renderer should be visible",
+    );
+
+    chat.cancelComposerInteraction("fallback-dynamic");
+    await resultPromise;
   });
 });
 
