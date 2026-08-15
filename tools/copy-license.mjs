@@ -8,10 +8,11 @@
  * found in the package directory, regardless of the `files` field, so copying
  * the file is enough — no per-package `package.json` change is needed.
  *
- * The copies are committed rather than generated-and-ignored, so a tarball
- * stays correct even when `npm publish` runs without a fresh build. This script
- * runs as the first step of the root build to keep them identical to the
- * repository LICENSE, which stays the single source of truth.
+ * The copies are build output and are gitignored, exactly like `dist`: the
+ * repository LICENSE stays the single source of truth, and this script runs as
+ * the first step of the root build so a tarball is never assembled without it.
+ * Publishing without building is already impossible for a different reason —
+ * `dist` would be missing too — so nothing is lost by not committing them.
  *
  * Usage:
  *   node tools/copy-license.mjs
