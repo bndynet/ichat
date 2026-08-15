@@ -12,6 +12,7 @@
 import "../../src/components/chat.js";
 import type {
   Chat,
+  ChatConfirmationChangeDetail,
   ChatConfirmationResult,
 } from "../../src/components/chat.js";
 import type { ChatConfirmation } from "../../src/components/chat-confirmation.js";
@@ -1356,6 +1357,255 @@ test("composer interaction: stale and outside events cannot settle the active re
     );
     const second = await secondPromise;
     assertEqual(second.status, "cancelled");
+  });
+});
+
+test("mixed queue: renders confirmation A, custom B, then confirmation C", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    const complete = document.createElement("button");
+    complete.textContent = "Complete custom";
+    panel.appendChild(complete);
+    chat.appendChild(panel);
+
+    const confirmationChanges: ChatConfirmationChangeDetail[] = [];
+    chat.addEventListener("confirmation-change", (event) => {
+      confirmationChanges.push(
+        (event as CustomEvent<ChatConfirmationChangeDetail>).detail,
+      );
+    });
+
+    const firstPromise = chat.requestConfirmation({
+      id: "mixed-confirmation-a",
+      title: "Confirmation A",
+    });
+    const customPromise = chat.requestComposerInteraction({
+      id: "mixed-custom-b",
+      kind: "x-form",
+    });
+    const thirdPromise = chat.requestConfirmation({
+      id: "mixed-confirmation-c",
+      title: "Confirmation C",
+    });
+
+    let confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Confirmation A");
+    confirmationButton(confirmation, "confirm").click();
+    const first = await firstPromise;
+    assertEqual(first.action, "confirm");
+
+    await waitForUpdate(chat);
+    await nextFrame();
+    assertEqual(chat.activeComposerInteraction?.id, "mixed-custom-b");
+    assert(
+      !isVisuallyHidden(panel),
+      "custom panel should render between the two confirmations",
+    );
+    assertEqual(chat.shadowRoot?.querySelector("i-chat-confirmation"), null);
+    assertEqual(confirmationChanges.at(-1)?.active, null);
+    assertDeepEqual(
+      confirmationChanges.at(-1)?.queue.map((request) => request.id),
+      ["mixed-confirmation-c"],
+    );
+
+    complete.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "mixed-custom-b", value: { submitted: true } },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const custom = await customPromise;
+    assertEqual(custom.status, "completed");
+
+    confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Confirmation C");
+    confirmationButton(confirmation, "cancel").click();
+    const third = await thirdPromise;
+    assertEqual(third.action, "cancel");
+    assertEqual(chat.activeComposerInteraction, null);
+  });
+});
+
+test("mixed queue: clearConfirmations preserves the custom request", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    panel.textContent = "Preserved custom request";
+    chat.appendChild(panel);
+
+    const confirmationChanges: ChatConfirmationChangeDetail[] = [];
+    chat.addEventListener("confirmation-change", (event) => {
+      confirmationChanges.push(
+        (event as CustomEvent<ChatConfirmationChangeDetail>).detail,
+      );
+    });
+
+    const firstPromise = chat.requestConfirmation({
+      id: "clear-confirmation-a",
+      title: "Clear A",
+    });
+    const customPromise = chat.requestComposerInteraction({
+      id: "preserve-custom-b",
+      kind: "x-form",
+    });
+    const thirdPromise = chat.requestConfirmation({
+      id: "clear-confirmation-c",
+      title: "Clear C",
+    });
+    await activeConfirmation(chat);
+
+    chat.clearConfirmations();
+    const [first, third] = await Promise.all([firstPromise, thirdPromise]);
+    assertDeepEqual(
+      [first, third].map((result) => result.action),
+      ["cancel", "cancel"],
+    );
+    await waitForUpdate(chat);
+    assertEqual(chat.activeComposerInteraction?.id, "preserve-custom-b");
+    assertEqual(confirmationChanges.at(-1)?.active, null);
+    assertDeepEqual(confirmationChanges.at(-1)?.queue, []);
+    assert(
+      !isVisuallyHidden(panel),
+      "clearConfirmations should leave the custom renderer visible",
+    );
+
+    assertEqual(
+      chat.completeComposerInteraction("preserve-custom-b", "done"),
+      true,
+    );
+    const custom = await customPromise;
+    assertEqual(custom.status, "completed");
+  });
+});
+
+test("mixed queue: clearComposerInteractions settles the entire queue", async () => {
+  await withIsolatedChat(async (chat) => {
+    const firstPromise = chat.requestConfirmation({
+      id: "clear-all-confirmation-a",
+      title: "Clear all A",
+    });
+    const customPromise = chat.requestComposerInteraction({
+      id: "clear-all-custom-b",
+      kind: "x-form",
+    });
+    const thirdPromise = chat.requestConfirmation({
+      id: "clear-all-confirmation-c",
+      title: "Clear all C",
+    });
+    await activeConfirmation(chat);
+
+    assertEqual(chat.clearComposerInteractions(), 3);
+    const [first, custom, third] = await Promise.all([
+      firstPromise,
+      customPromise,
+      thirdPromise,
+    ]);
+
+    assertEqual(first.action, "cancel");
+    assertEqual(third.action, "cancel");
+    assertEqual(custom.status, "cancelled");
+    assertEqual(
+      custom.status === "cancelled" ? custom.reason : undefined,
+      "cleared",
+    );
+    assertEqual(chat.activeComposerInteraction, null);
+  });
+});
+
+test("mixed queue: custom interaction completes while busy and blocks send", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    const complete = document.createElement("button");
+    panel.appendChild(complete);
+    chat.appendChild(panel);
+
+    chat.addMessage({
+      id: "mixed-busy-message",
+      role: "assistant",
+      streaming: true,
+      parts: [],
+    });
+    assertEqual(chat.busy, true);
+
+    const busyPromise = chat.requestComposerInteraction({
+      id: "mixed-busy-custom",
+      kind: "x-form",
+    });
+    await waitForUpdate(chat);
+    complete.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "mixed-busy-custom", value: "completed-while-busy" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const busyResult = await busyPromise;
+    assertEqual(busyResult.status, "completed");
+    assertEqual(chat.busy, true);
+
+    chat.updateMessage("mixed-busy-message", { streaming: false });
+    assertEqual(chat.busy, false);
+
+    const sends: string[] = [];
+    chat.addEventListener("send", (event) => {
+      sends.push((event as CustomEvent<{ content: string }>).detail.content);
+    });
+    const blockingPromise = chat.requestComposerInteraction({
+      id: "mixed-block-send",
+      kind: "x-picker",
+    });
+    await waitForUpdate(chat);
+    await invokeSend(chat, "must remain blocked");
+    assertDeepEqual(sends, []);
+
+    chat.cancelComposerInteraction("mixed-block-send");
+    await blockingPromise;
+  });
+});
+
+test("mixed queue: async beforeSend rechecks a custom interaction", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    panel.textContent = "Opened during middleware";
+    chat.appendChild(panel);
+
+    const entered = deferred();
+    const release = deferred();
+    const sends: string[] = [];
+    chat.use({
+      name: "custom-interaction-before-send",
+      async beforeSend(content) {
+        entered.resolve();
+        await release.promise;
+        return content;
+      },
+    });
+    chat.addEventListener("send", (event) => {
+      sends.push((event as CustomEvent<{ content: string }>).detail.content);
+    });
+
+    const sendPromise = invokeSend(chat, "pending custom check");
+    await entered.promise;
+    assertEqual(chat.busy, true);
+
+    const customPromise = chat.requestComposerInteraction({
+      id: "mixed-during-before-send",
+      kind: "x-form",
+    });
+    await waitForUpdate(chat);
+
+    release.resolve();
+    await sendPromise;
+    assertDeepEqual(sends, []);
+    assertEqual(chat.busy, false);
+    assertEqual(chat.activeComposerInteraction?.id, "mixed-during-before-send");
+
+    chat.cancelComposerInteraction("mixed-during-before-send");
+    await customPromise;
   });
 });
 
