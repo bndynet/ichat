@@ -41,6 +41,11 @@ export default defineConfig({
           page: () => import("./src/pages/builtin/ConfirmationPage.vue"),
         },
         {
+          label: "Composer interaction",
+          icon: "panel-top",
+          page: () => import("./src/pages/builtin/ComposerInteractionPage.vue"),
+        },
+        {
           label: "Details",
           icon: "panel-bottom",
           page: () => import("./src/pages/builtin/DetailsPage.vue"),
