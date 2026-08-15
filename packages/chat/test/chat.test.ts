@@ -15,6 +15,12 @@ import type {
 } from "@bndynet/ichat-messages";
 import { textPart } from "@bndynet/ichat-messages";
 import type { ChatRunController } from "../src/controllers/chat-run-controller.js";
+import type {
+  ChatComposerInteractionCancelReason,
+  ChatComposerInteractionRequest,
+  ChatComposerInteractionResolvedRequest,
+  ChatComposerInteractionResult,
+} from "../src/components/chat.js";
 import "../src/components/chat.js";
 
 type TestMessage = ChatMessage;
@@ -78,6 +84,18 @@ type TestChatElement = HTMLElement & {
   };
   tryApplyTodoItemUpdateEvent(event: Record<string, unknown>): { ok: boolean };
   createRunController(options?: { messageId?: string }): ChatRunController;
+  readonly activeComposerInteraction: ChatComposerInteractionResolvedRequest | null;
+  requestComposerInteraction(
+    request: ChatComposerInteractionRequest,
+  ): Promise<ChatComposerInteractionResult>;
+  completeComposerInteraction(id: string, value: unknown): boolean;
+  cancelComposerInteraction(
+    id: string,
+    reason?: ChatComposerInteractionCancelReason,
+  ): boolean;
+  clearComposerInteractions(
+    reason?: ChatComposerInteractionCancelReason,
+  ): number;
   showError(text: string, options?: { duration?: number }): void;
   addErrorMessage(error: string, text?: string): void;
   _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
@@ -141,6 +159,11 @@ assert.equal(typeof el.showError, "function");
 assert.equal(typeof el.dismissError, "function");
 assert.equal(typeof el.requestConfirmation, "function");
 assert.equal(typeof el.clearConfirmations, "function");
+assert.equal(typeof el.requestComposerInteraction, "function");
+assert.equal(typeof el.completeComposerInteraction, "function");
+assert.equal(typeof el.cancelComposerInteraction, "function");
+assert.equal(typeof el.clearComposerInteractions, "function");
+assert.equal(el.activeComposerInteraction, null);
 assert.equal(typeof el.createRunController, "function");
 assert.equal(typeof el.use, "function");
 assert.equal("registerCodeRenderer" in el, false);
@@ -148,6 +171,79 @@ assert.equal("registerRenderer" in el, false);
 
 // ready returns a Promise
 assert.ok(el.ready instanceof Promise, "ready should be a Promise");
+
+// Public composer interaction methods expose normalized snapshots and results.
+{
+  const chat = createChat();
+  const resultPromise = chat.requestComposerInteraction({
+    id: "public-custom",
+    kind: "x-form",
+    payload: { field: "value" },
+    ariaLabel: "Example form",
+  });
+
+  assert.equal(chat.activeComposerInteraction?.id, "public-custom");
+  assert.equal(chat.activeComposerInteraction?.kind, "x-form");
+  let sendCount = 0;
+  chat.addEventListener("send", () => {
+    sendCount += 1;
+  });
+  await chat._handleSend(sendEvent("must stay blocked"));
+  assert.equal(sendCount, 0);
+  assert.equal(chat.completeComposerInteraction("stale", null), false);
+  assert.equal(
+    chat.completeComposerInteraction("public-custom", { submitted: true }),
+    true,
+  );
+
+  const result = await resultPromise;
+  assert.equal(result.status, "completed");
+  assert.deepEqual(result.status === "completed" ? result.value : undefined, {
+    submitted: true,
+  });
+  assert.equal(result.request.id, "public-custom");
+  assert.equal(chat.activeComposerInteraction, null);
+}
+
+// Queued custom items can be cancelled, and clear settles the full queue.
+{
+  const chat = createChat();
+  const activePromise = chat.requestComposerInteraction({
+    id: "public-active",
+    kind: "x-form",
+  });
+  const queuedPromise = chat.requestComposerInteraction({
+    id: "public-queued",
+    kind: "x-picker",
+  });
+
+  assert.equal(chat.cancelComposerInteraction("public-queued"), true);
+  const queuedResult = await queuedPromise;
+  assert.equal(queuedResult.status, "cancelled");
+  assert.equal(
+    queuedResult.status === "cancelled" ? queuedResult.reason : undefined,
+    "cancelled",
+  );
+
+  assert.equal(chat.clearComposerInteractions(), 1);
+  const activeResult = await activePromise;
+  assert.equal(activeResult.status, "cancelled");
+  assert.equal(
+    activeResult.status === "cancelled" ? activeResult.reason : undefined,
+    "cleared",
+  );
+}
+
+// The generic API cannot bypass the built-in confirmation adapter.
+{
+  const chat = createChat();
+  await assert.rejects(
+    chat.requestComposerInteraction({
+      kind: "confirmation",
+    } as unknown as ChatComposerInteractionRequest),
+    /must start with "x-"/,
+  );
+}
 
 // Public `messages` is the single source of truth for Store mutations.
 {

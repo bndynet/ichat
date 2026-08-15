@@ -1,5 +1,10 @@
 export { Chat } from "./components/chat.js";
 export type {
+  ChatComposerInteractionCancelReason,
+  ChatComposerInteractionChangeDetail,
+  ChatComposerInteractionRequest,
+  ChatComposerInteractionResolvedRequest,
+  ChatComposerInteractionResult,
   ChatConfirmationAction,
   ChatConfirmationChangeDetail,
   ChatConfirmationRequest,

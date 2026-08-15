@@ -27,6 +27,10 @@ import { ChatRunController } from "../controllers/chat-run-controller.js";
 import type { ChatRunOptions } from "../controllers/chat-run-controller.js";
 import { CommandQueue } from "../controllers/command-queue.js";
 import { ComposerInteractionController } from "../controllers/composer-interaction-controller.js";
+import type {
+  InternalComposerInteractionRequest,
+  InternalComposerInteractionResult,
+} from "../controllers/composer-interaction-types.js";
 import { ConfirmationController } from "../controllers/confirmation-controller.js";
 import { SlotForwardingController } from "../controllers/slot-forwarding-controller.js";
 import {
@@ -85,6 +89,46 @@ export interface ChatConfirmationResult {
 export interface ChatConfirmationChangeDetail {
   active: ChatConfirmationResolvedRequest | null;
   queue: ChatConfirmationResolvedRequest[];
+  queueLength: number;
+}
+
+/** Data-only custom interaction accepted by the public composer queue API. */
+export interface ChatComposerInteractionRequest {
+  id?: string;
+  kind: `x-${string}`;
+  payload?: unknown;
+  ariaLabel?: string;
+  signal?: AbortSignal;
+}
+
+/** Normalized snapshot of an item in the shared composer interaction queue. */
+export interface ChatComposerInteractionResolvedRequest {
+  id: string;
+  kind: "confirmation" | `x-${string}`;
+  payload?: unknown;
+  ariaLabel?: string;
+}
+
+export type ChatComposerInteractionCancelReason =
+  "cancelled" | "aborted" | "cleared" | "disconnected";
+
+export type ChatComposerInteractionResult =
+  | {
+      id: string;
+      status: "completed";
+      value: unknown;
+      request: ChatComposerInteractionResolvedRequest;
+    }
+  | {
+      id: string;
+      status: "cancelled";
+      reason: ChatComposerInteractionCancelReason;
+      request: ChatComposerInteractionResolvedRequest;
+    };
+
+export interface ChatComposerInteractionChangeDetail {
+  active: ChatComposerInteractionResolvedRequest | null;
+  queue: ChatComposerInteractionResolvedRequest[];
   queueLength: number;
 }
 
@@ -636,6 +680,108 @@ export class Chat<
   }
 
   /**
+   * Enqueue a host-rendered custom interaction in the shared composer FIFO.
+   * Built-in confirmations must continue to use {@link requestConfirmation}.
+   */
+  requestComposerInteraction(
+    request: ChatComposerInteractionRequest,
+  ): Promise<ChatComposerInteractionResult> {
+    if (typeof request.kind !== "string" || !request.kind.startsWith("x-")) {
+      return Promise.reject(
+        new TypeError('Composer interaction kind must start with "x-".'),
+      );
+    }
+
+    return this._composerInteractionCtrl
+      .request(request)
+      .then((result) => this._toPublicComposerInteractionResult(result));
+  }
+
+  /** Complete the matching active custom interaction. Stale IDs return false. */
+  completeComposerInteraction(id: string, value: unknown): boolean {
+    const active = this._composerInteractionCtrl.active;
+    if (!active || active.kind === "confirmation") return false;
+    return this._composerInteractionCtrl.completeActive(id, value);
+  }
+
+  /** Cancel an active or queued custom interaction. Stale IDs return false. */
+  cancelComposerInteraction(
+    id: string,
+    reason: ChatComposerInteractionCancelReason = "cancelled",
+  ): boolean {
+    const request = this._findComposerInteraction(id);
+    if (!request || request.kind === "confirmation") return false;
+    return this._composerInteractionCtrl.cancel(id, reason);
+  }
+
+  /** Cancel every confirmation and custom interaction in the shared queue. */
+  clearComposerInteractions(
+    reason: ChatComposerInteractionCancelReason = "cleared",
+  ): number {
+    return this._composerInteractionCtrl.clear(reason);
+  }
+
+  /** Read-only snapshot of the active item in the shared composer queue. */
+  get activeComposerInteraction(): ChatComposerInteractionResolvedRequest | null {
+    const active = this._composerInteractionCtrl.active;
+    return active ? this._toPublicComposerInteractionRequest(active) : null;
+  }
+
+  private _findComposerInteraction(
+    id: string,
+  ): InternalComposerInteractionRequest | null {
+    const active = this._composerInteractionCtrl.active;
+    if (active?.id === id) return active;
+    return (
+      this._composerInteractionCtrl.queue.find(
+        (request) => request.id === id,
+      ) ?? null
+    );
+  }
+
+  private _toPublicComposerInteractionRequest(
+    request: InternalComposerInteractionRequest,
+  ): ChatComposerInteractionResolvedRequest {
+    return {
+      id: request.id,
+      kind: request.kind,
+      payload: request.payload,
+      ariaLabel: request.ariaLabel,
+    };
+  }
+
+  private _toPublicComposerInteractionResult(
+    result: InternalComposerInteractionResult,
+  ): ChatComposerInteractionResult {
+    const request = this._toPublicComposerInteractionRequest(result.request);
+    if (result.status === "completed") {
+      return {
+        id: result.id,
+        status: "completed",
+        value: result.value,
+        request,
+      };
+    }
+
+    return {
+      id: result.id,
+      status: "cancelled",
+      reason: this._toPublicComposerInteractionCancelReason(result.reason),
+      request,
+    };
+  }
+
+  private _toPublicComposerInteractionCancelReason(
+    reason: string,
+  ): ChatComposerInteractionCancelReason {
+    if (reason === "aborted" || reason === "disconnected") return reason;
+    if (reason === "cleared" || reason === "confirmation-cleared") {
+      return "cleared";
+    }
+    return "cancelled";
+  }
+
+  /**
    * Add a reply block beneath the message with the given `id`.
    *
    * The composer/input is external — this only displays the reply block(s)
@@ -824,7 +970,7 @@ export class Chat<
   // ── Events ────────────────────────────────────────────────────────
 
   private get _sendBlocked(): boolean {
-    return this.disabled || this.busy || !!this._confirmCtrl.active;
+    return this.disabled || this.busy || !!this._composerInteractionCtrl.active;
   }
 
   private async _handleSend(
@@ -844,7 +990,13 @@ export class Chat<
 
       // State may have changed while middleware was awaiting. Ignore this
       // submission if the chat became unavailable for any other reason.
-      if (this.disabled || this._streaming || this._confirmCtrl.active) return;
+      if (
+        this.disabled ||
+        this._streaming ||
+        this._composerInteractionCtrl.active
+      ) {
+        return;
+      }
 
       this.dispatchEvent(
         new CustomEvent("send", {
