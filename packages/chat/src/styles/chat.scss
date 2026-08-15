@@ -50,3 +50,13 @@ i-chat-messages {
     0 var(--chat-spacing-md, 16px) var(--chat-spacing-md, 16px)
   );
 }
+
+.chat-composer,
+.chat-composer-interaction {
+  min-width: 0;
+}
+
+.chat-composer[hidden],
+.chat-composer-interaction[hidden] {
+  display: none;
+}

@@ -918,6 +918,7 @@ export class Chat<
   // `updated` no longer need to push them manually.
 
   render() {
+    const hasActiveInteraction = this._composerInteractionCtrl.active !== null;
     const confirmation = this._confirmCtrl.activeRequest;
 
     return html`
@@ -940,44 +941,57 @@ export class Chat<
         </i-chat-messages>
       </div>
       <div class="chat-footer">
-        ${
-          confirmation
-            ? html`<i-chat-confirmation
-                .request=${confirmation}
-                .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation}
-                @confirmation-settle=${this._handleConfirmationSettle}
-              ></i-chat-confirmation>`
-            : html`
-                <slot
-                  name="input"
-                  @slotchange=${this._handleInputSlotChange}
-                  @send=${this._handleSend}
-                  @cancel=${this._handleCancel}
-                ></slot>
-                ${
-                  this._slotCtrl.hasCustomInput
-                    ? nothing
-                    : html`
-                        <i-chat-input
-                          .placeholder=${this.placeholder}
-                          .locale=${this.config.locale ?? ""}
-                          .labels=${this.config.labels?.composer}
-                          .busy=${this.busy}
-                          .streaming=${this._streaming}
-                          .showVoiceInput=${this.showVoiceInput}
-                          .voiceLang=${this.voiceLang}
-                          .voiceListeningLabel=${this.voiceListeningLabel}
-                          .voiceDiagnostics=${this.voiceDiagnostics}
-                          ?disabled=${this.disabled}
-                          @send=${this._handleSend}
-                          @cancel=${this._handleCancel}
-                        >
-                          <slot name="actions" slot="actions"></slot>
-                        </i-chat-input>
-                      `
-                }
-              `
-        }
+        <div
+          class="chat-composer"
+          ?hidden=${hasActiveInteraction}
+          ?inert=${hasActiveInteraction}
+          aria-hidden=${hasActiveInteraction ? "true" : "false"}
+        >
+          <slot
+            name="input"
+            @slotchange=${this._handleInputSlotChange}
+            @send=${this._handleSend}
+            @cancel=${this._handleCancel}
+          ></slot>
+          ${
+            this._slotCtrl.hasCustomInput
+              ? nothing
+              : html`
+                  <i-chat-input
+                    .placeholder=${this.placeholder}
+                    .locale=${this.config.locale ?? ""}
+                    .labels=${this.config.labels?.composer}
+                    .busy=${this.busy}
+                    .streaming=${this._streaming}
+                    .showVoiceInput=${this.showVoiceInput}
+                    .voiceLang=${this.voiceLang}
+                    .voiceListeningLabel=${this.voiceListeningLabel}
+                    .voiceDiagnostics=${this.voiceDiagnostics}
+                    ?disabled=${this.disabled || hasActiveInteraction}
+                    @send=${this._handleSend}
+                    @cancel=${this._handleCancel}
+                  >
+                    <slot name="actions" slot="actions"></slot>
+                  </i-chat-input>
+                `
+          }
+        </div>
+        <div
+          class="chat-composer-interaction"
+          ?hidden=${!hasActiveInteraction}
+          ?inert=${!hasActiveInteraction}
+          aria-hidden=${hasActiveInteraction ? "false" : "true"}
+        >
+          ${
+            confirmation
+              ? html`<i-chat-confirmation
+                  .request=${confirmation}
+                  .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation}
+                  @confirmation-settle=${this._handleConfirmationSettle}
+                ></i-chat-confirmation>`
+              : nothing
+          }
+        </div>
       </div>
     `;
   }
