@@ -15,6 +15,7 @@ import type {
   ChatConfirmationResult,
 } from "../../src/components/chat.js";
 import type { ChatConfirmation } from "../../src/components/chat-confirmation.js";
+import type { ComposerInteractionController } from "../../src/controllers/composer-interaction-controller.js";
 import type {
   ChatMessage,
   MessagesChangeDetail,
@@ -239,6 +240,16 @@ function composerRegion(chat: Chat): HTMLElement {
   ) as HTMLElement | null;
   assert(composer, "stable chat composer region should be rendered");
   return composer;
+}
+
+function composerInteractionController(
+  chat: Chat,
+): ComposerInteractionController {
+  return (
+    chat as unknown as {
+      _composerInteractionCtrl: ComposerInteractionController;
+    }
+  )._composerInteractionCtrl;
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────
@@ -932,6 +943,124 @@ test("confirmation: Confirm button receives initial focus", async () => {
 
     chat.clearConfirmations();
     await resultPromise;
+  });
+});
+
+test("confirmation: each queued request refocuses the confirm action", async () => {
+  await withIsolatedChat(async (chat) => {
+    const firstPromise = chat.requestConfirmation({
+      id: "focus-queue-1",
+      title: "First focus",
+    });
+    const secondPromise = chat.requestConfirmation({
+      id: "focus-queue-2",
+      title: "Second focus",
+    });
+
+    let confirmation = await activeConfirmation(chat);
+    const firstCancel = confirmationButton(confirmation, "cancel");
+    firstCancel.focus();
+    assertEqual(confirmation.shadowRoot?.activeElement, firstCancel);
+    firstCancel.click();
+    await firstPromise;
+
+    confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Second focus");
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      confirmationButton(confirmation, "confirm"),
+      "the next queued confirmation should focus its confirm action",
+    );
+
+    chat.clearConfirmations();
+    await secondPromise;
+  });
+});
+
+test("composer focus: custom interaction owns focus until confirmation takes over", async () => {
+  await withIsolatedChat(async (chat) => {
+    const controller = composerInteractionController(chat);
+    const customPromise = controller.request({
+      id: "custom-focus",
+      kind: "x-focus-probe",
+      ariaLabel: "Custom focus probe",
+    });
+    const confirmationPromise = chat.requestConfirmation({
+      id: "after-custom-focus",
+      title: "Focus after custom",
+    });
+    await waitForUpdate(chat);
+
+    const interactionRegion = chat.shadowRoot?.querySelector(
+      ".chat-composer-interaction",
+    ) as HTMLElement | null;
+    assert(interactionRegion, "interaction region should remain mounted");
+    const customControl = document.createElement("button");
+    customControl.textContent = "Custom control";
+    interactionRegion.appendChild(customControl);
+    customControl.focus();
+    await nextFrame();
+    assertEqual(
+      chat.shadowRoot?.activeElement,
+      customControl,
+      "custom interaction should be able to choose its own initial focus",
+    );
+
+    const tabEvent = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    customControl.dispatchEvent(tabEvent);
+    assertEqual(
+      tabEvent.defaultPrevented,
+      false,
+      "generic interactions should not receive a forced focus trap",
+    );
+    customControl.remove();
+
+    assertEqual(controller.completeActive("custom-focus", undefined), true);
+    await customPromise;
+    const confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Focus after custom");
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      confirmationButton(confirmation, "confirm"),
+    );
+
+    chat.clearConfirmations();
+    await confirmationPromise;
+  });
+});
+
+test("composer focus: clearing the queue restores the default input", async () => {
+  await withIsolatedChat(async (chat) => {
+    const input = defaultComposer(chat);
+    await waitForUpdate(input);
+    const textarea = input.shadowRoot?.querySelector(
+      ".chat-input-textarea",
+    ) as HTMLTextAreaElement | null;
+    assert(textarea, "default composer textarea should be rendered");
+
+    const firstPromise = chat.requestConfirmation({
+      id: "restore-focus-1",
+      title: "Restore one",
+    });
+    const secondPromise = chat.requestConfirmation({
+      id: "restore-focus-2",
+      title: "Restore two",
+    });
+    await activeConfirmation(chat);
+
+    chat.clearConfirmations();
+    await Promise.all([firstPromise, secondPromise]);
+    await waitForUpdate(chat);
+    await waitForUpdate(input);
+    await nextFrame();
+
+    assertEqual(chat.shadowRoot?.activeElement, input);
+    assertEqual(input.shadowRoot?.activeElement, textarea);
   });
 });
 

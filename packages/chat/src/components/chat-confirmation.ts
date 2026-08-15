@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS, nothing } from "lit";
+import { LitElement, html, unsafeCSS, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { setVersionAttribute } from "../version.js";
 import type { ChatConfirmationResolvedRequest } from "./chat.js";
@@ -15,6 +15,8 @@ import styles from "../styles/chat-confirmation.scss";
 export class ChatConfirmation extends LitElement {
   static styles = unsafeCSS(styles);
 
+  private _focusFrame?: number;
+
   /** The active confirmation request to display. */
   @property({ attribute: false }) request!: ChatConfirmationResolvedRequest;
 
@@ -26,9 +28,28 @@ export class ChatConfirmation extends LitElement {
     setVersionAttribute(this);
   }
 
-  protected firstUpdated(): void {
-    // Auto-focus the confirm button when the dialog appears
-    requestAnimationFrame(() => {
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has("request")) {
+      this._scheduleConfirmFocus(this.request.id);
+    }
+  }
+
+  override disconnectedCallback(): void {
+    if (this._focusFrame !== undefined) {
+      cancelAnimationFrame(this._focusFrame);
+      this._focusFrame = undefined;
+    }
+    super.disconnectedCallback();
+  }
+
+  private _scheduleConfirmFocus(requestId: string): void {
+    if (this._focusFrame !== undefined) {
+      cancelAnimationFrame(this._focusFrame);
+    }
+    this._focusFrame = requestAnimationFrame(() => {
+      this._focusFrame = undefined;
+      if (!this.isConnected || this.request.id !== requestId) return;
       this.renderRoot
         .querySelector<HTMLElement>(".chat-confirmation__btn--confirm")
         ?.focus();

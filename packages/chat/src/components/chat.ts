@@ -249,6 +249,7 @@ export class Chat<
     this,
     this._composerInteractionCtrl,
   );
+  private _hadActiveComposerInteraction = false;
 
   private _store = new ChatMessageStore({
     getMessages: () => this.messages as unknown as ChatMessage[],
@@ -615,7 +616,7 @@ export class Chat<
 
   /** Focus the input textarea. Safe to call before first render (no-op). */
   focusInput(): void {
-    if (this._confirmCtrl.active) return;
+    if (this._composerInteractionCtrl.active) return;
     this._input?.focus();
   }
 
@@ -781,7 +782,37 @@ export class Chat<
     this._replayPendingCommands();
   }
 
+  override updated(changed: PropertyValues): void {
+    super.updated(changed);
+    const hasActiveInteraction = this._composerInteractionCtrl.active !== null;
+    const shouldRestoreComposerFocus =
+      this._hadActiveComposerInteraction && !hasActiveInteraction;
+    this._hadActiveComposerInteraction = hasActiveInteraction;
+
+    if (shouldRestoreComposerFocus) {
+      this._restoreDefaultComposerFocus();
+    }
+  }
+
   // ── Lifecycle ──────────────────────────────────────────────────────
+
+  private _restoreDefaultComposerFocus(): void {
+    const input = this._input;
+    if (!input || this.disabled || this._slotCtrl.hasCustomInput) return;
+
+    void input.updateComplete.then(() => {
+      if (
+        !this.isConnected ||
+        input !== this._input ||
+        this.disabled ||
+        this._slotCtrl.hasCustomInput ||
+        this._composerInteractionCtrl.active
+      ) {
+        return;
+      }
+      input.focus();
+    });
+  }
 
   private _handleConfirmationSettle(
     e: CustomEvent<{ action: "confirm" | "cancel" }>,
