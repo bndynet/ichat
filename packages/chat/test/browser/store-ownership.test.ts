@@ -1034,6 +1034,195 @@ test("composer focus: custom interaction owns focus until confirmation takes ove
   });
 });
 
+test("composer interaction: slot is assigned only for an active custom request", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    panel.textContent = "Custom interaction panel";
+    chat.appendChild(panel);
+    await nextFrame();
+
+    const confirmationPromise = chat.requestConfirmation({
+      id: "slot-confirmation",
+      title: "Confirmation stays built in",
+    });
+    await activeConfirmation(chat);
+    assertEqual(
+      chat.shadowRoot?.querySelector('slot[name="composer-interaction"]'),
+      null,
+      "custom slot should not replace an active confirmation",
+    );
+    assert(
+      isVisuallyHidden(panel),
+      "custom panel should not render during confirmation",
+    );
+
+    chat.clearConfirmations();
+    await confirmationPromise;
+
+    const customPromise = chat.requestComposerInteraction({
+      id: "slot-custom",
+      kind: "x-form",
+    });
+    await waitForUpdate(chat);
+    await nextFrame();
+
+    const slot = chat.shadowRoot?.querySelector(
+      'slot[name="composer-interaction"]',
+    ) as HTMLSlotElement | null;
+    assert(slot, "custom interaction slot should be rendered");
+    assertDeepEqual(slot.assignedElements({ flatten: true }), [panel]);
+    assert(
+      !isVisuallyHidden(panel),
+      "assigned custom interaction panel should be visible",
+    );
+    assertEqual(chat.shadowRoot?.querySelector("i-chat-confirmation"), null);
+
+    chat.cancelComposerInteraction("slot-custom");
+    await customPromise;
+  });
+});
+
+test("composer interaction: complete and cancel events settle the active request", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    const action = document.createElement("button");
+    panel.appendChild(action);
+    chat.appendChild(panel);
+
+    const completedPromise = chat.requestComposerInteraction({
+      id: "slot-complete",
+      kind: "x-form",
+    });
+    await waitForUpdate(chat);
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-complete", value: { submitted: true } },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const completed = await completedPromise;
+    assertEqual(completed.status, "completed");
+    assertDeepEqual(
+      completed.status === "completed" ? completed.value : undefined,
+      { submitted: true },
+    );
+
+    const cancelledPromise = chat.requestComposerInteraction({
+      id: "slot-cancel",
+      kind: "x-picker",
+    });
+    await waitForUpdate(chat);
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-cancel", {
+        detail: { id: "slot-cancel" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const cancelled = await cancelledPromise;
+    assertEqual(cancelled.status, "cancelled");
+    assertEqual(
+      cancelled.status === "cancelled" ? cancelled.reason : undefined,
+      "cancelled",
+    );
+  });
+});
+
+test("composer interaction: stale and outside events cannot settle the active request", async () => {
+  await withIsolatedChat(async (chat) => {
+    const panel = document.createElement("div");
+    panel.slot = "composer-interaction";
+    const action = document.createElement("button");
+    panel.appendChild(action);
+    chat.appendChild(panel);
+
+    const firstPromise = chat.requestComposerInteraction({
+      id: "slot-active",
+      kind: "x-form",
+    });
+    const secondPromise = chat.requestComposerInteraction({
+      id: "slot-queued",
+      kind: "x-picker",
+    });
+    await waitForUpdate(chat);
+
+    const messageBody = chat.shadowRoot?.querySelector(".chat-body");
+    assert(messageBody, "chat body should be rendered");
+    messageBody.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-active", value: "outside" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    assertEqual(chat.activeComposerInteraction?.id, "slot-active");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-active", value: "not-composed" },
+        bubbles: true,
+        composed: false,
+      }),
+    );
+    assertEqual(chat.activeComposerInteraction?.id, "slot-active");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-active", value: "not-bubbling" },
+        bubbles: false,
+        composed: true,
+      }),
+    );
+    assertEqual(chat.activeComposerInteraction?.id, "slot-active");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-queued", value: "stale" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    assertEqual(chat.activeComposerInteraction?.id, "slot-active");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-complete", {
+        detail: { id: "slot-active", value: "accepted" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const first = await firstPromise;
+    assertEqual(
+      first.status === "completed" ? first.value : undefined,
+      "accepted",
+    );
+    await waitForUpdate(chat);
+    assertEqual(chat.activeComposerInteraction?.id, "slot-queued");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-cancel", {
+        detail: { id: "slot-active" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    assertEqual(chat.activeComposerInteraction?.id, "slot-queued");
+
+    action.dispatchEvent(
+      new CustomEvent("composer-interaction-cancel", {
+        detail: { id: "slot-queued" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    const second = await secondPromise;
+    assertEqual(second.status, "cancelled");
+  });
+});
+
 test("composer focus: clearing the queue restores the default input", async () => {
   await withIsolatedChat(async (chat) => {
     const input = defaultComposer(chat);

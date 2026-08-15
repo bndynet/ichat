@@ -165,6 +165,7 @@ export interface ChatComposerInteractionChangeDetail {
  * | `empty`              | Content shown when there are no messages            |
  * | `actions`            | Toolbar row **inside** the default `<i-chat-input>` (left side) |
  * | `input`              | Replace the default `<i-chat-input>` entirely           |
+ * | `composer-interaction` | Host-rendered content for an active custom `x-*` composer interaction |
  *
  * Voice-related props `showVoiceInput`, `voiceLang`, and `voiceListeningLabel` are forwarded to
  * the default `<i-chat-input>` (same behavior as using that element directly).
@@ -978,6 +979,42 @@ export class Chat<
     this._confirmCtrl.settle(e.detail.action);
   }
 
+  private _handleComposerInteractionComplete(
+    event: CustomEvent<{ id?: unknown; value?: unknown }>,
+  ): void {
+    event.stopPropagation();
+    if (!event.bubbles || !event.composed) return;
+    const active = this._composerInteractionCtrl.active;
+    const id = event.detail?.id;
+    if (
+      !active ||
+      active.kind === "confirmation" ||
+      typeof id !== "string" ||
+      id !== active.id
+    ) {
+      return;
+    }
+    this.completeComposerInteraction(id, event.detail.value);
+  }
+
+  private _handleComposerInteractionCancel(
+    event: CustomEvent<{ id?: unknown }>,
+  ): void {
+    event.stopPropagation();
+    if (!event.bubbles || !event.composed) return;
+    const active = this._composerInteractionCtrl.active;
+    const id = event.detail?.id;
+    if (
+      !active ||
+      active.kind === "confirmation" ||
+      typeof id !== "string" ||
+      id !== active.id
+    ) {
+      return;
+    }
+    this.cancelComposerInteraction(id);
+  }
+
   // ── Events ────────────────────────────────────────────────────────
 
   private readonly _handleComposerInteractionChange = (event: Event): void => {
@@ -1153,7 +1190,10 @@ export class Chat<
   // `updated` no longer need to push them manually.
 
   render() {
-    const hasActiveInteraction = this._composerInteractionCtrl.active !== null;
+    const activeInteraction = this._composerInteractionCtrl.active;
+    const hasActiveInteraction = activeInteraction !== null;
+    const hasCustomInteraction =
+      activeInteraction !== null && activeInteraction.kind !== "confirmation";
     const confirmation = this._confirmCtrl.activeRequest;
 
     return html`
@@ -1224,7 +1264,13 @@ export class Chat<
                   .labels=${resolveLabels({ locale: this.config.locale, labels: this.config.labels }).confirmation}
                   @confirmation-settle=${this._handleConfirmationSettle}
                 ></i-chat-confirmation>`
-              : nothing
+              : hasCustomInteraction
+                ? html`<slot
+                    name="composer-interaction"
+                    @composer-interaction-complete=${this._handleComposerInteractionComplete}
+                    @composer-interaction-cancel=${this._handleComposerInteractionCancel}
+                  ></slot>`
+                : nothing
           }
         </div>
       </div>
