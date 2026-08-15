@@ -10,7 +10,11 @@
  */
 
 import "../../src/components/chat.js";
-import type { Chat } from "../../src/components/chat.js";
+import type {
+  Chat,
+  ChatConfirmationResult,
+} from "../../src/components/chat.js";
+import type { ChatConfirmation } from "../../src/components/chat-confirmation.js";
 import type {
   ChatMessage,
   MessagesChangeDetail,
@@ -26,12 +30,13 @@ interface TestResult {
 }
 
 const results: TestResult[] = [];
+let testChain: Promise<void> = Promise.resolve();
 
 function test(name: string, fn: () => void | Promise<void>): void {
   results.push({ name, passed: false, detail: "pending" });
   const idx = results.length - 1;
 
-  void (async () => {
+  testChain = testChain.then(async () => {
     try {
       await fn();
       results[idx] = { name, passed: true };
@@ -39,7 +44,7 @@ function test(name: string, fn: () => void | Promise<void>): void {
       results[idx] = { name, passed: false, detail: String(err) };
     }
     renderResults();
-  })();
+  });
 }
 
 function assert(
@@ -127,6 +132,96 @@ function textMsg(id: string, text: string): ChatMessage {
     parts: [{ type: "text", id: `t-${id}`, text }],
     streaming: false,
   };
+}
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function withIsolatedChat(
+  fn: (chat: Chat) => void | Promise<void>,
+): Promise<void> {
+  const container = document.createElement("div");
+  container.style.cssText = [
+    "position: fixed",
+    "left: -10000px",
+    "top: 0",
+    "width: 400px",
+    "height: 600px",
+  ].join(";");
+  document.body.appendChild(container);
+
+  const chat = document.createElement("i-chat") as Chat;
+  container.appendChild(chat);
+
+  try {
+    await waitForUpdate(chat);
+    await fn(chat);
+  } finally {
+    container.remove();
+  }
+}
+
+async function activeConfirmation(chat: Chat): Promise<ChatConfirmation> {
+  await waitForUpdate(chat);
+  const confirmation = chat.shadowRoot?.querySelector(
+    "i-chat-confirmation",
+  ) as ChatConfirmation | null;
+  assert(confirmation, "i-chat-confirmation should be rendered");
+  await waitForUpdate(confirmation);
+  await nextFrame();
+  return confirmation;
+}
+
+function confirmationButton(
+  confirmation: ChatConfirmation,
+  action: "confirm" | "cancel",
+): HTMLButtonElement {
+  const button = confirmation.shadowRoot?.querySelector(
+    `.chat-confirmation__btn--${action}`,
+  ) as HTMLButtonElement | null;
+  assert(button, `${action} button should be rendered`);
+  return button;
+}
+
+function confirmationTitle(confirmation: ChatConfirmation): string {
+  return (
+    confirmation.shadowRoot?.querySelector(".chat-confirmation__title")
+      ?.textContent ?? ""
+  ).trim();
+}
+
+function isVisuallyHidden(element: HTMLElement | null): boolean {
+  if (!element || !element.isConnected) return true;
+  if (element.hidden || element.closest("[hidden]")) return true;
+  const style = getComputedStyle(element);
+  return (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    element.getClientRects().length === 0
+  );
+}
+
+function invokeSend(chat: Chat, content: string): Promise<void> {
+  return (
+    chat as unknown as {
+      _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
+    }
+  )._handleSend(
+    new CustomEvent("send", {
+      detail: { content },
+      bubbles: true,
+      composed: true,
+    }),
+  );
+}
+
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────
@@ -406,7 +501,319 @@ test("state: disabled reflects on input", async () => {
   assertEqual(inputEl?.disabled, true);
 });
 
-// 6. DOM attributes
+// 6. Confirmation lifecycle
+test("confirmation: renders panel and hides the default input", async () => {
+  await withIsolatedChat(async (chat) => {
+    const input = chat.shadowRoot?.querySelector(
+      "i-chat-input",
+    ) as HTMLElement | null;
+    assert(input, "default input should render before confirmation");
+    assert(
+      !isVisuallyHidden(input),
+      "default input should initially be visible",
+    );
+
+    const resultPromise = chat.requestConfirmation({
+      id: "render-default",
+      title: "Render default",
+    });
+    const confirmation = await activeConfirmation(chat);
+
+    assertEqual(confirmationTitle(confirmation), "Render default");
+    const activeInput = chat.shadowRoot?.querySelector(
+      "i-chat-input",
+    ) as HTMLElement | null;
+    assert(
+      isVisuallyHidden(activeInput),
+      "default input should be hidden while confirmation is active",
+    );
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
+test("confirmation: hides a custom input slot", async () => {
+  await withIsolatedChat(async (chat) => {
+    const customInput = document.createElement("button");
+    customInput.slot = "input";
+    customInput.textContent = "Custom input";
+    chat.appendChild(customInput);
+    await nextFrame();
+    await waitForUpdate(chat);
+
+    assert(
+      !isVisuallyHidden(customInput),
+      "custom input should initially be visible",
+    );
+
+    const resultPromise = chat.requestConfirmation({
+      id: "render-custom",
+      title: "Render custom",
+    });
+    await activeConfirmation(chat);
+
+    assert(
+      isVisuallyHidden(customInput),
+      "custom input should be hidden while confirmation is active",
+    );
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
+test("confirmation: Confirm and Cancel resolve the correct results", async () => {
+  await withIsolatedChat(async (chat) => {
+    const confirmPromise = chat.requestConfirmation({
+      id: "decision-confirm",
+      title: "Confirm this",
+    });
+    let confirmation = await activeConfirmation(chat);
+    confirmationButton(confirmation, "confirm").click();
+    const confirmed = await confirmPromise;
+    assertDeepEqual(
+      {
+        id: confirmed.id,
+        action: confirmed.action,
+        confirmed: confirmed.confirmed,
+      },
+      { id: "decision-confirm", action: "confirm", confirmed: true },
+    );
+
+    const cancelPromise = chat.requestConfirmation({
+      id: "decision-cancel",
+      title: "Cancel this",
+    });
+    confirmation = await activeConfirmation(chat);
+    confirmationButton(confirmation, "cancel").click();
+    const cancelled = await cancelPromise;
+    assertDeepEqual(
+      {
+        id: cancelled.id,
+        action: cancelled.action,
+        confirmed: cancelled.confirmed,
+      },
+      { id: "decision-cancel", action: "cancel", confirmed: false },
+    );
+  });
+});
+
+test("confirmation: Escape resolves the active request as cancel", async () => {
+  await withIsolatedChat(async (chat) => {
+    const resultPromise = chat.requestConfirmation({
+      id: "escape",
+      title: "Escape",
+    });
+    const confirmation = await activeConfirmation(chat);
+    const section = confirmation.shadowRoot?.querySelector("section");
+    assert(section, "confirmation section should be rendered");
+
+    section.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    const result = await resultPromise;
+    assertEqual(result.action, "cancel");
+    assertEqual(result.confirmed, false);
+  });
+});
+
+test("confirmation: Confirm button receives initial focus", async () => {
+  await withIsolatedChat(async (chat) => {
+    const resultPromise = chat.requestConfirmation({
+      id: "focus",
+      title: "Focus",
+    });
+    const confirmation = await activeConfirmation(chat);
+    const confirmButton = confirmationButton(confirmation, "confirm");
+
+    assertEqual(confirmation.shadowRoot?.activeElement, confirmButton);
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
+test("confirmation: Tab and Shift+Tab remain inside the dialog", async () => {
+  await withIsolatedChat(async (chat) => {
+    const resultPromise = chat.requestConfirmation({
+      id: "focus-trap",
+      title: "Focus trap",
+    });
+    const confirmation = await activeConfirmation(chat);
+    const cancelButton = confirmationButton(confirmation, "cancel");
+    const confirmButton = confirmationButton(confirmation, "confirm");
+
+    confirmButton.focus();
+    confirmButton.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      cancelButton,
+      "Tab from the last control should wrap to the first control",
+    );
+
+    cancelButton.focus();
+    cancelButton.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Tab",
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      confirmButton,
+      "Shift+Tab from the first control should wrap to the last control",
+    );
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
+test("confirmation: three requests render in strict FIFO order", async () => {
+  await withIsolatedChat(async (chat) => {
+    const firstPromise = chat.requestConfirmation({
+      id: "fifo-1",
+      title: "One",
+    });
+    const secondPromise = chat.requestConfirmation({
+      id: "fifo-2",
+      title: "Two",
+    });
+    const thirdPromise = chat.requestConfirmation({
+      id: "fifo-3",
+      title: "Three",
+    });
+
+    let confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "One");
+    confirmationButton(confirmation, "confirm").click();
+    const first = await firstPromise;
+
+    confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Two");
+    confirmationButton(confirmation, "cancel").click();
+    const second = await secondPromise;
+
+    confirmation = await activeConfirmation(chat);
+    assertEqual(confirmationTitle(confirmation), "Three");
+    confirmationButton(confirmation, "confirm").click();
+    const third = await thirdPromise;
+
+    assertDeepEqual(
+      [first, second, third].map(({ id, action }) => ({ id, action })),
+      [
+        { id: "fifo-1", action: "confirm" },
+        { id: "fifo-2", action: "cancel" },
+        { id: "fifo-3", action: "confirm" },
+      ],
+    );
+  });
+});
+
+test("confirmation: an active request blocks ordinary send", async () => {
+  await withIsolatedChat(async (chat) => {
+    const sends: string[] = [];
+    chat.addEventListener("send", (event) => {
+      sends.push((event as CustomEvent<{ content: string }>).detail.content);
+    });
+
+    const resultPromise = chat.requestConfirmation({
+      id: "block-send",
+      title: "Block send",
+    });
+    await activeConfirmation(chat);
+
+    await invokeSend(chat, "must not send");
+    assertDeepEqual(sends, []);
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
+test("confirmation: opening and closing does not change busy", async () => {
+  await withIsolatedChat(async (chat) => {
+    const busyChanges: boolean[] = [];
+    chat.addEventListener("busy-change", (event) => {
+      busyChanges.push((event as CustomEvent<{ busy: boolean }>).detail.busy);
+    });
+
+    const resultPromise = chat.requestConfirmation({
+      id: "busy-independent",
+      title: "Busy independent",
+    });
+    const confirmation = await activeConfirmation(chat);
+    assertEqual(chat.busy, false);
+
+    confirmationButton(confirmation, "cancel").click();
+    await resultPromise;
+    await waitForUpdate(chat);
+
+    assertEqual(chat.busy, false);
+    assertDeepEqual(busyChanges, []);
+  });
+});
+
+test("confirmation: async beforeSend rechecks active request", async () => {
+  await withIsolatedChat(async (chat) => {
+    const entered = deferred();
+    const release = deferred();
+    const sends: string[] = [];
+    const busyChanges: boolean[] = [];
+
+    chat.use({
+      name: "confirmation-before-send",
+      async beforeSend(content) {
+        entered.resolve();
+        await release.promise;
+        return content;
+      },
+    });
+    chat.addEventListener("send", (event) => {
+      sends.push((event as CustomEvent<{ content: string }>).detail.content);
+    });
+    chat.addEventListener("busy-change", (event) => {
+      busyChanges.push((event as CustomEvent<{ busy: boolean }>).detail.busy);
+    });
+
+    const sendPromise = invokeSend(chat, "pending");
+    await entered.promise;
+    assertEqual(chat.busy, true);
+
+    const confirmationPromise = chat.requestConfirmation({
+      id: "during-before-send",
+      title: "Opened while waiting",
+    });
+    await activeConfirmation(chat);
+
+    release.resolve();
+    await sendPromise;
+
+    assertDeepEqual(sends, []);
+    assertEqual(chat.busy, false);
+    assertDeepEqual(busyChanges, [true, false]);
+
+    chat.clearConfirmations();
+    const result: ChatConfirmationResult = await confirmationPromise;
+    assertEqual(result.action, "cancel");
+  });
+});
+
+// 7. DOM attributes
 test("dom: data-message-id and data-part-id are present", async () => {
   const chat = createChat();
   chat.addMessage({
