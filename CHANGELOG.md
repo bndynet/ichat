@@ -30,6 +30,11 @@ All notable changes to this project are documented here. This project follows
 
 ### Changed
 
+- `<i-chat>` keeps the default composer and custom `slot="input"` content
+  mounted while a composer interaction is active, hiding and inerting the
+  composer instead of removing it. Default composer drafts now survive
+  confirmations, and active voice recognition stops when an interaction takes
+  over the composer area.
 - `ChatRunController` only advances its lifecycle once the underlying mutation
   is accepted. A controlled host that rejects a proposal with `preventDefault()`
   leaves a rejected `start()` in `idle` and a rejected

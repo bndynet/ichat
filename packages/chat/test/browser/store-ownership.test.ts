@@ -20,6 +20,7 @@ import type {
   MessagesChangeDetail,
   TextPart,
 } from "@bndynet/ichat-messages";
+import type { ChatInput } from "@bndynet/ichat-input";
 
 // ── Test harness ──────────────────────────────────────────────────────────
 
@@ -222,6 +223,22 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
     resolve = done;
   });
   return { promise, resolve };
+}
+
+function defaultComposer(chat: Chat): ChatInput {
+  const input = chat.shadowRoot?.querySelector(
+    "i-chat-input",
+  ) as ChatInput | null;
+  assert(input, "default i-chat-input should be rendered");
+  return input;
+}
+
+function composerRegion(chat: Chat): HTMLElement {
+  const composer = chat.shadowRoot?.querySelector(
+    ".chat-composer",
+  ) as HTMLElement | null;
+  assert(composer, "stable chat composer region should be rendered");
+  return composer;
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────
@@ -560,6 +577,285 @@ test("confirmation: hides a custom input slot", async () => {
 
     chat.clearConfirmations();
     await resultPromise;
+  });
+});
+
+test("composer lifecycle: default input identity and draft survive confirmation", async () => {
+  await withIsolatedChat(async (chat) => {
+    const input = defaultComposer(chat);
+    await waitForUpdate(input);
+    const textarea = input.shadowRoot?.querySelector(
+      ".chat-input-textarea",
+    ) as HTMLTextAreaElement | null;
+    assert(textarea, "default composer textarea should be rendered");
+
+    input.setValue("preserved draft");
+    assertEqual(textarea.value, "preserved draft");
+
+    const resultPromise = chat.requestConfirmation({
+      id: "preserve-draft",
+      title: "Preserve draft",
+    });
+    await activeConfirmation(chat);
+    await waitForUpdate(input);
+
+    assertEqual(defaultComposer(chat), input);
+    assertEqual(textarea.value, "preserved draft");
+
+    chat.clearConfirmations();
+    await resultPromise;
+    await waitForUpdate(chat);
+    await waitForUpdate(input);
+
+    assertEqual(defaultComposer(chat), input);
+    assertEqual(textarea.value, "preserved draft");
+    assert(
+      !isVisuallyHidden(input),
+      "default input should be restored after confirmation",
+    );
+  });
+});
+
+test("composer lifecycle: custom input stays connected during confirmation", async () => {
+  interface LifecycleProbe extends HTMLElement {
+    connectedCount: number;
+    disconnectedCount: number;
+  }
+
+  const tag = "i-chat-composer-lifecycle-probe";
+  if (!customElements.get(tag)) {
+    customElements.define(
+      tag,
+      class extends HTMLElement {
+        connectedCount = 0;
+        disconnectedCount = 0;
+
+        connectedCallback(): void {
+          this.connectedCount += 1;
+        }
+
+        disconnectedCallback(): void {
+          this.disconnectedCount += 1;
+        }
+      },
+    );
+  }
+
+  await withIsolatedChat(async (chat) => {
+    const customInput = document.createElement(tag) as LifecycleProbe;
+    customInput.slot = "input";
+    chat.appendChild(customInput);
+    await nextFrame();
+    await waitForUpdate(chat);
+
+    assertEqual(customInput.connectedCount, 1);
+    assertEqual(customInput.disconnectedCount, 0);
+
+    const resultPromise = chat.requestConfirmation({
+      id: "custom-input-lifecycle",
+      title: "Keep custom input mounted",
+    });
+    await activeConfirmation(chat);
+
+    assertEqual(customInput.connectedCount, 1);
+    assertEqual(customInput.disconnectedCount, 0);
+    assert(customInput.isConnected, "custom input should remain connected");
+
+    chat.clearConfirmations();
+    await resultPromise;
+    await waitForUpdate(chat);
+
+    assertEqual(customInput.connectedCount, 1);
+    assertEqual(customInput.disconnectedCount, 0);
+    assert(customInput.isConnected, "custom input should still be connected");
+  });
+});
+
+test("composer lifecycle: active interaction locks the default composer", async () => {
+  await withIsolatedChat(async (chat) => {
+    const composer = composerRegion(chat);
+    const input = defaultComposer(chat);
+    await waitForUpdate(input);
+    const textarea = input.shadowRoot?.querySelector(
+      ".chat-input-textarea",
+    ) as HTMLTextAreaElement | null;
+    assert(textarea, "default composer textarea should be rendered");
+
+    const resultPromise = chat.requestConfirmation({
+      id: "composer-lock",
+      title: "Lock composer",
+    });
+    await activeConfirmation(chat);
+    await waitForUpdate(input);
+
+    assertEqual(composer.hidden, true);
+    assertEqual(composer.inert, true);
+    assertEqual(composer.getAttribute("aria-hidden"), "true");
+    assertEqual(input.disabled, true);
+    assertEqual(textarea.disabled, true);
+
+    textarea.focus();
+    assert(
+      input.shadowRoot?.activeElement !== textarea,
+      "disabled textarea should not receive focus",
+    );
+
+    chat.clearConfirmations();
+    await resultPromise;
+    await waitForUpdate(chat);
+    await waitForUpdate(input);
+
+    assertEqual(composer.hidden, false);
+    assertEqual(composer.inert, false);
+    assertEqual(composer.getAttribute("aria-hidden"), "false");
+    assertEqual(input.disabled, false);
+    assertEqual(textarea.disabled, false);
+  });
+});
+
+test("composer lifecycle: active interaction stops voice recognition", async () => {
+  let startCount = 0;
+  let abortCount = 0;
+  const previousDescriptor = Object.getOwnPropertyDescriptor(
+    window,
+    "SpeechRecognition",
+  );
+
+  class MockSpeechRecognition {
+    continuous = false;
+    interimResults = false;
+    lang = "";
+    onstart: ((event: Event) => void) | null = null;
+    onresult: ((event: Event) => void) | null = null;
+    onerror: ((event: Event) => void) | null = null;
+    onend: ((event: Event) => void) | null = null;
+
+    start(): void {
+      startCount += 1;
+    }
+
+    stop(): void {
+      /* no-op */
+    }
+
+    abort(): void {
+      abortCount += 1;
+    }
+  }
+
+  Object.defineProperty(window, "SpeechRecognition", {
+    configurable: true,
+    writable: true,
+    value: MockSpeechRecognition,
+  });
+
+  try {
+    await withIsolatedChat(async (chat) => {
+      const input = defaultComposer(chat);
+      await waitForUpdate(input);
+      const voiceButton = input.shadowRoot?.querySelector(
+        ".chat-input-voice",
+      ) as HTMLButtonElement | null;
+      assert(voiceButton, "voice button should render with the mock API");
+
+      voiceButton.click();
+      await waitForUpdate(input);
+      assertEqual(startCount, 1);
+
+      const resultPromise = chat.requestConfirmation({
+        id: "stop-voice",
+        title: "Stop voice input",
+      });
+      await activeConfirmation(chat);
+      await waitForUpdate(input);
+
+      assertEqual(abortCount, 1);
+      assertEqual(
+        input.shadowRoot?.querySelector(".chat-input-listening-overlay"),
+        null,
+      );
+
+      chat.clearConfirmations();
+      await resultPromise;
+    });
+  } finally {
+    if (previousDescriptor) {
+      Object.defineProperty(window, "SpeechRecognition", previousDescriptor);
+    } else {
+      delete (window as Window & { SpeechRecognition?: unknown })
+        .SpeechRecognition;
+    }
+  }
+});
+
+test("composer lifecycle: queued confirmations never flash the input", async () => {
+  await withIsolatedChat(async (chat) => {
+    const composer = composerRegion(chat);
+    const input = defaultComposer(chat);
+    const hiddenStates: boolean[] = [];
+    const observer = new MutationObserver(() => {
+      hiddenStates.push(composer.hidden);
+    });
+    observer.observe(composer, {
+      attributes: true,
+      attributeFilter: ["hidden"],
+    });
+
+    try {
+      const firstPromise = chat.requestConfirmation({
+        id: "stable-queue-1",
+        title: "One",
+      });
+      const secondPromise = chat.requestConfirmation({
+        id: "stable-queue-2",
+        title: "Two",
+      });
+      const thirdPromise = chat.requestConfirmation({
+        id: "stable-queue-3",
+        title: "Three",
+      });
+
+      let confirmation = await activeConfirmation(chat);
+      assertEqual(composer.hidden, true);
+      assertEqual(defaultComposer(chat), input);
+
+      confirmationButton(confirmation, "confirm").click();
+      await firstPromise;
+      confirmation = await activeConfirmation(chat);
+      assertEqual(confirmationTitle(confirmation), "Two");
+      assertEqual(composer.hidden, true);
+      assertEqual(defaultComposer(chat), input);
+      assert(
+        hiddenStates.every(Boolean),
+        "input should not become visible between queued requests",
+      );
+
+      confirmationButton(confirmation, "cancel").click();
+      await secondPromise;
+      confirmation = await activeConfirmation(chat);
+      assertEqual(confirmationTitle(confirmation), "Three");
+      assertEqual(composer.hidden, true);
+      assertEqual(defaultComposer(chat), input);
+      assert(
+        hiddenStates.every(Boolean),
+        "input should remain hidden until the queue is empty",
+      );
+
+      confirmationButton(confirmation, "confirm").click();
+      await thirdPromise;
+      await waitForUpdate(chat);
+      await nextFrame();
+
+      assertEqual(composer.hidden, false);
+      assertEqual(defaultComposer(chat), input);
+      assert(
+        !isVisuallyHidden(input),
+        "input should return after the final queued request",
+      );
+      assertEqual(hiddenStates.at(-1), false);
+    } finally {
+      observer.disconnect();
+    }
   });
 });
 
