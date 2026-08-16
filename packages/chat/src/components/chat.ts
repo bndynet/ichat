@@ -924,7 +924,6 @@ export class Chat<
   }
 
   override disconnectedCallback(): void {
-    this._confirmCtrl.cancelAll();
     this._pendingCommands.clear();
     // Dispose all plugins. Errors in individual teardowns are caught so
     // one broken plugin cannot prevent the rest from cleaning up.

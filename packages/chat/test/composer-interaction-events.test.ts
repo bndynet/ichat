@@ -273,3 +273,49 @@ test("keeps duplicate confirmation IDs public in generic queue events", async ()
     ],
   );
 });
+
+test("disconnect reports disconnected for confirmations and custom requests", async () => {
+  const chat = new Chat();
+  const results: ChatComposerInteractionResult[] = [];
+  const decisions: ChatConfirmationResult[] = [];
+  chat.addEventListener("composer-interaction-result", (event) => {
+    results.push((event as CustomEvent<ChatComposerInteractionResult>).detail);
+  });
+  chat.addEventListener("confirmation-decision", (event) => {
+    decisions.push((event as CustomEvent<ChatConfirmationResult>).detail);
+  });
+
+  const confirmationPromise = chat.requestConfirmation({
+    id: "disconnect-confirmation",
+    title: "Disconnect confirmation",
+  });
+  const customPromise = chat.requestComposerInteraction({
+    id: "disconnect-custom",
+    kind: "x-disconnect",
+  });
+
+  chat.disconnectedCallback();
+  const [confirmation, custom] = await Promise.all([
+    confirmationPromise,
+    customPromise,
+  ]);
+
+  assert.equal(confirmation.action, "cancel");
+  assert.equal(custom.status, "cancelled");
+  assert.equal(
+    custom.status === "cancelled" ? custom.reason : undefined,
+    "disconnected",
+  );
+  assert.deepEqual(
+    results.map((result) => ({
+      id: result.id,
+      reason: result.status === "cancelled" ? result.reason : result.status,
+    })),
+    [
+      { id: "disconnect-confirmation", reason: "disconnected" },
+      { id: "disconnect-custom", reason: "disconnected" },
+    ],
+  );
+  assert.deepEqual(decisions, []);
+  assert.equal(chat.activeComposerInteraction, null);
+});
