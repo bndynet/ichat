@@ -113,7 +113,11 @@ export function progressPlugin(md: MarkdownIt): void {
       if (closeIdx === -1) continue;
 
       let hasProgress = false;
-      let stepIdx = 0;
+      const items: Array<{
+        openIdx: number;
+        closeIdx: number;
+        status: ProgressStatus;
+      }> = [];
 
       let j = i + 1;
       while (j < closeIdx) {
@@ -149,21 +153,27 @@ export function progressPlugin(md: MarkdownIt): void {
           break;
         }
 
-        tokens[j].meta = {
-          ...tokens[j].meta,
-          progress: true,
-          progressStep: stepIdx,
-          progressStatus: status,
-        };
-        tokens[liClose].meta = { ...tokens[liClose].meta, progress: true };
-        stepIdx++;
+        items.push({ openIdx: j, closeIdx: liClose, status });
         j = liClose + 1;
       }
+
       if (hasProgress || tokens[i].meta?.bid) {
+        for (const [stepIdx, item] of items.entries()) {
+          tokens[item.openIdx].meta = {
+            ...tokens[item.openIdx].meta,
+            progress: true,
+            progressStep: stepIdx,
+            progressStatus: item.status,
+          };
+          tokens[item.closeIdx].meta = {
+            ...tokens[item.closeIdx].meta,
+            progress: true,
+          };
+        }
         tokens[i].meta = {
           ...tokens[i].meta,
           progress: true,
-          stepCount: stepIdx,
+          stepCount: items.length,
         };
         tokens[closeIdx].meta = { ...tokens[closeIdx].meta, progress: true };
       }
