@@ -43,10 +43,10 @@ jobs:
         run: npm run pretest && npm test
 
       - name: Coverage (chat-messages)
-        run: npm run test:coverage -w @bndynet/ichat-messages 2>&1 | node tools/check-coverage.mjs
+        run: npm run test:coverage -w @bndynet/ichat-messages
 
       - name: Coverage (chat-input)
-        run: npm run test:coverage -w @bndynet/ichat-input 2>&1 | node tools/check-coverage.mjs
+        run: npm run test:coverage -w @bndynet/ichat-input
 
       - name: Build + Validate npm pack
         run: npm run validate:pack

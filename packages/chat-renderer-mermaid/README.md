@@ -45,11 +45,6 @@ registerCodeRenderer(createMermaidRenderer({ codeToggle: false }));
 
 All runtime dependencies are auto-installed (`mermaid`, `markdown-it`). `@bndynet/ichat-messages` is a peer dependency.
 
-| Package                   | Version  |
-| ------------------------- | -------- |
-| `@bndynet/ichat-messages` | `^3.1.0` |
-| `markdown-it`             | `>=14`   |
-
 The renderer uses the library's audited `trusted: true` path so the
 `<i-chat-mermaid>` custom element is preserved. Mermaid source is HTML-escaped
 before insertion; consumers do not need to change the renderer security config.

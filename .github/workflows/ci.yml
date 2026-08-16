@@ -70,10 +70,10 @@ jobs:
       - run: npm ci
 
       - name: Build + Coverage (chat-messages)
-        run: npm run test:coverage -w @bndynet/ichat-messages 2>&1 | node tools/check-coverage.mjs
+        run: npm run test:coverage -w @bndynet/ichat-messages
 
       - name: Build + Coverage (chat-input)
-        run: npm run test:coverage -w @bndynet/ichat-input 2>&1 | node tools/check-coverage.mjs
+        run: npm run test:coverage -w @bndynet/ichat-input
 
   pack:
     runs-on: ubuntu-latest

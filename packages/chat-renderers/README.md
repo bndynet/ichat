@@ -31,9 +31,8 @@ import "@bndynet/ichat-renderers"; // auto-registers kpi, kpis, form
 
 ## Peer dependencies
 
-| Package                   | Version  |
-| ------------------------- | -------- |
-| `@bndynet/ichat-messages` | `^2.1.1` |
+`@bndynet/ichat-messages` is a peer dependency; the required version range is
+declared in `package.json`.
 
 ## License
 
