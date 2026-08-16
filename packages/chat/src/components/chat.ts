@@ -642,8 +642,8 @@ export class Chat<
   showError(text: string, options?: { duration?: number }): void {
     this._reportErrorThroughMiddleware(text);
     if (!this._isChildReady()) {
-      // Replace any previous pending error with the newest.
-      this._pendingCommands.clear();
+      // Replace any previous pending error without dropping unrelated
+      // presentation commands such as replyMessage().
       this._pendingCommands.removeByKind("show-error", "dismiss-error");
       this._pendingCommands.enqueue({ kind: "show-error", text, options });
       return;

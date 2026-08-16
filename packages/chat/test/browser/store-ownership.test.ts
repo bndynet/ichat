@@ -255,6 +255,41 @@ function composerInteractionController(
 
 // ── Test suites ───────────────────────────────────────────────────────────
 
+test("pre-ready: showError preserves a queued reply", async () => {
+  const host = document.getElementById("chat-host")!;
+  host.innerHTML = "";
+
+  const chat = document.createElement("i-chat") as Chat;
+  chat.messages = [textMsg("source", "original")];
+  chat.replyMessage("source", textMsg("quoted", "quoted text"));
+  chat.showError("initialization failed");
+  host.appendChild(chat);
+
+  await waitForUpdate(chat);
+  const messagesEl = chat.shadowRoot?.querySelector(
+    "i-chat-messages",
+  ) as HTMLElement | null;
+  assert(messagesEl, "i-chat-messages should be rendered");
+  await waitForUpdate(messagesEl);
+
+  const messageEl = messagesEl.shadowRoot?.querySelector(
+    '[data-message-id="source"]',
+  ) as HTMLElement | null;
+  assert(messageEl, "source message should be rendered");
+  await waitForUpdate(messageEl);
+
+  assert(
+    messageEl.shadowRoot?.querySelector(".message-reply"),
+    "reply queued before first render should remain visible",
+  );
+  assertEqual(
+    messagesEl.shadowRoot
+      ?.querySelector(".error-banner-text")
+      ?.textContent?.trim(),
+    "initialization failed",
+  );
+});
+
 // 1. Uncontrolled mode — rendered DOM
 test("uncontrolled: addMessage renders in child messages", async () => {
   const chat = createChat();

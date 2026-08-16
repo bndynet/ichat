@@ -96,6 +96,7 @@ type TestChatElement = HTMLElement & {
   clearComposerInteractions(
     reason?: ChatComposerInteractionCancelReason,
   ): number;
+  replyMessage(id: string, info?: Partial<TestMessage>): string;
   showError(text: string, options?: { duration?: number }): void;
   addErrorMessage(error: string, text?: string): void;
   _handleSend(event: CustomEvent<{ content: string }>): Promise<void>;
@@ -1062,6 +1063,33 @@ assert.ok(el.ready instanceof Promise, "ready should be a Promise");
   chat.showError("ui error");
   assert.equal(errors.length, 2);
   assert.equal(errors[1]?.error, "ui error");
+}
+
+// Pre-render showError replaces only pending error commands and preserves
+// unrelated presentation commands such as replyMessage.
+{
+  const chat = createChat();
+  chat.replyMessage("source", {
+    id: "quoted",
+    role: "assistant",
+    parts: [textPart("quoted text")],
+  });
+  chat.showError("first error");
+  chat.showError("latest error");
+
+  const commands = (
+    chat as unknown as {
+      _pendingCommands: {
+        drain(): Array<{ kind: string; text?: string }>;
+      };
+    }
+  )._pendingCommands.drain();
+
+  assert.deepEqual(
+    commands.map((command) => command.kind),
+    ["reply-message", "show-error"],
+  );
+  assert.equal(commands[1]?.text, "latest error");
 }
 
 // onError + afterMessageAdded: both fire for addErrorMessage, in that order.
