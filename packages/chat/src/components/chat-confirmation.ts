@@ -68,7 +68,7 @@ export class ChatConfirmation extends LitElement {
     // Focus trap: wrap Tab / Shift+Tab within the dialog
     if (e.key === "Tab") {
       const focusable = section.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        'summary, button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (focusable.length === 0) return;
       const first = focusable[0];

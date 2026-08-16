@@ -1683,6 +1683,54 @@ test("confirmation: Tab and Shift+Tab remain inside the dialog", async () => {
   });
 });
 
+test("confirmation: structured Details remains reachable inside the focus trap", async () => {
+  await withIsolatedChat(async (chat) => {
+    const resultPromise = chat.requestConfirmation({
+      id: "focus-trap-details",
+      title: "Focus trap details",
+      details: { path: "/tmp/report.json" },
+    });
+    const confirmation = await activeConfirmation(chat);
+    const summary = confirmation.shadowRoot?.querySelector(
+      "summary",
+    ) as HTMLElement | null;
+    assert(summary, "structured confirmation details should render a summary");
+    const confirmButton = confirmationButton(confirmation, "confirm");
+
+    confirmButton.focus();
+    confirmButton.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      summary,
+      "Tab from the last action should wrap to the Details summary",
+    );
+
+    summary.focus();
+    summary.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Tab",
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    assertEqual(
+      confirmation.shadowRoot?.activeElement,
+      confirmButton,
+      "Shift+Tab from Details should wrap to the last action",
+    );
+
+    chat.clearConfirmations();
+    await resultPromise;
+  });
+});
+
 test("confirmation: three requests render in strict FIFO order", async () => {
   await withIsolatedChat(async (chat) => {
     const firstPromise = chat.requestConfirmation({
