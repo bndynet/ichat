@@ -32,6 +32,34 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/**
+ * Minimal runtime boundary for backend-provided form schemas. Deeper business
+ * validation remains the backend's responsibility; this only prevents unsafe
+ * iteration and string rendering in the component.
+ */
+function hasRenderableFormFields(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const fields = (value as Record<string, unknown>).fields;
+  if (!Array.isArray(fields)) return false;
+
+  return fields.every((field) => {
+    if (!field || typeof field !== "object" || Array.isArray(field)) {
+      return false;
+    }
+
+    const item = field as Record<string, unknown>;
+    return (
+      typeof item.name === "string" &&
+      typeof item.type === "string" &&
+      (item.label === undefined || typeof item.label === "string") &&
+      (item.options === undefined ||
+        (Array.isArray(item.options) &&
+          item.options.every((option) => typeof option === "string")))
+    );
+  });
+}
+
 // ── Shadow-DOM styles ─────────────────────────────────────────────────────────
 
 const FORM_STYLES = `
@@ -400,7 +428,9 @@ class ChatFormElement extends HTMLElement {
     const raw = this.getAttribute("data") ?? "";
     if (!raw) return null;
     try {
-      const schema = JSON.parse(raw) as FormSchema;
+      const parsed: unknown = JSON.parse(raw);
+      if (!hasRenderableFormFields(parsed)) return null;
+      const schema = parsed as FormSchema;
       const formId =
         schema.id ?? this.getAttribute("data-form-id") ?? nextFormId();
       return { schema, formId };
