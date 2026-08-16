@@ -543,14 +543,14 @@ function clearAll() {
   display: grid;
   gap: 8px;
   padding: 10px 12px;
-  border-top: 1px solid var(--ichat-border, #d9d9df);
-  background: var(--ichat-input-bg, #fff);
+  border-top: 1px solid var(--chat-border, #d9d9df);
+  background: var(--chat-input-bg, var(--chat-surface, #fff));
 }
 
 .custom-composer__label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--ichat-muted, #666);
+  color: var(--chat-text-secondary, #666);
 }
 
 .custom-composer__textarea {
@@ -559,10 +559,10 @@ function clearAll() {
   min-height: 38px;
   padding: 8px 10px;
   resize: vertical;
-  border: 1px solid var(--ichat-border, #d9d9df);
+  border: 1px solid var(--chat-border, #d9d9df);
   border-radius: 8px;
-  color: var(--ichat-text, #1f2328);
-  background: var(--ichat-input-bg, #fff);
+  color: var(--chat-text, #1f2328);
+  background: var(--chat-input-bg, var(--chat-surface, #fff));
   font: inherit;
 }
 
@@ -576,9 +576,9 @@ function clearAll() {
 .interaction-panel {
   display: block;
   padding: 12px;
-  border-top: 1px solid var(--ichat-border, #d9d9df);
-  color: var(--ichat-text, #1f2328);
-  background: var(--ichat-input-bg, #fff);
+  border-top: 1px solid var(--chat-border, #d9d9df);
+  color: var(--chat-text, #1f2328);
+  background: var(--chat-input-bg, var(--chat-surface, #fff));
 }
 
 .interaction-form {
@@ -593,7 +593,7 @@ function clearAll() {
 
 .interaction-panel__heading span,
 .selector-option small {
-  color: var(--ichat-muted, #666);
+  color: var(--chat-text-secondary, #666);
   font-size: 12px;
 }
 
@@ -613,7 +613,7 @@ function clearAll() {
 .address-grid input {
   min-width: 0;
   padding: 8px 9px;
-  border: 1px solid var(--ichat-border, #d9d9df);
+  border: 1px solid var(--chat-border, #d9d9df);
   border-radius: 7px;
   color: inherit;
   background: inherit;
@@ -631,7 +631,7 @@ function clearAll() {
   align-items: flex-start;
   gap: 8px;
   padding: 9px;
-  border: 1px solid var(--ichat-border, #d9d9df);
+  border: 1px solid var(--chat-border, #d9d9df);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -643,27 +643,27 @@ function clearAll() {
 
 .interaction-panel button {
   padding: 7px 12px;
-  border: 1px solid var(--ichat-border, #d9d9df);
+  border: 1px solid var(--chat-border, #d9d9df);
   border-radius: 7px;
   cursor: pointer;
   font: inherit;
 }
 
 .interaction-panel button.secondary {
-  color: var(--ichat-text, #1f2328);
+  color: var(--chat-text, #1f2328);
   background: transparent;
 }
 
 .interaction-panel button.primary {
-  border-color: var(--ichat-primary, #2563eb);
+  border-color: var(--chat-primary, #2563eb);
   color: #fff;
-  background: var(--ichat-primary, #2563eb);
+  background: var(--chat-primary, #2563eb);
 }
 
 .interaction-panel input:focus-visible,
 .interaction-panel button:focus-visible,
 .custom-composer__textarea:focus-visible {
-  outline: 2px solid var(--ichat-primary, #2563eb);
+  outline: 2px solid var(--chat-primary, #2563eb);
   outline-offset: 2px;
 }
 
