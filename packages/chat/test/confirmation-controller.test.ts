@@ -96,6 +96,36 @@ test("delegates confirmation requests to the shared composer queue", async () =>
   assert.equal(composer.active, null);
 });
 
+test("preserves duplicate public confirmation IDs with unique queue IDs", async () => {
+  const { composer, controller } = createController();
+  const firstPromise = controller.request({
+    id: "duplicate",
+    title: "First duplicate",
+  });
+  const secondPromise = controller.request({
+    id: "duplicate",
+    title: "Second duplicate",
+  });
+
+  assert.equal(composer.active?.id, "duplicate");
+  assert.equal(composer.queue.length, 1);
+  assert.notEqual(composer.queue[0].id, "duplicate");
+  assert.notEqual(composer.queue[0].id, composer.active?.id);
+  assert.equal(controller.activeRequest?.id, "duplicate");
+
+  controller.settle("confirm");
+  const first = await firstPromise;
+  assert.equal(first.id, "duplicate");
+  assert.equal(first.request.id, "duplicate");
+  assert.equal(controller.activeRequest?.id, "duplicate");
+
+  controller.settle("cancel");
+  const second = await secondPromise;
+  assert.equal(second.id, "duplicate");
+  assert.equal(second.request.id, "duplicate");
+  assert.equal(composer.active, null);
+});
+
 test("cancelAll leaves custom composer interactions untouched", async () => {
   const { composer, controller } = createController();
   const customPromise = composer.request({ id: "custom", kind: "x-form" });

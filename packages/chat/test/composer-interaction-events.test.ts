@@ -228,3 +228,48 @@ test("keeps confirmation events while also emitting generic events", async () =>
     "cleared",
   );
 });
+
+test("keeps duplicate confirmation IDs public in generic queue events", async () => {
+  const chat = new Chat();
+  const changes: ChatComposerInteractionChangeDetail[] = [];
+  const results: ChatComposerInteractionResult[] = [];
+  chat.addEventListener("composer-interaction-change", (event) => {
+    changes.push(
+      (event as CustomEvent<ChatComposerInteractionChangeDetail>).detail,
+    );
+  });
+  chat.addEventListener("composer-interaction-result", (event) => {
+    results.push((event as CustomEvent<ChatComposerInteractionResult>).detail);
+  });
+
+  const firstPromise = chat.requestConfirmation({
+    id: "generic-duplicate",
+    title: "First duplicate",
+  });
+  const secondPromise = chat.requestConfirmation({
+    id: "generic-duplicate",
+    title: "Second duplicate",
+  });
+
+  assert.equal(changes.at(-1)?.active?.id, "generic-duplicate");
+  assert.deepEqual(
+    changes.at(-1)?.queue.map((request) => request.id),
+    ["generic-duplicate"],
+  );
+
+  confirmationController(chat).settle("confirm");
+  const first = await firstPromise;
+  assert.equal(first.id, "generic-duplicate");
+  assert.equal(changes.at(-1)?.active?.id, "generic-duplicate");
+
+  confirmationController(chat).settle("cancel");
+  const second = await secondPromise;
+  assert.equal(second.id, "generic-duplicate");
+  assert.deepEqual(
+    results.map((result) => ({ id: result.id, requestId: result.request.id })),
+    [
+      { id: "generic-duplicate", requestId: "generic-duplicate" },
+      { id: "generic-duplicate", requestId: "generic-duplicate" },
+    ],
+  );
+});

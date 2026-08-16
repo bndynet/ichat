@@ -1,85 +1,67 @@
-## Request a custom composer interaction
+## Address form
 
-Requests contain data only. The host renders the active request through the `composer-interaction` slot and completes it with the active request ID.
+`x-address-form` is a request kind, not a Web Component.
 
-```js
-const result = await chat.requestComposerInteraction({
-  kind: "x-address-form",
-  ariaLabel: "Shipping address form",
-  payload: {
-    title: "Shipping address",
-    defaults: { city: "London", country: "United Kingdom" },
-  },
-});
+```html
+<button id="open-address" type="button">Open address form</button>
 
-if (result.status === "completed") {
-  console.log("Address:", result.value);
-}
-```
-
-In Vue, key the renderer by request ID so local form state resets when FIFO advances to the next request.
-
-```vue
-<section
-  v-if="active?.kind === 'x-address-form'"
-  :key="active.id"
-  slot="composer-interaction"
->
-  <form @submit.prevent="completeAddress">
-    <!-- Render trusted host UI from the data-only payload. -->
+<i-chat id="chat" style="display: block; height: 28rem">
+  <form id="address-form" aria-label="Shipping address form" hidden>
+    <label>City <input name="city" required /></label>
+    <label>Country <input name="country" required /></label>
+    <button id="cancel-address" type="button">Cancel</button>
+    <button type="submit">Use address</button>
   </form>
-</section>
-```
+</i-chat>
 
-## Complete or cancel from the slotted renderer
+<script type="module">
+  import "@bndynet/ichat";
 
-The events must bubble, cross the shadow boundary, and carry the active request ID. Stale or mismatched IDs are ignored.
+  const chat = document.querySelector("#chat");
+  const form = document.querySelector("#address-form");
+  let activeId = null;
 
-```js
-function completeFrom(target, active, value) {
-  target.dispatchEvent(
-    new CustomEvent("composer-interaction-complete", {
-      detail: { id: active.id, value },
-      bubbles: true,
-      composed: true,
-    }),
-  );
-}
+  chat.addEventListener("composer-interaction-change", (event) => {
+    const active = event.detail.active;
+    const visible = active?.kind === "x-address-form";
 
-function cancelFrom(target, active) {
-  target.dispatchEvent(
-    new CustomEvent("composer-interaction-cancel", {
-      detail: { id: active.id },
-      bubbles: true,
-      composed: true,
-    }),
-  );
-}
-```
+    form.hidden = !visible;
+    if (!visible) {
+      form.removeAttribute("slot");
+      activeId = null;
+      return;
+    }
 
-## Queue custom and confirmation requests together
+    form.slot = "composer-interaction";
+    activeId = active.id;
+    form.elements.city.value = active.payload?.defaults?.city ?? "";
+    form.elements.country.value = active.payload?.defaults?.country ?? "";
+  });
 
-Both APIs share one FIFO. `clearConfirmations()` remains confirmation-only, while `clearComposerInteractions()` clears the whole queue.
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    chat.completeComposerInteraction(
+      activeId,
+      Object.fromEntries(new FormData(form)),
+    );
+  });
 
-```js
-void chat.requestConfirmation({ title: "Review the order?" });
-void chat.requestComposerInteraction({
-  kind: "x-delivery-selector",
-  payload: { options: ["standard", "express", "pickup"] },
-});
-void chat.requestConfirmation({ title: "Place the order?" });
-```
+  document.querySelector("#cancel-address").addEventListener("click", () => {
+    chat.cancelComposerInteraction(activeId);
+  });
 
-## Cancel with an AbortSignal
+  document
+    .querySelector("#open-address")
+    .addEventListener("click", async () => {
+      const result = await chat.requestComposerInteraction({
+        kind: "x-address-form",
+        ariaLabel: "Shipping address form",
+        payload: {
+          defaults: { city: "London", country: "United Kingdom" },
+        },
+      });
 
-```js
-const controller = new AbortController();
-
-const pending = chat.requestComposerInteraction({
-  kind: "x-address-form",
-  signal: controller.signal,
-});
-
-controller.abort();
-const result = await pending; // { status: "cancelled", reason: "aborted", ... }
+      console.log(result);
+    });
+</script>
 ```

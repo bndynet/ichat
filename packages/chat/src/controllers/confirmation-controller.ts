@@ -39,6 +39,7 @@ export class ConfirmationController implements ReactiveController {
     ChatConfirmationResult
   >();
   private _idSeq = 0;
+  private _queueIdSeq = 0;
 
   constructor(
     host: ConfirmationController["_host"],
@@ -89,7 +90,7 @@ export class ConfirmationController implements ReactiveController {
 
     return this._composer
       .request({
-        id: normalized.id,
+        id: this._queueId(normalized.id),
         kind: "confirmation",
         payload: normalized,
         ariaLabel: normalized.title,
@@ -101,13 +102,15 @@ export class ConfirmationController implements ReactiveController {
 
   /** Resolve the active confirmation and advance the shared queue. */
   settle(action: ChatConfirmationAction): void {
-    const request = this.activeRequest;
+    const active = this._composer.active;
+    if (!active) return;
+    const request = this._confirmationRequest(active);
     if (!request) return;
 
     if (action === "confirm") {
-      this._composer.completeActive(request.id, action);
+      this._composer.completeActive(active.id, action);
     } else {
-      this._composer.cancel(request.id, USER_CANCEL_REASON);
+      this._composer.cancel(active.id, USER_CANCEL_REASON);
     }
   }
 
@@ -202,5 +205,28 @@ export class ConfirmationController implements ReactiveController {
   private _nextId(): string {
     this._idSeq += 1;
     return `confirm-${Date.now().toString(36)}-${this._idSeq.toString(36)}`;
+  }
+
+  /**
+   * Keep caller-provided confirmation IDs public while satisfying the shared
+   * controller's unique pending-ID invariant. The legacy confirmation queue
+   * accepted duplicate public IDs, so only collisions receive an internal ID.
+   */
+  private _queueId(publicId: string): string {
+    if (!this._hasPendingQueueId(publicId)) return publicId;
+
+    let queueId: string;
+    do {
+      this._queueIdSeq += 1;
+      queueId = `confirmation-queue-${Date.now().toString(36)}-${this._queueIdSeq.toString(36)}`;
+    } while (this._hasPendingQueueId(queueId));
+    return queueId;
+  }
+
+  private _hasPendingQueueId(id: string): boolean {
+    return (
+      this._composer.active?.id === id ||
+      this._composer.queue.some((request) => request.id === id)
+    );
   }
 }

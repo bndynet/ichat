@@ -756,8 +756,12 @@ export class Chat<
   private _toPublicComposerInteractionRequest(
     request: InternalComposerInteractionRequest,
   ): ChatComposerInteractionResolvedRequest {
+    const confirmation =
+      request.kind === "confirmation"
+        ? (request.payload as ChatConfirmationResolvedRequest | undefined)
+        : undefined;
     return {
-      id: request.id,
+      id: confirmation?.id ?? request.id,
       kind: request.kind,
       payload: request.payload,
       ariaLabel: request.ariaLabel,
@@ -770,7 +774,7 @@ export class Chat<
     const request = this._toPublicComposerInteractionRequest(result.request);
     if (result.status === "completed") {
       return {
-        id: result.id,
+        id: request.id,
         status: "completed",
         value: result.value,
         request,
@@ -778,7 +782,7 @@ export class Chat<
     }
 
     return {
-      id: result.id,
+      id: request.id,
       status: "cancelled",
       reason: this._toPublicComposerInteractionCancelReason(result.reason),
       request,
