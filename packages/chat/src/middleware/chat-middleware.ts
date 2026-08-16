@@ -36,7 +36,8 @@ export interface ChatMiddleware {
   ) => MessagePart | null;
 
   /**
-   * Called when an error is reported (via `showError`, `addErrorMessage`, or SSE errors).
+   * Called when an error is reported (via `showError`, `addErrorMessage`,
+   * `ChatRunController.fail`, or SSE errors).
    */
   onError?: (error: string, messageId?: string) => void;
 }

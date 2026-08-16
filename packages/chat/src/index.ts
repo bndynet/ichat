@@ -15,6 +15,7 @@ export type {
 } from "./components/chat.js";
 export { ChatRunController } from "./controllers/chat-run-controller.js";
 export type {
+  ChatRunStartOutcome,
   ChatRunStatus,
   ChatRunOptions,
 } from "./controllers/chat-run-controller.js";

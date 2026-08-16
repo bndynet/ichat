@@ -386,6 +386,8 @@ test("controlled: rejecting the run placeholder leaves the run idle", async () =
   await waitForUpdate(chat);
 
   assertEqual(outcome.accepted, false);
+  assertEqual(outcome.started, false);
+  assertEqual(outcome.reason, "mutation-rejected");
   assertEqual(run.status, "idle");
   assertEqual(chat.messages.length, 0);
   assertEqual(run.appendText("body", "hi").ok, false);

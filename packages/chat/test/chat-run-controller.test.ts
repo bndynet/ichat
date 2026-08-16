@@ -157,8 +157,63 @@ function getMsgText(
 {
   const store = createMockStore();
   const run = new ChatRunController(store, { messageId: "custom-id" });
-  run.start();
+  const outcome = run.start();
+  assert.equal(outcome.started, true);
+  assert.equal(outcome.messageId, "custom-id");
   assert.equal(run.messageId, "custom-id");
+}
+
+// start adopts the effective id reported by a preprocessing mutation port
+{
+  const store = createMockStore();
+  const port: ChatMessageStorePort = {
+    ...store,
+    get messages() {
+      return store.messages;
+    },
+    addMessage(message) {
+      const processed = { ...message, id: `processed-${message.id}` };
+      return {
+        ...store.addMessage(processed),
+        messageId: processed.id,
+      };
+    },
+  };
+  const run = new ChatRunController(port, { messageId: "original" });
+  const outcome = run.start();
+
+  assert.equal(outcome.started, true);
+  assert.equal(outcome.messageId, "processed-original");
+  assert.equal(run.messageId, "processed-original");
+  run.appendPart({ type: "reasoning", id: "r1", text: "thinking" });
+  assert.equal(store._messages[0]?.id, "processed-original");
+  assert.equal(store._messages[0]?.parts[0]?.id, "r1");
+}
+
+// a middleware-dropped placeholder leaves the run idle and retryable
+{
+  const store = createMockStore();
+  const port: ChatMessageStorePort = {
+    ...store,
+    get messages() {
+      return store.messages;
+    },
+    addMessage() {
+      return {
+        changed: false,
+        accepted: true,
+        messageId: null,
+      };
+    },
+  };
+  const run = new ChatRunController(port);
+  const outcome = run.start();
+
+  assert.equal(outcome.started, false);
+  assert.equal(outcome.reason, "middleware-dropped");
+  assert.equal(outcome.accepted, true);
+  assert.equal(run.status, "idle");
+  assert.equal(store._messages.length, 0);
 }
 
 // start is no-op when already started
@@ -252,12 +307,24 @@ function getMsgText(
 // fail
 {
   const store = createMockStore();
-  const run = new ChatRunController(store);
+  const errors: Array<{ error: string; messageId: string }> = [];
+  const run = new ChatRunController({
+    ...store,
+    get messages() {
+      return store.messages;
+    },
+    reportError(error, messageId) {
+      errors.push({ error, messageId });
+    },
+  });
   run.start([textPart("hello")]);
   run.fail("Network error", "timed out");
   assert.equal(run.status, "error");
   assert.equal(store._messages[0].error, "Network error");
   assert.equal(store._messages[0].streaming, false);
+  assert.deepEqual(errors, [
+    { error: "Network error", messageId: run.messageId },
+  ]);
 }
 
 // cancel with onCancel
@@ -340,6 +407,8 @@ function getMsgText(
   const outcome = run.start([textPart("", { id: "body" })]);
 
   assert.equal(outcome.accepted, false);
+  assert.equal(outcome.started, false);
+  assert.equal(outcome.reason, "mutation-rejected");
   assert.equal(run.status, "idle");
   assert.equal(store._messages.length, 0);
   assert.equal(run.signal.aborted, false);

@@ -24,7 +24,11 @@ import {
 } from "@bndynet/ichat-messages";
 import { ChatInput } from "@bndynet/ichat-input";
 import { ChatRunController } from "../controllers/chat-run-controller.js";
-import type { ChatRunOptions } from "../controllers/chat-run-controller.js";
+import type {
+  ChatMessageAddOutcome,
+  ChatMessageStorePort,
+  ChatRunOptions,
+} from "../controllers/chat-run-controller.js";
 import { CommandQueue } from "../controllers/command-queue.js";
 import { ComposerInteractionController } from "../controllers/composer-interaction-controller.js";
 import type {
@@ -472,10 +476,40 @@ export class Chat<
   // Only DOM-touching methods (cancel, removeMessage, clear) and
   // presentation proxy methods stay in this component.
 
-  addMessage(message: ChatMessage): void {
+  private _addMessageThroughMiddleware(
+    message: ChatMessage,
+  ): ChatMessageAddOutcome {
     const processed = this._middlewareChain.executeAfterMessageAdded(message);
-    if (processed == null) return; // dropped by middleware
-    this._store.addMessage(processed);
+    if (processed == null) {
+      return { changed: false, accepted: true, messageId: null };
+    }
+    return {
+      ...this._store.addMessage(processed),
+      messageId: processed.id,
+    };
+  }
+
+  private _appendPartThroughMiddleware(
+    messageId: string,
+    part: Parameters<ChatMessages["appendPart"]>[1],
+  ): void {
+    const processed = this._middlewareChain.executeBeforeAppendPart(
+      messageId,
+      part,
+    );
+    if (processed == null) return;
+    this._store.appendPart(messageId, processed);
+  }
+
+  private _reportErrorThroughMiddleware(
+    error: string,
+    messageId?: string,
+  ): void {
+    this._middlewareChain.executeOnError(error, messageId);
+  }
+
+  addMessage(message: ChatMessage): void {
+    this._addMessageThroughMiddleware(message);
   }
 
   updateMessage(id: string, partial: Partial<ChatMessage>): void {
@@ -486,12 +520,7 @@ export class Chat<
     messageId: string,
     part: Parameters<ChatMessages["appendPart"]>[1],
   ): void {
-    const processed = this._middlewareChain.executeBeforeAppendPart(
-      messageId,
-      part,
-    );
-    if (processed == null) return; // dropped by middleware
-    this._store.appendPart(messageId, processed);
+    this._appendPartThroughMiddleware(messageId, part);
   }
 
   updatePart(
@@ -519,7 +548,7 @@ export class Chat<
   }
 
   addErrorMessage(error: string, text = ""): void {
-    this._middlewareChain.executeOnError(error);
+    this._reportErrorThroughMiddleware(error);
     const msg: ChatMessage = {
       id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       role: "assistant",
@@ -527,9 +556,7 @@ export class Chat<
       error,
       timestamp: Date.now(),
     };
-    const processed = this._middlewareChain.executeAfterMessageAdded(msg);
-    if (processed == null) return; // dropped by middleware
-    this._store.addMessage(processed);
+    this._addMessageThroughMiddleware(msg);
   }
 
   // ── Diagnostic / tool / todo / SSE (CHG-04) ──────────────────────
@@ -605,7 +632,7 @@ export class Chat<
   }
 
   showError(text: string, options?: { duration?: number }): void {
-    this._middlewareChain.executeOnError(text);
+    this._reportErrorThroughMiddleware(text);
     if (!this._isChildReady()) {
       // Replace any previous pending error with the newest.
       this._pendingCommands.clear();
@@ -664,12 +691,45 @@ export class Chat<
 
   /**
    * Create a `ChatRunController` that orchestrates one AI response run
-   * through the top-level message store.  The controller manages the
-   * full lifecycle: create the placeholder message, append parts, stream
-   * text deltas, and transition to complete / cancel / error.
+   * through the top-level middleware and message store.  The controller
+   * manages the full lifecycle: create the placeholder message, append parts,
+   * stream text deltas, and transition to complete / cancel / error.
    */
   createRunController(options?: ChatRunOptions): ChatRunController {
-    return new ChatRunController(this._store, options);
+    return new ChatRunController(this._createRunMutationPort(), options);
+  }
+
+  /** Keep controller mutations on the same middleware boundary as public APIs. */
+  private _createRunMutationPort(): ChatMessageStorePort {
+    const store = this._store;
+    const host = this;
+
+    return {
+      get messages() {
+        return store.messages;
+      },
+      addMessage(message) {
+        return host._addMessageThroughMiddleware(message);
+      },
+      updateMessage(id, partial) {
+        return store.updateMessage(id, partial);
+      },
+      cancelMessage(id, hint) {
+        return store.cancelMessage(id, hint);
+      },
+      appendPart(messageId, part) {
+        host._appendPartThroughMiddleware(messageId, part);
+      },
+      updatePart(messageId, partId, patch) {
+        store.updatePart(messageId, partId, patch);
+      },
+      tryUpdatePart(messageId, partId, patch) {
+        return store.tryUpdatePart(messageId, partId, patch);
+      },
+      reportError(error, messageId) {
+        host._reportErrorThroughMiddleware(error, messageId);
+      },
+    };
   }
 
   /** Focus the input textarea. Safe to call before first render (no-op). */

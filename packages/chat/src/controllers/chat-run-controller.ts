@@ -31,6 +31,19 @@ export interface ChatRunOptions {
   onCancel?: () => void;
 }
 
+/**
+ * Result of creating the placeholder for a run.
+ *
+ * `messageId` is the effective id after `afterMessageAdded` middleware.  A
+ * middleware-dropped placeholder is an accepted no-op, but it does not start
+ * the run.
+ */
+export interface ChatRunStartOutcome extends ChatMutationOutcome {
+  started: boolean;
+  messageId?: string;
+  reason?: "already-started" | "middleware-dropped" | "mutation-rejected";
+}
+
 // ── minimal port ────────────────────────────────────────────────────
 
 /**
@@ -42,9 +55,18 @@ export interface ChatRunOptions {
  * one a controlled host rejected.  `void` remains allowed for implementations
  * written against the older signature and is treated as accepted.
  */
+export interface ChatMessageAddOutcome extends ChatMutationOutcome {
+  /**
+   * Effective message id after mutation preprocessing.  `null` explicitly
+   * means the message was dropped; omitted preserves the requested id for
+   * backward-compatible Store implementations.
+   */
+  messageId?: string | null;
+}
+
 export interface ChatMessageStorePort {
   readonly messages: ChatMessage[];
-  addMessage(message: ChatMessage): ChatMutationOutcome | void;
+  addMessage(message: ChatMessage): ChatMessageAddOutcome | void;
   updateMessage(
     id: string,
     partial: Partial<ChatMessage>,
@@ -61,6 +83,8 @@ export interface ChatMessageStorePort {
     partId: string,
     patch: Partial<MessagePart>,
   ): MessagePartUpdateResult;
+  /** Report a run error through the host's observability middleware. */
+  reportError?(error: string, messageId: string): void;
 }
 
 // ── controller ─────────────────────────────────────────────────────
@@ -72,7 +96,8 @@ export interface ChatMessageStorePort {
  * `start()`, accepts streamed part updates, and transitions to a terminal
  * state on `complete()`, `cancel()`, or `fail()`.  It never accesses the
  * shadow DOM or child message state directly; all writes go through the
- * top-level store.
+ * host-provided mutation port.  `<i-chat>` supplies a port that applies its
+ * middleware before delegating to the top-level store.
  *
  * One controller represents one run.  Create a new controller for each
  * AI response.
@@ -130,31 +155,54 @@ export class ChatRunController {
    * Create the assistant placeholder message and begin streaming.
    * Must be called before any other method.
    *
-   * @returns The outcome of the placeholder mutation.  When it was rejected the
-   *          run stays `idle` and no message id is claimed, so `start()` can be
-   *          called again.
+   * @returns Whether this call started the run and the effective message id.
+   *          Rejected or middleware-dropped placeholders leave the run `idle`
+   *          with no claimed id, so `start()` can be called again.
    */
-  start(initialParts?: MessagePart[]): ChatMutationOutcome {
-    if (this._status !== "idle") return acceptedNoOp();
+  start(initialParts?: MessagePart[]): ChatRunStartOutcome {
+    if (this._status !== "idle") {
+      return {
+        ...acceptedNoOp(),
+        started: false,
+        reason: "already-started",
+      };
+    }
 
     const messageId =
       this._options.messageId ??
       `msg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const outcome = normalizeOutcome(
-      this._store.addMessage({
-        id: messageId,
-        role: this._options.role ?? "assistant",
-        parts: initialParts ?? [],
-        streaming: true,
-        timestamp: this._options.timestamp ?? Date.now(),
-      }),
-    );
-    if (!outcome.accepted) return outcome;
+    const addOutcome = this._store.addMessage({
+      id: messageId,
+      role: this._options.role ?? "assistant",
+      parts: initialParts ?? [],
+      streaming: true,
+      timestamp: this._options.timestamp ?? Date.now(),
+    });
+    const outcome = normalizeOutcome(addOutcome);
+    if (!outcome.accepted) {
+      return {
+        ...outcome,
+        started: false,
+        reason: "mutation-rejected",
+      };
+    }
+    if (addOutcome?.messageId === null) {
+      return {
+        ...outcome,
+        started: false,
+        reason: "middleware-dropped",
+      };
+    }
 
-    this._messageId = messageId;
+    const effectiveMessageId = addOutcome?.messageId ?? messageId;
+    this._messageId = effectiveMessageId;
     this._status = "streaming";
-    return outcome;
+    return {
+      ...outcome,
+      started: true,
+      messageId: effectiveMessageId,
+    };
   }
 
   /**
@@ -255,6 +303,8 @@ export class ChatRunController {
    */
   fail(error: string, text?: string): ChatMutationOutcome {
     if (this._status !== "streaming") return acceptedNoOp();
+
+    this._store.reportError?.(error, this._messageId);
 
     // The appended error part must be part of the array handed to
     // `_terminalPartsPatch`, so build it first and close out the whole result.

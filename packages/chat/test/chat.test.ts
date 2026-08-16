@@ -423,7 +423,9 @@ assert.ok(el.ready instanceof Promise, "ready should be a Promise");
   });
 
   const run = chat.createRunController({ messageId: "controlled-run" });
-  run.start([textPart("", { id: "body" })]);
+  const start = run.start([textPart("", { id: "body" })]);
+  assert.equal(start.started, true);
+  assert.equal(start.messageId, "controlled-run");
   assert.equal(run.appendText("body", "Hello").ok, true);
   assert.equal(run.appendText("body", " world").ok, true);
   run.complete();
@@ -1082,6 +1084,68 @@ assert.ok(el.ready instanceof Promise, "ready should be a Promise");
   assert.deepEqual(order, ["onError", "afterMessageAdded"]);
   // Message was dropped by afterMessageAdded → store is empty.
   assert.equal(chat.messages.length, 0);
+}
+
+// ChatRunController uses the same middleware boundary as imperative mutations.
+{
+  const chat = createChat();
+  const hooks: string[] = [];
+
+  chat.use({
+    name: "run-middleware",
+    afterMessageAdded: (message) => {
+      hooks.push(`afterMessageAdded:${message.id}`);
+      return { ...message, id: `processed-${message.id}` };
+    },
+    beforeAppendPart: (messageId, part) => {
+      hooks.push(`beforeAppendPart:${messageId}`);
+      if (part.type !== "text") return part;
+      return { ...part, text: `[processed] ${part.text}` };
+    },
+    onError: (error, messageId) => {
+      hooks.push(`onError:${messageId}:${error}`);
+    },
+  });
+
+  const run = chat.createRunController({ messageId: "run" });
+  const start = run.start();
+  assert.equal(start.started, true);
+  assert.equal(start.messageId, "processed-run");
+  assert.equal(run.messageId, "processed-run");
+
+  run.appendPart({ type: "text", id: "body", text: "hello" });
+  run.fail("stream failed");
+
+  assert.deepEqual(hooks, [
+    "afterMessageAdded:run",
+    "beforeAppendPart:processed-run",
+    "onError:processed-run:stream failed",
+  ]);
+  assert.equal(chat.messages[0]?.id, "processed-run");
+  assert.equal(chat.messages[0]?.parts[0]?.type, "text");
+  if (chat.messages[0]?.parts[0]?.type === "text") {
+    assert.equal(chat.messages[0].parts[0].text, "[processed] hello");
+  }
+  assert.equal(chat.messages[0]?.error, "stream failed");
+}
+
+// Dropping a run placeholder is explicit and does not create a ghost run.
+{
+  const chat = createChat();
+  chat.use({
+    name: "drop-run",
+    afterMessageAdded: () => null,
+  });
+
+  const run = chat.createRunController({ messageId: "dropped-run" });
+  const outcome = run.start();
+
+  assert.equal(outcome.started, false);
+  assert.equal(outcome.reason, "middleware-dropped");
+  assert.equal(outcome.accepted, true);
+  assert.equal(run.status, "idle");
+  assert.equal(chat.messages.length, 0);
+  assert.equal(chat.busy, false);
 }
 
 // ── Plugin lifecycle tests ───────────────────────────────────────────────
