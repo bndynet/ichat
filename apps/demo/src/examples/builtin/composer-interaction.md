@@ -33,6 +33,7 @@
     }
 
     form.slot = "composer-interaction";
+    if (activeId === active.id) return;
     activeId = active.id;
     form.elements.city.value = active.payload?.defaults?.city ?? "";
     form.elements.country.value = active.payload?.defaults?.country ?? "";
