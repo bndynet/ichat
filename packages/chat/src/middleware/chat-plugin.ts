@@ -6,7 +6,8 @@ import type { Chat } from "../components/chat.js";
  * Plugins are installed via `chat.use(plugin)` and can register middleware,
  * block renderers, part renderers, or perform any setup.  Return an optional
  * teardown function to clean up when the plugin is removed via
- * `chat.removePlugin(name)` or component disconnect.
+ * `chat.removePlugin(name)` or component disconnect. Teardown runs at most
+ * once, even if the disposer returned by `chat.use(plugin)` is called again.
  *
  * Duplicate plugin names are rejected — only the first registration is kept.
  *

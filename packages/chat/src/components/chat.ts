@@ -425,13 +425,19 @@ export class Chat<
       // Any concrete `Chat<MyParts>` is assignable to `Chat<{}>`, but TypeScript
       // cannot prove it while `TExtraParts` is still an unresolved type parameter.
       const teardown = plugin.install(this as unknown as Chat);
+      let disposed = false;
       const dispose = () => {
+        if (disposed) return;
+        disposed = true;
+        // Remove the registration before running host code. This makes cleanup
+        // re-entrant-safe and lets teardown install a fresh plugin with the same
+        // name without the old disposer deleting that new registration.
+        this._pluginDisposers.delete(plugin.name);
         try {
           teardown?.();
         } catch {
           /* teardown must not throw */
         }
-        this._pluginDisposers.delete(plugin.name);
       };
       this._pluginDisposers.set(plugin.name, dispose);
       return dispose;
@@ -441,7 +447,9 @@ export class Chat<
   }
 
   /**
-   * Remove a plugin by name and run its teardown.
+   * Remove a plugin by name and run its teardown. Plugin teardown is
+   * idempotent across this method, the disposer returned by `use()`, and
+   * component disconnect.
    *
    * @returns `true` if a plugin with that name was installed and removed,
    *   `false` if no such plugin was found.

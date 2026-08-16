@@ -1197,37 +1197,43 @@ assert.ok(el.ready instanceof Promise, "ready should be a Promise");
 // removePlugin: runs teardown and unregisters the plugin.
 {
   const chat = createChat();
-  let tornDown = false;
+  let teardownCount = 0;
 
   const dispose = chat.use({
     name: "removable",
     install() {
       return () => {
-        tornDown = true;
+        teardownCount += 1;
       };
     },
   });
 
   const removed = chat.removePlugin("removable");
   assert.equal(removed, true);
-  assert.equal(tornDown, true);
+  assert.equal(teardownCount, 1);
+
+  // A retained disposer remains safe after name-based removal.
+  dispose();
+  dispose();
+  assert.equal(teardownCount, 1);
 
   // removePlugin for unknown name returns false.
   assert.equal(chat.removePlugin("nonexistent"), false);
 
   // Disposer from use() also works (calls removePlugin internally).
   // Re-install and dispose via the returned function.
-  tornDown = false;
+  teardownCount = 0;
   const dispose2 = chat.use({
     name: "removable-2",
     install() {
       return () => {
-        tornDown = true;
+        teardownCount += 1;
       };
     },
   });
   dispose2();
-  assert.equal(tornDown, true);
+  dispose2();
+  assert.equal(teardownCount, 1);
 }
 
 // Plugin middleware integration: a plugin can register middleware and
