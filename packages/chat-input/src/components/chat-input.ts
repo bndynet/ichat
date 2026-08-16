@@ -364,6 +364,28 @@ export class ChatInput extends LitElement {
     this._textarea?.focus();
   }
 
+  /**
+   * Clicking anywhere inside the box focuses the textarea, except when the
+   * click lands on the textarea itself, an interactive control (buttons,
+   * links, etc.), or slotted content in the `actions` slot.
+   */
+  private _handleWrapperClick(e: Event): void {
+    if (this.disabled || this._listening) return;
+    const path = e.composedPath();
+    const origin = path.find((n): n is Element => n instanceof Element);
+    if (!origin) return;
+    // Slotted `actions` content lives in the light DOM — keep its own focus.
+    if (origin.getRootNode() !== this.shadowRoot) return;
+    // Interactive controls (including the textarea) handle focus themselves.
+    if (
+      origin.closest(
+        "button, a[href], [role='button'], input, textarea, select, [contenteditable='true']",
+      )
+    )
+      return;
+    this._textarea?.focus();
+  }
+
   private _handleInput(e: Event): void {
     this._value = (e.target as HTMLTextAreaElement).value;
     this._autoResize();
@@ -434,6 +456,7 @@ export class ChatInput extends LitElement {
     return html`
       <div
         class="chat-input-wrapper ${fieldLocked ? "chat-input-wrapper--locked" : ""}"
+        @click=${this._handleWrapperClick}
       >
         <div
           class="chat-input-field ${this._listening ? "chat-input-field--listening" : ""}"
