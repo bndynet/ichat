@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, onMounted } from "vue";
+import { ref, computed, nextTick, onBeforeUnmount, onMounted } from "vue";
 import {
   cancelPendingStreamPlayback,
   reply,
@@ -16,6 +16,7 @@ import ChatToolbar from "../components/ChatToolbar.vue";
 
 const loading = ref(true);
 const chatRef = ref(null);
+let initializationTimer = null;
 
 const replyDialogVisible = ref(false);
 const replyContent = ref("");
@@ -106,7 +107,12 @@ function timestampDaysAgo(days) {
 onMounted(async () => {
   await nextTick();
   const chat = chatRef.value;
-  setTimeout(() => {
+  if (!chat) return;
+
+  initializationTimer = setTimeout(() => {
+    initializationTimer = null;
+    if (chatRef.value !== chat) return;
+
     chat.addMessage({
       id: nextId(),
       role: "peer",
@@ -231,6 +237,13 @@ onMounted(async () => {
     reply(chatRef, "all");
     loading.value = false;
   }, 3000);
+});
+
+onBeforeUnmount(() => {
+  if (initializationTimer !== null) clearTimeout(initializationTimer);
+  initializationTimer = null;
+
+  cancelPendingStreamPlayback();
 });
 
 function handleSend(e) {
