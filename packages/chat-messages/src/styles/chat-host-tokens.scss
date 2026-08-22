@@ -23,6 +23,9 @@
 
   --chat-avatar-size: #{$avatar-size};
   --chat-message-max-width: #{$message-max-width};
+  // `--chat-max-width` is intentionally NOT declared on :host —
+  // doing so would shadow any value inherited from :root / ancestors.
+  // Consumers use `var(--chat-max-width, ...)` directly instead.
   --chat-messages-max-width: #{$messages-max-width};
   --chat-scrollbar-width: #{$scrollbar-width};
   --chat-progress-indicator-size: #{$progress-indicator-size};

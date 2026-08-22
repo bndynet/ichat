@@ -54,6 +54,11 @@ i-chat-messages {
 .chat-composer,
 .chat-composer-interaction {
   min-width: 0;
+  max-width: var(
+    --chat-max-width,
+    var(--chat-messages-max-width, 100%)
+  );
+  margin-inline: auto;
 }
 
 .chat-composer[hidden],

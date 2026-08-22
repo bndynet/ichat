@@ -120,7 +120,14 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: visible; // allow scroll-highlight ::before to extend outside
-  padding: var(--chat-spacing-lg, #{$spacing-lg});
+  padding-block: var(--chat-spacing-lg, #{$spacing-lg});
+  padding-inline: max(
+    var(--chat-spacing-lg, #{$spacing-lg}),
+    calc(
+      (100% - var(--chat-max-width, var(--chat-messages-max-width, 100%))) *
+        0.5
+    )
+  );
 
   &::-webkit-scrollbar {
     width: var(--chat-scrollbar-width, #{$scrollbar-width});
@@ -211,8 +218,11 @@
 }
 
 .chat-messages-inner {
-  max-width: var(--chat-messages-max-width, 100%);
-  margin: 0;
+  max-width: var(
+    --chat-max-width,
+    var(--chat-messages-max-width, 100%)
+  );
+  margin: 0 auto;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -238,11 +248,17 @@
 
   > i-chat-message,
   > .chat-date-separator {
-    width: calc(
-      100% - var(--chat-spacing-lg, #{$spacing-lg}) - var(
-          --chat-spacing-lg,
-          #{$spacing-lg}
-        )
+    width: min(
+      calc(
+        100% - var(--chat-spacing-lg, #{$spacing-lg}) - var(
+            --chat-spacing-lg,
+            #{$spacing-lg}
+          )
+      ),
+      var(
+        --chat-max-width,
+        var(--chat-messages-max-width, 100%)
+      )
     );
   }
 
