@@ -124,8 +124,7 @@
   padding-inline: max(
     var(--chat-spacing-lg, #{$spacing-lg}),
     calc(
-      (100% - var(--chat-max-width, var(--chat-messages-max-width, 100%))) *
-        0.5
+      (100% - var(--chat-max-width, var(--chat-messages-max-width, 100%))) * 0.5
     )
   );
 
@@ -218,10 +217,7 @@
 }
 
 .chat-messages-inner {
-  max-width: var(
-    --chat-max-width,
-    var(--chat-messages-max-width, 100%)
-  );
+  max-width: var(--chat-max-width, var(--chat-messages-max-width, 100%));
   margin: 0 auto;
   padding: 0;
   display: flex;
@@ -255,10 +251,7 @@
             #{$spacing-lg}
           )
       ),
-      var(
-        --chat-max-width,
-        var(--chat-messages-max-width, 100%)
-      )
+      var(--chat-max-width, var(--chat-messages-max-width, 100%))
     );
   }
 
