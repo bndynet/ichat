@@ -173,6 +173,14 @@
   }
 }
 
+// While streaming the reasoning body must grow with the incoming text so the
+// message list (the outer scroller) follows the stream. Capping its height here
+// would turn it into a nested scroller and stop the outer list from moving.
+.reasoning.is-streaming .reasoning-content.open {
+  max-height: none;
+  overflow: visible;
+}
+
 .reasoning-body {
   padding: var(--chat-spacing-sm, #{$spacing-sm})
     var(--chat-spacing-md, #{$spacing-md})

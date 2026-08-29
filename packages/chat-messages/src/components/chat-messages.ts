@@ -696,6 +696,13 @@ export class ChatMessages extends LitElement {
       el.scrollTop = el.scrollHeight;
     };
 
+    // Apply the first pass synchronously. Streaming re-renders can call
+    // `_scrollToBottom` on every animation frame, each time advancing `seq`
+    // before the previous call's deferred rAF pass runs. Without an immediate
+    // pass those deferred passes would keep invalidating one another and the
+    // viewport would never actually move (scrollbar thumb shrinks, list stays).
+    apply();
+
     requestAnimationFrame(() => {
       apply();
       requestAnimationFrame(() => {
