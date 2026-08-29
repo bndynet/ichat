@@ -117,6 +117,9 @@ export class ChatReasoning extends LitElement {
       (this._streamCtrl.isAnimating || displayed.trim().length === 0);
     // While streaming: always show the thinking body. After reply completes: collapsed until user expands.
     const bodyOpen = this.streaming || this._expanded;
+    // A reasoning block cannot be collapsed mid-stream, so hide the toggle
+    // affordance and turn the header into a passive label until it completes.
+    const collapsible = !this.streaming;
 
     return html`
       <div
@@ -124,11 +127,11 @@ export class ChatReasoning extends LitElement {
       >
         <div
           class="reasoning-header"
-          role="button"
-          tabindex="0"
-          aria-expanded=${bodyOpen}
-          @click=${this._toggle}
-          @keydown=${this._onHeaderKeydown}
+          role=${collapsible ? "button" : nothing}
+          tabindex=${collapsible ? "0" : nothing}
+          aria-expanded=${collapsible ? bodyOpen : nothing}
+          @click=${collapsible ? this._toggle : nothing}
+          @keydown=${collapsible ? this._onHeaderKeydown : nothing}
         >
           ${
             this.headerHtml
@@ -157,9 +160,15 @@ export class ChatReasoning extends LitElement {
                     }
                   </span>`
           }
-          <span class="reasoning-chevron ${bodyOpen ? "expanded" : ""}">
-            ${chatIcons.chevronDown({ size: 16, strokeWidth: 2.4 })}
-          </span>
+          ${
+            collapsible
+              ? html`<span
+                  class="reasoning-chevron ${bodyOpen ? "expanded" : ""}"
+                >
+                  ${chatIcons.chevronDown({ size: 16, strokeWidth: 2.4 })}
+                </span>`
+              : nothing
+          }
         </div>
         <div class="reasoning-content ${bodyOpen ? "open" : ""}">
           <div class="reasoning-body"></div>

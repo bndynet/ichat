@@ -88,6 +88,12 @@
   font-weight: 600;
 }
 
+// Streaming: the header is a passive label (no toggle affordance), so it must
+// not look or act clickable.
+.reasoning.is-streaming .reasoning-header {
+  pointer-events: none;
+}
+
 .reasoning-title {
   display: inline-flex;
   align-items: center;

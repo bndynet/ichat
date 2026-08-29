@@ -275,6 +275,37 @@ function getMsgText(
   assert.equal(store._messages[0].parts![0].status, "complete");
 }
 
+// reasoning marked complete mid-run stays complete through run.complete()
+{
+  const store = createMockStore();
+  const run = new ChatRunController(store);
+  run.start([
+    { type: "reasoning", id: "r1", text: "thinking", status: "streaming" },
+    { type: "text", id: "body", text: "", status: "streaming" },
+  ]);
+
+  // Reasoning stream ends before the answer: close it out independently so the
+  // block becomes collapsible while the answer is still streaming.
+  const closed = run.updatePart("r1", { status: "complete" });
+  assert.ok(closed.ok);
+  assert.equal(
+    store._messages[0].parts!.find((p) => p.id === "r1")!.status,
+    "complete",
+  );
+
+  // Finishing the run closes out the answer but leaves reasoning untouched.
+  run.complete();
+  assert.equal(store._messages[0].streaming, false);
+  assert.equal(
+    store._messages[0].parts!.find((p) => p.id === "r1")!.status,
+    "complete",
+  );
+  assert.equal(
+    store._messages[0].parts!.find((p) => p.id === "body")!.status,
+    "complete",
+  );
+}
+
 // complete
 {
   const store = createMockStore();

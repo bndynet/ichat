@@ -261,6 +261,7 @@ function playEvents(run, events, playback) {
   let reasoningText = "";
   let contentText = "";
   let hasContentPart = false;
+  let reasoningComplete = false;
   let i = 0;
 
   function nextDelay(ev) {
@@ -274,7 +275,8 @@ function playEvents(run, events, playback) {
   function step() {
     if (playback.cancelled) return;
     if (i >= events.length) {
-      run.updatePart(REASONING_PART_ID, { status: "complete" });
+      if (!reasoningComplete)
+        run.updatePart(REASONING_PART_ID, { status: "complete" });
       if (hasContentPart)
         run.updatePart(CONTENT_PART_ID, { status: "complete" });
       run.complete();
@@ -291,6 +293,13 @@ function playEvents(run, events, playback) {
       });
     }
     if (typeof ev.content === "string") {
+      // First answer token means reasoning finished: close it out now so the
+      // thinking block auto-collapses and stays collapsible while the answer
+      // is still streaming.
+      if (!reasoningComplete) {
+        run.updatePart(REASONING_PART_ID, { status: "complete" });
+        reasoningComplete = true;
+      }
       contentText += ev.content;
       if (!hasContentPart) {
         run.appendPart(
