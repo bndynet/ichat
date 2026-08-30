@@ -146,7 +146,9 @@ export class ChatBookmarks extends LitElement {
           ? GENERATING_LABEL
           : getMessageText(message);
     const compact = base.replace(/\s+/g, " ").trim();
-    return compact.length > max ? `${compact.slice(0, max).trimEnd()}…` : compact;
+    return compact.length > max
+      ? `${compact.slice(0, max).trimEnd()}…`
+      : compact;
   }
 
   private _showTip(message: ChatMessage, event: Event): void {
@@ -193,17 +195,19 @@ export class ChatBookmarks extends LitElement {
           `,
         )}
       </nav>
-      ${this._tip
-        ? html`
-            <div
-              class="tip"
-              role="tooltip"
-              style=${`top:${this._tip.top}px;left:${this._tip.left}px`}
-            >
-              ${this._tip.text}
-            </div>
-          `
-        : ""}
+      ${
+        this._tip
+          ? html`
+              <div
+                class="tip"
+                role="tooltip"
+                style=${`top:${this._tip.top}px;left:${this._tip.left}px`}
+              >
+                ${this._tip.text}
+              </div>
+            `
+          : ""
+      }
     `;
   }
 }

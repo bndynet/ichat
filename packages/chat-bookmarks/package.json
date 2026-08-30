@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/ichat-bookmarks",
-  "version": "3.3.2",
+  "version": "3.4.0",
   "description": "Floating bookmark rail Web Component for @bndynet/ichat: place marked messages anywhere in your layout and jump to them.",
   "keywords": [
     "ai-chat",
@@ -32,7 +32,7 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@bndynet/ichat-messages": "^3.3.2",
+    "@bndynet/ichat-messages": "^3.4.0",
     "lit": "^3.3.0"
   },
   "devDependencies": {

@@ -22,8 +22,7 @@ function buildFewMessages() {
   const now = Date.now();
   const messages = [];
   for (let i = 1; i <= 30; i++) {
-    const role =
-      i % 4 === 0 ? "self" : i % 2 === 0 ? "assistant" : "peer";
+    const role = i % 4 === 0 ? "self" : i % 2 === 0 ? "assistant" : "peer";
     let bookmark;
     if (i === 3) bookmark = true;
     else if (i === 7) bookmark = { label: "结论：方案 B 已通过" };
@@ -51,7 +50,8 @@ function buildManyMessages() {
   const now = Date.now();
   return Array.from({ length: 1000 }, (_, index) => {
     const n = index + 1;
-    const bookmarked = n === 1 || n === 250 || n === 500 || n === 750 || n === 1000;
+    const bookmarked =
+      n === 1 || n === 250 || n === 500 || n === 750 || n === 1000;
     return {
       id: `bm-many-${n}`,
       role: n % 4 === 0 ? "self" : "assistant",
@@ -94,7 +94,12 @@ onMounted(async () => {
     <div class="demo-toolbar">
       <div class="toolbar-control">
         <span class="toolbar-label">Messages</span>
-        <el-radio-group v-model="mode" size="small" :disabled="loading" @change="applyMode">
+        <el-radio-group
+          v-model="mode"
+          size="small"
+          :disabled="loading"
+          @change="applyMode"
+        >
           <el-radio-button value="few">Few (regular)</el-radio-button>
           <el-radio-button value="many">Many (virtual)</el-radio-button>
         </el-radio-group>
@@ -129,7 +134,10 @@ onMounted(async () => {
     </div>
   </div>
 
-  <ExampleCodeDrawer title="Bookmarks code example" :content="bookmarkExample" />
+  <ExampleCodeDrawer
+    title="Bookmarks code example"
+    :content="bookmarkExample"
+  />
 </template>
 
 <style scoped>

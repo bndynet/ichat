@@ -3,7 +3,64 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
-## 3.3.0 - 2026-08-16
+## 3.4.0
+
+### Added
+
+- New package `@bndynet/ichat-bookmarks` ships a standalone
+  `<i-chat-bookmarks>` bookmark rail that can live anywhere in the layout — a
+  sidebar, a gutter, a toolbar — instead of being tied to the message list.
+  Point it at `<i-chat>` or `<i-chat-messages>` with `for="<element id>"` or an
+  element reference in `.source` (`.source` wins), and it follows
+  `messages-change` on its own; call `refresh()` after assigning `messages`
+  directly. Each bar previews its message on hover or keyboard focus (custom
+  label, falling back to the message text, or “Generating…” while it streams),
+  and clicking it reuses the chat's `scrollToMessage()`, so virtual scrolling
+  and the scroll highlight work unchanged. The rail is a separate install and
+  is themed through the existing `--chat-*` tokens.
+- `ChatMessage.bookmark?: boolean | ChatBookmark` marks a message for the rail:
+  `true` uses the message text as the preview label, `{ label }` sets a custom
+  short label, and leaving it unset keeps the message out of the rail.
+  `ChatBookmark` is exported from `@bndynet/ichat-messages` and re-exported
+  from `@bndynet/ichat`.
+- `docs/parts.md` documents completing the reasoning part when its own stream
+  ends, with a full reasoning-then-answer SSE example, and the demo gains a
+  Bookmarks page.
+
+### Changed
+
+- `<i-chat-reasoning>` no longer presents a toggle while its part is still
+  streaming: the header is a passive label with no `button` role, focus stop,
+  click or key handler, and no chevron. Once the part completes, the block
+  auto-collapses and the header becomes expandable/collapsible again. This
+  matches the pre-existing rule that a streaming reasoning body is always
+  open, and drops an affordance that did nothing. Completing the reasoning
+  part as soon as its stream ends — typically on the first answer token — now
+  yields a collapsible thinking block for the rest of the reply;
+  `run.complete()` leaves an already-complete reasoning part untouched.
+- The root `build`, `typecheck` and `publish:packages` scripts include
+  `@bndynet/ichat-bookmarks`.
+
+### Fixed
+
+- Auto-scroll stopped following while reasoning streamed. Overlapping
+  streaming renders advanced the scroll sequence on every animation frame, so
+  each deferred `requestAnimationFrame` pass was invalidated by the next call
+  before it ran and the viewport never moved — the scrollbar thumb shrank
+  while the list stayed put. `<i-chat-messages>` now applies the first scroll
+  pass synchronously.
+
+### Compatibility
+
+- Bookmark support is additive: messages without `bookmark` render exactly as
+  before, and nothing new is pulled in unless `@bndynet/ichat-bookmarks` is
+  installed and imported. `@bndynet/ichat` does not depend on it.
+- A reasoning block can only be expanded or collapsed after its part
+  completes. While streaming, the header is no longer a focus stop and the
+  chevron is hidden; collapsing mid-stream never had an effect, so this is an
+  affordance change rather than a behavioural one.
+
+## 3.3.0
 
 ### Added
 

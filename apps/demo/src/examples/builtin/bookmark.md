@@ -43,8 +43,7 @@ Bind it to a chat/list element by id with `for` (works in any framework and
 native HTML):
 
 ```html
-<i-chat id="chat-1"></i-chat>
-<i-chat-bookmarks for="chat-1"></i-chat-bookmarks>
+<i-chat id="chat-1"></i-chat> <i-chat-bookmarks for="chat-1"></i-chat-bookmarks>
 ```
 
 Or set `.source` programmatically:

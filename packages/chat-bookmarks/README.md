@@ -37,7 +37,7 @@ chat.addMessage({
   id: "a1",
   role: "assistant",
   parts: [textPart("The final answer is 42.")],
-  bookmark: true,                              // default label: message text
+  bookmark: true, // default label: message text
 });
 
 chat.addMessage({
@@ -55,8 +55,7 @@ chat.addMessage({
 ### 1. `for` attribute (by element id — works everywhere)
 
 ```html
-<i-chat id="chat-1"></i-chat>
-<i-chat-bookmarks for="chat-1"></i-chat-bookmarks>
+<i-chat id="chat-1"></i-chat> <i-chat-bookmarks for="chat-1"></i-chat-bookmarks>
 ```
 
 The `for` value is resolved against the element's own root (document or shadow
@@ -109,11 +108,11 @@ Override it on any ancestor:
 
 ## API
 
-| Member                 | Type              | Description                                            |
-| ---------------------- | ----------------- | ------------------------------------------------------ |
-| `for`                  | `string`          | Id of the source chat/list element (attribute).        |
-| `source`               | `BookmarkSource`  | Direct element reference; overrides `for`.             |
-| `refresh()`            | `() => void`      | Re-read messages after a direct `.messages` assignment. |
+| Member      | Type             | Description                                             |
+| ----------- | ---------------- | ------------------------------------------------------- |
+| `for`       | `string`         | Id of the source chat/list element (attribute).         |
+| `source`    | `BookmarkSource` | Direct element reference; overrides `for`.              |
+| `refresh()` | `() => void`     | Re-read messages after a direct `.messages` assignment. |
 
 `BookmarkSource` is the minimal surface the rail needs — any element exposing
 `{ messages: ChatMessage[]; scrollToMessage(id): boolean }` works, including
