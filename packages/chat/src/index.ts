@@ -66,6 +66,7 @@ export type { MarkdownPlugin } from "@bndynet/ichat-messages";
 export type {
   ChatMessage,
   ChatMessageRole,
+  ChatBookmark,
   HighlightJs,
   ChatConfig,
   BlockRenderer,

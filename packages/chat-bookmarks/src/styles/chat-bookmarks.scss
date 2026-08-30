@@ -1,0 +1,77 @@
+// @bndynet/ichat-bookmarks — floating bookmark rail.
+// A standalone Web Component: the consumer positions it wherever they want
+// (sidebar, gutter, toolbar, …). Theme colors are inherited from the app's
+// `--chat-*` tokens set on `:root` / an ancestor, per the library theming
+// contract, so light/dark work automatically.
+
+:host {
+  display: block;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--chat-bookmarks-gap, 4px);
+  padding: 4px 2px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 12px; // generous hit area around the 4px bar
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+
+  &::before {
+    content: "";
+    width: 12px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--chat-bookmark-color, var(--chat-primary, #2563eb));
+    opacity: 0.5;
+    transition:
+      opacity 150ms ease,
+      width 150ms ease;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    opacity: 1;
+    width: 14px;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &:focus-visible::before {
+    box-shadow: 0 0 0 2px var(--chat-primary-light, #dbeafe);
+  }
+}
+
+.tip {
+  position: fixed;
+  transform: translateY(-50%);
+  max-width: 280px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--chat-surface, #ffffff);
+  color: var(--chat-text, #1a1a2e);
+  border: 1px solid var(--chat-border, #e8e8e8);
+  box-shadow: var(--chat-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}

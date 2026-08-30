@@ -61,6 +61,11 @@ export default defineConfig({
           page: () => import("./src/pages/builtin/VirtualScrollingPage.vue"),
         },
         {
+          label: "Bookmarks",
+          icon: "bookmark",
+          page: () => import("./src/pages/builtin/BookmarkPage.vue"),
+        },
+        {
           label: "Custom part (x-*)",
           icon: "puzzle",
           page: () => import("./src/pages/builtin/CustomPartPage.vue"),
@@ -138,11 +143,24 @@ export default defineConfig({
   ],
   bootstrap: "bootstrap.ts",
   env: {
+    port: 5173,
     customElements: ["i-renderers", "i-chat-input", "i-chat", "chat-renderers"],
+    vite: {
+      server: {
+        // The Cloudflare Tunnel routes vs.bndy.net -> localhost:5173.
+        // Bind to the loopback the tunnel dials and allow its Host header.
+        host: "127.0.0.1",
+        allowedHosts: ["vs.bndy.net"],
+      },
+    },
     watchPackages: [
       {
         name: "@bndynet/ichat-input",
         entryPath: "../../packages/chat-input/src/index.ts",
+      },
+      {
+        name: "@bndynet/ichat-bookmarks",
+        entryPath: "../../packages/chat-bookmarks/src/index.ts",
       },
       {
         name: "@bndynet/ichat-renderers",

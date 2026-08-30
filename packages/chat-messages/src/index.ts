@@ -71,6 +71,7 @@ export { buildMessagesChangeDetail } from "./messages-change-types.js";
 export type {
   ChatMessage,
   ChatMessageRole,
+  ChatBookmark,
   HighlightJs,
   BlockRenderer,
   BlockRenderMode,

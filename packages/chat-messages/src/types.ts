@@ -351,9 +351,32 @@ export type ExtendedChatMessage<
   ? ChatMessage
   : Omit<ChatMessage, "parts"> & { parts: ExtendedMessagePart<TExtraParts>[] };
 
+/**
+ * Customisation for a message {@link ChatMessage.bookmark} entry.
+ *
+ * A `bookmark` marks a message so it appears in the floating bookmark rail
+ * (`<i-chat-messages>`). The rail shows one short bar per bookmarked message,
+ * in message order; hovering previews the message and clicking scrolls to it.
+ */
+export interface ChatBookmark {
+  /**
+   * Short label shown in the hover preview. When omitted, the preview falls
+   * back to the message's plain text (see {@link getMessageText}).
+   */
+  label?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatMessageRole;
+  /**
+   * Marks this message as a bookmark in the floating bookmark rail.
+   *
+   * - `true` — shown with a default label (the message's text preview).
+   * - `{ label }` — shown with a custom short label.
+   * - unset — never appears in the rail (the default for normal messages).
+   */
+  bookmark?: boolean | ChatBookmark;
   /**
    * Ordered, typed body parts — the single source of truth for rendering. Use
    * the {@link textPart} / {@link reasoningPart} / {@link todoPart} factories for

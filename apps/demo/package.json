@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@bndynet/ichat": "*",
+    "@bndynet/ichat-bookmarks": "*",
     "@bndynet/ichat-input": "*",
     "@bndynet/ichat-messages": "*",
     "@bndynet/ichat-renderer-chart": "*",

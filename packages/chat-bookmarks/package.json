@@ -1,0 +1,60 @@
+{
+  "name": "@bndynet/ichat-bookmarks",
+  "version": "3.3.2",
+  "description": "Floating bookmark rail Web Component for @bndynet/ichat: place marked messages anywhere in your layout and jump to them.",
+  "keywords": [
+    "ai-chat",
+    "chat-ui",
+    "chatbot-ui",
+    "bookmarks",
+    "web-components",
+    "custom-elements",
+    "lit",
+    "llm-ui"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@bndynet/ichat-messages": "^3.3.2",
+    "lit": "^3.3.0"
+  },
+  "devDependencies": {
+    "@bndynet/ichat-messages": "file:../chat-messages",
+    "lit": "^3.3.0",
+    "sass-embedded": "^1.86.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bndynet/ichat.git"
+  },
+  "homepage": "https://github.com/bndynet/ichat#readme",
+  "bugs": {
+    "url": "https://github.com/bndynet/ichat/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
