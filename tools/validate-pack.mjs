@@ -15,6 +15,7 @@ import { join } from "node:path";
 
 const PACKAGES = [
   "@bndynet/ichat-messages",
+  "@bndynet/ichat-bookmarks",
   "@bndynet/ichat-input",
   "@bndynet/ichat",
   "@bndynet/ichat-renderers",
