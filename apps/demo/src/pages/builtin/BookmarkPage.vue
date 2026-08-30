@@ -122,9 +122,9 @@ onMounted(async () => {
     </p>
 
     <div class="demo-body">
-      <aside class="bookmark-sidebar">
+      <div class="floating-rail">
         <i-chat-bookmarks for="bookmark-chat" ref="bookmarksRef" />
-      </aside>
+      </div>
       <i-chat-messages id="bookmark-chat" ref="chatRef" class="message-list" />
     </div>
   </div>
@@ -181,18 +181,24 @@ onMounted(async () => {
 .demo-body {
   flex: 1;
   min-height: 0;
+  position: relative;
   display: flex;
   align-items: stretch;
 }
 
-.bookmark-sidebar {
-  flex: 0 0 44px;
+.floating-rail {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding-block: 24px;
-  border-right: 1px solid var(--el-border-color-lighter, #ebeef5);
-  background: var(--el-fill-color-light, #f5f7fa);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.floating-rail > i-chat-bookmarks {
+  pointer-events: auto;
 }
 
 .message-list {

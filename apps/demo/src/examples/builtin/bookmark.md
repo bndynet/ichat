@@ -65,8 +65,8 @@ document.querySelector("i-chat-bookmarks").source =
 
 ## Theming
 
-The bar colour is `--chat-bookmark-color`, defaulting to `--chat-primary`, so
-it follows your light/dark theme automatically.
+The bar colour is `--chat-bookmark-color`, defaulting to a neutral gray
+(`--chat-text-secondary`), so it follows your light/dark theme automatically.
 
 ```css
 :root {

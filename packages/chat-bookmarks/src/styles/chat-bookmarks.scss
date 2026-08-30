@@ -33,7 +33,10 @@
     width: 12px;
     height: 4px;
     border-radius: 2px;
-    background: var(--chat-bookmark-color, var(--chat-primary, #2563eb));
+    background: var(
+      --chat-bookmark-color,
+      var(--chat-text-secondary, #6b7280)
+    );
     opacity: 0.5;
     transition:
       opacity 150ms ease,

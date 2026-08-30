@@ -96,8 +96,9 @@ bookmarks.refresh();
 
 ## Theming
 
-The bar color is `--chat-bookmark-color`, defaulting to `--chat-primary`, so it
-follows your light/dark theme automatically. Override it on any ancestor:
+The bar color is `--chat-bookmark-color`, defaulting to a neutral gray
+(`--chat-text-secondary`), so it follows your light/dark theme automatically.
+Override it on any ancestor:
 
 ```css
 :root {
