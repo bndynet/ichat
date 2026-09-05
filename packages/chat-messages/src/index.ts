@@ -87,6 +87,7 @@ export type {
   ChatPartActionDetail,
   ChatPartActionKind,
   ChatLinkClickDetail,
+  VisibleMessageChangeDetail,
   MessagePart,
   PartBase,
   PartStatus,

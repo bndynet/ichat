@@ -110,6 +110,7 @@ export type {
   DeepPartial,
   PluralForms,
   ChatLinkClickDetail,
+  VisibleMessageChangeDetail,
   MarkdownRenderOptions,
 } from "@bndynet/ichat-messages";
 export {

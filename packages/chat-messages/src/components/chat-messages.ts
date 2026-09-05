@@ -9,6 +9,7 @@ import type {
   MessagePart,
   TodoItemPatch,
   ToolCallPart,
+  VisibleMessageChangeDetail,
 } from "../types.js";
 import { DEFAULT_CONFIG, textPart } from "../types.js";
 import { isTodoPart, isToolCallPart } from "../part-guards.js";
@@ -118,6 +119,10 @@ export class ChatMessages extends LitElement {
   private _errorDismissTimer?: ReturnType<typeof setTimeout>;
   /** Invalidates in-flight multi-pass scroll when a newer scroll is requested. */
   private _scrollToBottomSeq = 0;
+  /** Last dispatched visible range (avoids duplicate `visible-message-change`). */
+  private _visibleMessageId = "";
+  private _lastVisibleMessageId = "";
+  private _visibleMessageRaf = 0;
   /** True when `streaming` flipped in the current update (for `updated()`). */
   private _streamingChanged = false;
   /** Preserves the visible message when the renderer switches in either direction. */
@@ -757,6 +762,74 @@ export class ChatMessages extends LitElement {
     if (atBottom) {
       this._hasNewContent = false;
     }
+    this._scheduleVisibleMessageUpdate();
+  }
+
+  /**
+   * Debounce the visible-message computation to once per animation frame so
+   * high-frequency scroll events don't spam layout queries or events.
+   */
+  private _scheduleVisibleMessageUpdate(): void {
+    if (this._visibleMessageRaf) return;
+    this._visibleMessageRaf = requestAnimationFrame(() => {
+      this._visibleMessageRaf = 0;
+      this._updateVisibleMessage();
+    });
+  }
+
+  private _updateVisibleMessage(): void {
+    const { firstId, lastId } = this._findVisibleRange();
+    if (!firstId || !lastId) return;
+    if (
+      firstId === this._visibleMessageId &&
+      lastId === this._lastVisibleMessageId
+    ) {
+      return;
+    }
+    this._visibleMessageId = firstId;
+    this._lastVisibleMessageId = lastId;
+    this.dispatchEvent(
+      new CustomEvent<VisibleMessageChangeDetail>("visible-message-change", {
+        detail: { messageId: firstId, lastMessageId: lastId },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /** First and last `i-chat-message` intersecting the viewport (top/bottom). */
+  private _findVisibleRange(): {
+    firstId?: string;
+    lastId?: string;
+  } {
+    const scroller = this._scrollContainer;
+    if (!scroller) return {};
+    const scrollerRect = scroller.getBoundingClientRect();
+    const messages = this.renderRoot.querySelectorAll<HTMLElement>(
+      "i-chat-message[data-message-id]",
+    );
+    const intersects = (message: HTMLElement): boolean => {
+      const rect = message.getBoundingClientRect();
+      return rect.bottom > scrollerRect.top && rect.top < scrollerRect.bottom;
+    };
+
+    let firstId: string | undefined;
+    for (const message of messages) {
+      if (intersects(message)) {
+        firstId = message.dataset.messageId;
+        break;
+      }
+    }
+
+    let lastId: string | undefined;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (intersects(messages[i])) {
+        lastId = messages[i].dataset.messageId;
+        break;
+      }
+    }
+
+    return { firstId, lastId };
   }
 
   /**

@@ -513,6 +513,18 @@ export interface ChatLinkClickDetail {
   originalEvent: MouseEvent;
 }
 
+/**
+ * Fired when the visible message range of the message viewport changes while
+ * scrolling. Consumers (e.g. `@bndynet/ichat-bookmarks`) use this to track
+ * which messages the reader is currently looking at.
+ */
+export interface VisibleMessageChangeDetail {
+  /** Id of the first (top-most) visible message. */
+  messageId: string;
+  /** Id of the last (bottom-most) visible message. */
+  lastMessageId: string;
+}
+
 /** Strings for message list date separators (between day buckets). */
 export interface DateSeparatorLabels {
   today: string;

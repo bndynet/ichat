@@ -1,7 +1,7 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { ChatMessage } from "@bndynet/ichat-messages";
+import type { ChatMessage, VisibleMessageChangeDetail } from "@bndynet/ichat-messages";
 import { getMessageText } from "@bndynet/ichat-messages";
 import { setVersionAttribute } from "../version.js";
 import styles from "../styles/chat-bookmarks.scss";
@@ -53,6 +53,10 @@ export class ChatBookmarks extends LitElement {
   @property({ type: Object }) source?: BookmarkSource;
 
   @state() private _bookmarks: ChatMessage[] = [];
+  @state() private _visibleMessageId = "";
+  @state() private _lastVisibleMessageId = "";
+  /** Last bookmark the user clicked; highlighted while its message is in view. */
+  @state() private _selectedId = "";
   @state() private _tip: { text: string; top: number; left: number } | null =
     null;
 
@@ -112,6 +116,7 @@ export class ChatBookmarks extends LitElement {
     if (src && typeof src.addEventListener === "function") {
       this._listeningSource = src;
       src.addEventListener("messages-change", this._onMessagesChange);
+      src.addEventListener("visible-message-change", this._onVisibleMessageChange);
     }
   }
 
@@ -124,6 +129,10 @@ export class ChatBookmarks extends LitElement {
         "messages-change",
         this._onMessagesChange,
       );
+      this._listeningSource.removeEventListener(
+        "visible-message-change",
+        this._onVisibleMessageChange,
+      );
     }
     this._listeningSource = undefined;
   }
@@ -132,9 +141,69 @@ export class ChatBookmarks extends LitElement {
     this._sync();
   };
 
+  private readonly _onVisibleMessageChange = (event: Event): void => {
+    const detail = (event as CustomEvent<VisibleMessageChangeDetail>).detail;
+    if (detail?.messageId) {
+      this._visibleMessageId = detail.messageId;
+      this._lastVisibleMessageId = detail.lastMessageId ?? detail.messageId;
+    }
+  };
+
   private _sync(): void {
     const src = this._effectiveSource();
     this._bookmarks = (src?.messages ?? []).filter((m) => !!m.bookmark);
+    if (
+      this._selectedId &&
+      !this._bookmarks.some((m) => m.id === this._selectedId)
+    ) {
+      this._selectedId = "";
+    }
+  }
+
+  /**
+   * Id of the bookmark for the current scroll section — the last bookmarked
+   * message at or before the top-most visible message.
+   */
+  private get _activeBookmarkId(): string {
+    const messages = this._effectiveSource()?.messages;
+    if (!messages?.length || !this._visibleMessageId) return "";
+    const visibleIndex = messages.findIndex(
+      (m) => m.id === this._visibleMessageId,
+    );
+    if (visibleIndex < 0) return "";
+    let activeId = "";
+    for (let i = 0; i <= visibleIndex; i++) {
+      if (messages[i].bookmark) activeId = messages[i].id;
+    }
+    return activeId;
+  }
+
+  /**
+   * The bookmark to highlight: the last-clicked bookmark wins while its message
+   * is still inside the visible range; once it scrolls out of view (in either
+   * direction), the highlight falls back to the scroll-section bookmark.
+   */
+  private get _highlightedId(): string {
+    const messages = this._effectiveSource()?.messages ?? [];
+    if (this._selectedId) {
+      const selectedIndex = messages.findIndex((m) => m.id === this._selectedId);
+      const firstIndex = messages.findIndex(
+        (m) => m.id === this._visibleMessageId,
+      );
+      const lastIndex = messages.findIndex(
+        (m) => m.id === this._lastVisibleMessageId,
+      );
+      if (
+        selectedIndex >= 0 &&
+        firstIndex >= 0 &&
+        lastIndex >= 0 &&
+        selectedIndex >= firstIndex &&
+        selectedIndex <= lastIndex
+      ) {
+        return this._selectedId;
+      }
+    }
+    return this._activeBookmarkId;
   }
 
   private _preview(message: ChatMessage, max: number): string {
@@ -167,10 +236,16 @@ export class ChatBookmarks extends LitElement {
   }
 
   private _jump(message: ChatMessage): void {
+    this._selectedId = message.id;
+    // Optimistically treat the clicked message as the whole visible range so
+    // the highlight appears immediately (before the smooth scroll settles).
+    this._visibleMessageId = message.id;
+    this._lastVisibleMessageId = message.id;
     this._effectiveSource()?.scrollToMessage(message.id);
   }
 
   override render() {
+    const activeId = this._highlightedId;
     return html`
       <nav
         class="rail"
@@ -184,8 +259,9 @@ export class ChatBookmarks extends LitElement {
           (message) => html`
             <button
               type="button"
-              class="item"
+              class=${`item${message.id === activeId ? " active" : ""}`}
               data-message-id=${message.id}
+              aria-current=${message.id === activeId ? "location" : undefined}
               aria-label=${this._preview(message, ARIA_MAX)}
               @click=${() => this._jump(message)}
               @mouseenter=${(event: Event) => this._showTip(message, event)}

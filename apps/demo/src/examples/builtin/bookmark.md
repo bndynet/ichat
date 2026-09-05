@@ -59,6 +59,8 @@ document.querySelector("i-chat-bookmarks").source =
 - Hovering a bar previews the `label` (or a truncated plain-text preview).
 - Clicking a bar scrolls to the message (reusing `scrollToMessage`) and
   highlights it.
+- The bar for the current scroll section is highlighted automatically (the
+  last bookmark at or above the top of the viewport).
 - Auto-syncs on `messages-change`. After a direct `chat.messages = […]`
   assignment, call `bookmarks.refresh()`.
 
@@ -70,6 +72,7 @@ The bar colour is `--chat-bookmark-color`, defaulting to a neutral gray
 ```css
 :root {
   --chat-bookmark-color: #f59e0b;
+  --chat-bookmark-active-color: #10b981; /* current section */
   --chat-bookmarks-gap: 6px; /* spacing between bars */
 }
 ```

@@ -93,6 +93,14 @@ chat.messages = history;
 bookmarks.refresh();
 ```
 
+## Current section highlight
+
+As the reader scrolls, the rail highlights the bookmark for the section they're
+currently in — the last bookmarked message at or before the top of the viewport.
+It listens to the chat's `visible-message-change` event, so it works with both
+the regular list and virtual scrolling. The highlighted bar uses
+`--chat-bookmark-active-color` (defaults to `--chat-primary`).
+
 ## Theming
 
 The bar color is `--chat-bookmark-color`, defaulting to a neutral gray
@@ -102,6 +110,7 @@ Override it on any ancestor:
 ```css
 :root {
   --chat-bookmark-color: #f59e0b;
+  --chat-bookmark-active-color: #10b981; /* current section */
   --chat-bookmarks-gap: 6px; /* spacing between bars */
 }
 ```
