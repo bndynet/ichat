@@ -10,41 +10,52 @@ import { textPart } from "@bndynet/ichat";
 const chat = document.querySelector("i-chat-messages");
 ```
 
-## Send the page's diagrams
+## Switch themes
 
-The page renders these Flowchart, Sequence, and Graph definitions. The renderer converts each fence to SVG and follows the active theme.
+Use the picker above the diagrams, or call `setDefaultMermaidTheme()` from code. It changes the default for every diagram and re-renders the ones already on screen.
 
 ```js
-const diagram = `## Flowchart
+import { setDefaultMermaidTheme } from "@bndynet/ichat-renderer-mermaid";
+
+setDefaultMermaidTheme("forest"); // "auto" | "base" | "default" | "dark" | ...
+```
+
+## Send the page's diagrams
+
+The demo page renders **16 diagram types**: Flowchart, Sequence, Graph, Class, State, ER, Gantt, Pie, Journey, Quadrant, Mindmap, Timeline, Git graph, XY chart, Sankey, and Kanban.
+
+```js
+const diagram = `## Class diagram
 
 \`\`\`mermaid
-flowchart LR
-  A[i-chat] --> B[Markdown]
-  B --> C[Mermaid SVG]
+classDiagram
+  class ChatMessage {
+    +String id
+    +String role
+  }
+  class TextPart {
+    +String text
+  }
+  ChatMessage "1" *-- "many" TextPart : contains
 \`\`\`
 
-## Sequence
+## State diagram
 
 \`\`\`mermaid
-sequenceDiagram
-  participant U as User
-  participant C as Chat
-  U->>C: message
-  C-->>U: streamed reply
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Streaming : send
+  Streaming --> Idle : done
 \`\`\`
 
-## Graph
+## Pie
 
 \`\`\`mermaid
-graph TD
-  A[Enter Chart Definition] --> B(Preview)
-  B --> C{decide}
-  C --> D[Keep]
-  C --> E[Edit Definition]
-  E --> B
-  D --> F[Save Image and Code]
-  F --> B
-\`\`\``;
+pie title Renderer usage
+  "Mermaid" : 45
+  "Chart" : 30
+\`\`\`
+`;
 
 chat.addMessage({
   id: crypto.randomUUID(),
@@ -52,4 +63,55 @@ chat.addMessage({
   timestamp: Date.now(),
   parts: [textPart(diagram)],
 });
+```
+
+## More diagram fences
+
+```mermaid
+erDiagram
+  CHAT ||--o{ MESSAGE : contains
+  MESSAGE ||--|{ PART : has
+```
+
+```mermaid
+gantt
+  title Release plan
+  dateFormat YYYY-MM-DD
+  section Design
+  Spec :a1, 2026-01-05, 7d
+  section Build
+  Implement :b1, after a1, 10d
+```
+
+```mermaid
+mindmap
+  root((iChat))
+    Markdown
+    Renderers
+      Mermaid
+      Chart
+```
+
+```mermaid
+gitGraph
+  commit id: "init"
+  branch feature
+  checkout feature
+  commit id: "renderer"
+  checkout main
+  merge feature
+```
+
+```mermaid
+sankey-beta
+  Markdown,Renderers,30
+  Renderers,Mermaid,20
+```
+
+```mermaid
+kanban
+  todo[Todo]
+    design[Design API]
+  done[Done]
+    ship[Ship it]
 ```

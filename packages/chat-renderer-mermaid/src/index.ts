@@ -10,7 +10,17 @@ export {
   mermaidRenderer,
   mermaidPlugin,
   createMermaidRenderer,
+  getDefaultMermaidTheme,
+  setDefaultMermaidTheme,
 } from "./mermaid-renderer.js";
+export type { MermaidRendererOptions } from "./mermaid-renderer.js";
+
+export {
+  DEFAULT_MERMAID_THEME,
+  MERMAID_THEME_NAMES,
+  isMermaidThemeName,
+} from "./mermaid-config.js";
+export type { MermaidThemeName, MermaidThemeOption } from "./mermaid-config.js";
 
 export { CHAT_MERMAID_TOKEN_NAMES } from "./mermaid-theme-tokens.js";
 export type { ChatMermaidTokenName } from "./mermaid-theme-tokens.js";

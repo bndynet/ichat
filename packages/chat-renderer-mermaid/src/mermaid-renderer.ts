@@ -6,7 +6,13 @@ import {
   escapeHtml,
   type RendererOptions,
 } from "@bndynet/ichat-messages";
-import { DEFAULT_MERMAID_CONFIG } from "./mermaid-config.js";
+import {
+  DEFAULT_MERMAID_THEME,
+  DEFAULT_MERMAID_CONFIG,
+  isMermaidThemeName,
+  type MermaidThemeName,
+  type MermaidThemeOption,
+} from "./mermaid-config.js";
 import { buildMermaidThemeVariables } from "./mermaid-theme-tokens.js";
 import { setVersionAttribute } from "./version.js";
 
@@ -17,6 +23,43 @@ function isDarkTheme(): boolean {
   const html = document.documentElement;
   if (html.classList.contains("dark")) return true;
   return (html.getAttribute("data-theme") ?? "").includes("dark");
+}
+
+let defaultMermaidTheme: MermaidThemeOption = DEFAULT_MERMAID_THEME;
+
+/**
+ * Overrides the theme used when a renderer or `<i-chat-mermaid>` does not set
+ * `theme` / `data-mm-theme`. Existing diagrams refresh immediately.
+ *
+ * Use `"base"` to keep the `--chat-mermaid-*` token workflow, or `"auto"`
+ * (initial default) to track the host light/dark contract.
+ */
+export function setDefaultMermaidTheme(theme: MermaidThemeOption): void {
+  defaultMermaidTheme = theme;
+  if (typeof document !== "undefined") {
+    collectAllMermaidHosts().forEach((el) => el.refresh());
+  }
+}
+
+/** Current default theme (`"auto"` unless changed via `setDefaultMermaidTheme`). */
+export function getDefaultMermaidTheme(): MermaidThemeOption {
+  return defaultMermaidTheme;
+}
+
+function resolveThemeValue(value: MermaidThemeOption): MermaidThemeName {
+  if (value === "auto") return isDarkTheme() ? "dark" : "default";
+  return value;
+}
+
+/** Maps the renderer's `theme` option to a concrete Mermaid theme name. */
+function resolveMermaidTheme(
+  option: string | null | undefined,
+): MermaidThemeName {
+  const value = (option ?? "").trim();
+  if (value === "auto" || isMermaidThemeName(value)) {
+    return resolveThemeValue(value);
+  }
+  return resolveThemeValue(defaultMermaidTheme);
 }
 
 /**
@@ -100,7 +143,7 @@ export class ChatMermaid extends HTMLElement {
   private _mutationFlush = false;
 
   static get observedAttributes(): string[] {
-    return ["data-mm-fp"];
+    return ["data-mm-fp", "data-mm-theme"];
   }
 
   connectedCallback(): void {
@@ -141,6 +184,13 @@ export class ChatMermaid extends HTMLElement {
     });
   }
 
+  /** Resolved theme for this element (`data-mm-theme`, else the global default). */
+  private _theme(): MermaidThemeName {
+    return resolveMermaidTheme(
+      this.getAttribute("data-mm-theme") ?? defaultMermaidTheme,
+    );
+  }
+
   /** Re-run render (e.g. after theme change). */
   refresh(): void {
     if (this.isConnected) void this._render();
@@ -179,14 +229,21 @@ export class ChatMermaid extends HTMLElement {
 
     try {
       const mermaid = (await import("mermaid")).default;
+      const theme = this._theme();
       mermaid.initialize({
         ...DEFAULT_MERMAID_CONFIG,
-        theme: "base",
-        darkMode: isDarkTheme(),
-        themeVariables: {
-          ...DEFAULT_MERMAID_CONFIG.themeVariables,
-          ...buildMermaidThemeVariables(this),
-        },
+        theme,
+        // `base` is the only theme designed to be parametrized: feed it the
+        // CSS-variable palette. Official themes keep their complete palette
+        // (Mermaid merges top-level `darkMode` only via `themeVariables`, and
+        // the `dark` theme is already explicit).
+        themeVariables:
+          theme === "base"
+            ? {
+                ...DEFAULT_MERMAID_CONFIG.themeVariables,
+                ...buildMermaidThemeVariables(this),
+              }
+            : { ...DEFAULT_MERMAID_CONFIG.themeVariables },
       });
 
       // `render()` returns an error SVG (e.g. "Syntax error in text") without throwing — validate first.
@@ -224,7 +281,10 @@ if (
 
 // ── Fence renderer (sync HTML only) ─────────────────────────────────────────
 
-function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
+function renderMermaidBlock(
+  code: string,
+  opts: MermaidRendererOptions = {},
+): string {
   const trimmed = code.trim();
   if (!trimmed) {
     return renderCodeFallback("mermaid", code);
@@ -232,7 +292,12 @@ function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
 
   // Multiline / long diagrams must not live in an attribute — browsers normalize or truncate.
   const fp = fingerprintMermaidCode(code);
-  const html = `<i-chat-mermaid data-mm-fp="${escapeHtml(fp)}"><pre class="${MERMAID_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre></i-chat-mermaid>`;
+  // Leave the attribute off unless the caller pinned a theme, so
+  // `setDefaultMermaidTheme()` also affects elements rendered before the call.
+  const themeAttr = opts.theme
+    ? ` data-mm-theme="${escapeHtml(opts.theme)}"`
+    : "";
+  const html = `<i-chat-mermaid data-mm-fp="${escapeHtml(fp)}"${themeAttr}><pre class="${MERMAID_SOURCE_CLASS}" hidden>${escapeHtml(code)}</pre></i-chat-mermaid>`;
 
   return opts.codeToggle !== false
     ? wrapWithCodeToggle("mermaid", code, html)
@@ -240,6 +305,18 @@ function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
+
+export interface MermaidRendererOptions extends RendererOptions {
+  /**
+   * Mermaid theme. `auto` follows the host light/dark contract
+   * (`<html class="dark">` / `data-theme` containing `dark`); `base` uses the
+   * `--chat-mermaid-*` / `--chat-*` tokens; any official name pins that palette.
+   *
+   * @default undefined — the global default (`"auto"` initially, or whatever
+   * `setDefaultMermaidTheme()` last set).
+   */
+  theme?: MermaidThemeOption;
+}
 
 /**
  * Creates a `BlockRenderer` for `mermaid` fenced code blocks.
@@ -250,9 +327,11 @@ function renderMermaidBlock(code: string, opts: RendererOptions = {}): string {
  * @example
  * registry.register(createMermaidRenderer())
  * registry.register(createMermaidRenderer({ codeToggle: false }))
+ * registry.register(createMermaidRenderer({ theme: "base" })) // --chat-mermaid-* tokens
+ * registry.register(createMermaidRenderer({ theme: "forest" }))
  */
 export function createMermaidRenderer(
-  options: RendererOptions = {},
+  options: MermaidRendererOptions = {},
 ): BlockRenderer {
   return {
     name: "mermaid",
@@ -271,7 +350,7 @@ export const mermaidRenderer: BlockRenderer = createMermaidRenderer();
  */
 export function mermaidPlugin(
   mdInstance: MarkdownIt,
-  options: RendererOptions = {},
+  options: MermaidRendererOptions = {},
 ): void {
   const originalFence =
     mdInstance.renderer.rules.fence ||

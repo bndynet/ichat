@@ -69,22 +69,27 @@ const charts = {
 /** @type {Record<string, string>} Keys match sidebar / preset labels; values are markdown bodies. */
 export const demoData = {
   mermaid:
-    "Diagrams use the **`mermaid`** fence. Theme follows `data-theme` on `<html>` (light / dark).\n\n" +
-    "## Flowchart\n\n" +
+    "Diagrams use the **`mermaid`** fence. 16 diagram types below. Theme follows `data-theme` on `<html>` (light / dark).\n\n" +
+    "## Flowchart\n" +
+    "\n" +
     "```mermaid\n" +
     "flowchart LR\n" +
     "  A[i-chat] --> B[Markdown]\n" +
     "  B --> C[Mermaid SVG]\n" +
-    "```\n\n" +
-    "## Sequence\n\n" +
+    "```\n" +
+    "\n" +
+    "## Sequence\n" +
+    "\n" +
     "```mermaid\n" +
     "sequenceDiagram\n" +
     "  participant U as User\n" +
     "  participant C as Chat\n" +
     "  U->>C: message\n" +
     "  C-->>U: streamed reply\n" +
-    "```\n\n" +
-    "## Graph\n\n" +
+    "```\n" +
+    "\n" +
+    "## Graph\n" +
+    "\n" +
     "```mermaid\n" +
     "graph TD\n" +
     "  A[Enter Chart Definition] --> B(Preview)\n" +
@@ -94,6 +99,167 @@ export const demoData = {
     "  E --> B\n" +
     "  D --> F[Save Image and Code]\n" +
     "  F --> B\n" +
+    "```\n" +
+    "\n" +
+    "## Class diagram\n" +
+    "\n" +
+    "```mermaid\n" +
+    "classDiagram\n" +
+    "  class ChatMessage {\n" +
+    "    +String id\n" +
+    "    +String role\n" +
+    "    +addPart(part)\n" +
+    "  }\n" +
+    "  class TextPart {\n" +
+    "    +String text\n" +
+    "  }\n" +
+    '  ChatMessage "1" *-- "many" TextPart : contains\n' +
+    "```\n" +
+    "\n" +
+    "## State diagram\n" +
+    "\n" +
+    "```mermaid\n" +
+    "stateDiagram-v2\n" +
+    "  [*] --> Idle\n" +
+    "  Idle --> Streaming : send\n" +
+    "  Streaming --> Idle : done\n" +
+    "  Streaming --> Error : fail\n" +
+    "  Error --> [*]\n" +
+    "```\n" +
+    "\n" +
+    "## ER diagram\n" +
+    "\n" +
+    "```mermaid\n" +
+    "erDiagram\n" +
+    "  CHAT ||--o{ MESSAGE : contains\n" +
+    "  MESSAGE ||--|{ PART : has\n" +
+    "  CHAT {\n" +
+    "    string id\n" +
+    "  }\n" +
+    "  MESSAGE {\n" +
+    "    string id\n" +
+    "    string role\n" +
+    "  }\n" +
+    "```\n" +
+    "\n" +
+    "## Gantt\n" +
+    "\n" +
+    "```mermaid\n" +
+    "gantt\n" +
+    "  title Release plan\n" +
+    "  dateFormat YYYY-MM-DD\n" +
+    "  section Design\n" +
+    "  Spec :a1, 2026-01-05, 7d\n" +
+    "  Review :a2, after a1, 3d\n" +
+    "  section Build\n" +
+    "  Implement :b1, after a2, 10d\n" +
+    "  Test :b2, after b1, 5d\n" +
+    "```\n" +
+    "\n" +
+    "## Pie\n" +
+    "\n" +
+    "```mermaid\n" +
+    "pie title Renderer usage\n" +
+    '  "Mermaid" : 45\n' +
+    '  "Chart" : 30\n' +
+    '  "Form" : 15\n' +
+    '  "KPI" : 10\n' +
+    "```\n" +
+    "\n" +
+    "## Journey\n" +
+    "\n" +
+    "```mermaid\n" +
+    "journey\n" +
+    "  title Send a message\n" +
+    "  section Compose\n" +
+    "    Type text: 5: User\n" +
+    "    Press send: 4: User\n" +
+    "  section Stream\n" +
+    "    Receive reply: 5: User, Assistant\n" +
+    "```\n" +
+    "\n" +
+    "## Quadrant\n" +
+    "\n" +
+    "```mermaid\n" +
+    "quadrantChart\n" +
+    "  title Renderer priorities\n" +
+    "  x-axis Low effort --> High effort\n" +
+    "  y-axis Low value --> High value\n" +
+    "  quadrant-1 Do now\n" +
+    "  quadrant-2 Plan\n" +
+    "  quadrant-3 Drop\n" +
+    "  quadrant-4 Delegate\n" +
+    "  Mermaid: [0.3, 0.8]\n" +
+    "  Chart: [0.7, 0.6]\n" +
+    "  Form: [0.5, 0.4]\n" +
+    "```\n" +
+    "\n" +
+    "## Mindmap\n" +
+    "\n" +
+    "```mermaid\n" +
+    "mindmap\n" +
+    "  root((iChat))\n" +
+    "    Markdown\n" +
+    "      Highlight\n" +
+    "      Tables\n" +
+    "    Renderers\n" +
+    "      Mermaid\n" +
+    "      Chart\n" +
+    "    Streaming\n" +
+    "```\n" +
+    "\n" +
+    "## Timeline\n" +
+    "\n" +
+    "```mermaid\n" +
+    "timeline\n" +
+    "  title iChat milestones\n" +
+    "  2024 : Markdown pipeline\n" +
+    "  2025 : Renderers\n" +
+    "  2026 : Bookmarks\n" +
+    "```\n" +
+    "\n" +
+    "## Git graph\n" +
+    "\n" +
+    "```mermaid\n" +
+    "gitGraph\n" +
+    '  commit id: "init"\n' +
+    "  branch feature\n" +
+    "  checkout feature\n" +
+    '  commit id: "renderer"\n' +
+    "  checkout main\n" +
+    "  merge feature\n" +
+    "```\n" +
+    "\n" +
+    "## XY chart\n" +
+    "\n" +
+    "```mermaid\n" +
+    "xychart-beta\n" +
+    '  title "Streaming throughput"\n' +
+    "  x-axis [Jan, Feb, Mar]\n" +
+    '  y-axis "Tokens/s" 0 --> 100\n' +
+    "  bar [40, 60, 80]\n" +
+    "  line [45, 65, 85]\n" +
+    "```\n" +
+    "\n" +
+    "## Sankey\n" +
+    "\n" +
+    "```mermaid\n" +
+    "sankey-beta\n" +
+    "  Markdown,Renderers,30\n" +
+    "  Renderers,Mermaid,20\n" +
+    "  Renderers,Chart,10\n" +
+    "```\n" +
+    "\n" +
+    "## Kanban\n" +
+    "\n" +
+    "```mermaid\n" +
+    "kanban\n" +
+    "  todo[Todo]\n" +
+    "    design[Design API]\n" +
+    "  doing[Doing]\n" +
+    "    build[Build UI]\n" +
+    "  done[Done]\n" +
+    "    ship[Ship it]\n" +
     "```\n",
 
   chart:

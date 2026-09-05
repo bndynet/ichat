@@ -26,6 +26,15 @@ All notable changes to this project are documented here. This project follows
 - `docs/parts.md` documents completing the reasoning part when its own stream
   ends, with a full reasoning-then-answer SSE example, and the demo gains a
   Bookmarks page.
+- `@bndynet/ichat-renderer-mermaid` now defaults to Mermaid's official themes:
+  `theme: "auto"` follows the host light/dark contract (`dark` on dark pages,
+  `default` on light pages). Any official theme name (`forest`, `neutral`,
+  `neo`, `redux`, …) can be pinned per renderer, and `setDefaultMermaidTheme()`
+  changes the global default while refreshing already-mounted diagrams. The
+  token-driven `"base"` theme remains available as an opt-in
+  (`setDefaultMermaidTheme("base")` or `theme: "base"`); it is the only theme
+  that reads `--chat-mermaid-*`. Fence output carries `data-mm-theme` only when
+  a theme is pinned, so `<i-chat-mermaid>` re-renders when the attribute changes.
 
 ### Changed
 
