@@ -47,7 +47,7 @@ export function getDefaultMermaidTheme(): MermaidThemeOption {
 }
 
 function resolveThemeValue(value: MermaidThemeOption): MermaidThemeName {
-  if (value === "auto") return isDarkTheme() ? "dark" : "default";
+  if (value === "auto") return isDarkTheme() ? "redux-dark" : "redux";
   return value;
 }
 
@@ -309,8 +309,9 @@ function renderMermaidBlock(
 export interface MermaidRendererOptions extends RendererOptions {
   /**
    * Mermaid theme. `auto` follows the host light/dark contract
-   * (`<html class="dark">` / `data-theme` containing `dark`); `base` uses the
-   * `--chat-mermaid-*` / `--chat-*` tokens; any official name pins that palette.
+   * (`<html class="dark">` / `data-theme` containing `dark`) using the unified
+   * `redux` / `redux-dark` pair; `base` uses the `--chat-mermaid-*` /
+   * `--chat-*` tokens; any official name pins that palette.
    *
    * @default undefined — the global default (`"auto"` initially, or whatever
    * `setDefaultMermaidTheme()` last set).

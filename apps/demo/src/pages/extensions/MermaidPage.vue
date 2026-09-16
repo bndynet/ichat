@@ -54,11 +54,13 @@ onUnmounted(() => {
   </div>
 
   <p class="mermaid-demo-hint">
-    <code>auto</code> follows the site light/dark switch using Mermaid's
-    official <code>default</code> / <code>dark</code> palettes.
-    <code>base</code> derives colors from the chat <code>--chat-*</code> tokens
-    (full mapping only for flowchart/sequence; other types may keep Mermaid's
-    base palette). The remaining entries are Mermaid's official themes.
+    <code>auto</code> follows the site light/dark switch using the unified
+    <code>redux</code> / <code>redux-dark</code> palettes.
+    <code>redux-color</code> is still selectable, but its accent colors vary
+    between diagram types. <code>base</code> derives colors from the chat
+    <code>--chat-*</code> tokens (full mapping only for flowchart/sequence;
+    other types may keep Mermaid's base palette). The remaining entries are
+    Mermaid's official themes.
   </p>
   <i-chat-messages ref="chatRef" style="flex: 1; min-height: 0" />
   <ExampleCodeDrawer title="Mermaid code example" :content="mermaidExample" />

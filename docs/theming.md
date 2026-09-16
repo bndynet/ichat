@@ -30,7 +30,7 @@ document.documentElement.classList.add("dark");
 
 Toggling **only** `<body>` or a nested wrapper without updating `<html>` may leave charts/Mermaid on the previous palette.
 
-**What the library watches:** a `MutationObserver` on **`<html>`** for **`data-theme`** and **`class`**. Charts call `@bndynet/icharts` `switchTheme('dark' | 'light')`. Mermaid re-runs `render()` with the active theme. The library default is **`auto`**, which resolves to Mermaid's official **`default`** (light) or **`dark`** palette. With the opt-in **`theme: 'base'`**, it instead merges **`themeVariables`** from optional **`--chat-mermaid-*`** tokens (falling back to **`--chat-*`** as in [Mermaid CSS custom properties](#mermaid-css-custom-properties)). Message bodies use **Shadow DOM**; the implementation **walks open shadow roots** to find `<i-chart>` / `<i-chat-mermaid>` so diagrams inside bubbles still update.
+**What the library watches:** a `MutationObserver` on **`<html>`** for **`data-theme`** and **`class`**. Charts call `@bndynet/icharts` `switchTheme('dark' | 'light')`. Mermaid re-runs `render()` with the active theme. The library default is **`auto`**, which resolves to the unified **`redux`** (light) or **`redux-dark`** (dark) palette. With the opt-in **`theme: 'base'`**, it instead merges **`themeVariables`** from optional **`--chat-mermaid-*`** tokens (falling back to **`--chat-*`** as in [Mermaid CSS custom properties](#mermaid-css-custom-properties)). Message bodies use **Shadow DOM**; the implementation **walks open shadow roots** to find `<i-chart>` / `<i-chat-mermaid>` so diagrams inside bubbles still update.
 
 **CSS-only dark:** the [Quick example — dark theme](#quick-example--dark-theme) below uses `:root[data-theme="dark"] { … }`. You can instead put the `dark` **class** on `<html>` and drive `--chat-*` from `html.dark { … }` — both satisfy the contract above.
 
@@ -38,7 +38,7 @@ Toggling **only** `<body>` or a nested wrapper without updating `<html>` may lea
 
 ## Mermaid CSS custom properties
 
-Fenced **`mermaid`** blocks render inside **`<i-chat-mermaid>`**. The default is **`auto`** (official `default` / `dark`). If you opt into the token-driven **`base`** theme — `createMermaidRenderer({ theme: "base" })` or `setDefaultMermaidTheme("base")` — the renderer fills **`themeVariables`** from `getComputedStyle(host)` on that element: for each `--chat-mermaid-*` below, if the value is empty after `trim()`, the listed **`--chat-*`** fallbacks are read in order (still on the same host, so inherited `:root` tokens apply). You do **not** need to define `--chat-mermaid-*` unless you want diagram-only overrides.
+Fenced **`mermaid`** blocks render inside **`<i-chat-mermaid>`**. The default is **`auto`** (the unified `redux` / `redux-dark` pair). If you opt into the token-driven **`base`** theme — `createMermaidRenderer({ theme: "base" })` or `setDefaultMermaidTheme("base")` — the renderer fills **`themeVariables`** from `getComputedStyle(host)` on that element: for each `--chat-mermaid-*` below, if the value is empty after `trim()`, the listed **`--chat-*`** fallbacks are read in order (still on the same host, so inherited `:root` tokens apply). You do **not** need to define `--chat-mermaid-*` unless you want diagram-only overrides.
 
 | Property                          | Derives from (read order)                                  | Description                                                                                                       |
 | --------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +63,7 @@ The TypeScript package also exports **`CHAT_MERMAID_TOKEN_NAMES`** from `@bndyne
 
 ### Official Mermaid themes
 
-**`auto` is the default**: Mermaid's official `default` palette on light hosts, `dark` on dark hosts. You can pin one theme per renderer, or change the global default — which also refreshes diagrams that are already mounted:
+**`auto` is the default**: the unified `redux` palette on light hosts, `redux-dark` on dark hosts. `redux` is preferred over `redux-color` because the color variant varies noticeably across diagram types. You can pin one theme per renderer, or change the global default — which also refreshes diagrams that are already mounted:
 
 ```typescript
 import { registerCodeRenderer } from "@bndynet/ichat";
@@ -81,7 +81,9 @@ setDefaultMermaidTheme("forest");
 registerCodeRenderer(createMermaidRenderer({ theme: "dark" }));
 ```
 
-`auto`, `base`, and every official name (`default`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`) are accepted. Only `base` applies the `--chat-mermaid-*` / `--chat-*` tokens; official themes supply the full palette, so diagrams will not track the chat chrome unless you pick a compatible theme. `neo*` / `redux*` need a newer Mermaid release; older 11.x versions silently fall back to Mermaid's default palette.
+`auto`, `base`, and every official name (`default`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`) are accepted. Only `base` applies the `--chat-mermaid-*` / `--chat-*` tokens; official themes supply the full palette, so diagrams will not track the chat chrome unless you pick a compatible theme.
+
+Diagrams use Mermaid 12's defaults — the ELK layout and the `neo` look. Mermaid 12 requires Node.js >= 22.12 to install and an ES2024-capable browser (Safari 17.4+). It is loaded on demand, and falls back to the source code block when it cannot load.
 
 All official themes ship inside the same Mermaid bundle: selecting one is a runtime lookup, not a separate download.
 

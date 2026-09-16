@@ -40,18 +40,18 @@
     "markdown-it": ">=14"
   },
   "dependencies": {
-    "mermaid": "^11.4.0"
+    "mermaid": "^12.3.0"
   },
   "devDependencies": {
     "@bndynet/ichat-messages": "file:../chat-messages",
     "@types/markdown-it": "^14.1.2",
     "markdown-it": "^14.1.0",
-    "mermaid": "^11.4.0",
+    "mermaid": "^12.3.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12"
   },
   "license": "MIT",
   "repository": {

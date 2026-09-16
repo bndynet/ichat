@@ -3,9 +3,6 @@ import type { MermaidConfig } from "mermaid";
 /**
  * Official Mermaid theme names. All of them ship in the same Mermaid bundle —
  * selecting one is a runtime lookup, not a separate download.
- *
- * `neo*` / `redux*` need a newer Mermaid release; on older 11.x versions
- * Mermaid silently falls back to its default palette.
  */
 export const MERMAID_THEME_NAMES = [
   "default",
@@ -25,7 +22,8 @@ export type MermaidThemeName = (typeof MERMAID_THEME_NAMES)[number];
 
 /**
  * Theme choice for the renderer:
- * - `auto` — default: `dark` when the host is dark, otherwise `default`
+ * - `auto` — default: `redux-dark` when the host is dark, otherwise `redux`
+ *   (a single unified palette across diagram types)
  * - `base` — colors come from `--chat-mermaid-*` / `--chat-*` (opt-in)
  * - any official Mermaid theme name — complete official palette
  */

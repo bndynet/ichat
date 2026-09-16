@@ -150,7 +150,7 @@ import { createChartRenderer } from "@bndynet/ichat-renderer-chart";
 registerCodeRenderer(createChartRenderer({ codeToggle: false }));
 ```
 
-Mermaid defaults to `theme: "auto"` — Mermaid's official `dark` palette on dark hosts, `default` on light hosts. Pass `"base"` to use the `--chat-mermaid-*` tokens, or any official theme name to pin a palette:
+Mermaid defaults to `theme: "auto"` — the unified `redux-dark` palette on dark hosts, `redux` on light hosts. Pass `"base"` to use the `--chat-mermaid-*` tokens, or any official theme name to pin a palette:
 
 ```typescript
 import {

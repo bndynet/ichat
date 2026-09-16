@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- `@bndynet/ichat-renderer-mermaid` now depends on Mermaid 12 (`^12.3.0`) and
+  uses Mermaid 12's ELK layout and `neo` look. `theme: "auto"` maps to the
+  unified `redux` / `redux-dark` pair (dark hosts get `redux-dark`); `redux` is
+  preferred over `redux-color` because the color variant varies noticeably
+  between diagram types. Existing diagrams may be laid out and styled
+  differently. Mermaid 12 requires Node.js >= 22.12 to install and an
+  ES2024-capable browser (Safari 17.4+); when it cannot load, diagrams fall
+  back to their source code block.
+
 ## 3.4.0
 
 ### Added

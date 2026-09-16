@@ -25,7 +25,7 @@ import { createMermaidRenderer } from "@bndynet/ichat-renderer-mermaid";
 registerCodeRenderer(createMermaidRenderer({ codeToggle: false }));
 ```
 
-The default theme is **`auto`**: official `dark` on dark pages, `default` on light pages. To keep the `--chat-mermaid-*` token workflow instead, opt into `base`:
+The default theme is **`auto`**: the unified `redux-dark` palette on dark pages, `redux` on light pages. `redux` is used instead of `redux-color` because the color variant changes noticeably between diagram types. To keep the `--chat-mermaid-*` token workflow instead, opt into `base`:
 
 ```typescript
 import { setDefaultMermaidTheme } from "@bndynet/ichat-renderer-mermaid";
@@ -41,7 +41,7 @@ registerCodeRenderer(createMermaidRenderer({ theme: "forest" }));
 
 - Async rendering — non-blocking, renders on connect
 - Theme-aware — auto-refreshes on dark/light mode toggle
-- Official themes by default — `auto` follows the host light/dark contract via Mermaid's `default` / `dark`; any official name can be pinned
+- Official themes by default — `auto` follows the host light/dark contract via the unified `redux` / `redux-dark` pair; any official name can be pinned
 - Streaming-safe — handles incomplete syntax gracefully
 - Code toggle — "view source" button overlay
 
@@ -62,15 +62,19 @@ registerCodeRenderer(createMermaidRenderer({ theme: "forest" }));
 
 | Value              | Behavior                                                                                                                                         |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `"auto"` (default) | `"dark"` when `<html>` is dark, otherwise `"default"`.                                                                                           |
+| `"auto"` (default) | `"redux-dark"` when `<html>` is dark, otherwise `"redux"`.                                                                                       |
 | `"base"`           | Colors from `--chat-mermaid-*` / `--chat-*` (opt-in).                                                                                            |
 | official name      | Full palette from Mermaid (`default`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`). |
 
-Non-`base` themes ignore the `--chat-mermaid-*` tokens — the diagram uses Mermaid's complete palette and will not track the chat chrome unless you pick a compatible theme. `neo*` / `redux*` need a newer Mermaid release; older 11.x versions silently fall back to Mermaid's default palette. All official themes ship in the same Mermaid bundle, so selecting one is a runtime lookup, not a separate download.
+Non-`base` themes ignore the `--chat-mermaid-*` tokens — the diagram uses Mermaid's complete palette and will not track the chat chrome unless you pick a compatible theme. All official themes ship in the same Mermaid bundle, so selecting one is a runtime lookup, not a separate download.
+
+Diagrams use Mermaid 12's **ELK** layout and **`neo`** look. The `auto` theme uses the unified **`redux` / `redux-dark`** pair rather than Mermaid's per-diagram default theme, so every diagram type shares one palette. Flowchart, state, class, ER, requirement, and use-case diagrams are therefore laid out and styled by Mermaid itself; there is no iChat-specific layout override.
 
 ## Dependencies
 
 All runtime dependencies are auto-installed (`mermaid`, `markdown-it`). `@bndynet/ichat-messages` is a peer dependency.
+
+Mermaid 12 requires **Node.js >= 22.12** to install and an **ES2024-capable browser** (Safari 17.4+). Mermaid is loaded on demand; when it cannot be loaded, the diagram falls back to its source code block.
 
 The renderer uses the library's audited `trusted: true` path so the
 `<i-chat-mermaid>` custom element is preserved. Mermaid source is HTML-escaped
