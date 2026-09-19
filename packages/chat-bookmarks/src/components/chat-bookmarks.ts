@@ -1,7 +1,10 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { ChatMessage, VisibleMessageChangeDetail } from "@bndynet/ichat-messages";
+import type {
+  ChatMessage,
+  VisibleMessageChangeDetail,
+} from "@bndynet/ichat-messages";
 import { getMessageText } from "@bndynet/ichat-messages";
 import { setVersionAttribute } from "../version.js";
 import styles from "../styles/chat-bookmarks.scss";
@@ -116,7 +119,10 @@ export class ChatBookmarks extends LitElement {
     if (src && typeof src.addEventListener === "function") {
       this._listeningSource = src;
       src.addEventListener("messages-change", this._onMessagesChange);
-      src.addEventListener("visible-message-change", this._onVisibleMessageChange);
+      src.addEventListener(
+        "visible-message-change",
+        this._onVisibleMessageChange,
+      );
     }
   }
 
@@ -186,7 +192,9 @@ export class ChatBookmarks extends LitElement {
   private get _highlightedId(): string {
     const messages = this._effectiveSource()?.messages ?? [];
     if (this._selectedId) {
-      const selectedIndex = messages.findIndex((m) => m.id === this._selectedId);
+      const selectedIndex = messages.findIndex(
+        (m) => m.id === this._selectedId,
+      );
       const firstIndex = messages.findIndex(
         (m) => m.id === this._visibleMessageId,
       );

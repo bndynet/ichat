@@ -46,10 +46,7 @@
   &.active::before {
     opacity: 1;
     width: 18px;
-    background: var(
-      --chat-bookmark-active-color,
-      var(--chat-primary, #2563eb)
-    );
+    background: var(--chat-bookmark-active-color, var(--chat-primary, #2563eb));
   }
 
   &:hover::before,
