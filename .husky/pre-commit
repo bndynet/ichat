@@ -1,0 +1,3 @@
+# Formats staged files with Prettier and lints package sources with ESLint.
+# Rules live in lint-staged.config.mjs; this file only wires the hook.
+npx lint-staged

@@ -26,7 +26,8 @@
     "dev": "concurrently -n messages,input,renderers,chart,katex,mermaid,chat,demo -c cyan,magenta,yellow,green,blue,red,white,gray \"npm run dev -w @bndynet/ichat-messages\" \"npm run dev -w @bndynet/ichat-input\" \"npm run dev -w @bndynet/ichat-renderers\" \"npm run dev -w @bndynet/ichat-renderer-chart\" \"npm run dev -w @bndynet/ichat-renderer-katex\" \"npm run dev -w @bndynet/ichat-renderer-mermaid\" \"npm run dev -w @bndynet/ichat\" \"npm run dev -w chat-demo\"",
     "start": "npm run dev",
     "publish:packages": "npm run build && node tools/publish-packages.mjs",
-    "sync": "cli-sync -t ../chat-g"
+    "sync": "cli-sync -t ../chat-g",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@bndynet/cli": "^1.5.1",
@@ -35,6 +36,8 @@
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-lit": "^2.3.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "prettier": "3.9.6",
     "typescript-eslint": "^8.66.0"
   },
