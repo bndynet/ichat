@@ -1,0 +1,3 @@
+# Enforces the Conventional Commits header; rules live in tools/check-commit-msg.mjs
+# so they can be read and changed without touching the hook wiring.
+node tools/check-commit-msg.mjs "$1"
